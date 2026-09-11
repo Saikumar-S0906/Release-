@@ -450,7 +450,8 @@ private fun StylePick(
             Spacer(modifier = Modifier.height(PixiSpacing.sm))
             BoardPrimaryButton(
                 text = stringResource(R.string.board_f4_continue),
-                onClick = continueWithPhoto
+                onClick = continueWithPhoto,
+                modifier = Modifier.testTag(TestTags.TOOL_CONTINUE)
             )
             Text(
                 stringResource(R.string.board_f5_switch_intent),
@@ -458,9 +459,10 @@ private fun StylePick(
                 color = colors.textSecondary,
                 modifier = Modifier.padding(top = PixiSpacing.sm)
             )
-            TextButton(onClick = { onSwitchIntent("b5_choose") }) {
-                Text(stringResource(R.string.make_it_beautiful), color = colors.primary)
-            }
+            BoardOutlinedButton(
+                text = stringResource(R.string.make_it_beautiful),
+                onClick = { onSwitchIntent("b5_choose") }
+            )
         }
     }
 }
@@ -497,6 +499,7 @@ private fun Customize(onNext: () -> Unit, onBack: () -> Unit) {
         BoardFlowChrome(
             title = stringResource(R.string.board_c6_customize_title),
             onBack = onBack,
+            modifier = Modifier.testTag(TestTags.FLOW6_FUNNY),
             primaryLabel = stringResource(R.string.board_f6_next),
             onPrimary = {
                 BoardFlow6Session.topText = top
@@ -505,6 +508,7 @@ private fun Customize(onNext: () -> Unit, onBack: () -> Unit) {
                 BoardFlow6Session.captionScale = captionScale
                 onNext()
             },
+            primaryAiAccent = true,
             scrollable = false
         ) {
             BoardWideFrame(modifier = Modifier.weight(1f)) {
@@ -802,7 +806,8 @@ private fun FunnyResult(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(PixiSpacing.xl),
+                .padding(PixiSpacing.xl)
+                .testTag(TestTags.FLOW6_FUNNY),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(PixiSpacing.md)
         ) {

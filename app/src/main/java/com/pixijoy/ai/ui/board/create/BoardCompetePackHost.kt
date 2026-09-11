@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,11 +36,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pixijoy.ai.R
+import com.pixijoy.ai.testing.TestTags
+import com.pixijoy.ai.ui.board.BoardAddPhotoButton
+import com.pixijoy.ai.ui.board.BoardMediaSession
+import com.pixijoy.ai.ui.board.BoardUseSampleButton
 import com.pixijoy.ai.creative.CompetePack
 import com.pixijoy.ai.creative.CompetePackResult
 import com.pixijoy.ai.di.BoardAiEntryPoint
@@ -73,12 +80,64 @@ fun BoardCompetePackHost(
     when (screenId) {
         "b_pack_run" -> PackRunning(
             onDone = { onNavigate("b_pack_result") },
-            onFail = onBack
+            onFail = { onNavigate("b_pack") }
         )
-        else -> PackResult(
+        "b_pack_result" -> PackResult(
             onBack = onBack,
             onRetry = { onNavigate("b_pack_run") }
         )
+        else -> PackPhoto(
+            onContinue = { onNavigate("b_pack_run") },
+            onBack = onBack
+        )
+    }
+}
+
+@Composable
+private fun PackPhoto(onContinue: () -> Unit, onBack: () -> Unit) {
+    val colors = BoardTheme.colors
+    var hasPhoto by remember { mutableStateOf(BoardMediaSession.hasPhoto()) }
+    BoardMainShell(selected = BoardShellTab.Create, onTab = {}) {
+        BoardAdaptiveFrame {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(PixiSpacing.xl)
+                    .testTag(TestTags.FLOW_PACK_HOST),
+                verticalArrangement = Arrangement.spacedBy(PixiSpacing.md)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            painter = painterResource(R.drawable.pj_ic_back),
+                            contentDescription = stringResource(R.string.cd_back),
+                            tint = colors.textPrimary
+                        )
+                    }
+                    BoardTitleText(text = stringResource(R.string.compete_pack_title))
+                }
+                Text(
+                    stringResource(R.string.compete_pack_sub),
+                    color = colors.textSecondary,
+                    style = BoardType.body
+                )
+                if (!hasPhoto) {
+                    BoardUseSampleButton(
+                        sampleRes = BoardFlowArt.stickerHero,
+                        onReady = { hasPhoto = true }
+                    )
+                    BoardAddPhotoButton(onPicked = { hasPhoto = true })
+                }
+                BoardPrimaryButton(
+                    text = stringResource(R.string.board_f4_continue),
+                    onClick = onContinue,
+                    enabled = hasPhoto,
+                    aiAccent = true,
+                    modifier = Modifier.testTag(TestTags.TOOL_CONTINUE)
+                )
+            }
+        }
     }
 }
 
@@ -101,7 +160,8 @@ private fun PackRunning(onDone: () -> Unit, onFail: () -> Unit) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(PixiSpacing.xl),
+                    .padding(PixiSpacing.xl)
+                    .testTag(TestTags.FLOW_PACK_HOST),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -130,7 +190,8 @@ private fun PackResult(onBack: () -> Unit, onRetry: () -> Unit) {
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(PixiSpacing.xl),
+                    .padding(PixiSpacing.xl)
+                    .testTag(TestTags.FLOW_PACK_HOST),
                 verticalArrangement = Arrangement.spacedBy(PixiSpacing.md)
             ) {
                 BoardTitleText(text = stringResource(R.string.compete_pack_title))

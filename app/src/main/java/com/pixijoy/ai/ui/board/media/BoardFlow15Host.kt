@@ -669,10 +669,13 @@ private fun CropRotate(onDone: () -> Unit, onBack: () -> Unit) {
                 IconButton(onClick = onBack) {
                     Icon(painter = painterResource(R.drawable.pj_ic_back), contentDescription = stringResource(R.string.cd_back))
                 }
-                Spacer(modifier = Modifier.weight(1f))
-                TextButton(onClick = { applyCropAndDone() }) {
-                    Text(stringResource(R.string.flow15_save), color = colors.primary, fontWeight = FontWeight.Bold)
-                }
+                Text(
+                    stringResource(R.string.flow15_crop),
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = colors.textPrimary,
+                    modifier = Modifier.weight(1f)
+                )
             }
             Box(
                 modifier = Modifier
@@ -720,7 +723,7 @@ private fun CropRotate(onDone: () -> Unit, onBack: () -> Unit) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(PixiSpacing.lg),
+                    .padding(horizontal = PixiSpacing.sm, vertical = PixiSpacing.xs),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 Column(

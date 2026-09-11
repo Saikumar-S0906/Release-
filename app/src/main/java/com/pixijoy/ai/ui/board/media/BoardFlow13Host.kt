@@ -853,7 +853,8 @@ private fun CreatePack(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(PixiSpacing.xl),
+                .padding(PixiSpacing.xl)
+                .testTag(TestTags.FLOW13_PACK),
             verticalArrangement = Arrangement.spacedBy(PixiSpacing.md)
         ) {
             BoardScreenHeader(stringResource(R.string.board_f13_create_pack), onBack)
@@ -986,9 +987,10 @@ private fun CreatePack(
                     }
                 }
             )
-            TextButton(onClick = onRefine, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.board_f13_edit_sticker), color = colors.primary)
-            }
+            BoardOutlinedButton(
+                text = stringResource(R.string.board_f13_edit_sticker),
+                onClick = onRefine
+            )
             BoardTrustFooter()
         }
     }

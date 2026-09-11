@@ -96,10 +96,14 @@ fun AdaptiveContent(
     content: @Composable () -> Unit
 ) {
     Box(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.TopCenter
     ) {
-        Box(modifier = Modifier.widthIn(max = maxContentWidth)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .widthIn(max = maxContentWidth)
+        ) {
             content()
         }
     }

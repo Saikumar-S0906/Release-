@@ -392,7 +392,8 @@ private fun SelectPhotos(
                         BoardFlow16Session.clampSelection()
                         onNext()
                     }
-                }
+                },
+                modifier = Modifier.testTag(TestTags.TOOL_CONTINUE)
             )
         }
     }

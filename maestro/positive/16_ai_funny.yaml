@@ -4,7 +4,7 @@ tags:
   - ai
   - funny
 ---
-# Funny: sample → pick style → generate → result → back
+# Funny: sample → continue → generate → result → back (not processing loop)
 - runFlow: ../helpers/onboard_skip_to_home.yaml
 - runFlow: ../helpers/open_create_hub.yaml
 - runFlow: ../helpers/open_create_ai.yaml
@@ -17,6 +17,7 @@ tags:
       id: "flow6_funny"
     timeout: 25000
 - runFlow: ../helpers/use_sample.yaml
+- runFlow: ../helpers/tap_continue.yaml
 - runFlow:
     when:
       visible: "Continue"
@@ -38,7 +39,8 @@ tags:
 - extendedWaitUntil:
     visible:
       id: "flow6_funny"
-    timeout: 60000
+    timeout: 90000
+- assertVisible: "Your Meme is Ready!"
 - back
 - waitForAnimationToEnd
 - runFlow: ../helpers/back_to_create_hub.yaml

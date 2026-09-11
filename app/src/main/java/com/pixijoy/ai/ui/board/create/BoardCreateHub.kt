@@ -96,24 +96,9 @@ fun BoardCreateHub(
     var toolsSegment by rememberSaveable { mutableStateOf(true) }
     var canvasKey by rememberSaveable { mutableStateOf("editor") }
     val hubScroll = rememberScrollState()
-    val eraGate = rememberBoardPhotoGate(
-        onCameraDenied = { onNavigate("b3_camera_denied") }
-    ) {
-        onNavigate("b_diff_options")
-    }
     val canvasGate = rememberBoardPhotoGate(
         onCameraDenied = { onNavigate("b3_camera_denied") }
     ) { }
-    val packGate = rememberBoardPhotoGate(
-        onCameraDenied = { onNavigate("b3_camera_denied") }
-    ) {
-        onNavigate("b_pack_run")
-    }
-    val remixGate = rememberBoardPhotoGate(
-        onCameraDenied = { onNavigate("b3_camera_denied") }
-    ) {
-        onNavigate("b_c14")
-    }
     val selectedCanvasRes = when (canvasKey) {
         "funny" -> BoardFlowArt.funnyHero
         "sticker" -> BoardFlowArt.stickerHero
@@ -224,7 +209,8 @@ fun BoardCreateHub(
             subtitle = stringResource(R.string.compete_pack_sub),
             accent = colors.accentPink,
             imageRes = BoardFlowArt.stickerHero,
-            onClick = { pick("pack", packGate) }
+            onClick = { openBoard("pack", "b_pack") },
+            testTag = TestTags.CREATE_HUB_PACK
         ),
         CreateIntent(
             title = stringResource(R.string.make_it_beautiful),
@@ -268,50 +254,57 @@ fun BoardCreateHub(
             onClick = {
                 BoardFlowDifferentSession.eraIndex = 1
                 BoardFlowDifferentSession.styleIndex = 8
-                eraGate()
-            }
+                openBoard("different", "b_diff_choose")
+            },
+            testTag = TestTags.CREATE_HUB_TIME
         ),
         CreateIntent(
             title = stringResource(R.string.board_c06_title_short),
             subtitle = stringResource(R.string.create_hub_face_swap_desc),
             accent = colors.accentPink,
             imageRes = R.drawable.board_c06_faces,
-            onClick = { openBoard("faceswap", "b_c06") }
+            onClick = { openBoard("faceswap", "b_c06") },
+            testTag = TestTags.CREATE_HUB_FACESWAP
         ),
         CreateIntent(
             title = stringResource(R.string.create_extra_scene),
             subtitle = stringResource(R.string.create_hub_scene_desc),
             accent = colors.primary,
             imageRes = R.drawable.board_c07_scene,
-            onClick = { openBoard("scene", "b_c07") }
+            onClick = { openBoard("scene", "b_c07") },
+            testTag = TestTags.CREATE_HUB_SCENE
         ),
         CreateIntent(
             title = stringResource(R.string.create_extra_portrait),
             subtitle = stringResource(R.string.create_hub_portrait_desc),
             accent = colors.accentPink,
             imageRes = R.drawable.board_c09_portrait,
-            onClick = { openBoard("portrait", "b_c09") }
+            onClick = { openBoard("portrait", "b_c09") },
+            testTag = TestTags.CREATE_HUB_PORTRAIT
         ),
         CreateIntent(
             title = stringResource(R.string.create_extra_greeting),
             subtitle = stringResource(R.string.create_hub_greeting_desc),
             accent = colors.primary,
             imageRes = R.drawable.board_c12_card,
-            onClick = { openBoard("greeting", "b_c12") }
+            onClick = { openBoard("greeting", "b_c12") },
+            testTag = TestTags.CREATE_HUB_GREETING
         ),
         CreateIntent(
             title = stringResource(R.string.create_extra_remix),
             subtitle = stringResource(R.string.create_hub_remix_desc),
             accent = colors.primary,
             imageRes = R.drawable.board_c14_remix,
-            onClick = { pick("remix", remixGate) }
+            onClick = { openBoard("remix", "b_c14") },
+            testTag = TestTags.CREATE_HUB_REMIX
         ),
         CreateIntent(
             title = stringResource(R.string.create_extra_people),
             subtitle = stringResource(R.string.create_hub_people_desc),
             accent = colors.accentPurple,
             imageRes = R.drawable.board_c08_people,
-            onClick = { openBoard("people", "b_c08") }
+            onClick = { openBoard("people", "b_c08") },
+            testTag = TestTags.CREATE_HUB_PEOPLE
         )
     )
     val intentList: @Composable () -> Unit = {

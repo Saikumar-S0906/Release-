@@ -4,7 +4,7 @@ tags:
   - ai
   - different
 ---
-# Different: sample → style → back to hub
+# Different: sample → style continue → generate → result → back
 - runFlow: ../helpers/onboard_skip_to_home.yaml
 - runFlow: ../helpers/open_create_hub.yaml
 - runFlow: ../helpers/open_create_ai.yaml
@@ -19,8 +19,23 @@ tags:
 - runFlow: ../helpers/use_sample.yaml
 - extendedWaitUntil:
     visible:
-      id: "flow_diff_host|flow_different"
+      id: "tool_continue"
     timeout: 20000
+- tapOn:
+    id: "tool_continue"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "ai_generate"
+    timeout: 20000
+- tapOn:
+    id: "ai_generate"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow_diff_result"
+    timeout: 90000
+- assertVisible: "Style applied!"
 - back
 - waitForAnimationToEnd
 - runFlow: ../helpers/back_to_create_hub.yaml

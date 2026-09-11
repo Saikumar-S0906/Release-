@@ -103,7 +103,13 @@ fun BoardFlowChrome(
                     onClick = onPrimary,
                     enabled = primaryEnabled,
                     aiAccent = primaryAiAccent,
-                    modifier = Modifier.testTag(com.pixijoy.ai.testing.TestTags.TOOL_CONTINUE)
+                    modifier = Modifier.testTag(
+                        if (primaryAiAccent) {
+                            com.pixijoy.ai.testing.TestTags.AI_GENERATE
+                        } else {
+                            com.pixijoy.ai.testing.TestTags.TOOL_CONTINUE
+                        }
+                    )
                 )
                 if (onSecondary != null && secondaryLabel != null) {
                     BoardSecondaryButton(text = secondaryLabel, onClick = onSecondary)

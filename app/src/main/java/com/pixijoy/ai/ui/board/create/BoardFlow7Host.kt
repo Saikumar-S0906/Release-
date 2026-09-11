@@ -548,7 +548,8 @@ private fun YourRequest(onSubmit: () -> Unit, onBack: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(PixiSpacing.xl),
+                .padding(PixiSpacing.xl)
+                .testTag(TestTags.FLOW7_TELL),
             verticalArrangement = Arrangement.spacedBy(PixiSpacing.md)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -587,7 +588,9 @@ private fun YourRequest(onSubmit: () -> Unit, onBack: () -> Unit) {
                 onClick = {
                     BoardFlow7Session.prompt = text.trim().ifBlank { BoardFlow7Session.prompt }
                     onSubmit()
-                }
+                },
+                aiAccent = true,
+                modifier = Modifier.testTag(TestTags.AI_GENERATE)
             )
         }
     }
@@ -838,7 +841,8 @@ private fun ReviewResult(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(PixiSpacing.xl),
+                .padding(PixiSpacing.xl)
+                .testTag(TestTags.FLOW7_TELL),
             verticalArrangement = Arrangement.spacedBy(PixiSpacing.md)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {

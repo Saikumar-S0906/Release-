@@ -349,7 +349,6 @@ private fun DiffChooseStyle(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
                 .padding(PixiSpacing.xl)
                 .testTag(TestTags.FLOW_DIFF_HOST),
             verticalArrangement = Arrangement.spacedBy(PixiSpacing.md)
@@ -406,6 +405,12 @@ private fun DiffChooseStyle(
                     }
                 }
             }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(PixiSpacing.md)
+            ) {
             filtered.chunked(3).forEach { row ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -455,9 +460,13 @@ private fun DiffChooseStyle(
                     }
                 }
             }
+            }
             BoardCreditChip(credits = 2)
-            BoardPrimaryButton(text = stringResource(R.string.board_c00_continue), onClick = onContinue)
-            BoardTrustFooter()
+            BoardPrimaryButton(
+                text = stringResource(R.string.board_c00_continue),
+                onClick = onContinue,
+                modifier = Modifier.testTag(TestTags.TOOL_CONTINUE)
+            )
         }
     }
 }
@@ -488,7 +497,6 @@ private fun DiffCustomize(onGenerate: () -> Unit, onBack: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
                 .padding(PixiSpacing.xl)
                 .testTag(TestTags.FLOW_DIFF_HOST),
             verticalArrangement = Arrangement.spacedBy(PixiSpacing.md)
@@ -504,6 +512,12 @@ private fun DiffCustomize(onGenerate: () -> Unit, onBack: () -> Unit) {
                     color = colors.textPrimary
                 )
             }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(PixiSpacing.md)
+            ) {
             Image(
                 painter = painterResource(style.art),
                 contentDescription = null,
@@ -566,9 +580,14 @@ private fun DiffCustomize(onGenerate: () -> Unit, onBack: () -> Unit) {
                     }
                 }
             }
+            }
             BoardCreditChip(credits = 2)
-            BoardPrimaryButton(text = stringResource(R.string.board_f19_generate), onClick = onGenerate)
-            BoardTrustFooter()
+            BoardPrimaryButton(
+                text = stringResource(R.string.board_f19_generate),
+                onClick = onGenerate,
+                aiAccent = true,
+                modifier = Modifier.testTag(TestTags.AI_GENERATE)
+            )
         }
     }
 }
@@ -713,7 +732,7 @@ private fun DiffResult(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(PixiSpacing.xl)
-                .testTag(TestTags.FLOW_DIFF_HOST),
+                .testTag(TestTags.FLOW_DIFF_RESULT),
             verticalArrangement = Arrangement.spacedBy(PixiSpacing.md),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

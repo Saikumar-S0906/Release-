@@ -72,6 +72,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pixijoy.ai.R
@@ -707,7 +708,8 @@ private fun ResultCompare(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(PixiSpacing.xl),
+                .padding(PixiSpacing.xl)
+                .testTag(TestTags.FLOW5_BEAUTIFUL),
             verticalArrangement = Arrangement.spacedBy(PixiSpacing.md)
         ) {
             Row(
@@ -782,10 +784,10 @@ private fun ResultCompare(
                 }
             }
             }
-            BoardFlow5Session.sceneDescription?.takeIf { it.isNotBlank() }?.let { scene ->
-                Text(scene, style = BoardType.body, color = colors.textPrimary)
-            }
-            BoardFlow5Session.tipTop?.takeIf { it.isNotBlank() }?.let { tip ->
+            val scene = BoardFlow5Session.sceneDescription?.takeIf { it.isNotBlank() }
+            val tip = BoardFlow5Session.tipTop?.takeIf { it.isNotBlank() }
+            scene?.let { Text(it, style = BoardType.body, color = colors.textPrimary) }
+            if (tip != null && !tip.equals(scene, ignoreCase = true)) {
                 Text(tip, style = BoardType.secondary, color = colors.textSecondary)
             }
             BoardFlow5Session.lastUserMessage?.takeIf { it.isNotBlank() }?.let { msg ->
@@ -800,7 +802,7 @@ private fun ResultCompare(
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .width(72.dp)
+                            .width(96.dp)
                             .clickable { chip = i }
                     ) {
                         Box(
@@ -823,7 +825,10 @@ private fun ResultCompare(
                         Text(
                             stringResource(label),
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (on) colors.primary else colors.textSecondary
+                            color = if (on) colors.primary else colors.textSecondary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Clip,
+                            textAlign = TextAlign.Center
                         )
                     }
                 }

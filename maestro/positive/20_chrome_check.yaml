@@ -1,0 +1,67 @@
+appId: com.pixijoy.ai
+tags:
+  - positive
+  - chrome
+---
+# Portrait chrome: Home scroll cue, Editor crop, Expand crop, My Stuff grid.
+- launchApp:
+    appId: com.pixijoy.ai
+    clearState: false
+    permissions:
+      all: allow
+- runFlow: ../helpers/dismiss_ai_consent.yaml
+- runFlow: ../helpers/dismiss_anr.yaml
+- extendedWaitUntil:
+    visible:
+      id: "nav_home|nav_create"
+    timeout: 30000
+- tapOn:
+    id: "nav_home"
+- waitForAnimationToEnd
+- takeScreenshot: chrome_home
+- tapOn:
+    id: "nav_create"
+- waitForAnimationToEnd
+- runFlow: ../helpers/open_create_hub.yaml
+- tapOn:
+    id: "create_hub_editor"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow15_host"
+    timeout: 20000
+- runFlow: ../helpers/use_sample.yaml
+- extendedWaitUntil:
+    visible:
+      id: "flow15_workspace|flow15_crop"
+    timeout: 20000
+- tapOn:
+    id: "flow15_crop"
+- waitForAnimationToEnd
+- takeScreenshot: chrome_editor_crop
+- runFlow: ../helpers/back_to_create_hub.yaml
+- tapOn:
+    id: "create_hub_expand"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow_c10_host"
+    timeout: 20000
+- runFlow:
+    when:
+      visible: "AI Expand"
+    commands:
+      - tapOn: "AI Expand"
+      - waitForAnimationToEnd
+- runFlow: ../helpers/use_sample.yaml
+- waitForAnimationToEnd
+- takeScreenshot: chrome_expand_crop
+- tapOn:
+    id: "nav_my_stuff"
+- waitForAnimationToEnd
+- takeScreenshot: chrome_mystuff_portrait
+- tapOn:
+    id: "nav_home"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "nav_home"

@@ -260,6 +260,10 @@ private fun C06ChooseIntent(
                 color = colors.textSecondary,
                 style = MaterialTheme.typography.bodySmall
             )
+            com.pixijoy.ai.ui.board.BoardUseSampleButton(
+                sampleRes = R.drawable.board_c06_faces,
+                onReady = onStart
+            )
             BoardPrimaryButton(
                 text = stringResource(R.string.board_ct_get_started),
                 onClick = onStart

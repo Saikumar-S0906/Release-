@@ -353,6 +353,10 @@ private fun C09SelectPhoto(
                     }
                 }
             }
+            com.pixijoy.ai.ui.board.BoardUseSampleButton(
+                sampleRes = R.drawable.board_c09_portrait,
+                onReady = onPick
+            )
             BoardPrimaryButton(text = stringResource(R.string.board_c00_use_this_photo), onClick = onPick)
             BoardOutlinedButton(text = stringResource(R.string.board_c00_use_my_photo), onClick = onGallery)
             BoardTrustFooter()

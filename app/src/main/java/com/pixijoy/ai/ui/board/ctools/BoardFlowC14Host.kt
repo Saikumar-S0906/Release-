@@ -458,6 +458,10 @@ private fun C14AddPhoto(onPick: () -> Unit, onGallery: () -> Unit, onBack: () ->
                     }
                 }
             }
+            com.pixijoy.ai.ui.board.BoardUseSampleButton(
+                sampleRes = R.drawable.board_c14_remix,
+                onReady = onPick
+            )
             BoardPrimaryButton(text = stringResource(R.string.board_c00_use_this_photo), onClick = onPick)
             BoardOutlinedButton(text = stringResource(R.string.board_c00_use_my_photo), onClick = onGallery)
             BoardTrustFooter()

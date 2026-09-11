@@ -23,8 +23,10 @@ tags:
 - runFlow: ../helpers/use_sample.yaml
 - extendedWaitUntil:
     visible:
-      id: "flow13_host|sticker_screen"
+      id: "flow13_pack|flow13_host"
     timeout: 40000
+- assertVisible: "Add to WhatsApp"
+- assertVisible: "Save Pack"
 - runFlow: ../helpers/back_to_create_hub.yaml
 - runFlow: ../helpers/back_to_create_hub.yaml
 - assertVisible:

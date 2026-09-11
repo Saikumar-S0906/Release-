@@ -291,6 +291,10 @@ private fun C07Photo(onSample: () -> Unit, onGallery: () -> Unit, onBack: () -> 
                     .clip(RoundedCornerShape(radii.card)),
                 contentScale = ContentScale.Crop
             )
+            com.pixijoy.ai.ui.board.BoardUseSampleButton(
+                sampleRes = R.drawable.board_c07_scene,
+                onReady = onSample
+            )
             BoardOutlinedButton(text = stringResource(R.string.board_c00_use_my_photo), onClick = onGallery)
             BoardTrustFooter()
         }

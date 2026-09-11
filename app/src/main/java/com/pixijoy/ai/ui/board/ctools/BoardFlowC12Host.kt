@@ -420,6 +420,10 @@ private fun C12SelectPhoto(onPick: () -> Unit, onBack: () -> Unit) {
                     }
                 }
             }
+            com.pixijoy.ai.ui.board.BoardUseSampleButton(
+                sampleRes = R.drawable.board_c12_card,
+                onReady = onPick
+            )
             BoardPrimaryButton(text = stringResource(R.string.board_c00_use_this_photo), onClick = onPick)
             BoardTrustFooter()
         }

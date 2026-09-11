@@ -33,7 +33,8 @@ tags:
 - extendedWaitUntil:
     visible:
       id: "flow5_beautiful"
-    timeout: 60000
+    timeout: 90000
+- assertVisible: "Result"
 - back
 - waitForAnimationToEnd
 - runFlow: ../helpers/back_to_create_hub.yaml

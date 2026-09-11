@@ -4,7 +4,7 @@ tags:
   - ai
   - tell
 ---
-# Tell PixiJoy: open sheet, back to hub (no infinite generate)
+# Tell PixiJoy: suggestion → generate → result → back (not processing loop)
 - runFlow: ../helpers/onboard_skip_to_home.yaml
 - runFlow: ../helpers/open_create_hub.yaml
 - runFlow: ../helpers/open_create_ai.yaml
@@ -21,6 +21,25 @@ tags:
     visible:
       id: "flow7_tell"
     timeout: 25000
+- tapOn: "Make a birthday meme"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "ai_generate|flow7_tell"
+    timeout: 20000
+- runFlow:
+    when:
+      visible:
+        id: "ai_generate"
+    commands:
+      - tapOn:
+          id: "ai_generate"
+      - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow7_tell"
+    timeout: 90000
+- assertVisible: "Here's Your Result!"
 - back
 - waitForAnimationToEnd
 - runFlow: ../helpers/back_to_create_hub.yaml

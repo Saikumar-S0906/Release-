@@ -1,0 +1,134 @@
+appId: com.pixijoy.ai
+tags:
+  - positive
+  - ai
+  - more
+---
+# Remaining AI tiles: open + sample when present + Back. No hub photo pickers.
+- runFlow: ../helpers/onboard_skip_to_home.yaml
+- runFlow: ../helpers/open_create_hub.yaml
+- runFlow: ../helpers/open_create_ai.yaml
+
+- scrollUntilVisible:
+    element:
+      id: "create_hub_pack"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "create_hub_pack"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow_pack_host"
+    timeout: 20000
+- runFlow: ../helpers/use_sample.yaml
+- runFlow: ../helpers/back_to_create_hub.yaml
+- runFlow: ../helpers/open_create_ai.yaml
+
+- scrollUntilVisible:
+    element:
+      id: "create_hub_time"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "create_hub_time"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow_diff_host|flow_different"
+    timeout: 20000
+- runFlow: ../helpers/use_sample.yaml
+- runFlow: ../helpers/back_to_create_hub.yaml
+- runFlow: ../helpers/open_create_ai.yaml
+
+- scrollUntilVisible:
+    element:
+      id: "create_hub_faceswap"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "create_hub_faceswap"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow_c06_host"
+    timeout: 20000
+- runFlow: ../helpers/use_sample.yaml
+- runFlow: ../helpers/back_to_create_hub.yaml
+- runFlow: ../helpers/open_create_ai.yaml
+
+- scrollUntilVisible:
+    element:
+      id: "create_hub_scene"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "create_hub_scene"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow_c07_host"
+    timeout: 20000
+- runFlow: ../helpers/back_to_create_hub.yaml
+- runFlow: ../helpers/open_create_ai.yaml
+
+- scrollUntilVisible:
+    element:
+      id: "create_hub_portrait"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "create_hub_portrait"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow_c09_host"
+    timeout: 20000
+- runFlow: ../helpers/back_to_create_hub.yaml
+- runFlow: ../helpers/open_create_ai.yaml
+
+- scrollUntilVisible:
+    element:
+      id: "create_hub_greeting"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "create_hub_greeting"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow_c12_host"
+    timeout: 20000
+- runFlow: ../helpers/back_to_create_hub.yaml
+- runFlow: ../helpers/open_create_ai.yaml
+
+- scrollUntilVisible:
+    element:
+      id: "create_hub_remix"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "create_hub_remix"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow_c14_host"
+    timeout: 20000
+- runFlow: ../helpers/back_to_create_hub.yaml
+- runFlow: ../helpers/open_create_ai.yaml
+
+- scrollUntilVisible:
+    element:
+      id: "create_hub_people"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "create_hub_people"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow_c08_host"
+    timeout: 20000
+- runFlow: ../helpers/back_to_create_hub.yaml
+- assertVisible:
+    id: "nav_create"

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -367,9 +368,6 @@ private fun BoardHomeDefault(
     BoardMainShell(selected = BoardShellTab.Home, onTab = onTab) {
         BoardAdaptiveFrame {
             val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-            val canScrollForward by androidx.compose.runtime.remember {
-                androidx.compose.runtime.derivedStateOf { listState.canScrollForward }
-            }
             Box(modifier = Modifier.fillMaxSize()) {
                 LazyColumn(
                     state = listState,
@@ -480,12 +478,33 @@ private fun BoardHomeDefault(
                         .padding(horizontal = PixiSpacing.xl, vertical = PixiSpacing.lg),
                     verticalArrangement = Arrangement.spacedBy(PixiSpacing.sm)
                 ) {
-                    HomeIntentQuad(
-                        onBeautiful = onBeautiful,
-                        onFunny = onFunny,
-                        onDifferent = onDifferent,
-                        onMove = onMove
-                    )
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        HomeIntentQuad(
+                            onBeautiful = onBeautiful,
+                            onFunny = onFunny,
+                            onDifferent = onDifferent,
+                            onMove = onMove
+                        )
+                        Text(
+                            text = stringResource(R.string.board_scroll_for_more),
+                            style = BoardType.caption,
+                            color = colors.textSecondary,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                                .background(
+                                    Brush.verticalGradient(
+                                        listOf(
+                                            androidx.compose.ui.graphics.Color.Transparent,
+                                            colors.background.copy(alpha = 0.92f)
+                                        )
+                                    )
+                                )
+                                .padding(top = PixiSpacing.md, bottom = PixiSpacing.xs)
+                                .testTag("home_scroll_cue")
+                        )
+                    }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -553,9 +572,14 @@ private fun BoardHomeDefault(
                 BoardTrustFooter(modifier = Modifier.padding(PixiSpacing.md))
             }
                 }
-                BoardScrollCue(
-                    canScrollForward = canScrollForward,
-                    modifier = Modifier.align(Alignment.BottomCenter)
+                Text(
+                    text = stringResource(R.string.board_scroll_for_more),
+                    style = BoardType.caption,
+                    color = colors.textSecondary,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = PixiSpacing.sm)
+                        .testTag("home_scroll_cue")
                 )
                 BoardLazyScrollBar(
                     listState = listState,

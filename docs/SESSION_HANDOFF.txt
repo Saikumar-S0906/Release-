@@ -1,248 +1,131 @@
-PixiJoy — session handoff (paste this tomorrow to continue)
-============================================================
-Date of this write-up: 2026-09-11
-Product: PixiJoy (photo → stickers, beauty, memes, motion, WhatsApp)
+PixiJoy — NEXT SESSION HANDOFF (paste this to continue)
+=======================================================
+Date: 2026-09-11
 Code: C:\Users\andro\PixiJoy\PixiJoy
-Previous location (do not use): C:\Users\andro\AndroidStudioProjects\MyApplication
+Do not use: C:\Users\andro\AndroidStudioProjects\MyApplication
 GitHub: git@github.com:Saikumar-S0906/PixiJoy.git
 Package: com.pixijoy.ai
+Gradle JVM: C:/Users/andro/.jdks/jbr-17.0.14
+Maestro: C:\Users\andro\tools\maestro\bin\maestro.bat
+Emulator last used: emulator-5554 (Pixel 6 Pro)
+adb: setprop debug.pixijoy.e2e 1
+
 Do NOT ask the user to review each slice. Agent reviews, codes, runs, iterates.
-
-How to continue tomorrow
-------------------------
-Paste this whole file (or the “CONTINUE PROMPT” at the bottom) as the next
-message. Do not re-do finished Tools Maestro that already passed unless a
-regression is found. Pick up REMAINING first.
+Do not re-run Tools Maestro that already passed unless a regression is found.
 
 
 ------------------------------------------------------------------------------
-1. PRODUCT RULES (do not regress)
+PRODUCT RULES (do not regress)
 ------------------------------------------------------------------------------
-
-- UX over bible-as-grid. Photo-first. Tools vs AI mental model. No fake content.
-- Tools = on-device studio. AI = looks / Tell / cloud-when-available.
-- Remix is AI/social, not a Tools tile.
-- Export is not on the Create hub. Export with no photo = Take photo / Gallery,
-  never a Good Vibes / template image.
-- Camera / Gallery / Use sample appear AFTER the user picks a tool, not on the
-  Tools hub itself.
-- Dual back: in-tab stack pops; onNavigate to an id already on the stack pops
-  to it (no duplicate push). Result Back must NEVER go to a processing screen
-  that auto-calls onDone (infinite loop).
-- Do not print or commit secrets. Gemini key lives only in gitignored
-  local.properties.
+- Photo-first. Tools vs AI. No fake catalog content.
+- Tools = edit photo on-device. AI = generate a look.
+- Camera / Gallery / Use sample AFTER the user picks a tool, never on the
+  Tools hub.
+- Export is not a Create tile. Empty Export = Take photo / Gallery, never a
+  Good Vibes / template image.
+- Result Back must never return to a processing screen that auto-calls onDone.
+- Gemini key only in gitignored local.properties. Never echo or commit it.
 
 
 ------------------------------------------------------------------------------
-2. DONE THIS SESSION (and earlier UI pass that this session continued)
+WHAT IS REMAINING (do these first)
 ------------------------------------------------------------------------------
 
-A. Create hub IA
-- Tools tiles: Editor, Restore, Expand | Remove BG, Stickers | Move, Talking |
-  Collage. Groups Fix / Cutout / Motion / Compose.
-- AI tiles: pack, Beautiful, Funny, Different | Tell, Time machine, and more.
-- Removed from Tools hub: Take Photo, Gallery, Continue last-tool (Editor).
-- Stickers tile now opens b13_photo (in-tool photo + Use sample), not a hub
-  photo dialog.
-- BoardFadeIn must stay a Box (Column collapsed full-screen hosts to black).
-  Create hub wraps its own children in a Column inside FadeIn.
+P0 — still open
+1. Home “Scroll for more”
+   Still not visible in screenshots or Maestro 21 (id: home_scroll_cue).
+   Tell + recents sit below the 4 Home tiles. Overlay was added on the
+   intent quad in BoardFlow2Host.kt and AdaptiveContent inner Box is now
+   fillMaxSize — the caption still did not paint on Pixel 6 Pro.
+   Landscape Home is worse: only the hero fits; tiles are below the fold
+   with no cue.
+   Fix until Maestro 21 sees “Scroll for more” or id home_scroll_cue, and
+   a screenshot shows it above the nav.
 
-B. Photo-first Export
-- OpenExport empty state: “Add a photo…” + Choose a photo. No baAfter /
-  Good Vibes fallback.
-- BoardMediaSession.revision is Compose state so a pick recomposes Export.
+2. Live Gemini smoke (manual, not Maestro)
+   Maestro onboard taps “Use On-Device Only”, so 15–18 do NOT prove cloud.
+   Accept cloud AI → Beautiful + Funny generate → look for “Powered by
+   Gemini” or logcat AiOrchestrator/Gemini. Do not echo the key.
+   Key is already in local.properties (GEMINI_MODEL=gemini-2.5-flash,
+   BOARD_LIVE_GENERATE=true). User pasted it in chat earlier; rotate in
+   AI Studio if that chat is shared.
 
-C. Explore / landscape / tablet
-- Explore All: 2-wide, 6 categories, “See all categories” real button.
-- Phone landscape: max 2 columns (short height clamp), AdaptiveFrame does not
-  cap to 480dp on a rotated phone.
-- rememberBoardTwoPane() = Expanded width AND height >= 520 (real tablet).
-- My Stuff Browse two-pane uses rememberBoardTwoPane, not width==Expanded.
-  That was the “Open this version” landscape bug.
-- Home LazyColumn now gets a bounded height so “Scroll for more” can show.
+3. Finger pinch/stretch on Editor Crop and Expand crop
+   UI looks large enough (docs/ui_qa/chrome_editor_crop.png) but nobody
+   actually pinched on the emulator.
 
-D. Crop (user-reported: not enough space to pinch/stretch)
-- BoardCropCanvas: pinch to zoom, drag inside to pan, 4 corner handles to
-  stretch. Min window 0.10 (was 0.22).
-- Editor CropRotate: canvas fills remaining column (not a small centered
-  aspect box + huge padding).
-- Expand (C10) crop uses the same BoardCropCanvas, not a fake static frame.
+P1 — next after P0
+- Pack: 19 only opened photo + Use sample + Back. Run generate (six looks)
+  if cheap.
+- Remaining TextButtons on production result/community screens.
+- Confirm Beautiful chips Original / Vivid no longer truncate after 96.dp.
+- Community tablet two-pane (Pixel_Tablet AVD often did not attach).
 
-E. Infinite Back loops fixed
-- Result Back no longer navigates to *_processing for: Talking (C11), C07,
-  C08, C09, Remix (C14), Beautiful (b5_adjust), Funny (b6_customize).
-- Different / Tell already skipped processing on Back.
-
-F. Gemini (configured, gitignored)
-- File: local.properties (in .gitignore)
-- GEMINI_API_KEY=<user’s free-tier key — already in that file, do not echo>
-- GEMINI_MODEL=gemini-2.5-flash
-- BOARD_LIVE_GENERATE=true
-- Live path: Beautiful/Funny/Tell use Gemini for analysis/captions when
-  online AND user accepts CLOUD AI (not “On-device only”).
-- Pixel work (enhance, cutout, crop, stickers, motion) stays on-device.
-- Free-tier quota can 429 → app falls back, should not crash.
-- Maestro onboard helper taps “Use On-Device Only”, so Maestro runs do NOT
-  prove live Gemini. Manual: accept cloud consent, then AI → Beautiful →
-  Use sample → Continue → Generate. Look for “Powered by Gemini”.
-- User pasted the key in chat; recommend rotating it in AI Studio.
-
-G. Use sample (for Maestro, no gallery picker)
-- BoardUseSampleButton, testTag tool_use_sample
-- Wired on: Editor, Remove BG photo, Restore first thumb, Stickers, Expand,
-  Beautiful, Funny, Different.
-- Landing continue: testTag tool_continue
-- Generate CTA: testTag ai_generate
-
-
-------------------------------------------------------------------------------
-3. MAESTRO — what exists and what actually passed
-------------------------------------------------------------------------------
-
-CLI: C:\Users\andro\tools\maestro\bin\maestro.bat
-Device used: emulator-5554 (Pixel 4 XL)
-setprop debug.pixijoy.e2e 1 before runs.
-
-PASSED on device
-- negative/04_tools_hides_ai.yaml
-- negative/05_tools_back_each.yaml     (all 8 Tools tiles open + Back)
-- negative/06_ai_back_each.yaml        (Beautiful, Funny, Different, Tell)
-- positive/07_tools_editor.yaml        (crop, adjust, filters, text, heal)
-- positive/08_tools_restore.yaml
-- positive/09_tools_expand.yaml
-- positive/10_tools_cutout_erase.yaml  (erase apply)
-- positive/12_tools_move.yaml
-- positive/13_tools_talking.yaml
-- positive/14_tools_collage.yaml
-
-FAILED (product actually worked; test assertion was wrong)
-- positive/11_tools_stickers.yaml
-  After Use sample, cutout ran and showed “Create Sticker Pack” + Add to
-  WhatsApp + Save Pack. Assert wanted flow13_host which is only on the
-  photo step. Pack screen is untagged.
-  Also: “Edit Sticker” on that pack screen is still clickable text.
-
-WRITTEN, NOT RUN (or not proving live Gemini)
-- positive/15_ai_beautiful.yaml  (full generate)
-- positive/16_ai_funny.yaml
-- positive/17_ai_different.yaml
-- positive/18_ai_tell.yaml
-- edge/04_tools_double_back.yaml
-- Older: positive/01, 02, 03, 04, 05, 06 and other negative/edge/monkey
-  — 03/04 helpers updated (create_hub_photo removed from Tools hub).
-
-Helpers added/updated
-- helpers/use_sample.yaml
-- helpers/tap_continue.yaml
-- helpers/onboard_skip_to_home.yaml  (taps “Continue as Guest” by text + id)
-- helpers/open_create_hub.yaml       (waits for create_hub_editor, not photo)
-
-
-------------------------------------------------------------------------------
-4. REMAINING (do these next)
-------------------------------------------------------------------------------
-
-P0 — finish proven gaps
-1. Stickers Maestro: assert pack UI (Add to WhatsApp / Save Pack) after sample;
-   add flow13_host (or a pack tag) on CreatePack. Change “Edit Sticker”
-   TextButton → BoardOutlinedButton.
-2. Run positive/15–18 with cloud consent if proving Gemini; or keep on-device
-   and only assert generate + result + Back.
-3. Finger-test Editor Crop and Expand crop on emulator: pinch, corner drag,
-   pan. If still cramped, drop rotate/flip chrome or padding further.
-4. Re-verify My Stuff rotate (must stay a grid on phone landscape, not the
-   “Open this version” pane). Home: confirm “Scroll for more” when content
-   overflows.
-5. Live Gemini smoke (manual, not Maestro’s on-device consent):
-   Accept cloud AI → Beautiful + Funny generate → “Powered by Gemini” or
-   logcat AiOrchestrator/Gemini. If 404, try GEMINI_MODEL in local.properties.
-
-P1 — AI function Maestro (same pattern as Tools 07/10)
-- Beautiful: sample → continue → generate → result → Back to adjust (not
-  processing).
-- Funny: same.
-- Different: sample → style → generate → result.
-- Tell: prompt → generate → result.
-- Pack (one photo six looks), Time machine, face swap, scene, portrait,
-  greeting, people, remix — open + sample + Back at minimum; generate where
-  cheap.
-- Fix remaining TextButtons on production result/community screens if any
-  (stickers pack is confirmed).
-
-P2 — polish found along the way
-- Collage: tool_continue was SKIPPED (Next not tagged on that screen). Tag
-  the collage Next as tool_continue if you want Maestro to leave select.
-- Talking generate is slow (GIF); keep 60s waits.
-- Community tablet two-pane was skipped earlier.
-- Layers UI still out of scope from the original audit.
+P2 — later
+- Talking GIF is slow; keep 60s Maestro waits.
+- Layers UI out of scope.
 
 Do not
-- Re-architect to Clean Architecture (app is layered ui/data/ml/creative,
-  not CA).
-- Put Gemini key in source or git.
-- Put Take Photo/Gallery back on the Tools hub.
+- Re-architect to Clean Architecture.
+- Put Take Photo / Gallery back on the Tools hub.
+- Commit local.properties or the Gemini key.
 
 
 ------------------------------------------------------------------------------
-5. KEY FILES
+ALREADY DONE — do not redo unless regression
 ------------------------------------------------------------------------------
 
+Tools Maestro PASSED: NEG-04, NEG-05 (8 Tools tiles + Back), POS-07 editor
+(crop/adjust/filters/text/heal), 08 restore, 09 expand, 10 cutout+erase,
+11 stickers (pack tag + Edit Sticker button), 12 move, 13 talking, 14 collage.
+
+AI Maestro PASSED (on-device):
+- 15 Beautiful generate + Result + Back
+- 16 Funny generate + “Your Meme is Ready!” + Back
+- 17 Different generate + “Style applied!” + Back
+  (Continue/Generate pinned above the fold; FLOW_DIFF_RESULT tag)
+- 18 Tell suggestion → generate + “Here's Your Result!” + Back
+- 19 remaining AI tiles open + sample + Back: pack, time machine, face swap,
+  scene, portrait, greeting, remix, people
+
+Product
+- Tools hub has no Take Photo / Gallery / Continue Editor.
+- Pack / Time machine / Remix open in-tool photo, not a hub picker.
+- Editor Crop: pinch hint, corner handles, Apply; header Save text-button gone.
+- My Stuff phone landscape = 2-up grid, not “Open this version” detail pane
+  (docs/ui_qa/mystuff_landscape.png).
+- Infinite Back loops into processing were already fixed earlier.
+
+
+------------------------------------------------------------------------------
+KEY FILES
+------------------------------------------------------------------------------
+Home cue:       app/.../board/home/BoardFlow2Host.kt
+Adaptive:       app/.../ui/components/AdaptiveLayout.kt
 Create hub:     app/.../board/create/BoardCreateHub.kt
-Crop:           app/.../board/components/BoardCropCanvas.kt
-                app/.../board/media/BoardFlow15Host.kt  (CropRotate)
-                app/.../board/ctools/BoardFlowC10Host.kt (C10Crop)
-Export:         app/.../board/media/BoardFlow17Host.kt
-Explore/Home:   app/.../board/home/BoardFlow2Host.kt
-My Stuff:       app/.../board/library/BoardFlow18Host.kt
-Two-pane:       app/.../board/components/BoardAdaptive.kt
-                rememberBoardTwoPane()
-Photo/sample:   app/.../board/BoardPhotoGate.kt
-                BoardMediaSession.revision is Compose state
-Flags:          app/.../board/BoardFeatureFlags.kt
-Gemini:         local.properties (gitignored)
-                app/.../core/ai/CloudAiService.kt
-                app/.../board/BoardSoftGenerate.kt
-Gradle JVM:     org.gradle.java.home → JBR 17
-                C:\Users\andro\.jdks\jbr-17.0.14
+Pack:           app/.../board/create/BoardCompetePackHost.kt
+Funny/Tell/Diff: BoardFlow6Host.kt / BoardFlow7Host.kt / BoardFlowDifferentHost.kt
+Crop:           app/.../board/media/BoardFlow15Host.kt
+Tags:           app/.../testing/TestTags.kt
+Maestro:        maestro/positive/16–21 yaml
+Handoff:        docs/SESSION_HANDOFF.txt
 
 
 ------------------------------------------------------------------------------
-6. TEST TAGS (Maestro id:)
-------------------------------------------------------------------------------
-
-Hub: create_hub_segment_tools / _ai
-Tools: create_hub_editor restore expand remove_bg sticker move talking collage
-Sample/continue: tool_use_sample  tool_continue  ai_generate
-Editor: flow15_host workspace crop adjust filters text more heal apply save
-Cutout: flow_c04_host  flow_c04_erase  flow_c04_apply
-Others: flow_c05_host  flow_c10_host  flow_c11_host  flow13_host  flow14_host
-        flow16_host  flow5_beautiful  flow6_funny  flow7_tell
-        flow_diff_host
-Nav: nav_home nav_create nav_discover nav_community nav_my_stuff
-
-
-------------------------------------------------------------------------------
-7. CONTINUE PROMPT (copy from here if you only paste a short kickoff)
+CONTINUE PROMPT (short kickoff — paste this)
 ------------------------------------------------------------------------------
 
 Continue PixiJoy at C:\Users\andro\PixiJoy\PixiJoy.
-Read docs/SESSION_HANDOFF.txt first. Do not ask me to review. You review,
-code, run, iterate.
+Read docs/SESSION_HANDOFF.txt. Do not ask me to review. You review, code, run, iterate.
 
-P0 now:
-1) Fix stickers: tag the pack screen; Maestro 11 should assert WhatsApp/Save
-   Pack after Use sample; make Edit Sticker a real button.
-2) Finger-check crop pinch/corners on Editor and Expand; fix if still cramped.
-3) Run Maestro 15–18 AI generate (or fix consent helper if we need live
-   Gemini). Do not echo the Gemini key. It is already in local.properties.
-4) Re-check My Stuff rotate and Home scroll cue.
-5) Then Maestro for remaining AI tiles (pack, time machine, face swap, etc.)
-   and any truncation / clickable-text / overlap / Back-loop you find.
+Remaining P0:
+1) Home “Scroll for more” is still missing on screenshots and Maestro 21.
+   Make it visible on portrait Home (and landscape if tiles are below the fold).
+2) Optional: live Gemini smoke (accept cloud, Beautiful + Funny). Do not echo the key.
+3) Finger-check Editor Crop pinch/corners if you have the emulator.
 
-Emulator: adb devices (Pixel 4 XL was emulator-5554). Tablet AVD Pixel_Tablet
-exists but often did not attach; wm size override was used once for two-pane.
+Do not re-run Tools Maestro 07–14 or AI 15–19 unless you change those flows.
+Tools vs AI, photo-first, no fake content. No photo pickers on the Tools hub.
+Gradle: .\gradlew.bat :app:installDebug
 Maestro: C:\Users\andro\tools\maestro\bin\maestro.bat
-Gradle: .\gradlew.bat :app:installDebug with JBR 17.
-
-Tools vs AI mental model, photo-first, no fake content. Do not put photo
-pickers back on the Tools hub.
+Emulator: emulator-5554 (Pixel 6 Pro).
