@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">بقي %s من استخدام الذكاء الاصطناعي اليوم</item>
+        <item quantity="other">%s من استخدامات الذكاء الاصطناعي متبقية اليوم</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">غادر تصدير %s HD اليوم</item>
+        <item quantity="other">غادرت صادرات %s HD اليوم</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">متبقي اليوم %d إعلان بمكافأة</item>
+        <item quantity="other">%d rewarded ads left today</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">Sticker pack saved! %d sticker ready for WhatsApp</item>
+        <item quantity="other">Sticker pack saved! %d stickers ready for WhatsApp</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">تم حفظ %d ملصق لتطبيق WhatsApp!</item>
+        <item quantity="other">تم حفظ %d من الملصقات لتطبيق WhatsApp!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">يوم واحد متتالي</item>
+        <item quantity="other">يوم واحد متتالي</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">Viral Pack saved! %d images ready to share 🚀</item>
+    </plurals>
+</resources>

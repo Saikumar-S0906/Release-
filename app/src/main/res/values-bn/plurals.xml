@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">%s AI ব্যবহার আজ বাকি</item>
+        <item quantity="other">%s AI uses left today</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">%s HD রপ্তানি আজ বাকি</item>
+        <item quantity="other">%s HD রপ্তানি আজ বাকি</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">%dটি পুরস্কৃত বিজ্ঞাপন আজ বাকি</item>
+        <item quantity="other">%dটি পুরস্কৃত বিজ্ঞাপন আজ বাকি</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">স্টিকার প্যাক সংরক্ষিত! WhatsApp-এর জন্য %d স্টিকার প্রস্তুত</item>
+        <item quantity="other">স্টিকার প্যাক সংরক্ষিত! WhatsApp-এর জন্য %d স্টিকার প্রস্তুত৷</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">Saved %d sticker for WhatsApp!</item>
+        <item quantity="other">WhatsApp-এর জন্য %dটি স্টিকার সংরক্ষিত!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">%d দিনের ধারা</item>
+        <item quantity="other">%d দিনের ধারা</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">ভাইরাল প্যাক সংরক্ষিত! %dটি ছবি শেয়ার করার জন্য প্রস্তুত 🚀</item>
+    </plurals>
+</resources>

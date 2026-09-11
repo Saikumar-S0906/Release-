@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">%s AI-gebruik resteert vandaag</item>
+        <item quantity="other">%s AI-gebruik resteert vandaag</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">%s HD-export is vandaag vertrokken</item>
+        <item quantity="other">%s HD-exports zijn vandaag nog over</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">%d beloonde advertentie links vandaag</item>
+        <item quantity="other">%d beloonde advertenties overgebleven vandaag</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">Stickerpakket opgeslagen! %d sticker klaar voor WhatsApp</item>
+        <item quantity="other">Stickerpakket opgeslagen! %d stickers klaar voor WhatsApp</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">%d sticker voor WhatsApp opgeslagen!</item>
+        <item quantity="other">%d stickers voor WhatsApp opgeslagen!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">%d dagreeks</item>
+        <item quantity="other">%d dagreeks</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">Viraal pakket opgeslagen! %d afbeeldingen klaar om te delen 🚀</item>
+    </plurals>
+</resources>

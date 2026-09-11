@@ -1,0 +1,19 @@
+appId: com.pixijoy.ai
+---
+# System Back from a tool; re-enter Create if the hub chips are gone.
+- back
+- waitForAnimationToEnd
+- runFlow: ensure_in_app.yaml
+- runFlow:
+    when:
+      notVisible:
+        id: "create_hub_segment_tools"
+    commands:
+      - tapOn:
+          id: "nav_create"
+      - waitForAnimationToEnd
+      - runFlow: dismiss_anr.yaml
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_segment_tools|create_hub_segment_ai"
+    timeout: 20000

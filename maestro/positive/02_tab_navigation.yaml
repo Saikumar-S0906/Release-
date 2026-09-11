@@ -1,0 +1,34 @@
+appId: com.pixijoy.ai
+tags:
+  - positive
+  - navigation
+---
+# POS-02 Visit every chrome tab. Create defaults to Tools, not AI.
+- runFlow: ../helpers/onboard_skip_to_home.yaml
+- tapOn:
+    id: "nav_discover"
+- waitForAnimationToEnd
+- assertVisible: "Explore"
+- runFlow: ../helpers/open_create_hub.yaml
+- assertVisible:
+    id: "create_hub_photo"
+- assertVisible:
+    text: "On this device"
+- assertNotVisible:
+    id: "create_hub_beautiful"
+- assertNotVisible:
+    id: "create_hub_meme"
+- tapOn:
+    id: "nav_community"
+- waitForAnimationToEnd
+- assertVisible: "Community"
+- tapOn:
+    id: "nav_my_stuff"
+- waitForAnimationToEnd
+- assertVisible:
+    text: "My Stuff|Creations"
+- tapOn:
+    id: "nav_home"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "nav_home"

@@ -1,0 +1,41 @@
+---
+description: PixiJoy navigation and flow contract. Apply when editing routes, tabs, compose navigation, create entry points, or deep links.
+globs: ["**/*Nav*", "**/*Route*", "**/*Navigation*", "**/ui/**", "**/feature/**"]
+alwaysApply: true
+---
+
+# PixiJoy navigation contract
+
+You are implementing PixiJoy, not redesigning it.
+
+## Do
+
+- Keep root tabs exactly (chrome labels): Home, Explore, Create, Community, My Stuff.
+- Route ids may still say Discover / Profile (`tab_discover`, `b2_discover`, `b18_browse`). Do not rename the bar to match those ids.
+- Put Creations under My Stuff (and Home recents). Never add a sixth root tab.
+- Create tab root is `b_create_hub` with **Tools** (default) | **AI**. Local tools do not use AI credit chips.
+- Every Home / Explore / Funny / Editor tile that names a tool must have a live route from `docs/flows.json`.
+- Result footer is always Save, Share, Edit, Export, Remake, Publish.
+- Overlays (credits, Pro lock, guest wall, safety, offline, recovery) return to the same control.
+- Guest can create locally. Account required for publish, follow, sync, buy.
+- Kids: no public Community, no people search.
+- Compact: bottom bar + sheets. Expanded ≥840dp: rail + canvas + inspector.
+- Fold: same draft id cover ↔ inner. Do not restart generate on hinge.
+- Notification / widget / share-in opens the exact screen.
+
+## Do not
+
+- Replay onboarding for returning users.
+- Show fake recents on empty home (use C00).
+- Hide Create in overflow.
+- Debit credits on failed generate without refund/retry token.
+- Flip faces in RTL.
+- Treat Flow 1 tab labels as source of truth when they conflict with Flow 12.
+- Put Beautiful / Funny as the Create tab default (they live on the AI segment).
+- Clone CapCut NLE, Lightroom catalog, or Canva print as Create tiles.
+
+## Lookup
+
+- Human map: `docs/NAVIGATION.md`
+- Machine map: `docs/flows.json`
+- Board contract: title + numbered steps on illustrated specs 01–30 + C00/C04–C14.

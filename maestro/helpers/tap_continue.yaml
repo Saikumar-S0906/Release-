@@ -1,0 +1,11 @@
+appId: com.pixijoy.ai
+---
+# Continue / Get started / Start on a tool landing.
+- runFlow:
+    when:
+      visible:
+        id: "tool_continue"
+    commands:
+      - tapOn:
+          id: "tool_continue"
+      - waitForAnimationToEnd

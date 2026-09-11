@@ -1,0 +1,54 @@
+appId: com.pixijoy.ai
+tags:
+  - monkey
+  - stability
+---
+# MON-01 Chaos tabs + Create Tools/AI + light swipe — stay in app
+- runFlow: ../helpers/onboard_skip_to_home.yaml
+- repeat:
+    times: 4
+    commands:
+      - tapOn:
+          id: "nav_discover"
+          optional: true
+      - swipe:
+          direction: UP
+      - tapOn:
+          id: "nav_create"
+          optional: true
+      - tapOn:
+          id: "create_hub_segment_ai"
+          optional: true
+      - tapOn:
+          id: "create_hub_segment_tools"
+          optional: true
+      - swipe:
+          direction: DOWN
+      - tapOn:
+          id: "nav_community"
+          optional: true
+      - tapOn:
+          id: "nav_my_stuff"
+          optional: true
+      - tapOn:
+          id: "nav_home"
+          optional: true
+      - waitForAnimationToEnd:
+          optional: true
+- runFlow: ../helpers/ensure_in_app.yaml
+- runFlow: ../helpers/open_create_hub.yaml
+- runFlow: ../helpers/open_create_ai.yaml
+- runFlow:
+    when:
+      visible:
+        id: "create_hub_meme"
+    commands:
+      - tapOn:
+          id: "create_hub_meme"
+      - waitForAnimationToEnd
+      - back
+- runFlow: ../helpers/ensure_in_app.yaml
+- tapOn:
+    id: "nav_home"
+- assertVisible:
+    id: "nav_home"

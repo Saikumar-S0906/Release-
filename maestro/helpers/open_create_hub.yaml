@@ -1,0 +1,18 @@
+appId: com.pixijoy.ai
+---
+# Open Create tab on Tools (default).
+- tapOn:
+    id: "nav_create"
+- waitForAnimationToEnd
+- runFlow: dismiss_anr.yaml
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_segment_tools"
+    timeout: 25000
+- tapOn:
+    id: "create_hub_segment_tools"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_editor"
+    timeout: 15000

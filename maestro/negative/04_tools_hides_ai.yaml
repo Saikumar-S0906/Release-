@@ -1,0 +1,24 @@
+appId: com.pixijoy.ai
+tags:
+  - negative
+  - create
+  - ia
+---
+# NEG-04 Tools default must not show AI Beautiful/Funny tiles
+- runFlow: ../helpers/onboard_skip_to_home.yaml
+- runFlow: ../helpers/open_create_hub.yaml
+- assertVisible:
+    id: "create_hub_editor"
+- assertNotVisible:
+    id: "create_hub_beautiful"
+- assertNotVisible:
+    id: "create_hub_meme"
+- assertNotVisible:
+    id: "create_hub_different"
+- runFlow: ../helpers/open_create_ai.yaml
+- assertVisible:
+    id: "create_hub_beautiful"
+- assertVisible:
+    id: "create_hub_meme"
+- assertNotVisible:
+    id: "create_hub_editor"

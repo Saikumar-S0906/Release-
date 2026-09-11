@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">今天剩 %s AI 使用量</item>
+        <item quantity="other">今天還剩下 %s 個 AI 使用量</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">今天還剩 %s 高清匯出</item>
+        <item quantity="other">今天還剩下 %s 個高清匯出</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">%d rewarded ad left today</item>
+        <item quantity="other">今天還剩下 %d 個激勵廣告</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">Sticker pack saved! %d sticker ready for WhatsApp</item>
+        <item quantity="other">貼紙包已儲存！ %d 張貼紙已準備好用於 WhatsApp</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">已為 WhatsApp 儲存 %d 個貼圖！</item>
+        <item quantity="other">已為 WhatsApp 儲存 %d 個貼圖！</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">%d 天連續</item>
+        <item quantity="other">%d 天連續</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">病毒包已儲存！ %d 張圖片可供分享 🚀</item>
+    </plurals>
+</resources>

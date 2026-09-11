@@ -1,0 +1,32 @@
+appId: com.pixijoy.ai
+tags:
+  - positive
+  - cold-start
+---
+# POS-01 Cold start: privacy → skip onboard → 5-tab shell
+- runFlow: ../helpers/onboard_skip_to_home.yaml
+- assertVisible:
+    id: "nav_home"
+- assertVisible:
+    id: "nav_discover"
+- assertVisible:
+    id: "nav_create"
+- assertVisible:
+    id: "nav_community"
+- assertVisible:
+    id: "nav_my_stuff"
+- runFlow:
+    when:
+      visible:
+        id: "c00_open_studio"
+    commands:
+      - tapOn:
+          id: "c00_open_studio"
+      - waitForAnimationToEnd
+      - extendedWaitUntil:
+          visible:
+            id: "create_hub_segment_tools"
+          timeout: 20000
+      - tapOn:
+          id: "nav_home"
+      - waitForAnimationToEnd

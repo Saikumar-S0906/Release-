@@ -1,0 +1,16 @@
+appId: com.pixijoy.ai
+tags:
+  - edge
+  - navigation
+---
+# EDGE-02 Double-tap Home stays on Home
+- runFlow: ../helpers/onboard_skip_to_home.yaml
+- tapOn:
+    id: "nav_home"
+- tapOn:
+    id: "nav_home"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "nav_home"
+- assertVisible:
+    id: "nav_create"

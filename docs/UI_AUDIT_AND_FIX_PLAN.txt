@@ -1,0 +1,350 @@
+PixiJoy — UI audit and fix plan
+================================
+Date: 2026-09-11
+Status: AUDIT ONLY — no implementation in this document.
+Goal: UI that looks great and feels easy. Brand (color, icons) stays. Bible is not a grid law.
+Product: PixiJoy (photo → stickers, beauty, memes, motion, WhatsApp).
+Code: C:\Users\andro\AndroidStudioProjects\MyApplication
+
+This file is the single source for the next UI pass. It captures (1) reviewer
+inputs, (2) what the code actually does, (3) tasks with descriptions, (4) order.
+
+
+------------------------------------------------------------------------------
+1. REVIEWER INPUTS (what you said)
+------------------------------------------------------------------------------
+
+Create tab
+- Under Tools, UI is congested.
+- Export / Share is in the wrong place and behaves wrong.
+- Remix from Community is AI/social, not a "tool" — why is it under Tools?
+- Tapping Export / Share should ask: upload photo or take photo.
+- Instead it shows a Good Vibes / template image. That is incorrect.
+- Create can hold more options, but the current dump is the wrong shape.
+- Under AI it is too congested.
+
+Explore tab
+- Also feels congested.
+
+Principles
+- Bible was taken too seriously (pills, 16px, 2–4 columns, trust footers).
+- Ultimate goal is user experience, not bible compliance.
+- Phone rotation looks ugly.
+- UI must work on tablets.
+- Some options are still clickable text, not real buttons.
+- Do a deep audit. Do not fix in the same pass. Produce a task list.
+
+Earlier product context (still true)
+- Tabs, Explore catalog, and main navigation were wired.
+- Competitive pack exists: Create → "One photo, six looks".
+- AdvancedEditEngine / Tell / variations / avatars were later wired into
+  existing screens.
+- Material icons were replaced with pj_ic_* vectors (~56 KB).
+- Studio Gradle JDK must stay jbr-17 (not JBR 25) for Gradle 8.11.1.
+
+
+------------------------------------------------------------------------------
+2. WHAT THE CODE IS DOING TODAY (audit findings)
+------------------------------------------------------------------------------
+
+2.1 Create → Tools is a wall of tiles
+    File: app/src/main/java/com/pixijoy/ai/ui/board/create/BoardCreateHub.kt
+    Four stacked groups, 2 columns on phone (3 on landscape-width, 4 on tablet):
+
+      Fix (3):     Editor, Restore, Expand
+      Cutout (5):  Remove BG, Stickers, People, Face swap, Scene
+      Motion (4):  Make it Move, Talking photo, Slideshow, Video/GIF
+      Compose (6): One photo six looks, Collage, Greeting, Portrait,
+                   Remix from community, Export / Share
+
+    Tile aspect is a constant CreateHubTileAspect = 1.15f.
+    On a phone that is 18 tiles. That is why Tools feels stuffed.
+
+2.2 Wrong shelf for several tiles
+    - Remix (b_c14) is community/AI remix, listed under Tools → Compose.
+    - "One photo, six looks" is the AI pack, listed under Tools → Compose.
+    - Face swap, Scene, People are closer to AI than "tools".
+    - Export / Share is a finish action, not a create tool.
+
+2.3 Export / Share skips photo and shows stock art
+    - Create: pick("export", pipeline.openExport) → navigate("b17_open")
+      with NO photo gate (unlike Stickers, which uses stickerGate).
+    - BoardFlow17Session.hero() = BoardFlowArt.baAfter
+      (beautify "after" image — reads as Good Vibes / template).
+    - User never gets Take photo / Gallery / Files first.
+
+2.4 Create → AI is congested and duplicated
+    - Full-width primary button: Make it Beautiful
+    - Then tiles: Beautiful (again), Funny, Different
+    - Then five era chips (80s / 90s / 2000s / Film / Now) that jump into
+      Make it Different
+    - Then Tell PixiJoy as a 96dp image banner, not a normal tile
+    Beautiful is both a giant CTA and a tile. Eras + Different + Tell compete.
+
+2.5 Create hub header
+    When not embedded, Back AND Close both call onBack. Two exits, same action.
+
+2.6 Explore is a catalog dump
+    File: BoardDiscoverMain in BoardFlow2Host.kt
+    One scroll: title, search, chips (All / Templates / Styles / Stickers),
+    featured hero, 9 popular categories (3-wide on phone), trust footer.
+    3 category tiles per row is tight. Featured + all categories on All chip
+    is a second page of content.
+
+2.7 Landscape is "add a column", not a layout
+    boardGridColumns: compact=2, medium=3, expanded=4.
+    Landscape phone width often hits Medium → 3 columns of 1.15 tiles in a
+    short viewport = postage stamps. No landscape-specific Create/Explore.
+
+2.8 Tablet is a poster, not two-pane work
+    Create uses BoardListDetail when width >= 840dp.
+    Right pane is a STOCK canvas image (selectedCanvasRes), not the live tool
+    and not the user's photo.
+    Explore / Community stay single-column phone layouts stretched wide.
+    MainScaffold has a nav rail on expanded width; inner screens do not use it
+    as a real work surface.
+
+2.9 Clickable text still used as actions
+    TextButton / Text+clickable examples:
+      Explore "See all" (SectionHeader)
+      Home "Explore" TextButton
+      Different: Another style, Variations
+      Tell: Regenerate, input method
+      Community: People, Guidelines, Remix
+      Editor tool chips as Text+clickable
+    Primary/secondary should be BoardPrimaryButton / BoardOutlinedButton
+    with 48dp min height. Text is for copy, not jobs.
+
+2.10 Density from bible-as-law
+    52dp CTAs, 16px body, PixiSpacing.xl on every screen, trust footer on
+    many screens, 4 columns because "expanded". Brand color/icons are fine.
+    The grid math is what makes it feel cheap and busy.
+
+2.11 What is already in good shape (do not undo)
+    - Bottom tabs: Home, Explore, Create, Community, My Stuff
+    - Explore chips/categories mostly match labels
+    - Photo gate exists and is used for Stickers (pattern to copy)
+    - Pixi icon set (pj_ic_*) — keep using it
+    - Brand gradient #6C4DFF → #FF5AA5
+    - Competitive pack implementation exists; it is just filed in the wrong
+      Create group and the hub is too crowded to find it
+
+
+------------------------------------------------------------------------------
+3. PRINCIPLES FOR THE FIX (so we do not re-bible the UI)
+------------------------------------------------------------------------------
+
+P1. One job per screen. Hub = pick a job. Tool = do the job. Result = save/share.
+P2. Photo-first. If the job needs a photo, ask before showing a result canvas.
+P3. Tools vs AI is about the user's mental model, not the file name of the host.
+      Tools  = I edit this photo (crop, restore, stickers, remove BG).
+      AI     = I generate a look (beauty, funny, different, tell, pack, remix).
+      Share  = I leave with a file (export) — not a Create tile.
+P4. Phone portrait: 2 columns max for tiles. Phone landscape: 2-pane or 2
+    columns with a minimum tile height (~140dp), never 3-up postage stamps.
+P5. Tablet: list | preview (or list | grid). Not a stretched phone.
+P6. Actions are buttons. Sentences are not buttons.
+P7. Brand yes (color, icons, voice). Layout numbers from the bible are optional.
+P8. Empty and error states use the user's photo or an honest empty — never a
+    meme template pretending to be their work.
+
+
+------------------------------------------------------------------------------
+4. TASKS (what to build, in order)
+------------------------------------------------------------------------------
+
+TASK 1 — Rebuild Create information architecture
+Owner: Create hub
+Files: BoardCreateHub.kt, strings for group titles
+Problem: 18 Tools tiles; AI vs Tools does not match user language.
+Work:
+  Tools tab (~6–8 tiles):
+    Editor, Restore, Expand, Remove BG, Stickers, Collage
+    (optional: People as "edit people" if it stays a photo edit)
+  AI tab:
+    One photo six looks (hero or first tile)
+    Beautiful, Funny, Different
+    Tell PixiJoy (normal tile, not a thin banner)
+    Face swap, Scene, Portrait, Greeting (cards)
+    Remix from community
+  Not on Create hub:
+    Export / Share (see Task 2 and Task 9)
+    Duplicate Beautiful full-width button
+    Five era chips on the hub (see Task 3)
+Done when: a new user can explain Tools vs AI in one sentence, and Tools
+fits on a phone without feeling like a settings dump.
+
+TASK 2 — Photo-first for every job that needs a photo
+Owner: Create entries + Export
+Files: BoardCreateHub.kt, BoardPhotoGate.kt, BoardFlow17Host.kt,
+       BoardFlow17Session.hero(), Greeting/Portrait/Remix/Expand/People/Scene
+       hosts, compete pack entry
+Problem: Export skips camera/gallery and shows baAfter / Good Vibes art.
+Work:
+  Reuse the Stickers photo sheet: Take photo / Gallery / Files.
+  Export: photo gate → then b17 with THE USER bitmap. If no photo, empty
+  state "Add a photo to export" — never BoardFlowArt.baAfter as "your" image.
+  Same rule for Greeting, Portrait, Remix, Expand, Scene, People, pack.
+Done when: tapping Export never shows a template as the working image.
+
+TASK 3 — Un-crowd Create → AI
+Owner: AI segment of BoardCreateHub
+Problem: Beautiful twice, eras + Different + Tell all on one scroll.
+Work:
+  One primary: Beautiful OR "One photo, six looks" (pick one hero).
+  Secondary row: Funny, Different.
+  Eras: one tile "Time machine" that opens Different with era preselected.
+        Remove the five chips from the hub.
+  Tell: standard tile, same size as Funny/Different.
+  Remix: here, not Tools.
+Done when: AI is one screen (or one short scroll) on phone portrait.
+
+TASK 4 — Un-crowd Create → Tools
+Owner: Tools groups
+Problem: Motion + Compose is a wall; pack and export should not live here.
+Work:
+  Motion: surface Move + Talking only. Slideshow and GIF open from inside Move.
+  Compose: Collage only on Tools (or Cards: Collage + Greeting if greeting
+  stays a layout tool). Pack and Remix and Export leave this group.
+Done when: Tools is scannable in about three seconds.
+
+TASK 5 — Explore: one job per screen
+Owner: BoardDiscoverMain (BoardFlow2Host.kt)
+Problem: Search + chips + featured + 9 categories = spreadsheet.
+Work:
+  Default All: search, chips, one featured hero, 4–6 categories at 2-wide.
+  "See all categories" → full category grid (not 3-wide labels on the home).
+  Chips still switch Templates / Styles / Stickers catalogs.
+Done when: Explore does not feel like a catalog admin page.
+
+TASK 6 — Landscape is a layout
+Owner: Create hub, Explore, editor, results, compete pack
+Problem: Width class only bumps column count. Landscape phone = ugly 3-up.
+Work:
+  Phone landscape: 2 columns with min tile height ~140dp, OR list | preview.
+  Do not use expanded=4 columns on a phone on its side.
+  Keep primary Save/Share visible (not below the fold off-screen).
+  Test Create, Explore, Beautiful result, Export, pack result in landscape.
+Done when: rotating those screens looks designed, not squashed.
+
+TASK 7 — Tablet: real two-pane
+Owner: BoardListDetail usage, Explore, Community, MainScaffold
+Problem: Tablet Create right pane is a stock poster. Explore is a wide phone.
+Work:
+  Create 10": tool list | last photo or empty drop-zone (not selectedCanvasRes
+  stock art).
+  Explore 10": categories | content grid.
+  Community 10": feed | post.
+  Nav rail can stay; inner content must use the extra width for work, not
+  more tiny tiles.
+Done when: a 10" tablet does not look like a stretched phone.
+
+TASK 8 — Replace clickable text with real controls
+Owner: production surfaces (Create, Explore, Home, results, Tell, Different)
+Problem: Jobs are TextButton / Text+clickable.
+Work:
+  Primary job: BoardPrimaryButton
+  Secondary: BoardOutlinedButton
+  Tertiary: icon + label, 48dp min height
+  Sweep: See all, Explore text button, Another style, Variations, Regenerate,
+  editor tool labels, Community People/Guidelines/Remix if they are actions.
+  Leave text-only for legal, captions, body.
+Done when: you cannot tap a sentence to perform a create/result job.
+
+TASK 9 — Result and Export chrome
+Owner: Beautiful result, Export flow 17, compete pack result
+Problem: Mix of text links, chips, and stock fallbacks.
+Work:
+  Sticky bottom: Save, Share (two buttons).
+  Before/after stays where we already wired it.
+  Export platforms only after a user bitmap exists.
+  Compete pack: keep WhatsApp pack CTA as a real button (already is).
+Done when: every result has two obvious buttons, not a row of text links.
+
+TASK 10 — Create hub header
+Owner: BoardCreateHub title row
+Problem: Back and Close both call onBack when the hub is not the tab.
+Work:
+  Tab Create: no back/close (bottom nav leaves).
+  Hub opened from elsewhere: one Back, no duplicate Close.
+Done when: one obvious way out.
+
+TASK 11 — Density for feeling, not bible numbers
+Owner: BoardCreateHub, BoardDiscoverMain, theme usage on hubs
+Problem: xl padding + 52dp CTAs + trust footer + 4 columns = busy.
+Work:
+  Keep brand color and pj_ic_* icons.
+  More air between hub tiles; captions on tiles 12–13sp.
+  Trust footer: Home and legal only, not every Create/Explore screen.
+  Do not add a fourth tile column because width class is Expanded.
+Done when: Create and Explore look expensive, not like a settings list.
+
+TASK 12 — Visual QA matrix (gate before calling UI done)
+Do on device, not only preview:
+
+  Phone portrait
+    Create Tools, Create AI, Explore, Export (must not show template),
+    Beautiful result, One photo six looks result
+
+  Phone landscape
+    Same screens — no clipped CTAs, no 3-up postage stamps
+
+  Tablet ~10"
+    Two-pane Create and Explore
+
+  Font scale 1.3
+    Tile titles do not overflow
+
+  TalkBack
+    Every tile has a name; no action that is only a text sentence
+
+
+------------------------------------------------------------------------------
+5. SUGGESTED BUILD ORDER
+------------------------------------------------------------------------------
+
+  Slice A (your explicit bugs):  Task 1 + Task 2 + Task 10
+      File Remix/Export/Pack correctly; photo-first Export; one hub exit.
+
+  Slice B (congestion):          Task 3 + Task 4 + Task 5
+      AI hub, Tools hub, Explore default.
+
+  Slice C (devices):             Task 6 + Task 7
+      Landscape + tablet.
+
+  Slice D (controls + polish):   Task 8 + Task 9 + Task 11
+      Buttons, result chrome, density.
+
+  Slice E (proof):               Task 12
+      QA matrix on phone, rotate, tablet.
+
+Do not start C or D until A is on a device. Export/Good Vibes and Remix-in-Tools
+are the issues you can see today; they are Slice A.
+
+
+------------------------------------------------------------------------------
+6. OUT OF SCOPE FOR THIS UI PASS (do not mix in)
+------------------------------------------------------------------------------
+
+- New competitive features beyond laying out the pack tile correctly
+- Live cloud generate / real social backend
+- Gradle / JDK (already pinned to jbr-17)
+- Rewriting inner editor math (AdvancedEditEngine already on Adjust save)
+- Adding more Create tiles before the hub is un-crowded
+
+
+------------------------------------------------------------------------------
+7. SUCCESS BAR
+------------------------------------------------------------------------------
+
+A reviewer can:
+  1. Open Create → Tools and find Editor / Stickers / Remove BG in one glance.
+  2. Open Create → AI and tap Beautiful or the six-look pack without scrolling
+     past a wall of chips.
+  3. Tap Export and get Take photo / Gallery, then see THEIR photo.
+  4. Not find Remix under Tools.
+  5. Rotate the phone on Create and Explore and still tap a tile comfortably.
+  6. On a tablet, see list | preview, not a poster of stock art.
+  7. Save / Share as real buttons on results.
+
+When those seven are true, the UI pass is done — bible or not.

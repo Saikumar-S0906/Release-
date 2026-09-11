@@ -1,0 +1,29 @@
+appId: com.pixijoy.ai
+tags:
+  - positive
+  - tools
+  - motion
+---
+# Make it Move: input chooser visible, back does not loop
+- runFlow: ../helpers/onboard_skip_to_home.yaml
+- runFlow: ../helpers/open_create_hub.yaml
+- scrollUntilVisible:
+    element:
+      id: "create_hub_move"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "create_hub_move"
+- waitForAnimationToEnd
+- runFlow: ../helpers/dismiss_anr.yaml
+- extendedWaitUntil:
+    visible:
+      id: "flow14_host"
+    timeout: 25000
+- back
+- waitForAnimationToEnd
+- runFlow: ../helpers/back_to_create_hub.yaml
+- assertVisible:
+    id: "create_hub_segment_tools"
+- assertNotVisible:
+    id: "flow14_host"

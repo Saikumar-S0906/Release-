@@ -1,0 +1,29 @@
+appId: com.pixijoy.ai
+tags:
+  - edge
+  - back
+---
+# EDGE-03 Tools Editor back, then AI Funny back — stay in-app on Create
+- runFlow: ../helpers/onboard_skip_to_home.yaml
+- runFlow: ../helpers/open_create_hub.yaml
+- tapOn:
+    id: "create_hub_editor"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow15_host"
+    timeout: 25000
+- runFlow: ../helpers/back_to_create_hub.yaml
+- runFlow: ../helpers/open_create_ai.yaml
+- tapOn:
+    id: "create_hub_meme"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow6_funny"
+    timeout: 25000
+- runFlow: ../helpers/back_to_create_hub.yaml
+- assertVisible:
+    id: "nav_create"
+- assertVisible:
+    id: "create_hub_segment_tools"

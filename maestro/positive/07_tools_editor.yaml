@@ -1,0 +1,115 @@
+appId: com.pixijoy.ai
+tags:
+  - positive
+  - tools
+  - editor
+---
+# Editor: sample photo → workspace → crop / adjust / filters / text / retouch (heal brush)
+- runFlow: ../helpers/onboard_skip_to_home.yaml
+- runFlow: ../helpers/open_create_hub.yaml
+- tapOn:
+    id: "create_hub_editor"
+- waitForAnimationToEnd
+- runFlow: ../helpers/dismiss_anr.yaml
+- extendedWaitUntil:
+    visible:
+      id: "flow15_host"
+    timeout: 25000
+- runFlow: ../helpers/use_sample.yaml
+- extendedWaitUntil:
+    visible:
+      id: "flow15_workspace"
+    timeout: 25000
+
+- tapOn:
+    id: "flow15_crop"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow15_apply"
+    timeout: 15000
+- tapOn:
+    id: "flow15_apply"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow15_workspace"
+    timeout: 20000
+
+- tapOn:
+    id: "flow15_adjust"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "flow15_save"
+    commands:
+      - tapOn:
+          id: "flow15_save"
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "flow15_apply"
+    commands:
+      - tapOn:
+          id: "flow15_apply"
+      - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow15_workspace"
+    timeout: 25000
+
+- tapOn:
+    id: "flow15_filters"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      id: "flow15_apply"
+    direction: DOWN
+    timeout: 12000
+- tapOn:
+    id: "flow15_apply"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow15_workspace"
+    timeout: 25000
+
+- tapOn:
+    id: "flow15_text"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      id: "flow15_apply"
+    direction: DOWN
+    timeout: 12000
+- tapOn:
+    id: "flow15_apply"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow15_workspace"
+    timeout: 25000
+
+- tapOn:
+    id: "flow15_more"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "flow15_heal"
+    commands:
+      - tapOn:
+          id: "flow15_heal"
+      - waitForAnimationToEnd
+      - extendedWaitUntil:
+          visible:
+            id: "flow15_heal"
+          timeout: 15000
+      - back
+      - waitForAnimationToEnd
+
+- runFlow: ../helpers/back_to_create_hub.yaml
+- assertVisible:
+    id: "nav_create"

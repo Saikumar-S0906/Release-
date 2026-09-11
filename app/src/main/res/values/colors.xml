@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Flow 1 splash: near-black with brand glow (not legacy purple tile). -->
+    <color name="splash_background">#0B0618</color>
+    <color name="brand_pink">#FF5AA5</color>
+    <color name="brand_orange">#FFB52E</color>
+
+    <color name="pixijoy_background">#0B0B10</color>
+    <color name="pixijoy_surface">#15151C</color>
+    <color name="pixijoy_surface_2">#20202A</color>
+    <color name="pixijoy_background_light">#FAFAFC</color>
+    <color name="pixijoy_surface_light">#FFFFFF</color>
+    <color name="pixijoy_text">#FFFFFF</color>
+    <color name="pixijoy_text_secondary">#B7B7C7</color>
+    <color name="pixijoy_text_on_light">#11111A</color>
+    <color name="pixijoy_text_secondary_on_light">#646477</color>
+    <color name="pixijoy_border">#30303A</color>
+    <color name="pixijoy_accent_start">#6C4DFF</color>
+    <color name="pixijoy_accent_end">#FF5AA5</color>
+    <color name="pixijoy_success">#25B878</color>
+    <color name="pixijoy_error">#E94D63</color>
+    <color name="pixijoy_warning">#F4B740</color>
+</resources>

@@ -1,0 +1,38 @@
+appId: com.pixijoy.ai
+tags:
+  - edge
+  - navigation
+---
+# EDGE-01 Rapid tab switching + Tools/AI toggle must not crash
+- runFlow: ../helpers/onboard_skip_to_home.yaml
+- repeat:
+    times: 6
+    commands:
+      - runFlow: ../helpers/dismiss_anr.yaml
+      - tapOn:
+          id: "nav_discover"
+          optional: true
+      - tapOn:
+          id: "nav_create"
+          optional: true
+      - tapOn:
+          id: "create_hub_segment_ai"
+          optional: true
+      - tapOn:
+          id: "create_hub_segment_tools"
+          optional: true
+      - tapOn:
+          id: "nav_community"
+          optional: true
+      - tapOn:
+          id: "nav_my_stuff"
+          optional: true
+      - tapOn:
+          id: "nav_home"
+          optional: true
+- runFlow: ../helpers/ensure_in_app.yaml
+- waitForAnimationToEnd
+- assertVisible:
+    id: "nav_home"
+- assertVisible:
+    id: "nav_create"

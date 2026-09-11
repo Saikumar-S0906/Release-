@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">เหลือการใช้ AI %s ในวันนี้</item>
+        <item quantity="other">เหลือการใช้ AI %s ในวันนี้</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">%s HD export left today</item>
+        <item quantity="other">%s HD exports left today</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">เหลือโฆษณาที่มีการให้รางวัลอีก %d รายการในวันนี้</item>
+        <item quantity="other">วันนี้เหลือโฆษณาที่มีการให้รางวัลอีก %d รายการ</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">บันทึกชุดสติ๊กเกอร์แล้ว! %d สติกเกอร์พร้อมสำหรับ WhatsApp</item>
+        <item quantity="other">บันทึกชุดสติ๊กเกอร์แล้ว! %d สติกเกอร์พร้อมสำหรับ WhatsApp</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">บันทึก %d สติ๊กเกอร์สำหรับ WhatsApp แล้ว!</item>
+        <item quantity="other">บันทึก %d สติกเกอร์สำหรับ WhatsApp แล้ว!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">%d วันติดต่อกัน</item>
+        <item quantity="other">%d day streak</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">Viral Pack saved! %d images ready to share 🚀</item>
+    </plurals>
+</resources>

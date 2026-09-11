@@ -1,0 +1,139 @@
+appId: com.pixijoy.ai
+---
+# Fresh install → privacy Accept → skip onboarding → Home.
+- launchApp:
+    appId: com.pixijoy.ai
+    clearState: true
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: "privacy_accept"
+    timeout: 60000
+- tapOn:
+    id: "privacy_accept"
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- extendedWaitUntil:
+    visible:
+      text: "Skip|Continue|Next"
+    timeout: 60000
+
+- runFlow:
+    when:
+      visible:
+        id: "flow1_returning"
+    commands:
+      - tapOn: "Continue"
+      - waitForAnimationToEnd:
+          timeout: 5000
+
+- runFlow:
+    when:
+      visible:
+        id: "onboarding_skip"
+    commands:
+      - tapOn:
+          id: "onboarding_skip"
+      - waitForAnimationToEnd:
+          timeout: 5000
+      - extendedWaitUntil:
+          visible:
+            id: "flow1_skip"
+          timeout: 30000
+      - tapOn: "Skip"
+      - waitForAnimationToEnd:
+          timeout: 5000
+
+- extendedWaitUntil:
+    visible:
+      id: "flow1_permissions|flow1_signup|onboarding_continue_guest|flow1_ready|nav_home"
+    timeout: 45000
+
+- runFlow:
+    when:
+      visible:
+        id: "flow1_permissions"
+    commands:
+      - tapOn: "Allow Photos"
+      - waitForAnimationToEnd:
+          timeout: 5000
+
+- runFlow:
+    when:
+      visible: "While using the app"
+    commands:
+      - tapOn: "While using the app"
+- runFlow:
+    when:
+      visible: "Allow"
+    commands:
+      - tapOn: "Allow"
+
+- extendedWaitUntil:
+    visible:
+      id: "flow1_signup|onboarding_continue_guest|flow1_ready|nav_home"
+    timeout: 45000
+
+- runFlow:
+    when:
+      visible:
+        id: "onboarding_continue_guest"
+    commands:
+      - tapOn:
+          id: "onboarding_continue_guest"
+      - waitForAnimationToEnd:
+          timeout: 5000
+
+- runFlow:
+    when:
+      visible: "Continue as Guest"
+    commands:
+      - tapOn: "Continue as Guest"
+      - waitForAnimationToEnd:
+          timeout: 5000
+
+- runFlow:
+    when:
+      visible:
+        id: "flow1_signup"
+    commands:
+      - tapOn: "Continue as Guest"
+      - waitForAnimationToEnd:
+          timeout: 5000
+
+# Ready screen — tap by visible label (more reliable than id-only gate)
+- runFlow:
+    when:
+      visible: "Enter Home"
+    commands:
+      - tapOn: "Enter Home"
+      - waitForAnimationToEnd:
+          timeout: 5000
+
+- runFlow: dismiss_ai_consent.yaml
+- runFlow: dismiss_anr.yaml
+
+# If still not on shell, try Enter Home once more then consent/ANR again
+- runFlow:
+    when:
+      notVisible:
+        id: "nav_home"
+    commands:
+      - runFlow:
+          when:
+            visible: "Enter Home"
+          commands:
+            - tapOn: "Enter Home"
+            - waitForAnimationToEnd
+      - runFlow: dismiss_ai_consent.yaml
+      - runFlow: dismiss_anr.yaml
+
+- runFlow: dismiss_anr.yaml
+- extendedWaitUntil:
+    visible:
+      id: "nav_home"
+    timeout: 60000
+- assertVisible:
+    id: "nav_create"

@@ -1,0 +1,24 @@
+appId: com.pixijoy.ai
+---
+# If a prior back pressed out of the app, bring it back without wiping prefs.
+- runFlow: dismiss_anr.yaml
+- runFlow:
+    when:
+      notVisible:
+        id: "nav_home"
+    commands:
+      - launchApp:
+          appId: com.pixijoy.ai
+          clearState: false
+          stopApp: false
+      - extendedWaitUntil:
+          visible:
+            id: "nav_home|privacy_accept|onboarding_skip|flow1_ready"
+          timeout: 30000
+      - runFlow: dismiss_anr.yaml
+      - runFlow:
+          when:
+            visible:
+              id: "privacy_accept"
+          commands:
+            - runFlow: onboard_skip_to_home.yaml

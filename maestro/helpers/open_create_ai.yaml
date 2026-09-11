@@ -1,0 +1,11 @@
+appId: com.pixijoy.ai
+---
+# Switch Create hub to AI segment.
+- tapOn:
+    id: "create_hub_segment_ai"
+- waitForAnimationToEnd
+- runFlow: dismiss_anr.yaml
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_beautiful"
+    timeout: 15000

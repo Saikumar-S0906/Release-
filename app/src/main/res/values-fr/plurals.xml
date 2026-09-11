@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">%s utilisation de l\'IA restante aujourd\'hui</item>
+        <item quantity="other">%s utilisations de l\'IA restantes aujourd\'hui</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">%s exportation HD terminée aujourd\'hui</item>
+        <item quantity="other">%s exportations HD restantes aujourd\'hui</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">%d annonce avec récompense restante aujourd\'hui</item>
+        <item quantity="other">%d annonces avec récompense restantes aujourd\'hui</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">Pack d\'autocollants enregistré ! %d autocollant prêt pour WhatsApp</item>
+        <item quantity="other">Pack d\'autocollants enregistré ! %d autocollants prêts pour WhatsApp</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">%d autocollant enregistré pour WhatsApp !</item>
+        <item quantity="other">%d autocollants enregistrés pour WhatsApp !</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">%d jours consécutifs</item>
+        <item quantity="other">%d jours consécutifs</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">Pack viral enregistré ! %d images prêtes à être partagées 🚀</item>
+    </plurals>
+</resources>

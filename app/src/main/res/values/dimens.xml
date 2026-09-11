@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="touch_target_min">48dp</dimen>
+    <dimen name="content_padding">20dp</dimen>
+    <dimen name="content_max_width">840dp</dimen>
+    <dimen name="hero_height">180dp</dimen>
+    <dimen name="tool_tile_height">100dp</dimen>
+    <dimen name="bottom_nav_height">80dp</dimen>
+
+    <dimen name="pj_spacing_4">4dp</dimen>
+    <dimen name="pj_spacing_8">8dp</dimen>
+    <dimen name="pj_spacing_12">12dp</dimen>
+    <dimen name="pj_spacing_16">16dp</dimen>
+    <dimen name="pj_spacing_20">20dp</dimen>
+    <dimen name="pj_spacing_24">24dp</dimen>
+    <dimen name="pj_spacing_32">32dp</dimen>
+    <dimen name="pj_radius_small">12dp</dimen>
+    <dimen name="pj_radius_medium">18dp</dimen>
+    <dimen name="pj_radius_large">24dp</dimen>
+    <dimen name="pj_touch_target">48dp</dimen>
+</resources>

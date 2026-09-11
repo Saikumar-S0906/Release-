@@ -1,0 +1,15 @@
+{
+  "id": "string",
+  "category": "meme|sticker|gif|reel|story|poster|collage|ai_art",
+  "title": "localized string key",
+  "thumbnail": "cdn url or content asset id",
+  "preview": "cdn url or content asset id",
+  "aspectRatio": "9:16",
+  "premium": false,
+  "tags": [
+    "funny"
+  ],
+  "locale": [
+    "en"
+  ]
+}

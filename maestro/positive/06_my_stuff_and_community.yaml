@@ -1,0 +1,25 @@
+appId: com.pixijoy.ai
+tags:
+  - positive
+  - library
+  - community
+---
+# POS-06 My Stuff + Community roots load; return Home
+- runFlow: ../helpers/onboard_skip_to_home.yaml
+- tapOn:
+    id: "nav_my_stuff"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "flow18_host"
+- assertVisible:
+    text: "My Stuff|Creations"
+- tapOn:
+    id: "nav_community"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "flow27_host"
+- assertVisible: "Community"
+- tapOn:
+    id: "nav_home"
+- assertVisible:
+    id: "nav_home"

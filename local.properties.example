@@ -1,0 +1,26 @@
+## Copy this file to local.properties and fill in your values.
+## Never commit local.properties — it is gitignored.
+
+sdk.dir=C\:\\Users\\YOUR_USER\\AppData\\Local\\Android\\Sdk
+
+# Use a key from https://aistudio.google.com/apikey (usually starts with AIza...)
+# Leave as "dummy" to force free on-device simulator (no Google API calls).
+GEMINI_API_KEY=dummy
+
+# Model id for generateContent. Do NOT use gemini-2.0-flash (shut down June 2026).
+# Alternatives: gemini-2.5-flash (default), gemini-3.5-flash, gemini-3.8-flash, gemini-3.1-flash-lite
+GEMINI_MODEL=gemini-2.5-flash
+
+# Board Beautiful/Funny: when true AND a real GEMINI_API_KEY is set, processing probes live Gemini
+# (analyze / caption) then still shows soft rematch art. Keep false until you are ready to smoke.
+BOARD_LIVE_GENERATE=false
+
+# Leave blank to use in-app mock backend (trends, community, AI proxy).
+# Set to your deployed server URL when ready.
+PIXIJOY_API_BASE_URL=
+
+# Optional: AdMob (uses Google test IDs if omitted)
+ADMOB_APP_ID=
+ADMOB_BANNER_UNIT_ID=
+ADMOB_REWARDED_UNIT_ID=
+ADMOB_INTERSTITIAL_UNIT_ID=

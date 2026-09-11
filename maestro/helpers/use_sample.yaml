@@ -1,0 +1,11 @@
+appId: com.pixijoy.ai
+---
+# Use the in-tool sample photo (no gallery picker).
+- runFlow:
+    when:
+      visible:
+        id: "tool_use_sample"
+    commands:
+      - tapOn:
+          id: "tool_use_sample"
+      - waitForAnimationToEnd

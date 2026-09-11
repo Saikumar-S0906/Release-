@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">ఈరోజు %s AI వినియోగం మిగిలి ఉంది</item>
+        <item quantity="other">%s AI వినియోగాలు ఈరోజు మిగిలి ఉన్నాయి</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">%s HD ఎగుమతి ఈరోజు మిగిలి ఉంది</item>
+        <item quantity="other">%s HD exports left today</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">%d rewarded ad left today</item>
+        <item quantity="other">%d rewarded ads left today</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">స్టిక్కర్ ప్యాక్ సేవ్ చేయబడింది! WhatsApp కోసం %d స్టిక్కర్ సిద్ధంగా ఉంది</item>
+        <item quantity="other">Sticker pack saved! %d stickers ready for WhatsApp</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">WhatsApp కోసం %d స్టిక్కర్ సేవ్ చేయబడింది!</item>
+        <item quantity="other">WhatsApp కోసం %d స్టిక్కర్‌లు సేవ్ చేయబడ్డాయి!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">%d రోజు వరుస</item>
+        <item quantity="other">%d day streak</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">వైరల్ ప్యాక్ సేవ్ చేయబడింది! %d చిత్రాలు భాగస్వామ్యం చేయడానికి సిద్ధంగా ఉన్నాయి 🚀</item>
+    </plurals>
+</resources>

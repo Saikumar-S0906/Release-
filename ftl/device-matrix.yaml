@@ -1,0 +1,44 @@
+# Firebase Test Lab — PixiJoy device matrix (PR / nightly / release)
+#
+# Usage (requires gcloud + Firebase project with billing):
+#   .\scripts\run_ftl_robo.ps1
+#   .\scripts\run_ftl_instrumentation.ps1
+#
+# Docs: https://firebase.google.com/docs/test-lab/android/command-line
+
+# PR smoke — few devices
+pr:
+  - model: MediumPhone.arm
+    version: 34
+    locale: en_US
+    orientation: portrait
+  - model: MediumPhone.arm
+    version: 33
+    locale: en_US
+    orientation: portrait
+
+# Nightly — broader
+nightly:
+  - model: MediumPhone.arm
+    version: 34
+    locale: en_US
+    orientation: portrait
+  - model: MediumPhone.arm
+    version: 34
+    locale: hi_IN
+    orientation: portrait
+  - model: MediumPhone.arm
+    version: 34
+    locale: ar
+    orientation: portrait
+  - model: MediumTablet.arm
+    version: 34
+    locale: en_US
+    orientation: landscape
+  - model: MediumPhone.arm
+    version: 33
+    locale: en_US
+    orientation: portrait
+
+# Physical devices (when quota allows) — edit in console / gcloud
+# Pixel 8, Samsung A-series, etc.

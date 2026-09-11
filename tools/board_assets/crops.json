@@ -1,0 +1,4 @@
+{
+  "_comment": "phone frame crops: { \"file\": \"flows/01_....png\", \"out\": \"board_f1_welcome\", \"box\": [x,y,w,h] }",
+  "crops": []
+}

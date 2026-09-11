@@ -1,0 +1,31 @@
+appId: com.pixijoy.ai
+tags:
+  - positive
+  - tools
+  - stickers
+---
+# Stickers: photo step → sample → cutout/pack → back
+- runFlow: ../helpers/onboard_skip_to_home.yaml
+- runFlow: ../helpers/open_create_hub.yaml
+- scrollUntilVisible:
+    element:
+      id: "create_hub_sticker"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "create_hub_sticker"
+- waitForAnimationToEnd
+- runFlow: ../helpers/dismiss_anr.yaml
+- extendedWaitUntil:
+    visible:
+      id: "flow13_host|sticker_screen"
+    timeout: 25000
+- runFlow: ../helpers/use_sample.yaml
+- extendedWaitUntil:
+    visible:
+      id: "flow13_host|sticker_screen"
+    timeout: 40000
+- runFlow: ../helpers/back_to_create_hub.yaml
+- runFlow: ../helpers/back_to_create_hub.yaml
+- assertVisible:
+    id: "nav_create"

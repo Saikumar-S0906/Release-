@@ -1,0 +1,122 @@
+appId: com.pixijoy.ai
+tags:
+  - negative
+  - tools
+  - nav
+---
+# Every Tools tile: open, Back, still on Create hub. No infinite path.
+- runFlow: ../helpers/onboard_skip_to_home.yaml
+- runFlow: ../helpers/open_create_hub.yaml
+
+- tapOn:
+    id: "create_hub_editor"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow15_host"
+    timeout: 20000
+- runFlow: ../helpers/back_to_create_hub.yaml
+- assertVisible:
+    id: "create_hub_editor"
+
+- tapOn:
+    id: "create_hub_restore"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow_c05_host"
+    timeout: 20000
+- runFlow: ../helpers/back_to_create_hub.yaml
+- assertVisible:
+    id: "create_hub_restore"
+
+- tapOn:
+    id: "create_hub_expand"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow_c10_host"
+    timeout: 20000
+- runFlow: ../helpers/back_to_create_hub.yaml
+- assertVisible:
+    id: "create_hub_expand"
+
+- scrollUntilVisible:
+    element:
+      id: "create_hub_remove_bg"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "create_hub_remove_bg"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow_c04_host"
+    timeout: 20000
+- runFlow: ../helpers/back_to_create_hub.yaml
+- assertVisible:
+    id: "create_hub_segment_tools"
+
+- scrollUntilVisible:
+    element:
+      id: "create_hub_sticker"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "create_hub_sticker"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow13_host|sticker_screen"
+    timeout: 20000
+- runFlow: ../helpers/back_to_create_hub.yaml
+- assertVisible:
+    id: "create_hub_segment_tools"
+
+- scrollUntilVisible:
+    element:
+      id: "create_hub_move"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "create_hub_move"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow14_host"
+    timeout: 20000
+- runFlow: ../helpers/back_to_create_hub.yaml
+- assertVisible:
+    id: "create_hub_segment_tools"
+
+- scrollUntilVisible:
+    element:
+      id: "create_hub_talking"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "create_hub_talking"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow_c11_host"
+    timeout: 20000
+- runFlow: ../helpers/back_to_create_hub.yaml
+- assertVisible:
+    id: "create_hub_segment_tools"
+
+- scrollUntilVisible:
+    element:
+      id: "create_hub_collage"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "create_hub_collage"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow16_host"
+    timeout: 20000
+- runFlow: ../helpers/back_to_create_hub.yaml
+- assertVisible:
+    id: "nav_create"

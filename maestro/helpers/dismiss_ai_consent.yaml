@@ -1,0 +1,14 @@
+appId: com.pixijoy.ai
+---
+- runFlow:
+    when:
+      visible: "AI Photo Processing"
+    commands:
+      - tapOn: "Use On-Device Only"
+      - waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "I Agree"
+    commands:
+      - tapOn: "I Agree"
+      - waitForAnimationToEnd

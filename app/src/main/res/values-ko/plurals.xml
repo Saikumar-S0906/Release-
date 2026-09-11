@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">오늘 %s AI 사용 남음</item>
+        <item quantity="other">%s AI가 오늘 왼쪽을 사용합니다.</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">%s HD 내보내기가 오늘 남음</item>
+        <item quantity="other">오늘 %s HD 내보내기가 남았습니다.</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">%d rewarded ad left today</item>
+        <item quantity="other">오늘 %d개의 보상형 광고가 남았습니다.</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">스티커 팩이 저장되었습니다! WhatsApp에 사용할 수 있는 스티커 %d개 준비됨</item>
+        <item quantity="other">스티커 팩이 저장되었습니다! WhatsApp에 사용할 수 있는 스티커 %d개 준비됨</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">WhatsApp에 스티커 %d개를 저장했습니다!</item>
+        <item quantity="other">WhatsApp에 스티커 %d개를 저장했습니다!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">%d일 연속</item>
+        <item quantity="other">%d일 연속</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">바이럴 팩이 저장되었습니다! %d개의 이미지를 공유할 준비가 되었습니다 🚀</item>
+    </plurals>
+</resources>

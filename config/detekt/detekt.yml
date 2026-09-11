@@ -1,0 +1,37 @@
+config:
+  validation: true
+  warningsAsErrors: false
+
+complexity:
+  ComplexCondition:
+    threshold: 6
+  LongMethod:
+    threshold: 80
+  LongParameterList:
+    functionThreshold: 8
+    constructorThreshold: 10
+  TooManyFunctions:
+    thresholdInFiles: 25
+    thresholdInClasses: 25
+
+style:
+  MagicNumber:
+    active: false
+  WildcardImport:
+    active: true
+  MaxLineLength:
+    maxLineLength: 140
+    excludeCommentStatements: true
+  ReturnCount:
+    max: 4
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated:
+      - 'Composable'
+
+comments:
+  UndocumentedPublicClass:
+    active: false
+  UndocumentedPublicFunction:
+    active: false

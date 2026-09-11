@@ -1,0 +1,20 @@
+appId: com.pixijoy.ai
+---
+# System ANR sheet can block Compose tags after cold start.
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            visible: ".*isn't responding.*"
+          commands:
+            - tapOn: "Wait"
+            - waitForAnimationToEnd:
+                timeout: 8000
+      - runFlow:
+          when:
+            visible: "Close app"
+          commands:
+            - tapOn: "Wait"
+            - waitForAnimationToEnd:
+                timeout: 5000

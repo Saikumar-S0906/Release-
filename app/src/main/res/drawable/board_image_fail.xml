@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bible §29 — fail / missing image placeholder -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="160dp"
+    android:height="160dp"
+    android:viewportWidth="160"
+    android:viewportHeight="160">
+    <path
+        android:fillColor="#20202A"
+        android:pathData="M0,0h160v160h-160z" />
+    <path
+        android:fillColor="#30303A"
+        android:pathData="M28,36h104a12,12 0,0 1,12 12v64a12,12 0,0 1,-12 12h-104a12,12 0,0 1,-12 -12v-64a12,12 0,0 1,12 -12z" />
+    <path
+        android:fillColor="#6848FF"
+        android:fillAlpha="0.5"
+        android:pathData="M52,64a14,14 0,1 1,0.1 0z" />
+    <path
+        android:fillColor="#B7B7C7"
+        android:fillAlpha="0.55"
+        android:pathData="M40,108 L68,78 L92,98 L112,72 L132,108 Z" />
+</vector>

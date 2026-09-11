@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">%s Penggunaan AI tersisa hari ini</item>
+        <item quantity="other">%s Sisa penggunaan AI hari ini</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">%s ekspor HD tersisa hari ini</item>
+        <item quantity="other">%s Ekspor HD tersisa hari ini</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">%d iklan reward tersisa hari ini</item>
+        <item quantity="other">%d iklan reward tersisa hari ini</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">Paket stiker disimpan! %d stiker siap untuk WhatsApp</item>
+        <item quantity="other">Paket stiker disimpan! %d stiker siap untuk WhatsApp</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">Tersimpan %d stiker untuk WhatsApp!</item>
+        <item quantity="other">Menyimpan %d stiker untuk WhatsApp!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">%d hari berturut-turut</item>
+        <item quantity="other">%d hari berturut-turut</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">Paket Viral disimpan! %d gambar siap dibagikan 🚀</item>
+    </plurals>
+</resources>

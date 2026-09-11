@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">%s paggamit ng AI ang natitira ngayon</item>
+        <item quantity="other">%s AI gamit ang natitira ngayon</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">%s HD export ang natitira ngayon</item>
+        <item quantity="other">%s HD export ang natitira ngayon</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">%d rewarded na ad ang natitira ngayon</item>
+        <item quantity="other">%d rewarded na ad ang natitira ngayon</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">Na-save ang sticker pack! Handa na ang %d sticker para sa WhatsApp</item>
+        <item quantity="other">Na-save ang sticker pack! %d sticker ang handa na para sa WhatsApp</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">Naka-save na %d sticker para sa WhatsApp!</item>
+        <item quantity="other">Naka-save na %d sticker para sa WhatsApp!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">%d araw na sunod-sunod</item>
+        <item quantity="other">%d araw na sunod-sunod</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">Na-save ang Viral Pack! %d larawang handang ibahagi 🚀</item>
+    </plurals>
+</resources>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">今日は %s AI の使用が残りました</item>
+        <item quantity="other">%s AI は今日残りを使用します</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">%s HD export left today</item>
+        <item quantity="other">%s HD exports left today</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">今日は %d 個のリワード広告が残っています</item>
+        <item quantity="other">今日は %d 個のリワード広告が残っています</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">ステッカーパックを保存しました！ WhatsApp 用に %d ステッカーの準備ができました</item>
+        <item quantity="other">ステッカーパックを保存しました！ WhatsApp 用に %d 個のステッカーが準備されました</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">WhatsApp 用に %d 個のステッカーを保存しました!</item>
+        <item quantity="other">WhatsApp 用に %d 個のステッカーを保存しました!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">%d day streak</item>
+        <item quantity="other">%d 日連続</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">バイラルパックを保存しました! %d 枚の画像を共有する準備ができました 🚀</item>
+    </plurals>
+</resources>

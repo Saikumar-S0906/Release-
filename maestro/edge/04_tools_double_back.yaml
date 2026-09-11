@@ -1,0 +1,23 @@
+appId: com.pixijoy.ai
+tags:
+  - edge
+  - tools
+  - nav
+---
+# Double Back from a tool must not relaunch processing or leave the app.
+- runFlow: ../helpers/onboard_skip_to_home.yaml
+- runFlow: ../helpers/open_create_hub.yaml
+- tapOn:
+    id: "create_hub_restore"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow_c05_host"
+    timeout: 20000
+- back
+- waitForAnimationToEnd
+- back
+- waitForAnimationToEnd
+- runFlow: ../helpers/ensure_in_app.yaml
+- assertVisible:
+    id: "nav_create|nav_home|create_hub_segment_tools"

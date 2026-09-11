@@ -1,0 +1,28 @@
+appId: com.pixijoy.ai
+tags:
+  - positive
+  - ai
+  - tell
+---
+# Tell PixiJoy: open sheet, back to hub (no infinite generate)
+- runFlow: ../helpers/onboard_skip_to_home.yaml
+- runFlow: ../helpers/open_create_hub.yaml
+- runFlow: ../helpers/open_create_ai.yaml
+- scrollUntilVisible:
+    element:
+      id: "home_talk"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "home_talk"
+- waitForAnimationToEnd
+- runFlow: ../helpers/dismiss_anr.yaml
+- extendedWaitUntil:
+    visible:
+      id: "flow7_tell"
+    timeout: 25000
+- back
+- waitForAnimationToEnd
+- runFlow: ../helpers/back_to_create_hub.yaml
+- assertVisible:
+    id: "nav_create"
