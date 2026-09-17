@@ -27,6 +27,7 @@ import com.pixijoy.designsystem.PixiTextMuted
 fun MediaSourceSheet(
     title: String,
     onGallery: () -> Unit,
+    onCamera: () -> Unit,
     onSample: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -50,6 +51,13 @@ fun MediaSourceSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("studio_gallery")
+            )
+            PixiSecondaryButton(
+                text = stringResource(R.string.studio_take_photo),
+                onClick = onCamera,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("studio_camera")
             )
             PixiSecondaryButton(
                 text = stringResource(R.string.studio_use_sample),

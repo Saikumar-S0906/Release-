@@ -48,8 +48,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
 import com.pixijoy.ai.R
+import com.pixijoy.ai.ui.camera.CameraCaptureScreen
 import com.pixijoy.ai.ui.session.MovieSessionScreen
 import com.pixijoy.ai.ui.session.PhotoSessionScreen
 import com.pixijoy.core.common.AppResult
@@ -84,7 +84,8 @@ fun StudioApp() {
     var session by remember { mutableStateOf<OpenSession?>(null) }
     var pending by remember { mutableStateOf<PendingPick?>(null) }
     var showPickSheet by remember { mutableStateOf(false) }
-    var captureUri by remember { mutableStateOf<Uri?>(null) }
+    var showCamera by remember { mutableStateOf(false) }
+    var cameraRequest by remember { mutableStateOf<PendingPick?>(null) }
     val projects by repo.observeProjects().collectAsState(initial = emptyList())
     val config = LocalConfiguration.current
     val twoPane = isStudioTwoPane(config.screenWidthDp, config.screenHeightDp)
@@ -105,18 +106,6 @@ fun StudioApp() {
             scope.launch { openImported(repo, prefs, uri, request) { session = it; tab = StudioTab.Studio } }
         }
     }
-    val takePicture = rememberLauncherForActivityResult(
-        ActivityResultContracts.TakePicture()
-    ) { ok ->
-        val uri = captureUri
-        val request = pending
-        pending = null
-        showPickSheet = false
-        if (ok && uri != null && request != null) {
-            scope.launch { openImported(repo, prefs, uri, request) { session = it; tab = StudioTab.Studio } }
-        }
-    }
-
     fun launchGallery(request: PendingPick) {
         pending = request
         showPickSheet = false
@@ -129,12 +118,10 @@ fun StudioApp() {
     }
 
     fun launchCamera(request: PendingPick) {
-        pending = request
+        pending = null
         showPickSheet = false
-        val file = File(context.cacheDir, "capture.jpg")
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.files", file)
-        captureUri = uri
-        takePicture.launch(uri)
+        cameraRequest = request
+        showCamera = true
     }
 
     fun launchSample(request: PendingPick) {
@@ -220,6 +207,7 @@ fun StudioApp() {
                 MediaSourceSheet(
                     title = pick.title,
                     onGallery = { launchGallery(pick) },
+                    onCamera = { launchCamera(pick) },
                     onSample = { launchSample(pick) },
                     onDismiss = {
                         pending = null
@@ -227,7 +215,68 @@ fun StudioApp() {
                     }
                 )
             }
+            if (showCamera) {
+                CameraCaptureScreen(
+                    initialVideo = cameraRequest?.kind == MediaKind.MOVIE,
+                    onStill = { file ->
+                        showCamera = false
+                        val request = cameraRequest ?: PendingPick(
+                            "editor",
+                            MediaKind.PHOTO,
+                            context.getString(R.string.tool_editor)
+                        )
+                        cameraRequest = null
+                        scope.launch {
+                            openCaptured(repo, prefs, file, MediaKind.PHOTO, request) {
+                                session = it
+                                tab = StudioTab.Studio
+                            }
+                        }
+                    },
+                    onVideo = { file ->
+                        showCamera = false
+                        val request = cameraRequest ?: PendingPick(
+                            "move",
+                            MediaKind.MOVIE,
+                            context.getString(R.string.tool_move)
+                        )
+                        cameraRequest = null
+                        val movieRequest = request.copy(
+                            kind = MediaKind.MOVIE,
+                            tool = if (request.kind == MediaKind.MOVIE) request.tool else "move"
+                        )
+                        scope.launch {
+                            openCaptured(repo, prefs, file, MediaKind.MOVIE, movieRequest) {
+                                session = it
+                                tab = StudioTab.Studio
+                            }
+                        }
+                    },
+                    onClose = {
+                        showCamera = false
+                        cameraRequest = null
+                    }
+                )
+            }
         }
+    }
+}
+
+private suspend fun openCaptured(
+    repo: ProjectRepository,
+    prefs: StudioPrefs,
+    file: File,
+    kind: MediaKind,
+    request: PendingPick,
+    onOpen: (OpenSession) -> Unit
+) {
+    when (val result = repo.importFile(file, kind, request.title)) {
+        is AppResult.Ok -> {
+            prefs.setLastProject(result.value.id)
+            onOpen(OpenSession(result.value, request.tool))
+            file.delete()
+        }
+        is AppResult.Err -> Unit
     }
 }
 

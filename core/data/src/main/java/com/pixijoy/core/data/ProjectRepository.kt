@@ -58,6 +58,23 @@ class ProjectRepository(
         )
     }
 
+    suspend fun importFile(
+        file: File,
+        kind: MediaKind,
+        title: String
+    ): AppResult<Project> = withContext(dispatchers.io) {
+        runCatching {
+            val id = UUID.randomUUID().toString()
+            val dir = File(context.filesDir, "projects/$id").apply { mkdirs() }
+            val tmp = File(dir, "incoming")
+            file.copyTo(tmp, overwrite = true)
+            finishImport(id, dir, tmp, kind, title)
+        }.fold(
+            onSuccess = { it },
+            onFailure = { AppResult.Err("Could not import capture.", it) }
+        )
+    }
+
     suspend fun importBitmap(
         bitmap: Bitmap,
         title: String

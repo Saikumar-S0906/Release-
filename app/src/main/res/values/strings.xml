@@ -71,6 +71,12 @@
     <string name="studio_clip_count">%1$d clips · joined on export</string>
     <string name="studio_export_gif">Export GIF</string>
     <string name="studio_export_gif_ok">Saved GIF to Pictures/PixiJoy. No watermark.</string>
+    <string name="studio_camera_photo">Photo</string>
+    <string name="studio_camera_video">Video</string>
+    <string name="studio_camera_flip">Flip</string>
+    <string name="studio_camera_permission">PixiJoy takes photos and video on this phone. Nothing is uploaded.</string>
+    <string name="studio_camera_grant">Allow camera</string>
+    <string name="studio_camera_stop">Stop</string>
     <string name="studio_heal">Heal</string>
     <string name="studio_erase">Erase</string>
     <string name="studio_text">Text</string>
