@@ -27,7 +27,8 @@ data class AudioBed(
 
 data class Timeline(
     val clips: List<TimelineClip> = emptyList(),
-    val bed: AudioBed? = null
+    val bed: AudioBed? = null,
+    val voice: AudioBed? = null
 ) {
     fun totalMs(): Long = clips.sumOf { it.durationMs }
 
@@ -39,6 +40,15 @@ data class Timeline(
                 out += ClipMix.Window(t, t + clip.durationMs)
             }
             t += clip.durationMs
+        }
+        return out
+    }
+
+    fun duckWindows(voiceEndMs: Long = 0): List<ClipMix.Window> {
+        val out = dialogueWindows().toMutableList()
+        val v = voice
+        if (v != null && !v.muted && voiceEndMs > 0) {
+            out += ClipMix.Window(0, voiceEndMs)
         }
         return out
     }
@@ -165,6 +175,11 @@ data class Timeline(
             if (isNotEmpty()) append('\n')
             append("A,${music.fileName},${ClipMix.volume(music.volume)},${music.fadeInMs.coerceAtLeast(0)},${music.fadeOutMs.coerceAtLeast(0)},${if (music.muted) 1 else 0},${ClipMix.volume(music.duck)},${music.attackMs.coerceAtLeast(0)}")
         }
+        val vo = voice
+        if (vo != null) {
+            if (isNotEmpty()) append('\n')
+            append("V,${vo.fileName},${ClipMix.volume(vo.volume)},${vo.fadeInMs.coerceAtLeast(0)},${vo.fadeOutMs.coerceAtLeast(0)},${if (vo.muted) 1 else 0}")
+        }
     }
 
     companion object {
@@ -211,8 +226,22 @@ data class Timeline(
                     )
                 }.getOrNull()
             }.firstOrNull()
+            val voice = raw.lineSequence().mapNotNull { line ->
+                val p = line.trim().split(',')
+                if (p.getOrNull(0) != "V" || p.size < 6) return@mapNotNull null
+                runCatching {
+                    AudioBed(
+                        fileName = p[1],
+                        volume = p[2].toFloat().let(ClipMix::volume),
+                        fadeInMs = p[3].toLong().coerceAtLeast(0),
+                        fadeOutMs = p[4].toLong().coerceAtLeast(0),
+                        muted = p[5] == "1",
+                        duck = 1f
+                    )
+                }.getOrNull()
+            }.firstOrNull()
             val clips = if (parsed.isEmpty()) fromMedia(count, durationMs).clips else parsed
-            return Timeline(clips, bed)
+            return Timeline(clips, bed, voice)
         }
     }
 }

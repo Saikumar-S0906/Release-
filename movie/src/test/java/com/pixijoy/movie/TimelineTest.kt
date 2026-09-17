@@ -51,6 +51,23 @@ class TimelineTest {
     }
 
     @Test
+    fun voiceStemRoundTripAndDucksBed() {
+        val tl = Timeline(
+            listOf(TimelineClip("a", 0, 0, 4000, muted = true)),
+            AudioBed("bed.m4a"),
+            AudioBed("voice.m4a", volume = 1f, fadeInMs = 80, fadeOutMs = 120, muted = false, duck = 1f)
+        )
+        val decoded = Timeline.decode(tl.encode(), 1) { 4000 }
+        assertEquals("voice.m4a", decoded.voice?.fileName)
+        assertEquals(80L, decoded.voice?.fadeInMs)
+        val split = decoded.split(2000)
+        assertEquals("voice.m4a", split.voice?.fileName)
+        val windows = decoded.duckWindows(1500)
+        assertTrue(windows.any { it.startMs == 0L && it.endMs == 1500L })
+        assertTrue(decoded.dialogueWindows().isEmpty())
+    }
+
+    @Test
     fun dialogueWindowsSkipMutedClips() {
         val tl = Timeline(
             listOf(

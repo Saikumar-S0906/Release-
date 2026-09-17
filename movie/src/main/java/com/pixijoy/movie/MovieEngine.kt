@@ -175,7 +175,7 @@ class Media3MovieEngine : MovieEngine {
             edited.build()
         }
         val sequence = EditedMediaItemSequence.Builder(items).build()
-        val composition = composeWithBed(sequence, paths, source)
+        val composition = composeAudio(sequence, paths, source)
         startTransformer(context, composition, cache, onProgress)
     }
 
@@ -187,21 +187,16 @@ class Media3MovieEngine : MovieEngine {
         pictureDurationMs: Long,
         onProgress: (Float) -> Unit
     ): AppResult<Unit> {
-        val resolved = resolveBed(paths, timeline) ?: return AppResult.Ok(Unit)
+        if (resolveStem(paths, timeline.bed) == null && resolveStem(paths, timeline.voice) == null) {
+            return AppResult.Ok(Unit)
+        }
         return withContext(Dispatchers.Main) {
             val videoItem = EditedMediaItem.Builder(MediaItem.fromUri(Uri.fromFile(videoFile))).build()
             val videoSeq = EditedMediaItemSequence.Builder(listOf(videoItem)).build()
-            val bedSeq = bedSequence(
-                resolved.second,
-                resolved.first,
-                pictureDurationMs.coerceAtLeast(250),
-                durationMs(resolved.second.absolutePath),
-                timeline.dialogueWindows()
-            )
             val mixed = File(videoFile.parentFile, "mix-${videoFile.name}")
             val result = startTransformer(
                 context,
-                Composition.Builder(videoSeq, bedSeq).experimentalSetForceAudioTrack(true).build(),
+                composeAudio(videoSeq, paths, timeline, pictureDurationMs.coerceAtLeast(250)),
                 mixed,
                 onProgress
             )
@@ -218,28 +213,72 @@ class Media3MovieEngine : MovieEngine {
         }
     }
 
-    private fun composeWithBed(
+    private fun composeAudio(
         videoSeq: EditedMediaItemSequence,
         paths: List<String>,
-        timeline: Timeline
+        timeline: Timeline,
+        durationOverrideMs: Long? = null
     ): Composition {
-        val resolved = resolveBed(paths, timeline) ?: return Composition.Builder(videoSeq).build()
-        val bedSeq = bedSequence(
-            resolved.second,
-            resolved.first,
-            timeline.totalMs().coerceAtLeast(250),
-            durationMs(resolved.second.absolutePath),
-            timeline.dialogueWindows()
-        )
-        return Composition.Builder(videoSeq, bedSeq).experimentalSetForceAudioTrack(true).build()
+        val total = (durationOverrideMs ?: timeline.totalMs()).coerceAtLeast(250)
+        val sequences = ArrayList<EditedMediaItemSequence>()
+        sequences += videoSeq
+        val voice = resolveStem(paths, timeline.voice)
+        val voiceEnd = voice?.let { minOf(durationMs(it.second.absolutePath), total) } ?: 0L
+        val windows = timeline.duckWindows(voiceEnd)
+        resolveStem(paths, timeline.bed)?.let { (bed, file) ->
+            sequences += bedSequence(file, bed, total, durationMs(file.absolutePath), windows)
+        }
+        voice?.let { (stem, file) ->
+            sequences += voiceSequence(file, stem, total, durationMs(file.absolutePath))
+        }
+        return if (sequences.size == 1) {
+            Composition.Builder(videoSeq).build()
+        } else {
+            Composition.Builder(sequences).experimentalSetForceAudioTrack(true).build()
+        }
     }
 
-    private fun resolveBed(paths: List<String>, timeline: Timeline): Pair<AudioBed, File>? {
-        val bed = timeline.bed ?: return null
-        if (bed.muted || bed.fileName.isBlank()) return null
+    private fun resolveStem(paths: List<String>, stem: AudioBed?): Pair<AudioBed, File>? {
+        if (stem == null || stem.muted || stem.fileName.isBlank()) return null
         val dir = File(paths.first()).parentFile ?: return null
-        val file = File(dir, bed.fileName)
-        return if (file.exists()) bed to file else null
+        val file = File(dir, stem.fileName)
+        return if (file.exists()) stem to file else null
+    }
+
+    private fun voiceSequence(
+        file: File,
+        stem: AudioBed,
+        totalMs: Long,
+        sourceMs: Long
+    ): EditedMediaItemSequence {
+        val take = minOf(sourceMs.coerceAtLeast(1), totalMs)
+        val media = MediaItem.Builder()
+            .setUri(Uri.fromFile(file))
+            .setClippingConfiguration(
+                MediaItem.ClippingConfiguration.Builder()
+                    .setStartPositionMs(0)
+                    .setEndPositionMs(take)
+                    .build()
+            )
+            .build()
+        val edited = EditedMediaItem.Builder(media).setRemoveVideo(true)
+        val vol = ClipMix.volume(stem.volume)
+        if (vol != 1f || stem.fadeInMs > 0 || stem.fadeOutMs > 0) {
+            edited.setEffects(
+                Effects(
+                    listOf(
+                        EnvelopeAudioProcessor(
+                            durationMs = take,
+                            volume = vol,
+                            fadeInMs = stem.fadeInMs,
+                            fadeOutMs = stem.fadeOutMs
+                        )
+                    ),
+                    emptyList()
+                )
+            )
+        }
+        return EditedMediaItemSequence.Builder(listOf(edited.build())).build()
     }
 
     private fun bedSequence(

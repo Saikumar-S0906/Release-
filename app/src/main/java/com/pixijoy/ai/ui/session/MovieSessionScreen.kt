@@ -148,9 +148,21 @@ fun MovieSessionScreen(
     val addMusic = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {
             scope.launch {
-                when (val result = repo.importAudioBed(project.id, uri)) {
+                when (val result = repo.importAudioFile(project.id, uri, "bed")) {
                     is AppResult.Ok -> {
                         timeline = timeline.copy(bed = AudioBed(fileName = File(result.value).name))
+                    }
+                    is AppResult.Err -> status = result.message
+                }
+            }
+        }
+    }
+    val addVoice = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            scope.launch {
+                when (val result = repo.importAudioFile(project.id, uri, "voice")) {
+                    is AppResult.Ok -> {
+                        timeline = timeline.copy(voice = AudioBed(fileName = File(result.value).name, volume = 1f, duck = 1f))
                     }
                     is AppResult.Err -> status = result.message
                 }
@@ -160,16 +172,21 @@ fun MovieSessionScreen(
     val selected = timeline.clips.firstOrNull { it.id == selectedId } ?: timeline.clips.firstOrNull()
     val projectDir = remember(path) { File(path).parent }
     val bedFile = timeline.bed?.let { File(projectDir, it.fileName) }?.takeIf { it.exists() }
+    val voiceFile = timeline.voice?.let { File(projectDir, it.fileName) }?.takeIf { it.exists() }
 
     val player = remember {
         if (still) null else ExoPlayer.Builder(context).build()
     }
     val bedPlayer = remember { ExoPlayer.Builder(context).build() }
+    val voicePlayer = remember { ExoPlayer.Builder(context).build() }
     DisposableEffect(player) {
         onDispose { player?.release() }
     }
     DisposableEffect(bedPlayer) {
         onDispose { bedPlayer.release() }
+    }
+    DisposableEffect(voicePlayer) {
+        onDispose { voicePlayer.release() }
     }
     LaunchedEffect(bedFile?.absolutePath, timeline.bed?.muted) {
         val file = bedFile
@@ -185,9 +202,24 @@ fun MovieSessionScreen(
             bedPlayer.clearMediaItems()
         }
     }
+    LaunchedEffect(voiceFile?.absolutePath, timeline.voice?.muted) {
+        val file = voiceFile
+        val voice = timeline.voice
+        if (file != null && voice != null && !voice.muted) {
+            voicePlayer.setMediaItem(MediaItem.fromUri(Uri.fromFile(file)))
+            voicePlayer.repeatMode = Player.REPEAT_MODE_OFF
+            voicePlayer.prepare()
+            voicePlayer.playWhenReady = playing
+            voicePlayer.volume = voice.volume
+        } else {
+            voicePlayer.stop()
+            voicePlayer.clearMediaItems()
+        }
+    }
     LaunchedEffect(paths.size) {
         if (!still && timeline.clips.size != paths.size) {
             timeline = Timeline.fromMedia(paths.size) { engine.durationMs(paths[it]) }
+                .copy(bed = timeline.bed, voice = timeline.voice)
             selectedId = timeline.clips.firstOrNull()?.id
         }
     }
@@ -235,6 +267,18 @@ fun MovieSessionScreen(
                     clip.fadeOutMs
                 )
             }
+            val voice = timeline.voice
+            val voiceDur = voicePlayer.duration.takeIf { it > 0 } ?: 0L
+            if (voice != null && !voice.muted) {
+                voicePlayer.volume = ClipMix.gain(
+                    composition,
+                    voiceDur.coerceAtLeast(1),
+                    voice.volume,
+                    voice.fadeInMs,
+                    voice.fadeOutMs
+                )
+                voicePlayer.playWhenReady = playing && composition < voiceDur.coerceAtLeast(1)
+            }
             val bed = timeline.bed
             if (bed != null && !bed.muted) {
                 bedPlayer.volume = ClipMix.gain(
@@ -245,7 +289,7 @@ fun MovieSessionScreen(
                     bed.fadeOutMs
                 ) * ClipMix.duck(
                     composition,
-                    timeline.dialogueWindows(),
+                    timeline.duckWindows(voiceDur),
                     bed.duck,
                     bed.attackMs
                 )
@@ -292,6 +336,7 @@ fun MovieSessionScreen(
     fun runExport(gif: Boolean) {
         player?.playWhenReady = false
         bedPlayer.playWhenReady = false
+        voicePlayer.playWhenReady = false
         exporting = true
         progress = 0f
         status = context.getString(R.string.studio_export_background)
@@ -372,6 +417,8 @@ fun MovieSessionScreen(
                         }
                         val bedDur = bedPlayer.duration
                         if (bedDur > 0) bedPlayer.seekTo(ms % bedDur)
+                        val voiceDur = voicePlayer.duration
+                        if (voiceDur > 0) voicePlayer.seekTo(ms.coerceAtMost(voiceDur))
                     },
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_scrub")
@@ -408,6 +455,7 @@ fun MovieSessionScreen(
                         playing = !playing
                         player?.playWhenReady = playing
                         bedPlayer.playWhenReady = playing
+                        voicePlayer.playWhenReady = playing
                     },
                     modifier = Modifier.testTag("movie_play")
                 ) {
@@ -530,6 +578,8 @@ fun MovieSessionScreen(
                         playhead = (composition / total.toFloat()).coerceIn(0f, 1f)
                         val bedDur = bedPlayer.duration
                         if (bedDur > 0) bedPlayer.seekTo(composition % bedDur)
+                        val voiceDur = voicePlayer.duration
+                        if (voiceDur > 0) voicePlayer.seekTo(composition.coerceAtMost(voiceDur))
                     }
                 )
                 PixiSecondaryButton(
@@ -628,6 +678,73 @@ fun MovieSessionScreen(
                         modifier = Modifier.testTag("movie_bed_remove")
                     ) {
                         Text(stringResource(R.string.studio_remove_music), color = PixiText)
+                    }
+                }
+            }
+            PixiSecondaryButton(
+                text = stringResource(
+                    if (timeline.voice == null) R.string.studio_add_voice else R.string.studio_replace_voice
+                ),
+                onClick = { addVoice.launch("audio/*") },
+                modifier = Modifier.fillMaxWidth().testTag("movie_add_voice")
+            )
+            val voice = timeline.voice
+            if (voice != null) {
+                Text(
+                    stringResource(R.string.studio_voice_volume, voice.volume * 100f),
+                    color = PixiTextMuted
+                )
+                Slider(
+                    value = voice.volume,
+                    onValueChange = { v ->
+                        timeline = timeline.copy(voice = voice.copy(volume = ClipMix.volume(v)))
+                    },
+                    valueRange = 0f..1f,
+                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
+                    modifier = Modifier.testTag("movie_voice_volume")
+                )
+                Text(
+                    stringResource(R.string.studio_fade_in, voice.fadeInMs.toInt()),
+                    color = PixiTextMuted
+                )
+                Slider(
+                    value = voice.fadeInMs.toFloat(),
+                    onValueChange = {
+                        timeline = timeline.copy(voice = voice.copy(fadeInMs = it.toLong().coerceAtLeast(0)))
+                    },
+                    valueRange = 0f..2000f,
+                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
+                    modifier = Modifier.testTag("movie_voice_fade_in")
+                )
+                Text(
+                    stringResource(R.string.studio_fade_out, voice.fadeOutMs.toInt()),
+                    color = PixiTextMuted
+                )
+                Slider(
+                    value = voice.fadeOutMs.toFloat(),
+                    onValueChange = {
+                        timeline = timeline.copy(voice = voice.copy(fadeOutMs = it.toLong().coerceAtLeast(0)))
+                    },
+                    valueRange = 0f..2000f,
+                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
+                    modifier = Modifier.testTag("movie_voice_fade_out")
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(
+                        onClick = { timeline = timeline.copy(voice = voice.copy(muted = !voice.muted)) },
+                        modifier = Modifier.testTag("movie_voice_mute")
+                    ) {
+                        Text(
+                            if (voice.muted) stringResource(R.string.studio_unmute)
+                            else stringResource(R.string.studio_mute),
+                            color = PixiText
+                        )
+                    }
+                    TextButton(
+                        onClick = { timeline = timeline.copy(voice = null) },
+                        modifier = Modifier.testTag("movie_voice_remove")
+                    ) {
+                        Text(stringResource(R.string.studio_remove_voice), color = PixiText)
                     }
                 }
             }

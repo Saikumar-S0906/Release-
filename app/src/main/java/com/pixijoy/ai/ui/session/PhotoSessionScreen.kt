@@ -124,6 +124,7 @@ fun PhotoSessionScreen(
     }
     var sharpen by remember { mutableStateOf(0f) }
     var vignette by remember { mutableStateOf(0f) }
+    var blurRadius by remember { mutableStateOf(0f) }
     var expand by remember { mutableStateOf(0.12f) }
     var brush by remember { mutableStateOf(0.05f) }
     var maskReveal by remember { mutableStateOf(false) }
@@ -264,7 +265,7 @@ fun PhotoSessionScreen(
                     val liveAdjust = mode == SessionMode.Adjust &&
                         !LiveGrade.isAdjustIdentity(exposure, contrast, hue, saturation)
                     val liveDetail = mode == SessionMode.Adjust &&
-                        (sharpen > 0.01f || vignette > 0.01f)
+                        (sharpen > 0.01f || vignette > 0.01f || blurRadius > 0.5f)
                     val liveCurves = mode == SessionMode.Curves && !LiveGrade.curvesIdentity(curveYs)
                     Image(
                         bitmap = bmp.asImageBitmap(),
@@ -297,6 +298,7 @@ fun PhotoSessionScreen(
                                             detailShader.setFloatUniform("size", size.width, size.height)
                                             detailShader.setFloatUniform("sharpen", sharpen)
                                             detailShader.setFloatUniform("vignette", vignette)
+                                            detailShader.setFloatUniform("blur", blurRadius)
                                             renderEffect = android.graphics.RenderEffect
                                                 .createRuntimeShaderEffect(detailShader, "img")
                                                 .asComposeRenderEffect()
@@ -377,13 +379,17 @@ fun PhotoSessionScreen(
                 push(PhotoOp.Hsl(hue, saturation))
                 if (sharpen > 0.01f) push(PhotoOp.Sharpen(sharpen))
                 if (vignette > 0.01f) push(PhotoOp.Vignette(vignette))
+                if (blurRadius > 0.5f) push(PhotoOp.Blur(blurRadius.toInt().coerceIn(1, 8)))
                 sharpen = 0f
                 vignette = 0f
+                blurRadius = 0f
             },
             sharpen = sharpen,
             vignette = vignette,
+            blurRadius = blurRadius,
             onSharpenAmount = { sharpen = it },
             onVignetteAmount = { vignette = it },
+            onBlurAmount = { blurRadius = it },
             onApplyCrop = { push(crop); mode = defaultMode(toolKey) },
             onApplyExpand = { push(PhotoOp.Expand(expand)) },
             onApplyHeal = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Heal(pendingStamps)) },
@@ -570,8 +576,10 @@ private fun ToolBody(
     onApplyGrade: () -> Unit,
     sharpen: Float,
     vignette: Float,
+    blurRadius: Float,
     onSharpenAmount: (Float) -> Unit,
     onVignetteAmount: (Float) -> Unit,
+    onBlurAmount: (Float) -> Unit,
     onApplyCrop: () -> Unit,
     onApplyExpand: () -> Unit,
     onApplyHeal: () -> Unit,
@@ -613,6 +621,7 @@ private fun ToolBody(
                 LabeledSlider(stringResource(R.string.studio_contrast), contrast, 0.4f..1.8f, "session_contrast", onContrast)
                 LabeledSlider(stringResource(R.string.studio_hue), hue, -180f..180f, "session_hue", onHue)
                 LabeledSlider(stringResource(R.string.studio_saturation), saturation, 0f..2f, "session_saturation", onSaturation)
+                LabeledSlider(stringResource(R.string.studio_blur), blurRadius, 0f..8f, "session_blur_amount", onBlurAmount)
                 LabeledSlider(stringResource(R.string.studio_sharpen), sharpen, 0f..1f, "session_sharpen_amount", onSharpenAmount)
                 LabeledSlider(stringResource(R.string.studio_vignette), vignette, 0f..1f, "session_vignette_amount", onVignetteAmount)
                 PixiPrimaryButton(stringResource(R.string.studio_apply), onApplyGrade)

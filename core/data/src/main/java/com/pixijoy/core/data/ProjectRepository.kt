@@ -129,18 +129,25 @@ class ProjectRepository(
         )
     }
 
-    suspend fun importAudioBed(projectId: String, uri: Uri): AppResult<String> = withContext(dispatchers.io) {
+    suspend fun importAudioBed(projectId: String, uri: Uri): AppResult<String> =
+        importAudioFile(projectId, uri, "bed")
+
+    suspend fun importAudioFile(
+        projectId: String,
+        uri: Uri,
+        prefix: String
+    ): AppResult<String> = withContext(dispatchers.io) {
         runCatching {
             dao.get(projectId) ?: return@withContext AppResult.Err("Project missing.")
             val dir = File(context.filesDir, "projects/$projectId").apply { mkdirs() }
-            val tmp = File(dir, "bed-incoming")
+            val tmp = File(dir, "$prefix-incoming")
             context.contentResolver.openInputStream(uri)?.use { input ->
                 tmp.outputStream().use { input.copyTo(it) }
             } ?: return@withContext AppResult.Err("Could not read that audio.")
             val info = MediaProbe.probe(tmp)
             val ext = audioExtension(info.mime)
-            dir.listFiles()?.filter { it.name.startsWith("bed.") }?.forEach { it.delete() }
-            val dest = File(dir, "bed.$ext")
+            dir.listFiles()?.filter { it.name.startsWith("$prefix.") }?.forEach { it.delete() }
+            val dest = File(dir, "$prefix.$ext")
             if (!tmp.renameTo(dest)) {
                 tmp.copyTo(dest, overwrite = true)
                 tmp.delete()
@@ -148,7 +155,7 @@ class ProjectRepository(
             AppResult.Ok(dest.absolutePath)
         }.fold(
             onSuccess = { it },
-            onFailure = { AppResult.Err("Could not add music.", it) }
+            onFailure = { AppResult.Err("Could not add audio.", it) }
         )
     }
 

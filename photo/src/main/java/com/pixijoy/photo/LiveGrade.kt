@@ -117,11 +117,22 @@ uniform shader img;
 uniform float2 size;
 uniform float sharpen;
 uniform float vignette;
+uniform float blur;
 
 half4 main(float2 coord) {
   half4 c = img.eval(coord);
+  float2 t = float2(1.0, 1.0) / max(size, float2(1.0, 1.0));
+  if (blur > 0.5) {
+    float spread = max(blur, 1.0);
+    half4 acc = half4(0.0);
+    for (int y = -2; y <= 2; ++y) {
+      for (int x = -2; x <= 2; ++x) {
+        acc += img.eval(coord + float2(float(x), float(y)) * t * spread);
+      }
+    }
+    c = mix(c, acc / 25.0, clamp(blur / 8.0, 0.0, 1.0));
+  }
   if (sharpen > 0.001) {
-    float2 t = float2(1.0, 1.0) / max(size, float2(1.0, 1.0));
     half4 acc = c;
     acc += img.eval(coord + float2(t.x, 0.0));
     acc += img.eval(coord - float2(t.x, 0.0));
@@ -131,8 +142,8 @@ half4 main(float2 coord) {
     acc += img.eval(coord + float2(-t.x, t.y));
     acc += img.eval(coord + float2(t.x, -t.y));
     acc += img.eval(coord + float2(-t.x, -t.y));
-    half4 blur = acc / 9.0;
-    c = half4(clamp(c.rgb + sharpen * (c.rgb - blur.rgb), 0.0, 1.0), c.a);
+    half4 box = acc / 9.0;
+    c = half4(clamp(c.rgb + sharpen * (c.rgb - box.rgb), 0.0, 1.0), c.a);
   }
   if (vignette > 0.001) {
     float2 p = coord / max(size, float2(1.0, 1.0)) - float2(0.5);
