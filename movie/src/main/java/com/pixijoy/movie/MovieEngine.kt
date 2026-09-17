@@ -36,6 +36,7 @@ import kotlinx.coroutines.withContext
 interface MovieEngine {
     fun isStill(path: String): Boolean
     fun durationMs(path: String): Long
+    fun composition(paths: List<String>, timeline: Timeline): Composition
     suspend fun export(
         context: Context,
         paths: List<String>,
@@ -55,6 +56,15 @@ class Media3MovieEngine : MovieEngine {
     override fun durationMs(path: String): Long {
         val info = MediaProbe.probe(File(path))
         return info.durationMs?.takeIf { it > 0 } ?: MovieTrim.stillDurationMs(false)
+    }
+
+    override fun composition(paths: List<String>, timeline: Timeline): Composition {
+        val source = if (timeline.clips.isEmpty()) {
+            Timeline.fromMedia(paths.size) { durationMs(paths[it]) }
+        } else timeline
+        val items = source.clips.map { clip -> videoItem(paths, clip) }
+        val sequence = EditedMediaItemSequence.Builder(items).build()
+        return composeAudio(sequence, paths, source)
     }
 
     override suspend fun export(
@@ -153,30 +163,27 @@ class Media3MovieEngine : MovieEngine {
         cache: File,
         onProgress: (Float) -> Unit
     ): AppResult<Unit> = withContext(Dispatchers.Main) {
-        val source = if (timeline.clips.isEmpty()) {
-            Timeline.fromMedia(paths.size) { durationMs(paths[it]) }
-        } else timeline
-        val items = source.clips.map { clip ->
-            val path = paths.getOrElse(clip.mediaIndex) { paths.first() }
-            val duration = durationMs(path)
-            val (start, end) = MovieTrim.normalize(clip.inMs, clip.outMs, duration)
-            val builder = MediaItem.Builder()
-                .setUri(Uri.fromFile(File(path)))
-                .setClippingConfiguration(
-                    MediaItem.ClippingConfiguration.Builder()
-                        .setStartPositionMs(start)
-                        .setEndPositionMs(end)
-                        .build()
-                )
-            val edited = EditedMediaItem.Builder(builder.build())
-            if (clip.muted) edited.setRemoveAudio(true)
-            val effects = clipEffects(clip)
-            if (effects != null) edited.setEffects(effects)
-            edited.build()
-        }
-        val sequence = EditedMediaItemSequence.Builder(items).build()
-        val composition = composeAudio(sequence, paths, source)
-        startTransformer(context, composition, cache, onProgress)
+        startTransformer(context, composition(paths, timeline), cache, onProgress)
+    }
+
+    private fun videoItem(paths: List<String>, clip: TimelineClip): EditedMediaItem {
+        val path = paths.getOrElse(clip.mediaIndex) { paths.first() }
+        val duration = durationMs(path)
+        val (start, end) = MovieTrim.normalize(clip.inMs, clip.outMs, duration)
+        val builder = MediaItem.Builder()
+            .setUri(Uri.fromFile(File(path)))
+            .setClippingConfiguration(
+                MediaItem.ClippingConfiguration.Builder()
+                    .setStartPositionMs(start)
+                    .setEndPositionMs(end)
+                    .build()
+            )
+        val edited = EditedMediaItem.Builder(builder.build())
+            .setDurationUs(clip.durationMs.coerceAtLeast(1) * 1000)
+        if (clip.muted) edited.setRemoveAudio(true)
+        val effects = clipEffects(clip)
+        if (effects != null) edited.setEffects(effects)
+        return edited.build()
     }
 
     private suspend fun attachBed(
@@ -261,7 +268,9 @@ class Media3MovieEngine : MovieEngine {
                     .build()
             )
             .build()
-        val edited = EditedMediaItem.Builder(media).setRemoveVideo(true)
+        val edited = EditedMediaItem.Builder(media)
+            .setRemoveVideo(true)
+            .setDurationUs(take * 1000)
         val vol = ClipMix.volume(stem.volume)
         if (vol != 1f || stem.fadeInMs > 0 || stem.fadeOutMs > 0) {
             edited.setEffects(
@@ -305,7 +314,9 @@ class Media3MovieEngine : MovieEngine {
                         .build()
                 )
                 .build()
-            val edited = EditedMediaItem.Builder(media).setRemoveVideo(true)
+            val edited = EditedMediaItem.Builder(media)
+                .setRemoveVideo(true)
+                .setDurationUs(take * 1000)
             val needsMix = vol != 1f || bed.fadeInMs > 0 || bed.fadeOutMs > 0 ||
                 (duck < 0.999f && windows.isNotEmpty())
             if (needsMix) {

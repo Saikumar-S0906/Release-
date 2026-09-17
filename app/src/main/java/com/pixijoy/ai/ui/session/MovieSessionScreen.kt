@@ -84,6 +84,7 @@ import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
 import com.pixijoy.movie.AudioBed
 import com.pixijoy.movie.ClipMix
+import com.pixijoy.movie.CompositionPreview
 import com.pixijoy.movie.Filmstrip
 import com.pixijoy.movie.FilmstripFrame
 import com.pixijoy.movie.Media3MovieEngine
@@ -174,46 +175,49 @@ fun MovieSessionScreen(
     val bedFile = timeline.bed?.let { File(projectDir, it.fileName) }?.takeIf { it.exists() }
     val voiceFile = timeline.voice?.let { File(projectDir, it.fileName) }?.takeIf { it.exists() }
 
-    val player = remember {
-        if (still) null else ExoPlayer.Builder(context).build()
+    val compositionPreview = remember {
+        if (still) null else CompositionPreview(context)
     }
-    val bedPlayer = remember { ExoPlayer.Builder(context).build() }
-    val voicePlayer = remember { ExoPlayer.Builder(context).build() }
-    DisposableEffect(player) {
-        onDispose { player?.release() }
+    val player = compositionPreview?.player
+    val bedPlayer = remember { if (still) ExoPlayer.Builder(context).build() else null }
+    val voicePlayer = remember { if (still) ExoPlayer.Builder(context).build() else null }
+    DisposableEffect(compositionPreview) {
+        onDispose { compositionPreview?.release() }
     }
     DisposableEffect(bedPlayer) {
-        onDispose { bedPlayer.release() }
+        onDispose { bedPlayer?.release() }
     }
     DisposableEffect(voicePlayer) {
-        onDispose { voicePlayer.release() }
+        onDispose { voicePlayer?.release() }
     }
     LaunchedEffect(bedFile?.absolutePath, timeline.bed?.muted) {
+        val exo = bedPlayer ?: return@LaunchedEffect
         val file = bedFile
         val bed = timeline.bed
         if (file != null && bed != null && !bed.muted) {
-            bedPlayer.setMediaItem(MediaItem.fromUri(Uri.fromFile(file)))
-            bedPlayer.repeatMode = Player.REPEAT_MODE_ALL
-            bedPlayer.prepare()
-            bedPlayer.playWhenReady = playing
-            bedPlayer.volume = bed.volume
+            exo.setMediaItem(MediaItem.fromUri(Uri.fromFile(file)))
+            exo.repeatMode = Player.REPEAT_MODE_ALL
+            exo.prepare()
+            exo.playWhenReady = playing
+            exo.volume = bed.volume
         } else {
-            bedPlayer.stop()
-            bedPlayer.clearMediaItems()
+            exo.stop()
+            exo.clearMediaItems()
         }
     }
     LaunchedEffect(voiceFile?.absolutePath, timeline.voice?.muted) {
+        val exo = voicePlayer ?: return@LaunchedEffect
         val file = voiceFile
         val voice = timeline.voice
         if (file != null && voice != null && !voice.muted) {
-            voicePlayer.setMediaItem(MediaItem.fromUri(Uri.fromFile(file)))
-            voicePlayer.repeatMode = Player.REPEAT_MODE_OFF
-            voicePlayer.prepare()
-            voicePlayer.playWhenReady = playing
-            voicePlayer.volume = voice.volume
+            exo.setMediaItem(MediaItem.fromUri(Uri.fromFile(file)))
+            exo.repeatMode = Player.REPEAT_MODE_OFF
+            exo.prepare()
+            exo.playWhenReady = playing
+            exo.volume = voice.volume
         } else {
-            voicePlayer.stop()
-            voicePlayer.clearMediaItems()
+            exo.stop()
+            exo.clearMediaItems()
         }
     }
     LaunchedEffect(paths.size) {
@@ -223,77 +227,14 @@ fun MovieSessionScreen(
             selectedId = timeline.clips.firstOrNull()?.id
         }
     }
-    LaunchedEffect(paths.joinToString(), timeline.encode(), player) {
-        player?.apply {
-            val items = timeline.clips.map { clip ->
-                val p = paths.getOrElse(clip.mediaIndex) { path }
-                MediaItem.Builder()
-                    .setUri(Uri.fromFile(File(p)))
-                    .setClippingConfiguration(
-                        MediaItem.ClippingConfiguration.Builder()
-                            .setStartPositionMs(clip.inMs)
-                            .setEndPositionMs(clip.outMs)
-                            .build()
-                    )
-                    .build()
-            }
-            setMediaItems(items.ifEmpty { listOf(MediaItem.fromUri(Uri.fromFile(File(path)))) })
-            prepare()
-            playWhenReady = true
-            repeatMode = Player.REPEAT_MODE_ALL
-            setPlaybackSpeed(MovieSpeed.normalize(selected?.speed ?: speed))
-        }
+    LaunchedEffect(paths.joinToString(), timeline.encode(), compositionPreview) {
+        compositionPreview?.bind(paths, timeline, playing)
     }
-    LaunchedEffect(speed) {
-        player?.setPlaybackSpeed(MovieSpeed.normalize(speed))
-    }
-    LaunchedEffect(player, timeline.encode()) {
+    LaunchedEffect(player) {
         val exo = player ?: return@LaunchedEffect
         while (true) {
-            val clips = timeline.clips
-            val idx = exo.currentMediaItemIndex.coerceIn(0, (clips.size - 1).coerceAtLeast(0))
-            val before = clips.take(idx).sumOf { it.durationMs }
-            val composition = before + exo.currentPosition
             val total = timeline.totalMs().coerceAtLeast(1)
-            playhead = (composition / total.toFloat()).coerceIn(0f, 1f)
-            val clip = clips.getOrNull(idx)
-            if (clip != null) {
-                exo.volume = if (clip.muted) 0f
-                else ClipMix.gain(
-                    exo.currentPosition,
-                    clip.durationMs,
-                    clip.volume,
-                    clip.fadeInMs,
-                    clip.fadeOutMs
-                )
-            }
-            val voice = timeline.voice
-            val voiceDur = voicePlayer.duration.takeIf { it > 0 } ?: 0L
-            if (voice != null && !voice.muted) {
-                voicePlayer.volume = ClipMix.gain(
-                    composition,
-                    voiceDur.coerceAtLeast(1),
-                    voice.volume,
-                    voice.fadeInMs,
-                    voice.fadeOutMs
-                )
-                voicePlayer.playWhenReady = playing && composition < voiceDur.coerceAtLeast(1)
-            }
-            val bed = timeline.bed
-            if (bed != null && !bed.muted) {
-                bedPlayer.volume = ClipMix.gain(
-                    composition,
-                    total,
-                    bed.volume,
-                    bed.fadeInMs,
-                    bed.fadeOutMs
-                ) * ClipMix.duck(
-                    composition,
-                    timeline.duckWindows(voiceDur),
-                    bed.duck,
-                    bed.attackMs
-                )
-            }
+            playhead = (exo.currentPosition / total.toFloat()).coerceIn(0f, 1f)
             delay(50)
         }
     }
@@ -335,8 +276,8 @@ fun MovieSessionScreen(
 
     fun runExport(gif: Boolean) {
         player?.playWhenReady = false
-        bedPlayer.playWhenReady = false
-        voicePlayer.playWhenReady = false
+        bedPlayer?.playWhenReady = false
+        voicePlayer?.playWhenReady = false
         exporting = true
         progress = 0f
         status = context.getString(R.string.studio_export_background)
@@ -412,13 +353,11 @@ fun MovieSessionScreen(
                         playhead = it
                         val total = timeline.totalMs().coerceAtLeast(1)
                         val ms = (it * total).toLong()
-                        timeline.windowSeek(ms)?.let { (i, local) ->
-                            player?.seekTo(i, local)
-                        }
-                        val bedDur = bedPlayer.duration
-                        if (bedDur > 0) bedPlayer.seekTo(ms % bedDur)
-                        val voiceDur = voicePlayer.duration
-                        if (voiceDur > 0) voicePlayer.seekTo(ms.coerceAtMost(voiceDur))
+                        compositionPreview?.seekMs(ms)
+                        val bedDur = bedPlayer?.duration ?: 0L
+                        if (bedDur > 0) bedPlayer?.seekTo(ms % bedDur)
+                        val voiceDur = voicePlayer?.duration ?: 0L
+                        if (voiceDur > 0) voicePlayer?.seekTo(ms.coerceAtMost(voiceDur))
                     },
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_scrub")
@@ -454,8 +393,8 @@ fun MovieSessionScreen(
                     onClick = {
                         playing = !playing
                         player?.playWhenReady = playing
-                        bedPlayer.playWhenReady = playing
-                        voicePlayer.playWhenReady = playing
+                        bedPlayer?.playWhenReady = playing
+                        voicePlayer?.playWhenReady = playing
                     },
                     modifier = Modifier.testTag("movie_play")
                 ) {
@@ -572,14 +511,14 @@ fun MovieSessionScreen(
                         val idx = timeline.clips.indexOfFirst { it.id == clip.id }
                         if (idx < 0) return@FilmstripRow
                         val local = (sourceMs - clip.inMs).coerceAtLeast(0)
-                        player?.seekTo(idx, local)
                         val composition = timeline.startOf(clip.id) + local
+                        compositionPreview?.seekMs(composition)
                         val total = timeline.totalMs().coerceAtLeast(1)
                         playhead = (composition / total.toFloat()).coerceIn(0f, 1f)
-                        val bedDur = bedPlayer.duration
-                        if (bedDur > 0) bedPlayer.seekTo(composition % bedDur)
-                        val voiceDur = voicePlayer.duration
-                        if (voiceDur > 0) voicePlayer.seekTo(composition.coerceAtMost(voiceDur))
+                        val bedDur = bedPlayer?.duration ?: 0L
+                        if (bedDur > 0) bedPlayer?.seekTo(composition % bedDur)
+                        val voiceDur = voicePlayer?.duration ?: 0L
+                        if (voiceDur > 0) voicePlayer?.seekTo(composition.coerceAtMost(voiceDur))
                     }
                 )
                 PixiSecondaryButton(
