@@ -1,0 +1,33 @@
+appId: com.pixijoy.ai
+---
+- launchApp:
+    appId: com.pixijoy.ai
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: "studio_splash|privacy_accept|nav_home"
+    timeout: 20000
+- runFlow:
+    when:
+      visible:
+        id: "privacy_accept"
+    commands:
+      - tapOn:
+          id: "privacy_accept"
+- extendedWaitUntil:
+    visible:
+      id: "nav_home"
+    timeout: 15000
+- tapOn:
+    id: "nav_create"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_editor"
+    timeout: 10000
+- tapOn:
+    id: "nav_my_stuff"
+- assertVisible: "Library"
+- tapOn:
+    id: "nav_home"
+- assertVisible:
+    id: "home_open_studio"

@@ -20,6 +20,14 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "PixiJoyAI"
+rootProject.name = "PixiJoy"
 include(":app")
+include(":designsystem")
+include(":core:common")
+include(":core:data")
+include(":core:media")
+include(":photo")
+include(":movie")
+include(":ml")
+include(":billing")
 include(":benchmark")
