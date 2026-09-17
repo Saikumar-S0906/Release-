@@ -17,6 +17,3 @@ data class PendingPick(
     val kind: MediaKind,
     val title: String
 )
-
-fun isStudioTwoPane(widthDp: Int, heightDp: Int): Boolean =
-    widthDp >= 840 && heightDp >= 520

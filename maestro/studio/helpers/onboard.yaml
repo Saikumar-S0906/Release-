@@ -1,16 +1,10 @@
 appId: com.pixijoy.ai
 ---
-- extendedWaitUntil:
-    visible:
-      id: "studio_splash|privacy_accept|nav_home"
-    timeout: 20000
-- runFlow:
-    when:
-      visible:
-        id: "privacy_accept"
-    commands:
-      - tapOn:
-          id: "privacy_accept"
+- waitForAnimationToEnd:
+    timeout: 8000
+- tapOn:
+    text: "Continue"
+    optional: true
 - extendedWaitUntil:
     visible:
       id: "nav_home"

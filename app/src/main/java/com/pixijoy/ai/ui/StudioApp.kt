@@ -2,9 +2,15 @@ package com.pixijoy.ai.ui
 
 import android.graphics.BitmapFactory
 import android.net.Uri
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -62,6 +68,7 @@ import com.pixijoy.designsystem.PixiBg
 import com.pixijoy.designsystem.PixiPink
 import com.pixijoy.designsystem.PixiPrimaryButton
 import com.pixijoy.designsystem.PixiText
+import com.pixijoy.designsystem.pixiMotionMs
 import com.pixijoy.movie.Media3MovieEngine
 import com.pixijoy.photo.BitmapPhotoEngine
 import java.io.File
@@ -155,52 +162,76 @@ fun StudioApp() {
         )
         Gate.Shell -> {
             val compactSession = session != null && !twoPane
-            if (compactSession) {
-                SessionHost(
-                    session = session!!,
-                    projects = projects,
-                    repo = repo,
-                    engine = engine,
-                    movieEngine = movieEngine,
-                    onBack = { session = null }
-                )
-            } else {
-                StudioShell(
-                    tab = tab,
-                    onTab = { tab = it },
-                    twoPane = twoPane,
-                    projects = projects,
-                    session = session,
-                    onOpenStudio = { tab = StudioTab.Studio },
-                    onTakePhoto = {
-                        launchCamera(PendingPick("editor", MediaKind.PHOTO, context.getString(R.string.tool_editor)))
-                    },
-                    onGallery = {
-                        launchGallery(PendingPick("editor", MediaKind.PHOTO, context.getString(R.string.tool_editor)))
-                    },
-                    onSample = {
-                        launchSample(PendingPick("editor", MediaKind.PHOTO, context.getString(R.string.tool_editor)))
-                    },
-                    onOpenProject = { project ->
-                        session = OpenSession(
-                            project,
-                            if (project.kind == MediaKind.MOVIE) "move" else "editor"
-                        )
-                        tab = StudioTab.Studio
-                    },
-                    onPickTool = { tool ->
-                        pending = PendingPick(
-                            tool.key,
-                            tool.kind,
-                            context.getString(tool.title)
-                        )
-                        showPickSheet = true
-                    },
-                    onCloseSession = { session = null },
-                    repo = repo,
-                    engine = engine,
-                    movieEngine = movieEngine
-                )
+            val backEnabled = showCamera || showPickSheet || session != null
+            val motion = pixiMotionMs(emphasized = true)
+            PredictiveBackHandler(enabled = backEnabled) { progress ->
+                progress.collect { }
+                when {
+                    showCamera -> {
+                        showCamera = false
+                        cameraRequest = null
+                    }
+                    showPickSheet -> {
+                        showPickSheet = false
+                        pending = null
+                    }
+                    session != null -> session = null
+                }
+            }
+            AnimatedContent(
+                targetState = compactSession,
+                transitionSpec = {
+                    fadeIn(tween(motion)) togetherWith fadeOut(tween((motion / 2).coerceAtLeast(0)))
+                },
+                label = "session-pane"
+            ) { compact ->
+                if (compact && session != null) {
+                    SessionHost(
+                        session = session!!,
+                        projects = projects,
+                        repo = repo,
+                        engine = engine,
+                        movieEngine = movieEngine,
+                        onBack = { session = null }
+                    )
+                } else {
+                    StudioShell(
+                        tab = tab,
+                        onTab = { tab = it },
+                        twoPane = twoPane,
+                        projects = projects,
+                        session = session,
+                        onOpenStudio = { tab = StudioTab.Studio },
+                        onTakePhoto = {
+                            launchCamera(PendingPick("editor", MediaKind.PHOTO, context.getString(R.string.tool_editor)))
+                        },
+                        onGallery = {
+                            launchGallery(PendingPick("editor", MediaKind.PHOTO, context.getString(R.string.tool_editor)))
+                        },
+                        onSample = {
+                            launchSample(PendingPick("editor", MediaKind.PHOTO, context.getString(R.string.tool_editor)))
+                        },
+                        onOpenProject = { project ->
+                            session = OpenSession(
+                                project,
+                                if (project.kind == MediaKind.MOVIE) "move" else "editor"
+                            )
+                            tab = StudioTab.Studio
+                        },
+                        onPickTool = { tool ->
+                            pending = PendingPick(
+                                tool.key,
+                                tool.kind,
+                                context.getString(tool.title)
+                            )
+                            showPickSheet = true
+                        },
+                        onCloseSession = { session = null },
+                        repo = repo,
+                        engine = engine,
+                        movieEngine = movieEngine
+                    )
+                }
             }
             val pick = pending
             if (showPickSheet && pick != null) {
@@ -365,17 +396,18 @@ private fun StudioShell(
                 )
                 StudioTab.Studio -> {
                     if (twoPane) {
-                        Row(Modifier.fillMaxSize()) {
-                            StudioPane(
-                                onPickTool = onPickTool,
-                                modifier = Modifier.weight(0.4f)
-                            )
-                            Box(Modifier.weight(0.6f)) {
-                                if (session != null) {
-                                    SessionHost(session, projects, repo, engine, movieEngine, onCloseSession)
-                                } else {
-                                    EmptyCanvas()
-                                }
+                        StudioTwoPane(onPickTool = onPickTool) {
+                            if (session != null) {
+                                SessionHost(
+                                    session,
+                                    projects,
+                                    repo,
+                                    engine,
+                                    movieEngine,
+                                    onCloseSession
+                                )
+                            } else {
+                                EmptyCanvas()
                             }
                         }
                     } else {

@@ -44,7 +44,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -195,12 +194,6 @@ fun PhotoSessionScreen(
                         constraints.maxHeight.toFloat(),
                         bmp.width,
                         bmp.height
-                    )
-                    Image(
-                        painter = painterResource(R.drawable.pj_bg_checker_hint),
-                        contentDescription = null,
-                        contentScale = ContentScale.FillBounds,
-                        modifier = Modifier.fillMaxSize()
                     )
                     Image(
                         bitmap = bmp.asImageBitmap(),
