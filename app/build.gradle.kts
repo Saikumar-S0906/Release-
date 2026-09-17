@@ -66,6 +66,8 @@ dependencies {
     implementation(libs.androidx.compose.material3.adaptive.navigation.suite)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.coil.compose)
+    implementation(libs.androidx.exifinterface)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.kotlinx.coroutines.android)

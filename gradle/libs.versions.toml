@@ -10,6 +10,8 @@ hilt = "2.52"
 hiltNavigationCompose = "1.2.0"
 navigationCompose = "2.8.5"
 datastore = "1.1.1"
+room = "2.6.1"
+exifinterface = "1.3.7"
 coil = "3.0.4"
 camerax = "1.4.1"
 mlkitSegmentation = "16.0.0-beta6"
@@ -49,6 +51,12 @@ androidx-compose-material3-adaptive-navigation-suite = { group = "androidx.compo
 androidx-window = { group = "androidx.window", name = "window", version = "1.3.0" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
+androidx-compose-material3-adaptive = { group = "androidx.compose.material3.adaptive", name = "adaptive" }
+androidx-compose-material3-adaptive-layout = { group = "androidx.compose.material3.adaptive", name = "adaptive-layout" }
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
 hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }

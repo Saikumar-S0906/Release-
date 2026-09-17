@@ -10,6 +10,7 @@ local.properties
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
+.idea/
 .DS_Store
 /build
 **/build/
@@ -21,3 +22,4 @@ local.properties
 *.keystore
 *.jks
 google-services.json
+maestro/reports/

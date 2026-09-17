@@ -33,4 +33,27 @@
     <string name="tool_move_sub">Motion from a still</string>
     <string name="tool_talking">Talking</string>
     <string name="tool_talking_sub">Ken Burns GIF</string>
+    <string name="studio_take_photo">Take photo</string>
+    <string name="studio_gallery">Gallery</string>
+    <string name="studio_use_sample">Use sample</string>
+    <string name="studio_sample_title">Sample</string>
+    <string name="studio_recents">Recents</string>
+    <string name="studio_pick_body">Photo first, then the tool. Nothing leaves this phone.</string>
+    <string name="studio_cancel">Cancel</string>
+    <string name="studio_back">Back</string>
+    <string name="studio_undo">Undo</string>
+    <string name="studio_redo">Redo</string>
+    <string name="studio_crop">Crop</string>
+    <string name="studio_rotate">Rotate</string>
+    <string name="studio_flip">Flip</string>
+    <string name="studio_adjust">Adjust</string>
+    <string name="studio_apply">Apply</string>
+    <string name="studio_export">Export JPEG</string>
+    <string name="studio_exporting">Exporting…</string>
+    <string name="studio_export_ok">Saved to Pictures/PixiJoy. No watermark.</string>
+    <string name="studio_exposure">Exposure</string>
+    <string name="studio_contrast">Contrast</string>
+    <string name="studio_loading">Opening…</string>
+    <string name="studio_empty_canvas">Pick a tool, then a photo.</string>
+    <string name="studio_movie_placeholder">Trim, concat, and talking stills land in the movie slice. The clip is already on this phone.</string>
 </resources>

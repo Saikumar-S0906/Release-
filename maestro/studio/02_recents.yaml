@@ -1,0 +1,24 @@
+appId: com.pixijoy.ai
+---
+- launchApp:
+    appId: com.pixijoy.ai
+    clearState: true
+- runFlow: helpers/onboard.yaml
+- tapOn:
+    id: "home_use_sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 20000
+- tapOn:
+    id: "session_back"
+- tapOn:
+    id: "nav_home"
+- extendedWaitUntil:
+    visible:
+      id: "home_recents"
+    timeout: 10000
+- tapOn:
+    id: "nav_my_stuff"
+- assertVisible:
+    id: "library_grid"

@@ -1,0 +1,36 @@
+package com.pixijoy.core.media
+
+import android.graphics.BitmapFactory
+import android.media.MediaMetadataRetriever
+import java.io.File
+
+data class MediaInfo(
+    val mime: String,
+    val width: Int,
+    val height: Int,
+    val durationMs: Long? = null
+)
+
+object MediaProbe {
+    fun probe(file: File): MediaInfo {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(file.absolutePath, bounds)
+        if (bounds.outWidth > 0 && bounds.outHeight > 0) {
+            return MediaInfo(
+                mime = bounds.outMimeType ?: "image/jpeg",
+                width = bounds.outWidth,
+                height = bounds.outHeight
+            )
+        }
+        val retriever = MediaMetadataRetriever()
+        return try {
+            retriever.setDataSource(file.absolutePath)
+            val w = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toIntOrNull() ?: 0
+            val h = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toIntOrNull() ?: 0
+            val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()
+            MediaInfo(mime = "video/mp4", width = w, height = h, durationMs = duration)
+        } finally {
+            retriever.release()
+        }
+    }
+}
