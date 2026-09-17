@@ -121,5 +121,7 @@
     <string name="studio_mask_hide">Hide</string>
     <string name="studio_mask_reveal">Reveal</string>
     <string name="studio_mask_clear">Clear mask</string>
-    <string name="studio_mask_hint">Paint on the selected layer. Hide conceals the edit; Reveal brings it back.</string>
+    <string name="studio_mask_subject">Subject</string>
+    <string name="studio_mask_background">Background</string>
+    <string name="studio_mask_hint">Tap Subject to fill the selected layer mask from the person in the photo. Paint Hide or Reveal to refine.</string>
 </resources>

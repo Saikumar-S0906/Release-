@@ -3,6 +3,8 @@ package com.pixijoy.photo
 import kotlin.math.hypot
 import kotlin.math.roundToInt
 
+enum class MaskFill { None, Subject, Background }
+
 data class MaskStroke(
     val x: Float,
     val y: Float,
@@ -24,8 +26,24 @@ fun String.unpackMask(): List<MaskStroke> {
     }
 }
 
-fun rasterizeMask(width: Int, height: Int, strokes: List<MaskStroke>): ByteArray {
-    val mask = ByteArray(width * height) { 255.toByte() }
+fun invertMask(src: ByteArray): ByteArray =
+    ByteArray(src.size) { i -> (255 - (src[i].toInt() and 0xff)).toByte() }
+
+fun maskBytesFromArgb(px: IntArray, invert: Boolean = false): ByteArray =
+    ByteArray(px.size) { i ->
+        val a = (px[i] ushr 24) and 0xff
+        (if (invert) 255 - a else a).toByte()
+    }
+
+fun rasterizeMask(
+    width: Int,
+    height: Int,
+    strokes: List<MaskStroke>,
+    fill: ByteArray? = null
+): ByteArray {
+    val n = width * height
+    val mask = if (fill != null && fill.size == n) fill.copyOf()
+    else ByteArray(n) { 255.toByte() }
     if (strokes.isEmpty()) return mask
     val minSide = minOf(width, height)
     for (stroke in strokes) {

@@ -22,13 +22,10 @@ class BitmapPhotoEngine(
         for (layer in layers) {
             if (!layer.visible) continue
             val next = applyOp(current, layer.op, sources, maxEdge)
-            val mask = if (layer.mask.isEmpty()) null
-            else rasterizeMask(next.width, next.height, layer.mask)
-            val composed = if (layer.op.isGeometry() && mask == null) {
-                next
-            } else if (layer.op.isGeometry()) {
+            val composed = if (layer.op.isGeometry()) {
                 next
             } else {
+                val mask = rasterizeLayerMask(current, next, layer)
                 blendBitmaps(current, next, layer.opacity, layer.blend, mask)
             }
             if (next !== current && next !== composed && !next.isRecycled) next.recycle()
@@ -45,8 +42,17 @@ class BitmapPhotoEngine(
         displayName: String,
         format: ExportFormat,
         quality: Int
+    ): AppResult<String> = exportLayers(context, sources, ops.toLayers(), displayName, format, quality)
+
+    fun exportLayers(
+        context: Context,
+        sources: List<String>,
+        layers: List<LayeredOp>,
+        displayName: String,
+        format: ExportFormat,
+        quality: Int
     ): AppResult<String> {
-        val bitmap = renderLayers(sources, ops.toLayers(), maxEdge = 8192)
+        val bitmap = renderLayers(sources, layers, maxEdge = 8192)
         val compressFormat = when (format) {
             ExportFormat.JPEG -> Bitmap.CompressFormat.JPEG
             ExportFormat.PNG -> Bitmap.CompressFormat.PNG
@@ -80,6 +86,24 @@ class BitmapPhotoEngine(
         } finally {
             if (!bitmap.isRecycled) bitmap.recycle()
         }
+    }
+
+    private fun rasterizeLayerMask(current: Bitmap, next: Bitmap, layer: LayeredOp): ByteArray? {
+        if (layer.mask.isEmpty() && layer.maskFill == MaskFill.None) return null
+        val fill = when (layer.maskFill) {
+            MaskFill.None -> null
+            MaskFill.Subject, MaskFill.Background -> {
+                val bmp = vision.subjectMask(current) ?: return rasterizeMask(next.width, next.height, layer.mask)
+                val scaled = if (bmp.width == next.width && bmp.height == next.height) bmp
+                else Bitmap.createScaledBitmap(bmp, next.width, next.height, true)
+                val px = IntArray(scaled.width * scaled.height)
+                scaled.getPixels(px, 0, scaled.width, 0, 0, scaled.width, scaled.height)
+                if (scaled !== bmp && !scaled.isRecycled) scaled.recycle()
+                if (!bmp.isRecycled) bmp.recycle()
+                maskBytesFromArgb(px, invert = layer.maskFill == MaskFill.Background)
+            }
+        }
+        return rasterizeMask(next.width, next.height, layer.mask, fill)
     }
 
     private fun decode(path: String, maxEdge: Int): Bitmap {

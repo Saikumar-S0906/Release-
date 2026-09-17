@@ -9,7 +9,8 @@ data class LayeredOp(
     val opacity: Float = 1f,
     val blend: BlendMode = BlendMode.Normal,
     val op: PhotoOp,
-    val mask: List<MaskStroke> = emptyList()
+    val mask: List<MaskStroke> = emptyList(),
+    val maskFill: MaskFill = MaskFill.None
 )
 
 fun PhotoOp.layerName(): String = when (this) {
@@ -47,7 +48,7 @@ fun List<LayeredOp>.toOps(): List<PhotoOp> = filter { it.visible }.map { it.op }
 fun List<LayeredOp>.encodeLayers(): String =
     joinToString("\n") { layer ->
         buildString {
-            append("LY,${layer.id},${layer.name.encodePayload()},${if (layer.visible) 1 else 0},${layer.opacity},${layer.blend.name}")
+            append("LY,${layer.id},${layer.name.encodePayload()},${if (layer.visible) 1 else 0},${layer.opacity},${layer.blend.name},${layer.maskFill.name}")
             append('\n')
             append(listOf(layer.op).encodeGraph())
             if (layer.mask.isNotEmpty()) {
@@ -84,7 +85,10 @@ fun String.decodeLayers(): List<LayeredOp> {
                     opacity = p[4].toFloatOrNull()?.coerceIn(0f, 1f) ?: 1f,
                     blend = runCatching { BlendMode.valueOf(p[5]) }.getOrDefault(BlendMode.Normal),
                     op = op,
-                    mask = mask
+                    mask = mask,
+                    maskFill = p.getOrNull(6)?.let {
+                        runCatching { MaskFill.valueOf(it) }.getOrNull()
+                    } ?: MaskFill.None
                 )
             }
             i += consumed

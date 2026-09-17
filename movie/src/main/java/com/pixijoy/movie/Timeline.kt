@@ -60,6 +60,47 @@ data class Timeline(val clips: List<TimelineClip> = emptyList()) {
         clip.copy(outMs = out)
     }
 
+    fun rippleTrimIn(id: String, newInMs: Long, minHoldMs: Long = 250): Timeline {
+        val i = clips.indexOfFirst { it.id == id }
+        if (i < 0) return this
+        val clip = clips[i]
+        val inn = newInMs.coerceIn(0, (clip.outMs - minHoldMs).coerceAtLeast(0))
+        val copy = clips.toMutableList()
+        if (i > 0) {
+            val prev = copy[i - 1]
+            if (prev.mediaIndex == clip.mediaIndex && prev.outMs == clip.inMs) {
+                val cut = inn.coerceIn(prev.inMs + minHoldMs, (clip.outMs - minHoldMs).coerceAtLeast(prev.inMs + minHoldMs))
+                copy[i - 1] = prev.copy(outMs = cut)
+                copy[i] = clip.copy(inMs = cut)
+                return Timeline(copy)
+            }
+        }
+        copy[i] = clip.copy(inMs = inn)
+        return Timeline(copy)
+    }
+
+    fun rippleTrimOut(id: String, newOutMs: Long, sourceEndMs: Long, minHoldMs: Long = 250): Timeline {
+        val i = clips.indexOfFirst { it.id == id }
+        if (i < 0) return this
+        val clip = clips[i]
+        val out = newOutMs.coerceIn(clip.inMs + minHoldMs, sourceEndMs.coerceAtLeast(clip.inMs + minHoldMs))
+        val copy = clips.toMutableList()
+        if (i < copy.lastIndex) {
+            val next = copy[i + 1]
+            if (next.mediaIndex == clip.mediaIndex && next.inMs == clip.outMs) {
+                val cut = out.coerceIn(
+                    clip.inMs + minHoldMs,
+                    (next.outMs - minHoldMs).coerceAtLeast(clip.inMs + minHoldMs)
+                ).coerceAtMost(sourceEndMs.coerceAtLeast(clip.inMs + minHoldMs))
+                copy[i] = clip.copy(outMs = cut)
+                copy[i + 1] = next.copy(inMs = cut)
+                return Timeline(copy)
+            }
+        }
+        copy[i] = clip.copy(outMs = out)
+        return Timeline(copy)
+    }
+
     fun move(id: String, delta: Int): Timeline {
         val i = clips.indexOfFirst { it.id == id }
         if (i < 0) return this

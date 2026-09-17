@@ -63,13 +63,13 @@ import com.pixijoy.photo.BitmapPhotoEngine
 import com.pixijoy.photo.BlendMode
 import com.pixijoy.photo.ExportFormat
 import com.pixijoy.photo.LayeredOp
+import com.pixijoy.photo.MaskFill
 import com.pixijoy.photo.MaskStroke
 import com.pixijoy.photo.PhotoOp
 import com.pixijoy.photo.Stamp
 import com.pixijoy.photo.decodeLayers
 import com.pixijoy.photo.encodeLayers
 import com.pixijoy.photo.layerName
-import com.pixijoy.photo.toOps
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -294,12 +294,28 @@ fun PhotoSessionScreen(
             onBlur = { push(PhotoOp.Blur(2)) },
             onSharpen = { push(PhotoOp.Sharpen(0.55f)) },
             onVignette = { push(PhotoOp.Vignette(0.4f)) },
+            maskFill = (layers.firstOrNull { it.id == selectedLayer } ?: layers.lastOrNull())?.maskFill
+                ?: MaskFill.None,
             maskReveal = maskReveal,
             onMaskReveal = { maskReveal = it },
             onClearMask = {
                 val id = selectedLayer ?: layers.lastOrNull()?.id
                 if (id != null) {
-                    layers = layers.map { if (it.id == id) it.copy(mask = emptyList()) else it }
+                    layers = layers.map {
+                        if (it.id == id) it.copy(mask = emptyList(), maskFill = MaskFill.None) else it
+                    }
+                }
+            },
+            onSubjectMask = {
+                val id = selectedLayer ?: layers.lastOrNull()?.id ?: return@ToolBody
+                layers = layers.map {
+                    if (it.id == id) it.copy(maskFill = MaskFill.Subject) else it
+                }
+            },
+            onBackgroundMask = {
+                val id = selectedLayer ?: layers.lastOrNull()?.id ?: return@ToolBody
+                layers = layers.map {
+                    if (it.id == id) it.copy(maskFill = MaskFill.Background) else it
                 }
             },
             onSticker = { glyph -> push(PhotoOp.Sticker(glyph, placeX, placeY, 0.18f)) },
@@ -370,10 +386,10 @@ fun PhotoSessionScreen(
                 exporting = true
                 scope.launch {
                     val result = withContext(Dispatchers.IO) {
-                        engine.export(
+                        engine.exportLayers(
                             context,
                             sources,
-                            layers.toOps(),
+                            layers,
                             "PixiJoy_${project.title}_${System.currentTimeMillis()}.${format.extension}",
                             format,
                             quality
@@ -461,9 +477,12 @@ private fun ToolBody(
     onBlur: () -> Unit,
     onSharpen: () -> Unit,
     onVignette: () -> Unit,
+    maskFill: MaskFill,
     maskReveal: Boolean,
     onMaskReveal: (Boolean) -> Unit,
-    onClearMask: () -> Unit
+    onClearMask: () -> Unit,
+    onSubjectMask: () -> Unit,
+    onBackgroundMask: () -> Unit
 ) {
     Column(Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (toolKey == "restore") {
@@ -542,6 +561,20 @@ private fun ToolBody(
             }
             SessionMode.Mask -> {
                 LabeledSlider(stringResource(R.string.studio_brush), brush, 0.02f..0.12f, "session_brush_size", onBrush)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FormatChip(
+                        stringResource(R.string.studio_mask_subject),
+                        maskFill == MaskFill.Subject,
+                        "mask_subject",
+                        onSubjectMask
+                    )
+                    FormatChip(
+                        stringResource(R.string.studio_mask_background),
+                        maskFill == MaskFill.Background,
+                        "mask_background",
+                        onBackgroundMask
+                    )
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FormatChip(stringResource(R.string.studio_mask_hide), !maskReveal, "mask_hide") {
                         onMaskReveal(false)

@@ -86,4 +86,46 @@ class PhotoOpTest {
         assertTrue((bits[16 * 32 + 16].toInt() and 0xff) < 200)
         assertTrue((bits[0].toInt() and 0xff) > 200)
     }
+
+    @Test
+    fun subjectFillRoundTripAndRaster() {
+        val layer = LayeredOp(
+            id = "1",
+            name = "Grade",
+            op = PhotoOp.Grade(0f, 1f),
+            maskFill = MaskFill.Subject
+        )
+        val decoded = listOf(layer).encodeLayers().decodeLayers().first()
+        assertEquals(MaskFill.Subject, decoded.maskFill)
+        assertEquals(MaskFill.None, "".decodeLayers().firstOrNull()?.maskFill ?: MaskFill.None)
+
+        val fill = ByteArray(16 * 16) { 0 }
+        for (y in 4..11) for (x in 4..11) fill[y * 16 + x] = 255.toByte()
+        val subject = rasterizeMask(16, 16, emptyList(), fill)
+        assertEquals(255, subject[8 * 16 + 8].toInt() and 0xff)
+        assertEquals(0, subject[0].toInt() and 0xff)
+
+        val hideStroke = listOf(MaskStroke(0.5f, 0.5f, 0.15f, false))
+        val refined = rasterizeMask(16, 16, hideStroke, fill)
+        assertTrue((refined[8 * 16 + 8].toInt() and 0xff) < 200)
+
+        val inverted = invertMask(fill)
+        assertEquals(0, inverted[8 * 16 + 8].toInt() and 0xff)
+        assertEquals(255, inverted[0].toInt() and 0xff)
+
+        val argb = intArrayOf(0x00000000, 0x80FFFFFF.toInt(), 0xFFFFFFFF.toInt())
+        val bytes = maskBytesFromArgb(argb)
+        assertEquals(0, bytes[0].toInt() and 0xff)
+        assertEquals(128, bytes[1].toInt() and 0xff)
+        assertEquals(255, bytes[2].toInt() and 0xff)
+        assertEquals(255, maskBytesFromArgb(argb, invert = true)[0].toInt() and 0xff)
+    }
+
+    @Test
+    fun oldLyWithoutFillStillDecodes() {
+        val graph = "LY,1,Grade,1,1.0,Normal\nG,0.0,1.0"
+        val decoded = graph.decodeLayers().first()
+        assertEquals(MaskFill.None, decoded.maskFill)
+        assertEquals("Grade", decoded.name)
+    }
 }

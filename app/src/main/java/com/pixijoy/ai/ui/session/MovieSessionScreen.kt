@@ -331,7 +331,7 @@ fun MovieSessionScreen(
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState())
                         .testTag("movie_timeline_strip"),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(1.dp)
                 ) {
                     timeline.clips.forEach { clip ->
                         val sourceEnd = engine.durationMs(paths.getOrElse(clip.mediaIndex) { path })
@@ -340,8 +340,8 @@ fun MovieSessionScreen(
                             selected = clip.id == selected?.id,
                             sourceEndMs = sourceEnd,
                             onSelect = { selectedId = clip.id },
-                            onTrimIn = { timeline = timeline.trimIn(clip.id, it) },
-                            onTrimOut = { timeline = timeline.trimOut(clip.id, it, sourceEnd) }
+                            onTrimIn = { timeline = timeline.rippleTrimIn(clip.id, it) },
+                            onTrimOut = { timeline = timeline.rippleTrimOut(clip.id, it, sourceEnd) }
                         )
                     }
                 }
@@ -462,13 +462,17 @@ private fun TimelineClipBlock(
                 .width(14.dp)
                 .height(48.dp)
                 .background(PixiText.copy(alpha = 0.35f))
-                .pointerInput(clip.id, clip.inMs, clip.outMs) {
-                    detectDragGestures { change, drag ->
-                        change.consume()
-                        val dxDp = drag.x / density.density
-                        val dMs = (dxDp * 12f * clip.speed).toLong()
-                        onTrimIn(clip.inMs + dMs)
-                    }
+                .pointerInput(clip.id) {
+                    var acc = 0L
+                    detectDragGestures(
+                        onDragStart = { acc = 0L },
+                        onDrag = { change, drag ->
+                            change.consume()
+                            val dxDp = drag.x / density.density
+                            acc += (dxDp * 12f * clip.speed).toLong()
+                            onTrimIn(clip.inMs + acc)
+                        }
+                    )
                 }
                 .testTag("clip_handle_in")
         )
@@ -483,13 +487,17 @@ private fun TimelineClipBlock(
                 .width(14.dp)
                 .height(48.dp)
                 .background(PixiText.copy(alpha = 0.35f))
-                .pointerInput(clip.id, clip.inMs, clip.outMs, sourceEndMs) {
-                    detectDragGestures { change, drag ->
-                        change.consume()
-                        val dxDp = drag.x / density.density
-                        val dMs = (dxDp * 12f * clip.speed).toLong()
-                        onTrimOut(clip.outMs + dMs)
-                    }
+                .pointerInput(clip.id, sourceEndMs) {
+                    var acc = 0L
+                    detectDragGestures(
+                        onDragStart = { acc = 0L },
+                        onDrag = { change, drag ->
+                            change.consume()
+                            val dxDp = drag.x / density.density
+                            acc += (dxDp * 12f * clip.speed).toLong()
+                            onTrimOut(clip.outMs + acc)
+                        }
+                    )
                 }
                 .testTag("clip_handle_out")
         )
