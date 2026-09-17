@@ -15,6 +15,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,6 +48,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -331,19 +334,15 @@ fun MovieSessionScreen(
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     timeline.clips.forEach { clip ->
-                        val w = (clip.durationMs / 12f).coerceIn(56f, 180f)
-                        Box(
-                            modifier = Modifier
-                                .width(w.dp)
-                                .height(44.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (clip.id == selected?.id) PixiAccent else PixiSurface)
-                                .clickable { selectedId = clip.id }
-                                .padding(6.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(clip.id, color = PixiText, maxLines = 1)
-                        }
+                        val sourceEnd = engine.durationMs(paths.getOrElse(clip.mediaIndex) { path })
+                        TimelineClipBlock(
+                            clip = clip,
+                            selected = clip.id == selected?.id,
+                            sourceEndMs = sourceEnd,
+                            onSelect = { selectedId = clip.id },
+                            onTrimIn = { timeline = timeline.trimIn(clip.id, it) },
+                            onTrimOut = { timeline = timeline.trimOut(clip.id, it, sourceEnd) }
+                        )
                     }
                 }
                 TextButton(
@@ -433,6 +432,66 @@ fun MovieSessionScreen(
                 runExport(gif = exportGif)
             },
             onDismiss = { if (!exporting) showExport = false }
+        )
+    }
+}
+
+@Composable
+private fun TimelineClipBlock(
+    clip: com.pixijoy.movie.TimelineClip,
+    selected: Boolean,
+    sourceEndMs: Long,
+    onSelect: () -> Unit,
+    onTrimIn: (Long) -> Unit,
+    onTrimOut: (Long) -> Unit
+) {
+    val density = LocalDensity.current
+    val w = (clip.durationMs / 12f).coerceIn(64f, 220f)
+    Row(
+        modifier = Modifier
+            .width(w.dp)
+            .height(48.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(if (selected) PixiAccent else PixiSurface)
+            .clickable(onClick = onSelect)
+            .testTag("timeline_clip"),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .width(14.dp)
+                .height(48.dp)
+                .background(PixiText.copy(alpha = 0.35f))
+                .pointerInput(clip.id, clip.inMs, clip.outMs) {
+                    detectDragGestures { change, drag ->
+                        change.consume()
+                        val dxDp = drag.x / density.density
+                        val dMs = (dxDp * 12f * clip.speed).toLong()
+                        onTrimIn(clip.inMs + dMs)
+                    }
+                }
+                .testTag("clip_handle_in")
+        )
+        Text(
+            clip.id,
+            color = PixiText,
+            maxLines = 1,
+            modifier = Modifier.weight(1f).padding(horizontal = 4.dp)
+        )
+        Box(
+            modifier = Modifier
+                .width(14.dp)
+                .height(48.dp)
+                .background(PixiText.copy(alpha = 0.35f))
+                .pointerInput(clip.id, clip.inMs, clip.outMs, sourceEndMs) {
+                    detectDragGestures { change, drag ->
+                        change.consume()
+                        val dxDp = drag.x / density.density
+                        val dMs = (dxDp * 12f * clip.speed).toLong()
+                        onTrimOut(clip.outMs + dMs)
+                    }
+                }
+                .testTag("clip_handle_out")
         )
     }
 }

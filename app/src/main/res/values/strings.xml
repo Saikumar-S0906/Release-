@@ -117,4 +117,9 @@
     <string name="studio_hide">Hide</string>
     <string name="studio_show">Show</string>
     <string name="studio_delete_clip">Delete clip</string>
+    <string name="studio_mask">Mask</string>
+    <string name="studio_mask_hide">Hide</string>
+    <string name="studio_mask_reveal">Reveal</string>
+    <string name="studio_mask_clear">Clear mask</string>
+    <string name="studio_mask_hint">Paint on the selected layer. Hide conceals the edit; Reveal brings it back.</string>
 </resources>

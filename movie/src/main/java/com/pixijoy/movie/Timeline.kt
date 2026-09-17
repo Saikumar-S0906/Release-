@@ -50,6 +50,16 @@ data class Timeline(val clips: List<TimelineClip> = emptyList()) {
 
     fun remove(id: String): Timeline = Timeline(clips.filterNot { it.id == id })
 
+    fun trimIn(id: String, newInMs: Long, minHoldMs: Long = 250): Timeline = update(id) { clip ->
+        val inn = newInMs.coerceIn(0, (clip.outMs - minHoldMs).coerceAtLeast(0))
+        clip.copy(inMs = inn)
+    }
+
+    fun trimOut(id: String, newOutMs: Long, sourceEndMs: Long, minHoldMs: Long = 250): Timeline = update(id) { clip ->
+        val out = newOutMs.coerceIn(clip.inMs + minHoldMs, sourceEndMs.coerceAtLeast(clip.inMs + minHoldMs))
+        clip.copy(outMs = out)
+    }
+
     fun move(id: String, delta: Int): Timeline {
         val i = clips.indexOfFirst { it.id == id }
         if (i < 0) return this

@@ -63,6 +63,7 @@ import com.pixijoy.photo.BitmapPhotoEngine
 import com.pixijoy.photo.BlendMode
 import com.pixijoy.photo.ExportFormat
 import com.pixijoy.photo.LayeredOp
+import com.pixijoy.photo.MaskStroke
 import com.pixijoy.photo.PhotoOp
 import com.pixijoy.photo.Stamp
 import com.pixijoy.photo.decodeLayers
@@ -73,7 +74,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private enum class SessionMode { Crop, Adjust, Heal, Erase, Text, Expand, Stickers, Collage, Curves, Layers }
+private enum class SessionMode { Crop, Adjust, Heal, Erase, Text, Expand, Stickers, Collage, Curves, Layers, Mask }
 
 @Composable
 fun PhotoSessionScreen(
@@ -101,6 +102,7 @@ fun PhotoSessionScreen(
     var saturation by remember { mutableStateOf(1f) }
     var expand by remember { mutableStateOf(0.12f) }
     var brush by remember { mutableStateOf(0.05f) }
+    var maskReveal by remember { mutableStateOf(false) }
     var pendingStamps by remember { mutableStateOf(listOf<Stamp>()) }
     var lastStamp by remember { mutableStateOf<Stamp?>(null) }
     var text by remember { mutableStateOf("PixiJoy") }
@@ -215,6 +217,24 @@ fun PhotoSessionScreen(
                     )
                     when (mode) {
                         SessionMode.Crop -> CropOverlay(crop, imageRect, { crop = it }, Modifier.fillMaxSize())
+                        SessionMode.Mask -> BrushOverlay(
+                            imageRect = imageRect,
+                            radius = brush,
+                            onStamp = { stamp ->
+                                if (!stampSpacing(lastStamp, stamp)) return@BrushOverlay
+                                lastStamp = stamp
+                                val id = selectedLayer ?: layers.lastOrNull()?.id ?: return@BrushOverlay
+                                layers = layers.map { layer ->
+                                    if (layer.id != id) layer
+                                    else layer.copy(
+                                        mask = layer.mask + MaskStroke(
+                                            stamp.x, stamp.y, stamp.r, maskReveal
+                                        )
+                                    )
+                                }
+                            },
+                            modifier = Modifier.fillMaxSize()
+                        )
                         SessionMode.Heal, SessionMode.Erase -> BrushOverlay(
                             imageRect = imageRect,
                             radius = brush,
@@ -274,6 +294,14 @@ fun PhotoSessionScreen(
             onBlur = { push(PhotoOp.Blur(2)) },
             onSharpen = { push(PhotoOp.Sharpen(0.55f)) },
             onVignette = { push(PhotoOp.Vignette(0.4f)) },
+            maskReveal = maskReveal,
+            onMaskReveal = { maskReveal = it },
+            onClearMask = {
+                val id = selectedLayer ?: layers.lastOrNull()?.id
+                if (id != null) {
+                    layers = layers.map { if (it.id == id) it.copy(mask = emptyList()) else it }
+                }
+            },
             onSticker = { glyph -> push(PhotoOp.Sticker(glyph, placeX, placeY, 0.18f)) },
             onCollage = { cols -> push(PhotoOp.Collage(cols)) },
             onAddPhoto = {
@@ -395,7 +423,8 @@ private fun railsFor(toolKey: String): List<RailItem> = when (toolKey) {
         RailItem(R.string.studio_curves, "session_curves", SessionMode.Curves),
         RailItem(R.string.studio_heal, "session_heal", SessionMode.Heal),
         RailItem(R.string.studio_text, "session_text", SessionMode.Text),
-        RailItem(R.string.studio_layers, "session_layers", SessionMode.Layers)
+        RailItem(R.string.studio_layers, "session_layers", SessionMode.Layers),
+        RailItem(R.string.studio_mask, "session_mask", SessionMode.Mask)
     )
 }
 
@@ -431,7 +460,10 @@ private fun ToolBody(
     onApplyCurves: (FloatArray) -> Unit,
     onBlur: () -> Unit,
     onSharpen: () -> Unit,
-    onVignette: () -> Unit
+    onVignette: () -> Unit,
+    maskReveal: Boolean,
+    onMaskReveal: (Boolean) -> Unit,
+    onClearMask: () -> Unit
 ) {
     Column(Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (toolKey == "restore") {
@@ -507,6 +539,19 @@ private fun ToolBody(
                     FormatChip("★", false, "sticker_star") { onSticker("★") }
                     FormatChip("✦", false, "sticker_spark") { onSticker("✦") }
                 }
+            }
+            SessionMode.Mask -> {
+                LabeledSlider(stringResource(R.string.studio_brush), brush, 0.02f..0.12f, "session_brush_size", onBrush)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FormatChip(stringResource(R.string.studio_mask_hide), !maskReveal, "mask_hide") {
+                        onMaskReveal(false)
+                    }
+                    FormatChip(stringResource(R.string.studio_mask_reveal), maskReveal, "mask_reveal") {
+                        onMaskReveal(true)
+                    }
+                }
+                Text(stringResource(R.string.studio_mask_hint), color = PixiTextMuted)
+                PixiPrimaryButton(stringResource(R.string.studio_mask_clear), onClearMask, Modifier.testTag("mask_clear"))
             }
             SessionMode.Layers -> {
                 Text(stringResource(R.string.studio_layers_hint), color = PixiTextMuted)

@@ -75,4 +75,15 @@ class PhotoOpTest {
         assertEquals(128, blendChannel(128, 128, BlendMode.Normal))
         assertTrue(blendChannel(200, 50, BlendMode.Multiply) < 50)
     }
+
+    @Test
+    fun maskRoundTripAndRaster() {
+        val strokes = listOf(MaskStroke(0.5f, 0.5f, 0.2f, false))
+        val layer = LayeredOp("1", "Grade", true, 1f, BlendMode.Normal, PhotoOp.Grade(0f, 1f), strokes)
+        val decoded = listOf(layer).encodeLayers().decodeLayers().first()
+        assertEquals(strokes, decoded.mask)
+        val bits = rasterizeMask(32, 32, strokes)
+        assertTrue((bits[16 * 32 + 16].toInt() and 0xff) < 200)
+        assertTrue((bits[0].toInt() and 0xff) > 200)
+    }
 }

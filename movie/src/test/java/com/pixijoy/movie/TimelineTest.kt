@@ -47,4 +47,12 @@ class TimelineTest {
         assertEquals(listOf("a", "c"), tl.remove("b").clips.map { it.id })
         assertEquals(listOf("b", "a", "c"), tl.move("a", 1).clips.map { it.id })
     }
+
+    @Test
+    fun trimHandlesKeepMinimum() {
+        val tl = Timeline(listOf(TimelineClip("a", 0, 0, 4000)))
+        assertEquals(500L, tl.trimIn("a", 500).clips[0].inMs)
+        assertEquals(3000L, tl.trimOut("a", 3000, 4000).clips[0].outMs)
+        assertTrue(tl.trimIn("a", 3900).clips[0].outMs - tl.trimIn("a", 3900).clips[0].inMs >= 250)
+    }
 }

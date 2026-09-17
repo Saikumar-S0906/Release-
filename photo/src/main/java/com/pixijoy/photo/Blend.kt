@@ -4,7 +4,13 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import kotlin.math.min
 
-fun blendBitmaps(dst: Bitmap, src: Bitmap, opacity: Float, mode: BlendMode): Bitmap {
+fun blendBitmaps(
+    dst: Bitmap,
+    src: Bitmap,
+    opacity: Float,
+    mode: BlendMode,
+    mask: ByteArray? = null
+): Bitmap {
     val w = min(dst.width, src.width)
     val h = min(dst.height, src.height)
     val out = dst.copy(Bitmap.Config.ARGB_8888, true)
@@ -14,7 +20,8 @@ fun blendBitmaps(dst: Bitmap, src: Bitmap, opacity: Float, mode: BlendMode): Bit
     src.getPixels(b, 0, w, 0, 0, w, h)
     val o = opacity.coerceIn(0f, 1f)
     for (i in a.indices) {
-        a[i] = blendPixel(a[i], b[i], o, mode)
+        val m = if (mask != null && i < mask.size) (mask[i].toInt() and 0xff) / 255f else 1f
+        a[i] = blendPixel(a[i], b[i], o * m, mode)
     }
     out.setPixels(a, 0, w, 0, 0, w, h)
     return out

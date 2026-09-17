@@ -8,7 +8,8 @@ data class LayeredOp(
     val visible: Boolean = true,
     val opacity: Float = 1f,
     val blend: BlendMode = BlendMode.Normal,
-    val op: PhotoOp
+    val op: PhotoOp,
+    val mask: List<MaskStroke> = emptyList()
 )
 
 fun PhotoOp.layerName(): String = when (this) {
@@ -45,8 +46,15 @@ fun List<LayeredOp>.toOps(): List<PhotoOp> = filter { it.visible }.map { it.op }
 
 fun List<LayeredOp>.encodeLayers(): String =
     joinToString("\n") { layer ->
-        "LY,${layer.id},${layer.name.encodePayload()},${if (layer.visible) 1 else 0},${layer.opacity},${layer.blend.name}\n" +
-            listOf(layer.op).encodeGraph()
+        buildString {
+            append("LY,${layer.id},${layer.name.encodePayload()},${if (layer.visible) 1 else 0},${layer.opacity},${layer.blend.name}")
+            append('\n')
+            append(listOf(layer.op).encodeGraph())
+            if (layer.mask.isNotEmpty()) {
+                append('\n')
+                append("MK,${layer.mask.pack()}")
+            }
+        }
     }
 
 fun String.decodeLayers(): List<LayeredOp> {
@@ -61,6 +69,13 @@ fun String.decodeLayers(): List<LayeredOp> {
             val p = line.split(',')
             val opLine = lines.getOrNull(i + 1).orEmpty()
             val op = opLine.decodeGraph().firstOrNull()
+            var mask = emptyList<MaskStroke>()
+            var consumed = 2
+            val maybeMask = lines.getOrNull(i + 2).orEmpty()
+            if (maybeMask.startsWith("MK,")) {
+                mask = maybeMask.substringAfter(',').unpackMask()
+                consumed = 3
+            }
             if (op != null && p.size >= 6) {
                 out += LayeredOp(
                     id = p[1],
@@ -68,10 +83,11 @@ fun String.decodeLayers(): List<LayeredOp> {
                     visible = p[3] == "1",
                     opacity = p[4].toFloatOrNull()?.coerceIn(0f, 1f) ?: 1f,
                     blend = runCatching { BlendMode.valueOf(p[5]) }.getOrDefault(BlendMode.Normal),
-                    op = op
+                    op = op,
+                    mask = mask
                 )
             }
-            i += 2
+            i += consumed
         } else {
             i++
         }

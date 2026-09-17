@@ -22,12 +22,14 @@ class BitmapPhotoEngine(
         for (layer in layers) {
             if (!layer.visible) continue
             val next = applyOp(current, layer.op, sources, maxEdge)
-            val composed = if (layer.op.isGeometry() ||
-                (layer.opacity >= 0.999f && layer.blend == BlendMode.Normal)
-            ) {
+            val mask = if (layer.mask.isEmpty()) null
+            else rasterizeMask(next.width, next.height, layer.mask)
+            val composed = if (layer.op.isGeometry() && mask == null) {
+                next
+            } else if (layer.op.isGeometry()) {
                 next
             } else {
-                blendBitmaps(current, next, layer.opacity, layer.blend)
+                blendBitmaps(current, next, layer.opacity, layer.blend, mask)
             }
             if (next !== current && next !== composed && !next.isRecycled) next.recycle()
             if (composed !== current && !current.isRecycled) current.recycle()
