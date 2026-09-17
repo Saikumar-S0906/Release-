@@ -8,7 +8,8 @@ data class MediaInfo(
     val mime: String,
     val width: Int,
     val height: Int,
-    val durationMs: Long? = null
+    val durationMs: Long? = null,
+    val fps: Float? = null
 )
 
 object MediaProbe {
@@ -30,7 +31,9 @@ object MediaProbe {
             val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()
             val mime = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
                 ?: if (w > 0 && h > 0) "video/mp4" else "audio/mp4"
-            MediaInfo(mime = mime, width = w, height = h, durationMs = duration)
+            val fps = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE)
+                ?.toFloatOrNull()
+            MediaInfo(mime = mime, width = w, height = h, durationMs = duration, fps = fps)
         } finally {
             retriever.release()
         }

@@ -89,6 +89,7 @@ import com.pixijoy.movie.Filmstrip
 import com.pixijoy.movie.FilmstripFrame
 import com.pixijoy.movie.Media3MovieEngine
 import com.pixijoy.movie.MovieEngine
+import com.pixijoy.movie.MovieFrame
 import com.pixijoy.movie.MovieMotion
 import com.pixijoy.movie.MovieSpeed
 import com.pixijoy.movie.MovieTrim
@@ -274,6 +275,21 @@ fun MovieSessionScreen(
         }
     }
 
+    fun clipFps(): Float {
+        val p = paths.getOrElse(selected?.mediaIndex ?: 0) { path }
+        return engine.fps(p)
+    }
+
+    fun stepFrame(delta: Int) {
+        playing = false
+        player?.playWhenReady = false
+        val total = timeline.totalMs().coerceAtLeast(1)
+        val now = (playhead * total).toLong()
+        val next = MovieFrame.step(now, delta, clipFps(), total)
+        compositionPreview?.seekMs(next)
+        playhead = (next / total.toFloat()).coerceIn(0f, 1f)
+    }
+
     fun runExport(gif: Boolean) {
         player?.playWhenReady = false
         bedPlayer?.playWhenReady = false
@@ -359,6 +375,12 @@ fun MovieSessionScreen(
                         val voiceDur = voicePlayer?.duration ?: 0L
                         if (voiceDur > 0) voicePlayer?.seekTo(ms.coerceAtMost(voiceDur))
                     },
+                    onValueChangeFinished = {
+                        val total = timeline.totalMs().coerceAtLeast(1)
+                        val snapped = MovieFrame.snap((playhead * total).toLong(), clipFps(), total)
+                        compositionPreview?.seekMs(snapped)
+                        playhead = (snapped / total.toFloat()).coerceIn(0f, 1f)
+                    },
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_scrub")
                 )
@@ -389,19 +411,33 @@ fun MovieSessionScreen(
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_trim_end")
                 )
-                TextButton(
-                    onClick = {
-                        playing = !playing
-                        player?.playWhenReady = playing
-                        bedPlayer?.playWhenReady = playing
-                        voicePlayer?.playWhenReady = playing
-                    },
-                    modifier = Modifier.testTag("movie_play")
-                ) {
-                    Text(
-                        if (playing) stringResource(R.string.studio_pause) else stringResource(R.string.studio_play),
-                        color = PixiText
-                    )
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    TextButton(
+                        onClick = { stepFrame(-1) },
+                        modifier = Modifier.testTag("movie_frame_prev")
+                    ) {
+                        Text(stringResource(R.string.studio_frame_prev), color = PixiText)
+                    }
+                    TextButton(
+                        onClick = {
+                            playing = !playing
+                            player?.playWhenReady = playing
+                            bedPlayer?.playWhenReady = playing
+                            voicePlayer?.playWhenReady = playing
+                        },
+                        modifier = Modifier.testTag("movie_play")
+                    ) {
+                        Text(
+                            if (playing) stringResource(R.string.studio_pause) else stringResource(R.string.studio_play),
+                            color = PixiText
+                        )
+                    }
+                    TextButton(
+                        onClick = { stepFrame(1) },
+                        modifier = Modifier.testTag("movie_frame_next")
+                    ) {
+                        Text(stringResource(R.string.studio_frame_next), color = PixiText)
+                    }
                 }
                 TextButton(
                     onClick = {

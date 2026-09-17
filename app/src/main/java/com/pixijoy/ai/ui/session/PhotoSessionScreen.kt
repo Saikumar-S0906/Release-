@@ -7,6 +7,7 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -41,6 +42,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
@@ -78,6 +82,8 @@ import com.pixijoy.photo.MaskStroke
 import com.pixijoy.photo.PhotoOp
 import com.pixijoy.photo.Stamp
 import com.pixijoy.photo.decodeLayers
+import com.pixijoy.photo.histogramClip
+import com.pixijoy.photo.lumaHistogram
 import com.pixijoy.photo.encodeLayers
 import com.pixijoy.photo.layerName
 import androidx.work.ExistingWorkPolicy
@@ -109,6 +115,7 @@ fun PhotoSessionScreen(
     var redo by remember(project.id) { mutableStateOf(listOf<LayeredOp>()) }
     var selectedLayer by remember { mutableStateOf<String?>(null) }
     var preview by remember { mutableStateOf<Bitmap?>(null) }
+    var histogram by remember { mutableStateOf<IntArray?>(null) }
     var mode by remember { mutableStateOf(defaultMode(toolKey)) }
     var crop by remember { mutableStateOf(PhotoOp.Crop(0.08f, 0.08f, 0.92f, 0.92f)) }
     var exposure by remember { mutableStateOf(0f) }
@@ -174,6 +181,7 @@ fun PhotoSessionScreen(
         }
         preview?.let { if (!it.isRecycled) it.recycle() }
         preview = next
+        histogram = lumaHistogram(next)
         repo.saveGraph(project.id, layers.encodeLayers())
         busy = false
     }
@@ -344,6 +352,15 @@ fun PhotoSessionScreen(
                             modifier = Modifier.fillMaxSize()
                         )
                         else -> Unit
+                    }
+                    val bins = histogram
+                    if (bins != null && (mode == SessionMode.Adjust || mode == SessionMode.Curves)) {
+                        HistogramStrip(
+                            bins = bins,
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                        )
                     }
                 }
             } else {
@@ -819,6 +836,40 @@ private fun LayerStack(
 private fun RailAction(label: String, tag: String, onClick: () -> Unit) {
     TextButton(onClick = onClick, modifier = Modifier.testTag(tag)) {
         Text(label, color = PixiText, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+private fun HistogramStrip(bins: IntArray, modifier: Modifier = Modifier) {
+    val clip = remember(bins) { histogramClip(bins) }
+    Column(modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Canvas(
+            Modifier
+                .fillMaxWidth()
+                .height(44.dp)
+                .testTag("photo_histogram")
+        ) {
+            val peak = bins.maxOrNull()?.coerceAtLeast(1) ?: 1
+            val bar = size.width / bins.size.coerceAtLeast(1)
+            bins.forEachIndexed { i, n ->
+                val h = size.height * n / peak
+                val color = when {
+                    i < 5 -> Color(0xFFE05A5A)
+                    i >= 251 -> Color(0xFF6FA8FF)
+                    else -> PixiAccent
+                }
+                drawRect(
+                    color = color.copy(alpha = 0.9f),
+                    topLeft = Offset(i * bar, size.height - h),
+                    size = Size(bar.coerceAtLeast(1f), h)
+                )
+            }
+        }
+        Text(
+            "${stringResource(R.string.studio_clip_shadows, clip.shadowPct * 100f)}   ${stringResource(R.string.studio_clip_highlights, clip.highlightPct * 100f)}",
+            color = PixiTextMuted,
+            modifier = Modifier.testTag("photo_clipping")
+        )
     }
 }
 

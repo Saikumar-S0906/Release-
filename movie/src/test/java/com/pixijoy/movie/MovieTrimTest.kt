@@ -34,6 +34,18 @@ class MovieTrimTest {
     }
 
     @Test
+    fun frameStepSnapsToFps() {
+        assertEquals(24f, MovieFrame.fps(null), 0.001f)
+        assertEquals(30f, MovieFrame.fps(30f), 0.001f)
+        assertEquals(24f, MovieFrame.fps(0f), 0.001f)
+        assertEquals(41L, MovieFrame.durationMs(24f))
+        assertEquals(1025L, MovieFrame.snap(1020, 24f, 5000))
+        assertEquals(41L, MovieFrame.step(0, 1, 24f, 5000))
+        assertEquals(0L, MovieFrame.step(20, -1, 24f, 5000))
+        assertEquals(5000L, MovieFrame.step(4980, 2, 24f, 5000))
+    }
+
+    @Test
     fun kenBurnsScale_bounds() {
         assertEquals(1f, MovieMotion.scale(0f, false), 0.001f)
         assertEquals(1.18f, MovieMotion.scale(1f, false), 0.001f)

@@ -36,6 +36,7 @@ import kotlinx.coroutines.withContext
 interface MovieEngine {
     fun isStill(path: String): Boolean
     fun durationMs(path: String): Long
+    fun fps(path: String): Float
     fun composition(paths: List<String>, timeline: Timeline): Composition
     suspend fun export(
         context: Context,
@@ -57,6 +58,8 @@ class Media3MovieEngine : MovieEngine {
         val info = MediaProbe.probe(File(path))
         return info.durationMs?.takeIf { it > 0 } ?: MovieTrim.stillDurationMs(false)
     }
+
+    override fun fps(path: String): Float = MovieFrame.fps(MediaProbe.probe(File(path)).fps)
 
     override fun composition(paths: List<String>, timeline: Timeline): Composition {
         val source = if (timeline.clips.isEmpty()) {

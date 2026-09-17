@@ -46,6 +46,21 @@ class PhotoOpTest {
     }
 
     @Test
+    fun histogramClipCountsEnds() {
+        val bins = IntArray(256)
+        bins[0] = 10
+        bins[3] = 10
+        bins[128] = 80
+        bins[255] = 20
+        val clip = histogramClip(bins)
+        assertEquals(20f / 120f, clip.shadowPct, 0.001f)
+        assertEquals(20f / 120f, clip.highlightPct, 0.001f)
+        assertEquals(128, clip.peak)
+        val empty = histogramClip(IntArray(0))
+        assertEquals(0f, empty.shadowPct, 0.001f)
+    }
+
+    @Test
     fun curvesIdentityMidpoint() {
         val ys = floatArrayOf(0f, 0.25f, 0.5f, 0.75f, 1f)
         assertEquals(0.5f, evalCurve(0.5f, ys), 0.001f)
