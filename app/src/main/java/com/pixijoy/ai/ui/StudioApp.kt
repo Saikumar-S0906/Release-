@@ -227,6 +227,7 @@ fun StudioApp() {
                             showPickSheet = true
                         },
                         onCloseSession = { session = null },
+                        onDeleteProject = { project -> scope.launch { repo.delete(project.id) } },
                         repo = repo,
                         engine = engine,
                         movieEngine = movieEngine
@@ -362,6 +363,7 @@ private fun StudioShell(
     onOpenProject: (Project) -> Unit,
     onPickTool: (StudioTool) -> Unit,
     onCloseSession: () -> Unit,
+    onDeleteProject: (Project) -> Unit,
     repo: ProjectRepository,
     engine: BitmapPhotoEngine,
     movieEngine: Media3MovieEngine
@@ -414,7 +416,7 @@ private fun StudioShell(
                         StudioPane(onPickTool = onPickTool)
                     }
                 }
-                StudioTab.Library -> LibraryPane(projects, onOpenProject)
+                StudioTab.Library -> LibraryPane(projects, onOpenProject, onDeleteProject)
             }
         }
     }

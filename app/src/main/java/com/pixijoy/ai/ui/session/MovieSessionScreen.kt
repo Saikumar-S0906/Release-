@@ -99,6 +99,8 @@ fun MovieSessionScreen(
     var exporting by remember { mutableStateOf(false) }
     var progress by remember { mutableFloatStateOf(0f) }
     var status by remember { mutableStateOf<String?>(null) }
+    var showExport by remember { mutableStateOf(false) }
+    var exportGif by remember { mutableStateOf(false) }
     val addClip = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
         if (uri != null) scope.launch { repo.addUri(project.id, uri) }
     }
@@ -282,14 +284,10 @@ fun MovieSessionScreen(
                 Text(it, color = PixiSuccess, modifier = Modifier.testTag("session_status"))
             }
             PixiPrimaryButton(
-                text = when {
-                    exporting && progress > 0f -> context.getString(R.string.studio_export_pct, (progress * 100).toInt())
-                    exporting -> stringResource(R.string.studio_exporting)
-                    else -> stringResource(R.string.studio_export_mp4)
-                },
+                text = stringResource(R.string.studio_export),
                 onClick = {
-                    if (exporting) return@PixiPrimaryButton
-                    runExport(gif = false)
+                    exportGif = false
+                    showExport = true
                 },
                 enabled = !exporting,
                 modifier = Modifier.testTag("session_export")
@@ -307,6 +305,27 @@ fun MovieSessionScreen(
                 )
             }
         }
+    }
+    if (showExport) {
+        ExportSheet(
+            title = stringResource(R.string.studio_export_sheet_title),
+            formats = if (still) listOf("mp4" to "MP4", "gif" to "GIF") else listOf("mp4" to "MP4"),
+            selectedKey = if (exportGif) "gif" else "mp4",
+            quality = 92,
+            showQuality = false,
+            destination = stringResource(
+                if (exportGif) R.string.studio_export_destination_pictures
+                else R.string.studio_export_destination_movies
+            ),
+            exporting = exporting,
+            onSelectFormat = { exportGif = it == "gif" },
+            onQuality = {},
+            onExport = {
+                showExport = false
+                runExport(gif = exportGif)
+            },
+            onDismiss = { if (!exporting) showExport = false }
+        )
     }
 }
 

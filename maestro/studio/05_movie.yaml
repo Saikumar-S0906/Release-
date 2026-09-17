@@ -24,5 +24,11 @@ appId: com.pixijoy.ai
     id: "session_export"
 - extendedWaitUntil:
     visible:
+      id: "export_sheet_confirm"
+    timeout: 10000
+- tapOn:
+    id: "export_sheet_confirm"
+- extendedWaitUntil:
+    visible:
       id: "session_status"
     timeout: 60000

@@ -13,7 +13,7 @@
     <string name="studio_photo_caption">On this device · never uploaded</string>
     <string name="studio_movie_caption">Trim, motion, talking stills — encoded here.</string>
     <string name="studio_recents_empty">Your recents will show up here.</string>
-    <string name="studio_library_empty">Your exports will live here.</string>
+    <string name="studio_library_empty">Your projects will live here.</string>
     <string name="nav_home">Home</string>
     <string name="nav_studio">Studio</string>
     <string name="nav_library">Library</string>
@@ -90,4 +90,12 @@
     <string name="studio_cutout_now">Remove flat background</string>
     <string name="studio_tap_place">Tap the photo to place it.</string>
     <string name="studio_add_photo">Add another photo</string>
+    <string name="studio_filter_all">All</string>
+    <string name="studio_library_delete">Delete</string>
+    <string name="studio_library_filter_empty">Nothing in this filter yet.</string>
+    <string name="studio_export_sheet_title">Export</string>
+    <string name="studio_export_quality">Quality %1$d</string>
+    <string name="studio_export_destination_pictures">Saves to Pictures/PixiJoy</string>
+    <string name="studio_export_destination_movies">Saves to Movies/PixiJoy</string>
+    <string name="studio_export_no_watermark">No watermark. Nothing is uploaded.</string>
 </resources>

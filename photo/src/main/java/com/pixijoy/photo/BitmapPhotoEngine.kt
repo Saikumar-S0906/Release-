@@ -27,7 +27,8 @@ class BitmapPhotoEngine : PhotoEngine {
         sources: List<String>,
         ops: List<PhotoOp>,
         displayName: String,
-        format: ExportFormat
+        format: ExportFormat,
+        quality: Int
     ): AppResult<String> {
         val bitmap = render(sources, ops, maxEdge = 8192)
         val compressFormat = when (format) {
@@ -35,7 +36,7 @@ class BitmapPhotoEngine : PhotoEngine {
             ExportFormat.PNG -> Bitmap.CompressFormat.PNG
             ExportFormat.WEBP -> Bitmap.CompressFormat.WEBP_LOSSY
         }
-        val quality = if (format == ExportFormat.PNG) 100 else 92
+        val q = if (format == ExportFormat.PNG) 100 else quality.coerceIn(60, 100)
         return try {
             val values = ContentValues().apply {
                 put(MediaStore.Images.Media.DISPLAY_NAME, displayName)
@@ -50,7 +51,7 @@ class BitmapPhotoEngine : PhotoEngine {
             val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
                 ?: return AppResult.Err("Could not create a Pictures file.")
             resolver.openOutputStream(uri)?.use { out ->
-                if (!bitmap.compress(compressFormat, quality, out)) {
+                if (!bitmap.compress(compressFormat, q, out)) {
                     return AppResult.Err("Could not write ${format.extension}.")
                 }
             } ?: return AppResult.Err("Could not open export stream.")

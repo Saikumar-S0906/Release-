@@ -104,6 +104,8 @@ fun PhotoSessionScreen(
     var format by remember {
         mutableStateOf(if (toolKey == "cutout" || toolKey == "stickers") ExportFormat.PNG else ExportFormat.JPEG)
     }
+    var quality by remember { mutableStateOf(92) }
+    var showExport by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf<String?>(null) }
     var exporting by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
@@ -283,18 +285,38 @@ fun PhotoSessionScreen(
                 }
             }
         }
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            FormatChip("JPEG", format == ExportFormat.JPEG, "export_jpeg") { format = ExportFormat.JPEG }
-            FormatChip("PNG", format == ExportFormat.PNG, "export_png") { format = ExportFormat.PNG }
-            FormatChip("WebP", format == ExportFormat.WEBP, "export_webp") { format = ExportFormat.WEBP }
-        }
         PixiPrimaryButton(
-            text = if (exporting || busy) stringResource(R.string.studio_exporting) else stringResource(R.string.studio_export),
-            onClick = {
-                if (exporting) return@PixiPrimaryButton
+            text = stringResource(R.string.studio_export),
+            onClick = { showExport = true },
+            enabled = !exporting && !busy,
+            modifier = Modifier
+                .padding(horizontal = 20.dp, vertical = 10.dp)
+                .testTag("session_export")
+        )
+    }
+    if (showExport) {
+        ExportSheet(
+            title = stringResource(R.string.studio_export_sheet_title),
+            formats = listOf(
+                "jpeg" to "JPEG",
+                "png" to "PNG",
+                "webp" to "WebP"
+            ),
+            selectedKey = format.name.lowercase(),
+            quality = quality,
+            showQuality = format != ExportFormat.PNG,
+            destination = stringResource(R.string.studio_export_destination_pictures),
+            exporting = exporting,
+            onSelectFormat = { key ->
+                format = when (key) {
+                    "png" -> ExportFormat.PNG
+                    "webp" -> ExportFormat.WEBP
+                    else -> ExportFormat.JPEG
+                }
+            },
+            onQuality = { quality = it },
+            onExport = {
+                if (exporting) return@ExportSheet
                 exporting = true
                 scope.launch {
                     val result = withContext(Dispatchers.IO) {
@@ -303,20 +325,19 @@ fun PhotoSessionScreen(
                             sources,
                             ops,
                             "PixiJoy_${project.title}_${System.currentTimeMillis()}.${format.extension}",
-                            format
+                            format,
+                            quality
                         )
                     }
                     exporting = false
+                    showExport = false
                     status = when (result) {
                         is AppResult.Ok -> context.getString(R.string.studio_export_ok)
                         is AppResult.Err -> result.message
                     }
                 }
             },
-            enabled = !exporting,
-            modifier = Modifier
-                .padding(horizontal = 20.dp, vertical = 10.dp)
-                .testTag("session_export")
+            onDismiss = { if (!exporting) showExport = false }
         )
     }
 }

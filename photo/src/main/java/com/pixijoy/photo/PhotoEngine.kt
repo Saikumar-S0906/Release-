@@ -11,7 +11,8 @@ interface PhotoEngine {
         sources: List<String>,
         ops: List<PhotoOp>,
         displayName: String,
-        format: ExportFormat
+        format: ExportFormat,
+        quality: Int = 92
     ): AppResult<String>
 }
 
@@ -25,6 +26,7 @@ class StubPhotoEngine : PhotoEngine {
         sources: List<String>,
         ops: List<PhotoOp>,
         displayName: String,
-        format: ExportFormat
+        format: ExportFormat,
+        quality: Int
     ): AppResult<String> = AppResult.Err("Stub")
 }
