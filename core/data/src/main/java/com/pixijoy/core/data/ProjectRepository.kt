@@ -102,12 +102,7 @@ class ProjectRepository(
                 tmp.outputStream().use { input.copyTo(it) }
             } ?: return@withContext AppResult.Err("Could not read that file.")
             val info = MediaProbe.probe(tmp)
-            val ext = when {
-                info.mime.contains("png") -> "png"
-                info.mime.contains("webp") -> "webp"
-                info.mime.contains("video") || (info.durationMs ?: 0) > 0 -> "mp4"
-                else -> "jpg"
-            }
+            val ext = extensionFor(info.mime, info.durationMs)
             val dest = File(dir, "extra-${System.currentTimeMillis()}.$ext")
             if (!tmp.renameTo(dest)) {
                 tmp.copyTo(dest, overwrite = true)
@@ -134,6 +129,29 @@ class ProjectRepository(
         )
     }
 
+    suspend fun importAudioBed(projectId: String, uri: Uri): AppResult<String> = withContext(dispatchers.io) {
+        runCatching {
+            dao.get(projectId) ?: return@withContext AppResult.Err("Project missing.")
+            val dir = File(context.filesDir, "projects/$projectId").apply { mkdirs() }
+            val tmp = File(dir, "bed-incoming")
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                tmp.outputStream().use { input.copyTo(it) }
+            } ?: return@withContext AppResult.Err("Could not read that audio.")
+            val info = MediaProbe.probe(tmp)
+            val ext = audioExtension(info.mime)
+            dir.listFiles()?.filter { it.name.startsWith("bed.") }?.forEach { it.delete() }
+            val dest = File(dir, "bed.$ext")
+            if (!tmp.renameTo(dest)) {
+                tmp.copyTo(dest, overwrite = true)
+                tmp.delete()
+            }
+            AppResult.Ok(dest.absolutePath)
+        }.fold(
+            onSuccess = { it },
+            onFailure = { AppResult.Err("Could not add music.", it) }
+        )
+    }
+
     suspend fun saveGraph(id: String, graph: String): Unit = withContext(dispatchers.io) {
         val row = dao.get(id)?.project ?: return@withContext
         dao.upsertProject(row.copy(graph = graph, updatedAt = System.currentTimeMillis()))
@@ -152,12 +170,11 @@ class ProjectRepository(
         title: String
     ): AppResult<Project> {
         val info = MediaProbe.probe(tmp)
-        val ext = when {
-            info.mime.contains("png") -> "png"
-            info.mime.contains("webp") -> "webp"
-            info.mime.contains("video") || kind == MediaKind.MOVIE -> "mp4"
-            else -> "jpg"
-        }
+        val ext = extensionFor(
+            info.mime,
+            info.durationMs,
+            movie = kind == MediaKind.MOVIE
+        )
         val dest = File(dir, "source.$ext")
         if (!tmp.renameTo(dest)) {
             tmp.copyTo(dest, overwrite = true)
@@ -208,3 +225,28 @@ private fun com.pixijoy.core.data.db.ProjectWithMedia.toProject() = Project(
         )
     }
 )
+
+internal fun extensionFor(mime: String, durationMs: Long?, movie: Boolean = false): String {
+    val m = mime.lowercase()
+    return when {
+        m.contains("png") -> "png"
+        m.contains("webp") -> "webp"
+        m.startsWith("audio") || m.contains("mpeg") && !m.contains("video") -> audioExtension(m)
+        m.contains("video") || movie -> "mp4"
+        (durationMs ?: 0) > 0 && (m.contains("audio") || m.contains("mpeg") || m.contains("aac") || m.contains("mp4")) ->
+            if (m.contains("video")) "mp4" else audioExtension(m)
+        (durationMs ?: 0) > 0 -> "mp4"
+        else -> "jpg"
+    }
+}
+
+internal fun audioExtension(mime: String): String {
+    val m = mime.lowercase()
+    return when {
+        m.contains("mpeg") || m.contains("mp3") -> "mp3"
+        m.contains("wav") -> "wav"
+        m.contains("ogg") || m.contains("opus") -> "ogg"
+        m.contains("aac") || m.contains("m4a") || m.contains("mp4") -> "m4a"
+        else -> "m4a"
+    }
+}

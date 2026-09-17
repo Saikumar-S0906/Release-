@@ -36,6 +36,20 @@ class TimelineTest {
     }
 
     @Test
+    fun audioBedRoundTripAndSurvivesSplit() {
+        val tl = Timeline(
+            listOf(TimelineClip("a", 0, 0, 4000)),
+            AudioBed("bed.m4a", 0.6f, 200, 300, false)
+        )
+        val decoded = Timeline.decode(tl.encode(), 1) { 4000 }
+        assertEquals(tl.bed, decoded.bed)
+        val split = decoded.split(2000)
+        assertEquals("bed.m4a", split.bed?.fileName)
+        assertEquals(0.6f, split.bed?.volume ?: 0f, 0.001f)
+        assertEquals(2, split.clips.size)
+    }
+
+    @Test
     fun oldSevenFieldClipKeepsFullVolume() {
         val decoded = Timeline.decode("C,0,0,1000,1.0,0,a", 1) { 1000 }
         assertEquals(1f, decoded.clips[0].volume, 0.001f)

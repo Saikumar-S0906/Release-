@@ -15,7 +15,18 @@ data class TimelineClip(
     val durationMs: Long get() = MovieSpeed.outputDurationMs(sourceDurationMs, speed)
 }
 
-data class Timeline(val clips: List<TimelineClip> = emptyList()) {
+data class AudioBed(
+    val fileName: String,
+    val volume: Float = 0.8f,
+    val fadeInMs: Long = 400,
+    val fadeOutMs: Long = 400,
+    val muted: Boolean = false
+)
+
+data class Timeline(
+    val clips: List<TimelineClip> = emptyList(),
+    val bed: AudioBed? = null
+) {
     fun totalMs(): Long = clips.sumOf { it.durationMs }
 
     fun clipAt(playheadMs: Long): Pair<TimelineClip, Long>? {
@@ -61,13 +72,13 @@ data class Timeline(val clips: List<TimelineClip> = emptyList()) {
             }
             t = end
         }
-        return if (split) Timeline(out) else this
+        return if (split) copy(clips = out) else this
     }
 
     fun update(id: String, transform: (TimelineClip) -> TimelineClip): Timeline =
-        Timeline(clips.map { if (it.id == id) transform(it) else it })
+        copy(clips = clips.map { if (it.id == id) transform(it) else it })
 
-    fun remove(id: String): Timeline = Timeline(clips.filterNot { it.id == id })
+    fun remove(id: String): Timeline = copy(clips = clips.filterNot { it.id == id })
 
     fun trimIn(id: String, newInMs: Long, minHoldMs: Long = 250): Timeline = update(id) { clip ->
         val inn = newInMs.coerceIn(0, (clip.outMs - minHoldMs).coerceAtLeast(0))
@@ -91,11 +102,11 @@ data class Timeline(val clips: List<TimelineClip> = emptyList()) {
                 val cut = inn.coerceIn(prev.inMs + minHoldMs, (clip.outMs - minHoldMs).coerceAtLeast(prev.inMs + minHoldMs))
                 copy[i - 1] = prev.copy(outMs = cut)
                 copy[i] = clip.copy(inMs = cut)
-                return Timeline(copy)
+                return copy(clips = copy)
             }
         }
         copy[i] = clip.copy(inMs = inn)
-        return Timeline(copy)
+        return copy(clips = copy)
     }
 
     fun rippleTrimOut(id: String, newOutMs: Long, sourceEndMs: Long, minHoldMs: Long = 250): Timeline {
@@ -113,11 +124,11 @@ data class Timeline(val clips: List<TimelineClip> = emptyList()) {
                 ).coerceAtMost(sourceEndMs.coerceAtLeast(clip.inMs + minHoldMs))
                 copy[i] = clip.copy(outMs = cut)
                 copy[i + 1] = next.copy(inMs = cut)
-                return Timeline(copy)
+                return copy(clips = copy)
             }
         }
         copy[i] = clip.copy(outMs = out)
-        return Timeline(copy)
+        return copy(clips = copy)
     }
 
     fun move(id: String, delta: Int): Timeline {
@@ -128,11 +139,18 @@ data class Timeline(val clips: List<TimelineClip> = emptyList()) {
         val copy = clips.toMutableList()
         val clip = copy.removeAt(i)
         copy.add(j, clip)
-        return Timeline(copy)
+        return copy(clips = copy)
     }
 
-    fun encode(): String = clips.joinToString("\n") { c ->
-        "C,${c.mediaIndex},${c.inMs},${c.outMs},${c.speed},${if (c.muted) 1 else 0},${c.id},${ClipMix.volume(c.volume)},${c.fadeInMs.coerceAtLeast(0)},${c.fadeOutMs.coerceAtLeast(0)}"
+    fun encode(): String = buildString {
+        append(clips.joinToString("\n") { c ->
+            "C,${c.mediaIndex},${c.inMs},${c.outMs},${c.speed},${if (c.muted) 1 else 0},${c.id},${ClipMix.volume(c.volume)},${c.fadeInMs.coerceAtLeast(0)},${c.fadeOutMs.coerceAtLeast(0)}"
+        })
+        val music = bed
+        if (music != null) {
+            if (isNotEmpty()) append('\n')
+            append("A,${music.fileName},${ClipMix.volume(music.volume)},${music.fadeInMs.coerceAtLeast(0)},${music.fadeOutMs.coerceAtLeast(0)},${if (music.muted) 1 else 0}")
+        }
     }
 
     companion object {
@@ -164,7 +182,21 @@ data class Timeline(val clips: List<TimelineClip> = emptyList()) {
                     )
                 }.getOrNull()
             }.toList()
-            return if (parsed.isEmpty()) fromMedia(count, durationMs) else Timeline(parsed)
+            val bed = raw.lineSequence().mapNotNull { line ->
+                val p = line.trim().split(',')
+                if (p.getOrNull(0) != "A" || p.size < 6) return@mapNotNull null
+                runCatching {
+                    AudioBed(
+                        fileName = p[1],
+                        volume = p[2].toFloat().let(ClipMix::volume),
+                        fadeInMs = p[3].toLong().coerceAtLeast(0),
+                        fadeOutMs = p[4].toLong().coerceAtLeast(0),
+                        muted = p[5] == "1"
+                    )
+                }.getOrNull()
+            }.firstOrNull()
+            val clips = if (parsed.isEmpty()) fromMedia(count, durationMs).clips else parsed
+            return Timeline(clips, bed)
         }
     }
 }

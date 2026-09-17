@@ -75,6 +75,7 @@ import com.pixijoy.designsystem.PixiSuccess
 import com.pixijoy.designsystem.PixiSurface
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
+import com.pixijoy.movie.AudioBed
 import com.pixijoy.movie.ClipMix
 import com.pixijoy.movie.Filmstrip
 import com.pixijoy.movie.FilmstripFrame
@@ -137,13 +138,45 @@ fun MovieSessionScreen(
             }
         }
     }
+    val addMusic = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            scope.launch {
+                when (val result = repo.importAudioBed(project.id, uri)) {
+                    is AppResult.Ok -> {
+                        timeline = timeline.copy(bed = AudioBed(fileName = File(result.value).name))
+                    }
+                    is AppResult.Err -> status = result.message
+                }
+            }
+        }
+    }
     val selected = timeline.clips.firstOrNull { it.id == selectedId } ?: timeline.clips.firstOrNull()
+    val projectDir = remember(path) { File(path).parent }
+    val bedFile = timeline.bed?.let { File(projectDir, it.fileName) }?.takeIf { it.exists() }
 
     val player = remember {
         if (still) null else ExoPlayer.Builder(context).build()
     }
+    val bedPlayer = remember { ExoPlayer.Builder(context).build() }
     DisposableEffect(player) {
         onDispose { player?.release() }
+    }
+    DisposableEffect(bedPlayer) {
+        onDispose { bedPlayer.release() }
+    }
+    LaunchedEffect(bedFile?.absolutePath, timeline.bed?.muted) {
+        val file = bedFile
+        val bed = timeline.bed
+        if (file != null && bed != null && !bed.muted) {
+            bedPlayer.setMediaItem(MediaItem.fromUri(Uri.fromFile(file)))
+            bedPlayer.repeatMode = Player.REPEAT_MODE_ALL
+            bedPlayer.prepare()
+            bedPlayer.playWhenReady = playing
+            bedPlayer.volume = bed.volume
+        } else {
+            bedPlayer.stop()
+            bedPlayer.clearMediaItems()
+        }
     }
     LaunchedEffect(paths.size) {
         if (!still && timeline.clips.size != paths.size) {
@@ -193,6 +226,16 @@ fun MovieSessionScreen(
                     clip.volume,
                     clip.fadeInMs,
                     clip.fadeOutMs
+                )
+            }
+            val bed = timeline.bed
+            if (bed != null && !bed.muted) {
+                bedPlayer.volume = ClipMix.gain(
+                    composition,
+                    total,
+                    bed.volume,
+                    bed.fadeInMs,
+                    bed.fadeOutMs
                 )
             }
             delay(50)
@@ -275,9 +318,12 @@ fun MovieSessionScreen(
                     onValueChange = {
                         playhead = it
                         val total = timeline.totalMs().coerceAtLeast(1)
-                        timeline.windowSeek((it * total).toLong())?.let { (i, local) ->
+                        val ms = (it * total).toLong()
+                        timeline.windowSeek(ms)?.let { (i, local) ->
                             player?.seekTo(i, local)
                         }
+                        val bedDur = bedPlayer.duration
+                        if (bedDur > 0) bedPlayer.seekTo(ms % bedDur)
                     },
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_scrub")
@@ -313,6 +359,7 @@ fun MovieSessionScreen(
                     onClick = {
                         playing = !playing
                         player?.playWhenReady = playing
+                        bedPlayer.playWhenReady = playing
                     },
                     modifier = Modifier.testTag("movie_play")
                 ) {
@@ -430,8 +477,11 @@ fun MovieSessionScreen(
                         if (idx < 0) return@FilmstripRow
                         val local = (sourceMs - clip.inMs).coerceAtLeast(0)
                         player?.seekTo(idx, local)
+                        val composition = timeline.startOf(clip.id) + local
                         val total = timeline.totalMs().coerceAtLeast(1)
-                        playhead = ((timeline.startOf(clip.id) + local) / total.toFloat()).coerceIn(0f, 1f)
+                        playhead = (composition / total.toFloat()).coerceIn(0f, 1f)
+                        val bedDur = bedPlayer.duration
+                        if (bedDur > 0) bedPlayer.seekTo(composition % bedDur)
                     }
                 )
                 PixiSecondaryButton(
@@ -456,6 +506,69 @@ fun MovieSessionScreen(
                     if (talking) stringResource(R.string.studio_talking_hint) else stringResource(R.string.studio_move_hint),
                     color = PixiTextMuted
                 )
+            }
+            PixiSecondaryButton(
+                text = stringResource(
+                    if (timeline.bed == null) R.string.studio_add_music else R.string.studio_replace_music
+                ),
+                onClick = { addMusic.launch("audio/*") },
+                modifier = Modifier.fillMaxWidth().testTag("movie_add_music")
+            )
+            val bed = timeline.bed
+            if (bed != null) {
+                Text(
+                    stringResource(R.string.studio_music_volume, bed.volume * 100f),
+                    color = PixiTextMuted
+                )
+                Slider(
+                    value = bed.volume,
+                    onValueChange = { v ->
+                        timeline = timeline.copy(bed = bed.copy(volume = ClipMix.volume(v)))
+                    },
+                    valueRange = 0f..1f,
+                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
+                    modifier = Modifier.testTag("movie_bed_volume")
+                )
+                Text(
+                    stringResource(R.string.studio_fade_in, bed.fadeInMs.toInt()),
+                    color = PixiTextMuted
+                )
+                Slider(
+                    value = bed.fadeInMs.toFloat(),
+                    onValueChange = { timeline = timeline.copy(bed = bed.copy(fadeInMs = it.toLong().coerceAtLeast(0))) },
+                    valueRange = 0f..2000f,
+                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
+                    modifier = Modifier.testTag("movie_bed_fade_in")
+                )
+                Text(
+                    stringResource(R.string.studio_fade_out, bed.fadeOutMs.toInt()),
+                    color = PixiTextMuted
+                )
+                Slider(
+                    value = bed.fadeOutMs.toFloat(),
+                    onValueChange = { timeline = timeline.copy(bed = bed.copy(fadeOutMs = it.toLong().coerceAtLeast(0))) },
+                    valueRange = 0f..2000f,
+                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
+                    modifier = Modifier.testTag("movie_bed_fade_out")
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(
+                        onClick = { timeline = timeline.copy(bed = bed.copy(muted = !bed.muted)) },
+                        modifier = Modifier.testTag("movie_bed_mute")
+                    ) {
+                        Text(
+                            if (bed.muted) stringResource(R.string.studio_unmute)
+                            else stringResource(R.string.studio_mute),
+                            color = PixiText
+                        )
+                    }
+                    TextButton(
+                        onClick = { timeline = timeline.copy(bed = null) },
+                        modifier = Modifier.testTag("movie_bed_remove")
+                    ) {
+                        Text(stringResource(R.string.studio_remove_music), color = PixiText)
+                    }
+                }
             }
             Text(
                 stringResource(R.string.studio_speed, MovieSpeed.normalize(selected?.speed ?: speed)),

@@ -1,7 +1,9 @@
 package com.pixijoy.ai.ui.session
 
 import android.graphics.Bitmap
+import android.graphics.RuntimeShader
 import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -40,7 +42,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -63,6 +69,7 @@ import com.pixijoy.photo.BitmapPhotoEngine
 import com.pixijoy.photo.BlendMode
 import com.pixijoy.photo.ExportFormat
 import com.pixijoy.photo.LayeredOp
+import com.pixijoy.photo.LiveGrade
 import com.pixijoy.photo.MaskFill
 import com.pixijoy.photo.MaskStroke
 import com.pixijoy.photo.PhotoOp
@@ -100,6 +107,10 @@ fun PhotoSessionScreen(
     var contrast by remember { mutableStateOf(1f) }
     var hue by remember { mutableStateOf(0f) }
     var saturation by remember { mutableStateOf(1f) }
+    var curveYs by remember { mutableStateOf(floatArrayOf(0f, 0.25f, 0.5f, 0.75f, 1f)) }
+    val curvesShader = remember {
+        if (Build.VERSION.SDK_INT >= 33) RuntimeShader(LiveGrade.CURVES_AGSL) else null
+    }
     var expand by remember { mutableStateOf(0.12f) }
     var brush by remember { mutableStateOf(0.05f) }
     var maskReveal by remember { mutableStateOf(false) }
@@ -209,11 +220,38 @@ fun PhotoSessionScreen(
                         bmp.width,
                         bmp.height
                     )
+                    val liveAdjust = mode == SessionMode.Adjust &&
+                        !LiveGrade.isAdjustIdentity(exposure, contrast, hue, saturation)
+                    val liveCurves = mode == SessionMode.Curves && !LiveGrade.curvesIdentity(curveYs)
                     Image(
                         bitmap = bmp.asImageBitmap(),
                         contentDescription = project.title,
                         contentScale = ContentScale.Fit,
-                        modifier = Modifier.fillMaxSize()
+                        colorFilter = if (liveAdjust) {
+                            ColorFilter.colorMatrix(
+                                ColorMatrix(LiveGrade.colorMatrix(exposure, contrast, hue, saturation))
+                            )
+                        } else {
+                            null
+                        },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .then(
+                                if (liveCurves && Build.VERSION.SDK_INT >= 33 && curvesShader != null) {
+                                    Modifier.graphicsLayer {
+                                        curvesShader.setFloatUniform("y0", curveYs[0])
+                                        curvesShader.setFloatUniform("y1", curveYs[1])
+                                        curvesShader.setFloatUniform("y2", curveYs[2])
+                                        curvesShader.setFloatUniform("y3", curveYs[3])
+                                        curvesShader.setFloatUniform("y4", curveYs[4])
+                                        renderEffect = android.graphics.RenderEffect
+                                            .createRuntimeShaderEffect(curvesShader, "img")
+                                            .asComposeRenderEffect()
+                                    }
+                                } else {
+                                    Modifier
+                                }
+                            )
                     )
                     when (mode) {
                         SessionMode.Crop -> CropOverlay(crop, imageRect, { crop = it }, Modifier.fillMaxSize())
@@ -291,6 +329,8 @@ fun PhotoSessionScreen(
             onRestore = { push(PhotoOp.Restore) },
             onCutout = { push(PhotoOp.Subject); format = ExportFormat.PNG },
             onApplyCurves = { push(PhotoOp.Curves(it.copyOf())) },
+            curveYs = curveYs,
+            onCurveYs = { curveYs = it },
             onBlur = { push(PhotoOp.Blur(2)) },
             onSharpen = { push(PhotoOp.Sharpen(0.55f)) },
             onVignette = { push(PhotoOp.Vignette(0.4f)) },
@@ -474,6 +514,8 @@ private fun ToolBody(
     onCollage: (Int) -> Unit,
     onAddPhoto: () -> Unit,
     onApplyCurves: (FloatArray) -> Unit,
+    curveYs: FloatArray,
+    onCurveYs: (FloatArray) -> Unit,
     onBlur: () -> Unit,
     onSharpen: () -> Unit,
     onVignette: () -> Unit,
@@ -510,19 +552,19 @@ private fun ToolBody(
                 }
             }
             SessionMode.Curves -> {
-                var c0 by remember { mutableStateOf(0f) }
-                var c1 by remember { mutableStateOf(0.25f) }
-                var c2 by remember { mutableStateOf(0.5f) }
-                var c3 by remember { mutableStateOf(0.75f) }
-                var c4 by remember { mutableStateOf(1f) }
-                LabeledSlider(stringResource(R.string.studio_curve_black), c0, 0f..1f, "curve_0") { c0 = it }
-                LabeledSlider(stringResource(R.string.studio_curve_shadow), c1, 0f..1f, "curve_1") { c1 = it }
-                LabeledSlider(stringResource(R.string.studio_curve_mid), c2, 0f..1f, "curve_2") { c2 = it }
-                LabeledSlider(stringResource(R.string.studio_curve_light), c3, 0f..1f, "curve_3") { c3 = it }
-                LabeledSlider(stringResource(R.string.studio_curve_white), c4, 0f..1f, "curve_4") { c4 = it }
+                fun set(i: Int, v: Float) {
+                    val next = curveYs.copyOf()
+                    next[i] = v
+                    onCurveYs(next)
+                }
+                LabeledSlider(stringResource(R.string.studio_curve_black), curveYs[0], 0f..1f, "curve_0") { set(0, it) }
+                LabeledSlider(stringResource(R.string.studio_curve_shadow), curveYs[1], 0f..1f, "curve_1") { set(1, it) }
+                LabeledSlider(stringResource(R.string.studio_curve_mid), curveYs[2], 0f..1f, "curve_2") { set(2, it) }
+                LabeledSlider(stringResource(R.string.studio_curve_light), curveYs[3], 0f..1f, "curve_3") { set(3, it) }
+                LabeledSlider(stringResource(R.string.studio_curve_white), curveYs[4], 0f..1f, "curve_4") { set(4, it) }
                 PixiPrimaryButton(
                     stringResource(R.string.studio_apply),
-                    { onApplyCurves(floatArrayOf(c0, c1, c2, c3, c4)) },
+                    { onApplyCurves(curveYs.copyOf()) },
                     Modifier.testTag("session_apply_curves")
                 )
             }

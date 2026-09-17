@@ -28,7 +28,9 @@ object MediaProbe {
             val w = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toIntOrNull() ?: 0
             val h = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toIntOrNull() ?: 0
             val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()
-            MediaInfo(mime = "video/mp4", width = w, height = h, durationMs = duration)
+            val mime = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
+                ?: if (w > 0 && h > 0) "video/mp4" else "audio/mp4"
+            MediaInfo(mime = mime, width = w, height = h, durationMs = duration)
         } finally {
             retriever.release()
         }

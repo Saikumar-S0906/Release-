@@ -122,6 +122,25 @@ class PhotoOpTest {
     }
 
     @Test
+    fun liveGradeIdentityMatrix() {
+        val m = LiveGrade.colorMatrix(0f, 1f, 0f, 1f)
+        assertEquals(1f, m[0], 0.01f)
+        assertEquals(1f, m[6], 0.01f)
+        assertEquals(1f, m[12], 0.01f)
+        assertEquals(0f, m[4], 0.01f)
+        assertTrue(LiveGrade.isAdjustIdentity(0f, 1f, 0f, 1f))
+        assertTrue(LiveGrade.curvesIdentity(floatArrayOf(0f, 0.25f, 0.5f, 0.75f, 1f)))
+    }
+
+    @Test
+    fun liveGradeExposureDoublesGain() {
+        val m = LiveGrade.gradeMatrix(1f, 1f)
+        assertEquals(2f, m[0], 0.01f)
+        assertEquals(2f, m[6], 0.01f)
+        assertEquals(2f, m[12], 0.01f)
+    }
+
+    @Test
     fun oldLyWithoutFillStillDecodes() {
         val graph = "LY,1,Grade,1,1.0,Normal\nG,0.0,1.0"
         val decoded = graph.decodeLayers().first()
