@@ -240,6 +240,126 @@ fun applyGradeBitmap(src: Bitmap, exposureEv: Float, contrast: Float): Bitmap {
     return out
 }
 
+fun evalCurve(t: Float, ys: FloatArray): Float {
+    val x = t.coerceIn(0f, 1f)
+    if (ys.size < 2) return x
+    val n = ys.size - 1
+    val pos = x * n
+    val i = pos.toInt().coerceIn(0, n - 1)
+    val f = pos - i
+    return (ys[i] * (1f - f) + ys[i + 1] * f).coerceIn(0f, 1f)
+}
+
+fun applyCurves(src: Bitmap, ys: FloatArray): Bitmap {
+    val lut = IntArray(256) { i -> (evalCurve(i / 255f, ys) * 255f).roundToInt().coerceIn(0, 255) }
+    val w = src.width
+    val h = src.height
+    val px = IntArray(w * h)
+    src.getPixels(px, 0, w, 0, 0, w, h)
+    for (i in px.indices) {
+        val c = px[i]
+        val a = Color.alpha(c)
+        val r = lut[Color.red(c)]
+        val g = lut[Color.green(c)]
+        val b = lut[Color.blue(c)]
+        px[i] = Color.argb(a, r, g, b)
+    }
+    val out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+    out.setPixels(px, 0, w, 0, 0, w, h)
+    return out
+}
+
+fun applyVignette(src: Bitmap, amount: Float): Bitmap {
+    val out = src.copy(Bitmap.Config.ARGB_8888, true)
+    val w = out.width
+    val h = out.height
+    val cx = w / 2f
+    val cy = h / 2f
+    val maxD = hypot(cx, cy)
+    val px = IntArray(w * h)
+    out.getPixels(px, 0, w, 0, 0, w, h)
+    val a = amount.coerceIn(0f, 1f)
+    for (y in 0 until h) {
+        for (x in 0 until w) {
+            val i = y * w + x
+            val d = hypot(x - cx, y - cy) / maxD
+            val fall = ((d - (1f - a)).coerceIn(0f, 1f) / a.coerceAtLeast(0.001f)).coerceIn(0f, 1f)
+            val m = 1f - a * fall * fall
+            val c = px[i]
+            px[i] = Color.argb(
+                Color.alpha(c),
+                (Color.red(c) * m).roundToInt().coerceIn(0, 255),
+                (Color.green(c) * m).roundToInt().coerceIn(0, 255),
+                (Color.blue(c) * m).roundToInt().coerceIn(0, 255)
+            )
+        }
+    }
+    out.setPixels(px, 0, w, 0, 0, w, h)
+    return out
+}
+
+fun applyBlurPasses(src: Bitmap, radius: Int): Bitmap {
+    var current = src
+    repeat(radius.coerceIn(1, 8)) {
+        val next = boxBlurBitmap(current)
+        if (current !== src && !current.isRecycled) current.recycle()
+        current = next
+    }
+    return current
+}
+
+fun boxBlurBitmap(src: Bitmap): Bitmap {
+    val w = src.width
+    val h = src.height
+    val px = IntArray(w * h)
+    src.getPixels(px, 0, w, 0, 0, w, h)
+    val dest = IntArray(px.size)
+    boxBlur(px, dest, w, h)
+    val out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+    out.setPixels(dest, 0, w, 0, 0, w, h)
+    return out
+}
+
+fun applyMaskAlpha(src: Bitmap, mask: Bitmap): Bitmap {
+    val out = src.copy(Bitmap.Config.ARGB_8888, true)
+    val w = out.width
+    val h = out.height
+    val scaled = if (mask.width == w && mask.height == h) mask
+    else Bitmap.createScaledBitmap(mask, w, h, true)
+    val srcPx = IntArray(w * h)
+    val maskPx = IntArray(w * h)
+    out.getPixels(srcPx, 0, w, 0, 0, w, h)
+    scaled.getPixels(maskPx, 0, w, 0, 0, w, h)
+    for (i in srcPx.indices) {
+        val a = Color.red(maskPx[i]).coerceIn(0, 255)
+        srcPx[i] = (a shl 24) or (srcPx[i] and 0x00FFFFFF)
+    }
+    out.setPixels(srcPx, 0, w, 0, 0, w, h)
+    if (scaled !== mask && !scaled.isRecycled) scaled.recycle()
+    return out
+}
+
+fun lumaHistogram(src: Bitmap): IntArray {
+    val bins = IntArray(256)
+    val w = src.width
+    val h = src.height
+    val step = max(1, min(w, h) / 128)
+    val px = IntArray(w * h)
+    src.getPixels(px, 0, w, 0, 0, w, h)
+    var y = 0
+    while (y < h) {
+        var x = 0
+        while (x < w) {
+            val c = px[y * w + x]
+            val luma = (77 * Color.red(c) + 150 * Color.green(c) + 29 * Color.blue(c)) shr 8
+            bins[luma.coerceIn(0, 255)]++
+            x += step
+        }
+        y += step
+    }
+    return bins
+}
+
 private fun boxBlur(src: IntArray, dest: IntArray, w: Int, h: Int) {
     src.copyInto(dest)
     for (y in 1 until h - 1) {

@@ -10,7 +10,9 @@ import android.provider.MediaStore
 import com.pixijoy.core.common.AppResult
 import kotlin.math.max
 
-class BitmapPhotoEngine : PhotoEngine {
+class BitmapPhotoEngine(
+    private val vision: com.pixijoy.ml.VisionFacade = com.pixijoy.ml.UnavailableVision
+) : PhotoEngine {
     override fun render(sources: List<String>, ops: List<PhotoOp>, maxEdge: Int): Bitmap {
         require(sources.isNotEmpty()) { "No media" }
         var current = decode(sources.first(), maxEdge)
@@ -112,6 +114,20 @@ class BitmapPhotoEngine : PhotoEngine {
             val collage = applyCollage(bitmaps, op.columns, maxEdge)
             bitmaps.forEach { if (!it.isRecycled) it.recycle() }
             collage
+        }
+        is PhotoOp.Curves -> applyCurves(src, op.y)
+        is PhotoOp.Blur -> applyBlurPasses(src, op.radius)
+        is PhotoOp.Sharpen -> applyUnsharp(src, op.amount)
+        is PhotoOp.Vignette -> applyVignette(src, op.amount)
+        is PhotoOp.Subject -> {
+            val mask = vision.subjectMask(src)
+            if (mask != null) {
+                val cut = applyMaskAlpha(src, mask)
+                if (!mask.isRecycled) mask.recycle()
+                cut
+            } else {
+                applyCutout(src)
+            }
         }
     }
 }

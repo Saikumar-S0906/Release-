@@ -31,10 +31,8 @@ interface MovieEngine {
     suspend fun export(
         context: Context,
         paths: List<String>,
-        trimStartMs: Long,
-        trimEndMs: Long,
+        timeline: Timeline,
         talking: Boolean,
-        speed: Float,
         gif: Boolean,
         onProgress: (Float) -> Unit
     ): AppResult<String>
@@ -54,23 +52,21 @@ class Media3MovieEngine : MovieEngine {
     override suspend fun export(
         context: Context,
         paths: List<String>,
-        trimStartMs: Long,
-        trimEndMs: Long,
+        timeline: Timeline,
         talking: Boolean,
-        speed: Float,
         gif: Boolean,
         onProgress: (Float) -> Unit
     ): AppResult<String> {
         val primary = paths.firstOrNull() ?: return AppResult.Err("No clip to export.")
         val still = isStill(primary)
-        val rate = MovieSpeed.normalize(speed)
+        val rate = timeline.clips.firstOrNull()?.speed ?: 1f
         val cacheName = if (gif) "pixijoy-export-${System.currentTimeMillis()}.gif"
         else "pixijoy-export-${System.currentTimeMillis()}.mp4"
         val cache = File(context.cacheDir, cacheName)
         val encoded = when {
             gif -> encodeGif(primary, cache, talking, rate, onProgress)
             still -> encodeStill(primary, cache, talking, rate, onProgress)
-            else -> encodeClips(context, paths, trimStartMs, trimEndMs, rate, cache, onProgress)
+            else -> encodeClips(context, paths, timeline, cache, onProgress)
         }
         if (encoded is AppResult.Err) {
             cache.delete()
@@ -134,28 +130,29 @@ class Media3MovieEngine : MovieEngine {
     private suspend fun encodeClips(
         context: Context,
         paths: List<String>,
-        trimStartMs: Long,
-        trimEndMs: Long,
-        speed: Float,
+        timeline: Timeline,
         cache: File,
         onProgress: (Float) -> Unit
     ): AppResult<Unit> = withContext(Dispatchers.Main) {
-        val items = paths.mapIndexed { index, path ->
+        val source = if (timeline.clips.isEmpty()) {
+            Timeline.fromMedia(paths.size) { durationMs(paths[it]) }
+        } else timeline
+        val items = source.clips.map { clip ->
+            val path = paths.getOrElse(clip.mediaIndex) { paths.first() }
             val duration = durationMs(path)
-            val builder = MediaItem.Builder().setUri(Uri.fromFile(File(path)))
-            if (index == 0) {
-                val (start, end) = MovieTrim.normalize(trimStartMs, trimEndMs, duration)
-                builder.setClippingConfiguration(
+            val (start, end) = MovieTrim.normalize(clip.inMs, clip.outMs, duration)
+            val builder = MediaItem.Builder()
+                .setUri(Uri.fromFile(File(path)))
+                .setClippingConfiguration(
                     MediaItem.ClippingConfiguration.Builder()
                         .setStartPositionMs(start)
                         .setEndPositionMs(end)
                         .build()
                 )
-            }
             val edited = EditedMediaItem.Builder(builder.build())
-            if (speed != 1f) {
-                edited.setEffects(speedEffects(speed))
-            }
+            if (clip.muted) edited.setRemoveAudio(true)
+            val speed = MovieSpeed.normalize(clip.speed)
+            if (speed != 1f) edited.setEffects(speedEffects(speed))
             edited.build()
         }
         val sequence = EditedMediaItemSequence.Builder(items).build()

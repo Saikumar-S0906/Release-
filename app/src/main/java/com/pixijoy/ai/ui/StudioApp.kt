@@ -70,6 +70,7 @@ import com.pixijoy.designsystem.PixiPrimaryButton
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.pixiMotionMs
 import com.pixijoy.movie.Media3MovieEngine
+import com.pixijoy.ml.MediaPipeVision
 import com.pixijoy.photo.BitmapPhotoEngine
 import java.io.File
 import kotlinx.coroutines.delay
@@ -83,7 +84,8 @@ fun StudioApp() {
     val context = LocalContext.current
     val prefs = remember { StudioPrefs(context.applicationContext) }
     val repo = remember { ProjectRepository(context.applicationContext) }
-    val engine = remember { BitmapPhotoEngine() }
+    val vision = remember { MediaPipeVision(context.applicationContext) }
+    val engine = remember { BitmapPhotoEngine(vision) }
     val movieEngine = remember { Media3MovieEngine() }
     val scope = rememberCoroutineScope()
     var gate by remember { mutableStateOf(Gate.Splash) }

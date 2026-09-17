@@ -61,11 +61,13 @@ import com.pixijoy.designsystem.PixiSuccess
 import com.pixijoy.designsystem.PixiSurface
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
+import com.pixijoy.movie.Filmstrip
 import com.pixijoy.movie.Media3MovieEngine
 import com.pixijoy.movie.MovieEngine
 import com.pixijoy.movie.MovieMotion
 import com.pixijoy.movie.MovieSpeed
 import com.pixijoy.movie.MovieTrim
+import com.pixijoy.movie.Timeline
 import java.io.File
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -91,6 +93,14 @@ fun MovieSessionScreen(
         if (still) MovieTrim.stillDurationMs(talking)
         else paths.sumOf { engine.durationMs(it) }.coerceAtLeast(1000)
     }
+    var timeline by remember {
+        mutableStateOf(
+            Timeline.decode(project.graph, paths.size) { i ->
+                engine.durationMs(paths.getOrElse(i) { path })
+            }
+        )
+    }
+    var selectedId by remember { mutableStateOf(timeline.clips.firstOrNull()?.id) }
     var startMs by remember { mutableLongStateOf(0L) }
     var endMs by remember { mutableLongStateOf(if (still) duration else engine.durationMs(path).coerceAtLeast(1000)) }
     var speed by remember { mutableFloatStateOf(1f) }
@@ -102,8 +112,13 @@ fun MovieSessionScreen(
     var showExport by remember { mutableStateOf(false) }
     var exportGif by remember { mutableStateOf(false) }
     val addClip = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
-        if (uri != null) scope.launch { repo.addUri(project.id, uri) }
+        if (uri != null) {
+            scope.launch {
+                repo.addUri(project.id, uri)
+            }
+        }
     }
+    val selected = timeline.clips.firstOrNull { it.id == selectedId } ?: timeline.clips.firstOrNull()
 
     val player = remember {
         if (still) null else ExoPlayer.Builder(context).build()
@@ -111,13 +126,31 @@ fun MovieSessionScreen(
     DisposableEffect(player) {
         onDispose { player?.release() }
     }
-    LaunchedEffect(paths.joinToString(), player) {
+    LaunchedEffect(paths.size) {
+        if (!still && timeline.clips.size != paths.size) {
+            timeline = Timeline.fromMedia(paths.size) { engine.durationMs(paths[it]) }
+            selectedId = timeline.clips.firstOrNull()?.id
+        }
+    }
+    LaunchedEffect(paths.joinToString(), timeline.encode(), player) {
         player?.apply {
-            setMediaItems(paths.map { MediaItem.fromUri(Uri.fromFile(File(it))) })
+            val items = timeline.clips.map { clip ->
+                val p = paths.getOrElse(clip.mediaIndex) { path }
+                MediaItem.Builder()
+                    .setUri(Uri.fromFile(File(p)))
+                    .setClippingConfiguration(
+                        MediaItem.ClippingConfiguration.Builder()
+                            .setStartPositionMs(clip.inMs)
+                            .setEndPositionMs(clip.outMs)
+                            .build()
+                    )
+                    .build()
+            }
+            setMediaItems(items.ifEmpty { listOf(MediaItem.fromUri(Uri.fromFile(File(path)))) })
             prepare()
             playWhenReady = true
             repeatMode = Player.REPEAT_MODE_ALL
-            setPlaybackSpeed(MovieSpeed.normalize(speed))
+            setPlaybackSpeed(MovieSpeed.normalize(selected?.speed ?: speed))
         }
     }
     LaunchedEffect(speed) {
@@ -135,8 +168,8 @@ fun MovieSessionScreen(
             delay(200)
         }
     }
-    LaunchedEffect(startMs, endMs, speed) {
-        repo.saveGraph(project.id, "M,$startMs,$endMs,${MovieSpeed.normalize(speed)}")
+    LaunchedEffect(timeline, speed) {
+        repo.saveGraph(project.id, timeline.encode())
     }
 
     fun runExport(gif: Boolean) {
@@ -147,10 +180,10 @@ fun MovieSessionScreen(
             val result = engine.export(
                 context = context,
                 paths = paths,
-                trimStartMs = startMs,
-                trimEndMs = endMs,
+                timeline = timeline.update(selected?.id ?: "") {
+                    it.copy(speed = MovieSpeed.normalize(speed), inMs = startMs, outMs = endMs)
+                }.let { if (it.clips.isEmpty()) timeline else it },
                 talking = talking,
-                speed = speed,
                 gif = gif,
                 onProgress = { progress = it }
             )
@@ -249,6 +282,34 @@ fun MovieSessionScreen(
                         color = PixiText
                     )
                 }
+                TextButton(
+                    onClick = {
+                        val ph = (playhead * timeline.totalMs()).toLong()
+                        timeline = timeline.split(ph)
+                        selectedId = timeline.clips.firstOrNull()?.id
+                    },
+                    modifier = Modifier.testTag("movie_split")
+                ) {
+                    Text(stringResource(R.string.studio_split), color = PixiText)
+                }
+                TextButton(
+                    onClick = {
+                        val id = selected?.id ?: return@TextButton
+                        timeline = timeline.update(id) { it.copy(muted = !it.muted) }
+                    },
+                    modifier = Modifier.testTag("movie_mute")
+                ) {
+                    Text(
+                        if (selected?.muted == true) stringResource(R.string.studio_unmute)
+                        else stringResource(R.string.studio_mute),
+                        color = PixiText
+                    )
+                }
+                Text(
+                    stringResource(R.string.studio_timeline_clips, timeline.clips.size),
+                    color = PixiTextMuted,
+                    modifier = Modifier.testTag("movie_timeline")
+                )
                 PixiSecondaryButton(
                     text = stringResource(R.string.studio_add_clip),
                     onClick = {

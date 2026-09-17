@@ -33,11 +33,24 @@ class PhotoOpTest {
             PhotoOp.Erase(listOf(Stamp(0.2f, 0.3f, 0.04f))),
             PhotoOp.TextLayer("Hello, Pixi", 0.5f, 0.8f, 0.08f, 0xFFFFFFFF.toInt()),
             PhotoOp.Sticker("❤", 0.5f, 0.5f, 0.2f),
-            PhotoOp.Collage(2)
+            PhotoOp.Collage(2),
+            PhotoOp.Curves(floatArrayOf(0f, 0.2f, 0.5f, 0.8f, 1f)),
+            PhotoOp.Blur(3),
+            PhotoOp.Sharpen(0.6f),
+            PhotoOp.Vignette(0.4f),
+            PhotoOp.Subject
         )
         val decoded = ops.encodeGraph().decodeGraph()
         assertEquals(ops, decoded)
         assertTrue("".decodeGraph().isEmpty())
+    }
+
+    @Test
+    fun curvesIdentityMidpoint() {
+        val ys = floatArrayOf(0f, 0.25f, 0.5f, 0.75f, 1f)
+        assertEquals(0.5f, evalCurve(0.5f, ys), 0.001f)
+        assertEquals(0f, evalCurve(0f, ys), 0.001f)
+        assertEquals(1f, evalCurve(1f, ys), 0.001f)
     }
 
     @Test

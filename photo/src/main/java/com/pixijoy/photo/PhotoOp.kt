@@ -41,6 +41,15 @@ sealed interface PhotoOp {
         val scale: Float
     ) : PhotoOp
     data class Collage(val columns: Int) : PhotoOp
+    data class Curves(val y: FloatArray) : PhotoOp {
+        override fun equals(other: Any?): Boolean =
+            other is Curves && y.contentEquals(other.y)
+        override fun hashCode(): Int = y.contentHashCode()
+    }
+    data class Blur(val radius: Int) : PhotoOp
+    data class Sharpen(val amount: Float) : PhotoOp
+    data class Vignette(val amount: Float) : PhotoOp
+    data object Subject : PhotoOp
 }
 
 data class PixelRect(val left: Int, val top: Int, val right: Int, val bottom: Int) {
@@ -85,6 +94,11 @@ fun List<PhotoOp>.encodeGraph(): String =
                 "T,${op.x},${op.y},${op.size},${op.color},${op.text.encodePayload()}"
             is PhotoOp.Sticker -> "P,${op.glyph.encodePayload()},${op.x},${op.y},${op.scale}"
             is PhotoOp.Collage -> "L,${op.columns}"
+            is PhotoOp.Curves -> "Q,${op.y.joinToString(",")}"
+            is PhotoOp.Blur -> "W,${op.radius}"
+            is PhotoOp.Sharpen -> "X,${op.amount}"
+            is PhotoOp.Vignette -> "V,${op.amount}"
+            is PhotoOp.Subject -> "J"
         }
     }
 
@@ -124,6 +138,16 @@ fun String.decodeGraph(): List<PhotoOp> {
                     )
                 } else null
                 "L" -> if (parts.size == 2) PhotoOp.Collage(parts[1].toInt().coerceIn(1, 4)) else null
+                "Q" -> if (parts.size == 6) {
+                    PhotoOp.Curves(floatArrayOf(
+                        parts[1].toFloat(), parts[2].toFloat(), parts[3].toFloat(),
+                        parts[4].toFloat(), parts[5].toFloat()
+                    ))
+                } else null
+                "W" -> if (parts.size == 2) PhotoOp.Blur(parts[1].toInt().coerceIn(1, 16)) else null
+                "X" -> if (parts.size == 2) PhotoOp.Sharpen(parts[1].toFloat()) else null
+                "V" -> if (parts.size == 2) PhotoOp.Vignette(parts[1].toFloat()) else null
+                "J" -> PhotoOp.Subject
                 else -> null
             }
         } catch (_: NumberFormatException) {

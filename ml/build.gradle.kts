@@ -16,4 +16,5 @@ android {
 
 dependencies {
     implementation(project(":core:common"))
+    implementation(libs.mediapipe.tasks.vision)
 }

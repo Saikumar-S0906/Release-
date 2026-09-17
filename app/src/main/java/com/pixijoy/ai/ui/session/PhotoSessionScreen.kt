@@ -69,7 +69,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private enum class SessionMode { Crop, Adjust, Heal, Erase, Text, Expand, Stickers, Collage }
+private enum class SessionMode { Crop, Adjust, Heal, Erase, Text, Expand, Stickers, Collage, Curves }
 
 @Composable
 fun PhotoSessionScreen(
@@ -259,7 +259,11 @@ fun PhotoSessionScreen(
             onApplyErase = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Erase(pendingStamps)) },
             onApplyText = { push(PhotoOp.TextLayer(text, placeX, placeY, 0.08f, 0xFFFFFFFF.toInt())) },
             onRestore = { push(PhotoOp.Restore) },
-            onCutout = { push(PhotoOp.Cutout); format = ExportFormat.PNG },
+            onCutout = { push(PhotoOp.Subject); format = ExportFormat.PNG },
+            onApplyCurves = { push(PhotoOp.Curves(it.copyOf())) },
+            onBlur = { push(PhotoOp.Blur(2)) },
+            onSharpen = { push(PhotoOp.Sharpen(0.55f)) },
+            onVignette = { push(PhotoOp.Vignette(0.4f)) },
             onSticker = { glyph -> push(PhotoOp.Sticker(glyph, placeX, placeY, 0.18f)) },
             onCollage = { cols -> push(PhotoOp.Collage(cols)) },
             onAddPhoto = {
@@ -359,7 +363,9 @@ private fun railsFor(toolKey: String): List<RailItem> = when (toolKey) {
         RailItem(R.string.studio_heal, "session_heal", SessionMode.Heal)
     )
     "expand" -> listOf(RailItem(R.string.studio_expand_tool, "session_expand", SessionMode.Expand))
-    "cutout" -> listOf(RailItem(R.string.studio_erase, "session_erase", SessionMode.Erase))
+    "cutout" -> listOf(
+        RailItem(R.string.studio_erase, "session_erase", SessionMode.Erase)
+    )
     "stickers" -> listOf(
         RailItem(R.string.studio_stickers, "session_stickers", SessionMode.Stickers),
         RailItem(R.string.studio_text, "session_text", SessionMode.Text)
@@ -368,6 +374,7 @@ private fun railsFor(toolKey: String): List<RailItem> = when (toolKey) {
     else -> listOf(
         RailItem(R.string.studio_crop, "session_crop", SessionMode.Crop),
         RailItem(R.string.studio_adjust, "session_adjust", SessionMode.Adjust),
+        RailItem(R.string.studio_curves, "session_curves", SessionMode.Curves),
         RailItem(R.string.studio_heal, "session_heal", SessionMode.Heal),
         RailItem(R.string.studio_text, "session_text", SessionMode.Text)
     )
@@ -401,7 +408,11 @@ private fun ToolBody(
     onCutout: () -> Unit,
     onSticker: (String) -> Unit,
     onCollage: (Int) -> Unit,
-    onAddPhoto: () -> Unit
+    onAddPhoto: () -> Unit,
+    onApplyCurves: (FloatArray) -> Unit,
+    onBlur: () -> Unit,
+    onSharpen: () -> Unit,
+    onVignette: () -> Unit
 ) {
     Column(Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (toolKey == "restore") {
@@ -422,6 +433,28 @@ private fun ToolBody(
                 LabeledSlider(stringResource(R.string.studio_hue), hue, -180f..180f, "session_hue", onHue)
                 LabeledSlider(stringResource(R.string.studio_saturation), saturation, 0f..2f, "session_saturation", onSaturation)
                 PixiPrimaryButton(stringResource(R.string.studio_apply), onApplyGrade)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FormatChip(stringResource(R.string.studio_blur), false, "session_blur", onBlur)
+                    FormatChip(stringResource(R.string.studio_sharpen), false, "session_sharpen", onSharpen)
+                    FormatChip(stringResource(R.string.studio_vignette), false, "session_vignette", onVignette)
+                }
+            }
+            SessionMode.Curves -> {
+                var c0 by remember { mutableStateOf(0f) }
+                var c1 by remember { mutableStateOf(0.25f) }
+                var c2 by remember { mutableStateOf(0.5f) }
+                var c3 by remember { mutableStateOf(0.75f) }
+                var c4 by remember { mutableStateOf(1f) }
+                LabeledSlider(stringResource(R.string.studio_curve_black), c0, 0f..1f, "curve_0") { c0 = it }
+                LabeledSlider(stringResource(R.string.studio_curve_shadow), c1, 0f..1f, "curve_1") { c1 = it }
+                LabeledSlider(stringResource(R.string.studio_curve_mid), c2, 0f..1f, "curve_2") { c2 = it }
+                LabeledSlider(stringResource(R.string.studio_curve_light), c3, 0f..1f, "curve_3") { c3 = it }
+                LabeledSlider(stringResource(R.string.studio_curve_white), c4, 0f..1f, "curve_4") { c4 = it }
+                PixiPrimaryButton(
+                    stringResource(R.string.studio_apply),
+                    { onApplyCurves(floatArrayOf(c0, c1, c2, c3, c4)) },
+                    Modifier.testTag("session_apply_curves")
+                )
             }
             SessionMode.Expand -> {
                 LabeledSlider(stringResource(R.string.studio_expand_tool), expand, 0.05f..0.35f, "session_expand_amount", onExpand)
