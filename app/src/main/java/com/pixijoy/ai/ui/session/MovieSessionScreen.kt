@@ -2,6 +2,9 @@ package com.pixijoy.ai.ui.session
 
 import android.net.Uri
 import android.view.ViewGroup
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -53,15 +56,17 @@ import com.pixijoy.core.data.ProjectRepository
 import com.pixijoy.designsystem.PixiAccent
 import com.pixijoy.designsystem.PixiBg
 import com.pixijoy.designsystem.PixiPrimaryButton
+import com.pixijoy.designsystem.PixiSecondaryButton
 import com.pixijoy.designsystem.PixiSuccess
 import com.pixijoy.designsystem.PixiSurface
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
 import com.pixijoy.movie.Media3MovieEngine
 import com.pixijoy.movie.MovieEngine
+import com.pixijoy.movie.MovieMotion
+import com.pixijoy.movie.MovieSpeed
 import com.pixijoy.movie.MovieTrim
 import java.io.File
-import kotlin.math.cos
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -76,45 +81,85 @@ fun MovieSessionScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val path = project.source?.path ?: project.coverPath
+    val paths = remember(project.media, project.coverPath) {
+        project.media.map { it.path }.ifEmpty { listOf(project.coverPath) }
+    }
+    val path = paths.first()
     val talking = toolKey == "talking"
     val still = remember(path) { engine.isStill(path) }
-    val duration = remember(path, talking) {
-        if (still) MovieTrim.stillDurationMs(talking) else engine.durationMs(path).coerceAtLeast(1000)
+    val duration = remember(path, talking, paths) {
+        if (still) MovieTrim.stillDurationMs(talking)
+        else paths.sumOf { engine.durationMs(it) }.coerceAtLeast(1000)
     }
     var startMs by remember { mutableLongStateOf(0L) }
-    var endMs by remember { mutableLongStateOf(duration) }
+    var endMs by remember { mutableLongStateOf(if (still) duration else engine.durationMs(path).coerceAtLeast(1000)) }
+    var speed by remember { mutableFloatStateOf(1f) }
     var playhead by remember { mutableFloatStateOf(0f) }
     var playing by remember { mutableStateOf(true) }
     var exporting by remember { mutableStateOf(false) }
     var progress by remember { mutableFloatStateOf(0f) }
     var status by remember { mutableStateOf<String?>(null) }
+    val addClip = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
+        if (uri != null) scope.launch { repo.addUri(project.id, uri) }
+    }
 
     val player = remember {
         if (still) null else ExoPlayer.Builder(context).build()
     }
-    DisposableEffect(path, player) {
-        player?.apply {
-            setMediaItem(MediaItem.fromUri(Uri.fromFile(File(path))))
-            prepare()
-            playWhenReady = true
-            repeatMode = Player.REPEAT_MODE_ONE
-        }
+    DisposableEffect(player) {
         onDispose { player?.release() }
     }
-    LaunchedEffect(player, startMs, endMs) {
+    LaunchedEffect(paths.joinToString(), player) {
+        player?.apply {
+            setMediaItems(paths.map { MediaItem.fromUri(Uri.fromFile(File(it))) })
+            prepare()
+            playWhenReady = true
+            repeatMode = Player.REPEAT_MODE_ALL
+            setPlaybackSpeed(MovieSpeed.normalize(speed))
+        }
+    }
+    LaunchedEffect(speed) {
+        player?.setPlaybackSpeed(MovieSpeed.normalize(speed))
+    }
+    LaunchedEffect(player, startMs, endMs, paths.size) {
         val exo = player ?: return@LaunchedEffect
         while (true) {
             val pos = exo.currentPosition
-            playhead = pos / duration.toFloat()
-            if (pos >= endMs) {
+            val total = exo.duration.takeIf { it > 0 } ?: duration
+            playhead = (pos / total.toFloat()).coerceIn(0f, 1f)
+            if (paths.size == 1 && pos >= endMs) {
                 exo.seekTo(startMs)
             }
             delay(200)
         }
     }
-    LaunchedEffect(startMs, endMs) {
-        repo.saveGraph(project.id, "M,$startMs,$endMs")
+    LaunchedEffect(startMs, endMs, speed) {
+        repo.saveGraph(project.id, "M,$startMs,$endMs,${MovieSpeed.normalize(speed)}")
+    }
+
+    fun runExport(gif: Boolean) {
+        exporting = true
+        progress = 0f
+        player?.playWhenReady = false
+        scope.launch {
+            val result = engine.export(
+                context = context,
+                paths = paths,
+                trimStartMs = startMs,
+                trimEndMs = endMs,
+                talking = talking,
+                speed = speed,
+                gif = gif,
+                onProgress = { progress = it }
+            )
+            exporting = false
+            status = when (result) {
+                is AppResult.Ok -> context.getString(
+                    if (gif) R.string.studio_export_gif_ok else R.string.studio_export_movie_ok
+                )
+                is AppResult.Err -> result.message
+            }
+        }
     }
 
     Column(
@@ -171,20 +216,21 @@ fun MovieSessionScreen(
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_scrub")
                 )
+                val firstDuration = engine.durationMs(path).coerceAtLeast(1000)
                 Text(stringResource(R.string.studio_trim_start), color = PixiTextMuted)
                 Slider(
-                    value = startMs / duration.toFloat(),
+                    value = (startMs / firstDuration.toFloat()).coerceIn(0f, 1f),
                     onValueChange = {
-                        startMs = MovieTrim.normalize((it * duration).toLong(), endMs, duration).first
+                        startMs = MovieTrim.normalize((it * firstDuration).toLong(), endMs, firstDuration).first
                     },
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_trim_start")
                 )
                 Text(stringResource(R.string.studio_trim_end), color = PixiTextMuted)
                 Slider(
-                    value = endMs / duration.toFloat(),
+                    value = (endMs / firstDuration.toFloat()).coerceIn(0f, 1f),
                     onValueChange = {
-                        endMs = MovieTrim.normalize(startMs, (it * duration).toLong(), duration).second
+                        endMs = MovieTrim.normalize(startMs, (it * firstDuration).toLong(), firstDuration).second
                     },
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_trim_end")
@@ -201,12 +247,37 @@ fun MovieSessionScreen(
                         color = PixiText
                     )
                 }
+                PixiSecondaryButton(
+                    text = stringResource(R.string.studio_add_clip),
+                    onClick = {
+                        addClip.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("movie_add_clip")
+                )
+                if (paths.size > 1) {
+                    Text(
+                        stringResource(R.string.studio_clip_count, paths.size),
+                        color = PixiTextMuted
+                    )
+                }
             } else {
                 Text(
                     if (talking) stringResource(R.string.studio_talking_hint) else stringResource(R.string.studio_move_hint),
                     color = PixiTextMuted
                 )
             }
+            Text(stringResource(R.string.studio_speed, MovieSpeed.normalize(speed)), color = PixiTextMuted)
+            Slider(
+                value = speed,
+                onValueChange = { speed = MovieSpeed.normalize(it) },
+                valueRange = 0.5f..2f,
+                colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
+                modifier = Modifier.testTag("movie_speed")
+            )
             status?.let {
                 Text(it, color = PixiSuccess, modifier = Modifier.testTag("session_status"))
             }
@@ -218,28 +289,23 @@ fun MovieSessionScreen(
                 },
                 onClick = {
                     if (exporting) return@PixiPrimaryButton
-                    exporting = true
-                    progress = 0f
-                    player?.playWhenReady = false
-                    scope.launch {
-                        val result = engine.export(
-                            context = context,
-                            path = path,
-                            trimStartMs = startMs,
-                            trimEndMs = endMs,
-                            talking = talking,
-                            onProgress = { progress = it }
-                        )
-                        exporting = false
-                        status = when (result) {
-                            is AppResult.Ok -> context.getString(R.string.studio_export_movie_ok)
-                            is AppResult.Err -> result.message
-                        }
-                    }
+                    runExport(gif = false)
                 },
                 enabled = !exporting,
                 modifier = Modifier.testTag("session_export")
             )
+            if (still) {
+                PixiSecondaryButton(
+                    text = stringResource(R.string.studio_export_gif),
+                    onClick = {
+                        if (exporting) return@PixiSecondaryButton
+                        runExport(gif = true)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("session_export_gif")
+                )
+            }
         }
     }
 }
@@ -256,12 +322,8 @@ private fun KenBurnsPreview(path: String, talking: Boolean, durationMs: Int) {
         ),
         label = "t"
     )
-    val scale = if (talking) {
-        1f + 0.08f * (0.5f - 0.5f * cos((t * 2f * Math.PI).toFloat()))
-    } else {
-        1f + 0.18f * t
-    }
-    val pan = if (talking) 0f else (t - 0.5f) * 80f
+    val scale = MovieMotion.scale(t, talking)
+    val pan = MovieMotion.pan(t, talking, 640f)
     AsyncImage(
         model = File(path),
         contentDescription = null,

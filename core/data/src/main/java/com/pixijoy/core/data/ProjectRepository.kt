@@ -85,7 +85,12 @@ class ProjectRepository(
                 tmp.outputStream().use { input.copyTo(it) }
             } ?: return@withContext AppResult.Err("Could not read that file.")
             val info = MediaProbe.probe(tmp)
-            val ext = if (info.mime.contains("png")) "png" else "jpg"
+            val ext = when {
+                info.mime.contains("png") -> "png"
+                info.mime.contains("webp") -> "webp"
+                info.mime.contains("video") || (info.durationMs ?: 0) > 0 -> "mp4"
+                else -> "jpg"
+            }
             val dest = File(dir, "extra-${System.currentTimeMillis()}.$ext")
             if (!tmp.renameTo(dest)) {
                 tmp.copyTo(dest, overwrite = true)

@@ -8,8 +8,12 @@ import android.os.Environment
 import android.provider.MediaStore
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.audio.SonicAudioProcessor
+import androidx.media3.effect.SpeedChangeEffect
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.EditedMediaItem
+import androidx.media3.transformer.EditedMediaItemSequence
+import androidx.media3.transformer.Effects
 import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.Transformer
@@ -26,10 +30,12 @@ interface MovieEngine {
     fun durationMs(path: String): Long
     suspend fun export(
         context: Context,
-        path: String,
+        paths: List<String>,
         trimStartMs: Long,
         trimEndMs: Long,
         talking: Boolean,
+        speed: Float,
+        gif: Boolean,
         onProgress: (Float) -> Unit
     ): AppResult<String>
 }
@@ -47,25 +53,64 @@ class Media3MovieEngine : MovieEngine {
 
     override suspend fun export(
         context: Context,
-        path: String,
+        paths: List<String>,
         trimStartMs: Long,
         trimEndMs: Long,
         talking: Boolean,
+        speed: Float,
+        gif: Boolean,
         onProgress: (Float) -> Unit
     ): AppResult<String> {
-        val still = isStill(path)
-        val cache = File(context.cacheDir, "pixijoy-export-${System.currentTimeMillis()}.mp4")
-        val encoded = if (still) {
-            encodeStill(path, cache, talking, onProgress)
-        } else {
-            encodeClip(context, path, trimStartMs, trimEndMs, cache, onProgress)
+        val primary = paths.firstOrNull() ?: return AppResult.Err("No clip to export.")
+        val still = isStill(primary)
+        val rate = MovieSpeed.normalize(speed)
+        val cacheName = if (gif) "pixijoy-export-${System.currentTimeMillis()}.gif"
+        else "pixijoy-export-${System.currentTimeMillis()}.mp4"
+        val cache = File(context.cacheDir, cacheName)
+        val encoded = when {
+            gif -> encodeGif(primary, cache, talking, rate, onProgress)
+            still -> encodeStill(primary, cache, talking, rate, onProgress)
+            else -> encodeClips(context, paths, trimStartMs, trimEndMs, rate, cache, onProgress)
         }
         if (encoded is AppResult.Err) {
             cache.delete()
             return encoded
         }
-        return publish(context, cache, "PixiJoy_${System.currentTimeMillis()}.mp4").also {
-            cache.delete()
+        val published = if (gif) {
+            publish(
+                context,
+                cache,
+                "PixiJoy_${System.currentTimeMillis()}.gif",
+                mime = "image/gif",
+                pictures = true
+            )
+        } else {
+            publish(
+                context,
+                cache,
+                "PixiJoy_${System.currentTimeMillis()}.mp4",
+                mime = "video/mp4",
+                pictures = false
+            )
+        }
+        cache.delete()
+        return published
+    }
+
+    private suspend fun encodeGif(
+        path: String,
+        cache: File,
+        talking: Boolean,
+        speed: Float,
+        onProgress: (Float) -> Unit
+    ): AppResult<Unit> = withContext(Dispatchers.Default) {
+        val bitmap = BitmapFactory.decodeFile(path)
+            ?: return@withContext AppResult.Err("Could not read the still.")
+        try {
+            val duration = MovieSpeed.outputDurationMs(MovieTrim.stillDurationMs(talking), speed)
+            GifEncoder().encode(bitmap, cache, duration, talking, onProgress)
+        } finally {
+            if (!bitmap.isRecycled) bitmap.recycle()
         }
     }
 
@@ -73,43 +118,48 @@ class Media3MovieEngine : MovieEngine {
         path: String,
         cache: File,
         talking: Boolean,
+        speed: Float,
         onProgress: (Float) -> Unit
     ): AppResult<Unit> = withContext(Dispatchers.Default) {
         val bitmap = BitmapFactory.decodeFile(path)
             ?: return@withContext AppResult.Err("Could not read the still.")
         try {
-            KenBurnsEncoder().encode(
-                source = bitmap,
-                output = cache,
-                durationMs = MovieTrim.stillDurationMs(talking),
-                talking = talking,
-                onProgress = onProgress
-            )
+            val duration = MovieSpeed.outputDurationMs(MovieTrim.stillDurationMs(talking), speed)
+            KenBurnsEncoder().encode(bitmap, cache, duration, talking, onProgress)
         } finally {
             if (!bitmap.isRecycled) bitmap.recycle()
         }
     }
 
-    private suspend fun encodeClip(
+    private suspend fun encodeClips(
         context: Context,
-        path: String,
+        paths: List<String>,
         trimStartMs: Long,
         trimEndMs: Long,
+        speed: Float,
         cache: File,
         onProgress: (Float) -> Unit
     ): AppResult<Unit> = withContext(Dispatchers.Main) {
-        val duration = durationMs(path)
-        val (start, end) = MovieTrim.normalize(trimStartMs, trimEndMs, duration)
-        val mediaItem = MediaItem.Builder()
-            .setUri(Uri.fromFile(File(path)))
-            .setClippingConfiguration(
-                MediaItem.ClippingConfiguration.Builder()
-                    .setStartPositionMs(start)
-                    .setEndPositionMs(end)
-                    .build()
-            )
-            .build()
-        val edited = EditedMediaItem.Builder(mediaItem).build()
+        val items = paths.mapIndexed { index, path ->
+            val duration = durationMs(path)
+            val builder = MediaItem.Builder().setUri(Uri.fromFile(File(path)))
+            if (index == 0) {
+                val (start, end) = MovieTrim.normalize(trimStartMs, trimEndMs, duration)
+                builder.setClippingConfiguration(
+                    MediaItem.ClippingConfiguration.Builder()
+                        .setStartPositionMs(start)
+                        .setEndPositionMs(end)
+                        .build()
+                )
+            }
+            val edited = EditedMediaItem.Builder(builder.build())
+            if (speed != 1f) {
+                edited.setEffects(speedEffects(speed))
+            }
+            edited.build()
+        }
+        val sequence = EditedMediaItemSequence.Builder(items).build()
+        val composition = Composition.Builder(sequence).build()
         suspendCancellableCoroutine { cont ->
             val transformer = Transformer.Builder(context)
                 .setVideoMimeType(MimeTypes.VIDEO_H264)
@@ -127,32 +177,58 @@ class Media3MovieEngine : MovieEngine {
                         exception: ExportException
                     ) {
                         if (cont.isActive) {
-                            cont.resume(AppResult.Err(exception.localizedMessage ?: "Trim export failed.", exception))
+                            cont.resume(
+                                AppResult.Err(exception.localizedMessage ?: "Movie export failed.", exception)
+                            )
                         }
                     }
                 }
             )
-            transformer.start(edited, cache.absolutePath)
+            transformer.start(composition, cache.absolutePath)
             cont.invokeOnCancellation { transformer.cancel() }
         }
     }
 
-    private fun publish(context: Context, file: File, displayName: String): AppResult<String> {
+    private fun speedEffects(speed: Float): Effects {
+        val audio = SonicAudioProcessor().apply {
+            setSpeed(speed)
+            setPitch(1f)
+        }
+        return Effects(listOf(audio), listOf(SpeedChangeEffect(speed)))
+    }
+
+    private fun publish(
+        context: Context,
+        file: File,
+        displayName: String,
+        mime: String,
+        pictures: Boolean
+    ): AppResult<String> {
         return try {
+            val collection = if (pictures) {
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+            } else {
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+            }
+            val folder = if (pictures) {
+                Environment.DIRECTORY_PICTURES + "/PixiJoy"
+            } else {
+                Environment.DIRECTORY_MOVIES + "/PixiJoy"
+            }
             val values = ContentValues().apply {
-                put(MediaStore.Video.Media.DISPLAY_NAME, displayName)
-                put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
-                put(MediaStore.Video.Media.RELATIVE_PATH, Environment.DIRECTORY_MOVIES + "/PixiJoy")
-                put(MediaStore.Video.Media.IS_PENDING, 1)
+                put(MediaStore.MediaColumns.DISPLAY_NAME, displayName)
+                put(MediaStore.MediaColumns.MIME_TYPE, mime)
+                put(MediaStore.MediaColumns.RELATIVE_PATH, folder)
+                put(MediaStore.MediaColumns.IS_PENDING, 1)
             }
             val resolver = context.contentResolver
-            val uri = resolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values)
-                ?: return AppResult.Err("Could not create a Movies file.")
+            val uri = resolver.insert(collection, values)
+                ?: return AppResult.Err("Could not create an export file.")
             resolver.openOutputStream(uri)?.use { out ->
                 file.inputStream().use { it.copyTo(out) }
             } ?: return AppResult.Err("Could not open export stream.")
             values.clear()
-            values.put(MediaStore.Video.Media.IS_PENDING, 0)
+            values.put(MediaStore.MediaColumns.IS_PENDING, 0)
             resolver.update(uri, values, null, null)
             AppResult.Ok(uri.toString())
         } catch (t: Throwable) {

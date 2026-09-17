@@ -1,0 +1,28 @@
+appId: com.pixijoy.ai
+---
+- launchApp:
+    appId: com.pixijoy.ai
+    clearState: true
+- runFlow: helpers/onboard.yaml
+- tapOn:
+    id: "nav_create"
+- tapOn:
+    id: "create_hub_segment_movie"
+- tapOn:
+    id: "create_hub_talking"
+- tapOn:
+    id: "studio_use_sample"
+- extendedWaitUntil:
+    visible:
+      id: "movie_session"
+    timeout: 20000
+- extendedWaitUntil:
+    visible:
+      id: "movie_speed"
+    timeout: 10000
+- tapOn:
+    id: "session_export_gif"
+- extendedWaitUntil:
+    visible:
+      id: "session_status"
+    timeout: 60000

@@ -12,7 +12,6 @@ import android.media.MediaFormat
 import android.media.MediaMuxer
 import com.pixijoy.core.common.AppResult
 import java.io.File
-import kotlin.math.cos
 import kotlin.math.max
 
 internal class KenBurnsEncoder {
@@ -135,9 +134,8 @@ internal class KenBurnsEncoder {
         paint: Paint
     ) {
         canvas.drawColor(Color.BLACK)
-        val pulse = if (talking) 1f + 0.08f * (0.5f - 0.5f * cos((t * 2f * Math.PI).toFloat())) else 1f + 0.18f * t
-        val pan = if (talking) 0f else (t - 0.5f) * width * 0.12f
-        val scale = cover * pulse
+        val pan = MovieMotion.pan(t, talking, width.toFloat())
+        val scale = cover * MovieMotion.scale(t, talking)
         val matrix = Matrix().apply {
             postTranslate(-source.width / 2f, -source.height / 2f)
             postScale(scale, scale)
