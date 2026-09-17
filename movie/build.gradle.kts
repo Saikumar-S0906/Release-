@@ -17,4 +17,10 @@ android {
 dependencies {
     implementation(project(":core:common"))
     implementation(project(":core:media"))
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.transformer)
+    implementation(libs.androidx.media3.effect)
+    implementation(libs.androidx.media3.common)
+    implementation(libs.kotlinx.coroutines.android)
+    testImplementation(libs.junit)
 }

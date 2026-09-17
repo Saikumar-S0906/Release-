@@ -62,6 +62,7 @@ import com.pixijoy.designsystem.PixiBg
 import com.pixijoy.designsystem.PixiPink
 import com.pixijoy.designsystem.PixiPrimaryButton
 import com.pixijoy.designsystem.PixiText
+import com.pixijoy.movie.Media3MovieEngine
 import com.pixijoy.photo.BitmapPhotoEngine
 import java.io.File
 import kotlinx.coroutines.delay
@@ -76,6 +77,7 @@ fun StudioApp() {
     val prefs = remember { StudioPrefs(context.applicationContext) }
     val repo = remember { ProjectRepository(context.applicationContext) }
     val engine = remember { BitmapPhotoEngine() }
+    val movieEngine = remember { Media3MovieEngine() }
     val scope = rememberCoroutineScope()
     var gate by remember { mutableStateOf(Gate.Splash) }
     var tab by rememberSaveable { mutableStateOf(StudioTab.Home) }
@@ -172,6 +174,7 @@ fun StudioApp() {
                     projects = projects,
                     repo = repo,
                     engine = engine,
+                    movieEngine = movieEngine,
                     onBack = { session = null }
                 )
             } else {
@@ -208,7 +211,8 @@ fun StudioApp() {
                     },
                     onCloseSession = { session = null },
                     repo = repo,
-                    engine = engine
+                    engine = engine,
+                    movieEngine = movieEngine
                 )
             }
             val pick = pending
@@ -249,6 +253,7 @@ private fun SessionHost(
     projects: List<Project>,
     repo: ProjectRepository,
     engine: BitmapPhotoEngine,
+    movieEngine: Media3MovieEngine,
     onBack: () -> Unit
 ) {
     val project = projects.firstOrNull { it.id == session.project.id } ?: session.project
@@ -256,7 +261,7 @@ private fun SessionHost(
         ?.let { stringResource(it) }
         ?: stringResource(R.string.tool_editor)
     if (session.kind == MediaKind.MOVIE) {
-        MovieSessionScreen(project, label, onBack)
+        MovieSessionScreen(project, label, session.tool, repo, movieEngine, onBack)
     } else {
         PhotoSessionScreen(project, label, session.tool, repo, engine, onBack)
     }
@@ -278,7 +283,8 @@ private fun StudioShell(
     onPickTool: (StudioTool) -> Unit,
     onCloseSession: () -> Unit,
     repo: ProjectRepository,
-    engine: BitmapPhotoEngine
+    engine: BitmapPhotoEngine,
+    movieEngine: Media3MovieEngine
 ) {
     NavigationSuiteScaffold(
         navigationSuiteItems = {
@@ -317,7 +323,7 @@ private fun StudioShell(
                             )
                             Box(Modifier.weight(0.6f)) {
                                 if (session != null) {
-                                    SessionHost(session, projects, repo, engine, onCloseSession)
+                                    SessionHost(session, projects, repo, engine, movieEngine, onCloseSession)
                                 } else {
                                     EmptyCanvas()
                                 }

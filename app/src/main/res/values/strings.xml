@@ -56,6 +56,16 @@
     <string name="studio_loading">Opening…</string>
     <string name="studio_empty_canvas">Pick a tool, then a photo.</string>
     <string name="studio_movie_placeholder">Trim, concat, and talking stills land in the movie slice. The clip is already on this phone.</string>
+    <string name="studio_export_mp4">Export MP4</string>
+    <string name="studio_export_movie_ok">Saved to Movies/PixiJoy. No watermark.</string>
+    <string name="studio_export_pct">Exporting %1$d%%</string>
+    <string name="studio_scrub">Scrub</string>
+    <string name="studio_trim_start">Start</string>
+    <string name="studio_trim_end">End</string>
+    <string name="studio_play">Play</string>
+    <string name="studio_pause">Pause</string>
+    <string name="studio_move_hint">Slow zoom and pan, encoded on this phone.</string>
+    <string name="studio_talking_hint">A gentle pulse on the still, encoded here.</string>
     <string name="studio_heal">Heal</string>
     <string name="studio_erase">Erase</string>
     <string name="studio_text">Text</string>
