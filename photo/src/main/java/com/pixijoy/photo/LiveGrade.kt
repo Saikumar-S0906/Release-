@@ -1,6 +1,7 @@
 package com.pixijoy.photo
 
 import kotlin.math.cos
+import kotlin.math.hypot
 import kotlin.math.pow
 import kotlin.math.sin
 
@@ -11,6 +12,14 @@ object LiveGrade {
 
     fun isAdjustIdentity(exposure: Float, contrast: Float, hue: Float, saturation: Float): Boolean =
         exposure == 0f && contrast == 1f && hue == 0f && saturation == 1f
+
+    fun vignetteMul(nx: Float, ny: Float, amount: Float): Float {
+        val a = amount.coerceIn(0f, 1f)
+        if (a <= 0f) return 1f
+        val d = hypot(nx - 0.5f, ny - 0.5f) / 0.70710678f
+        val fall = ((d - (1f - a)) / a.coerceAtLeast(0.001f)).coerceIn(0f, 1f)
+        return (1f - a * fall * fall).coerceIn(0f, 1f)
+    }
 
     fun colorMatrix(
         exposure: Float,
@@ -100,6 +109,40 @@ float evalCurve(float x) {
 half4 main(float2 coord) {
   half4 c = img.eval(coord);
   return half4(evalCurve(c.r), evalCurve(c.g), evalCurve(c.b), c.a);
+}
+"""
+
+    const val DETAIL_AGSL = """
+uniform shader img;
+uniform float2 size;
+uniform float sharpen;
+uniform float vignette;
+
+half4 main(float2 coord) {
+  half4 c = img.eval(coord);
+  if (sharpen > 0.001) {
+    float2 t = float2(1.0, 1.0) / max(size, float2(1.0, 1.0));
+    half4 acc = c;
+    acc += img.eval(coord + float2(t.x, 0.0));
+    acc += img.eval(coord - float2(t.x, 0.0));
+    acc += img.eval(coord + float2(0.0, t.y));
+    acc += img.eval(coord - float2(0.0, t.y));
+    acc += img.eval(coord + float2(t.x, t.y));
+    acc += img.eval(coord + float2(-t.x, t.y));
+    acc += img.eval(coord + float2(t.x, -t.y));
+    acc += img.eval(coord + float2(-t.x, -t.y));
+    half4 blur = acc / 9.0;
+    c = half4(clamp(c.rgb + sharpen * (c.rgb - blur.rgb), 0.0, 1.0), c.a);
+  }
+  if (vignette > 0.001) {
+    float2 p = coord / max(size, float2(1.0, 1.0)) - float2(0.5);
+    float d = length(p) / 0.70710678;
+    float a = clamp(vignette, 0.0, 1.0);
+    float fall = clamp((d - (1.0 - a)) / max(a, 0.001), 0.0, 1.0);
+    float m = 1.0 - a * fall * fall;
+    c = half4(c.rgb * m, c.a);
+  }
+  return c;
 }
 """
 }

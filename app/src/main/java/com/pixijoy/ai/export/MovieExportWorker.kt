@@ -1,11 +1,8 @@
 package com.pixijoy.ai.export
 
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.ServiceInfo
-import android.os.Build
-import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
@@ -48,7 +45,7 @@ class MovieExportWorker(
                     val pct = (p * 100f).toInt().coerceIn(0, 100)
                     setProgressAsync(workDataOf(KEY_PROGRESS to p))
                     val nm = applicationContext.getSystemService(NotificationManager::class.java)
-                    nm.notify(NOTIF_ID, notification(pct))
+                    nm.notify(NOTIF_ID, ExportNotifications.notification(applicationContext, pct))
                 }
             )
             when (result) {
@@ -61,18 +58,9 @@ class MovieExportWorker(
     private fun foreground(progress: Int): ForegroundInfo =
         ForegroundInfo(
             NOTIF_ID,
-            notification(progress),
+            ExportNotifications.notification(applicationContext, progress),
             ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
         )
-
-    private fun notification(progress: Int) = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
-        .setContentTitle("PixiJoy")
-        .setContentText(if (progress in 1..99) "Exporting $progress%" else "Exporting…")
-        .setSmallIcon(android.R.drawable.stat_sys_upload)
-        .setOngoing(true)
-        .setOnlyAlertOnce(true)
-        .setProgress(100, progress.coerceIn(0, 100), progress <= 0)
-        .build()
 
     companion object {
         const val KEY_PROJECT = "projectId"
@@ -81,17 +69,10 @@ class MovieExportWorker(
         const val KEY_PROGRESS = "progress"
         const val KEY_URI = "uri"
         const val KEY_ERROR = "error"
-        const val CHANNEL_ID = "pixijoy_export"
         private const val NOTIF_ID = 42
 
         fun uniqueName(projectId: String) = "export-$projectId"
 
-        fun ensureChannel(context: Context) {
-            if (Build.VERSION.SDK_INT < 26) return
-            val nm = context.getSystemService(NotificationManager::class.java)
-            nm.createNotificationChannel(
-                NotificationChannel(CHANNEL_ID, "Export", NotificationManager.IMPORTANCE_LOW)
-            )
-        }
+        fun ensureChannel(context: Context) = ExportNotifications.ensureChannel(context)
     }
 }

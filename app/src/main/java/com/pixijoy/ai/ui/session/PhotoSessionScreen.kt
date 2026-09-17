@@ -34,6 +34,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,6 +55,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pixijoy.ai.R
+import com.pixijoy.ai.export.MovieExportWorker
+import com.pixijoy.ai.export.PhotoExportWorker
 import com.pixijoy.core.common.AppResult
 import com.pixijoy.core.data.Project
 import com.pixijoy.core.data.ProjectRepository
@@ -77,6 +80,11 @@ import com.pixijoy.photo.Stamp
 import com.pixijoy.photo.decodeLayers
 import com.pixijoy.photo.encodeLayers
 import com.pixijoy.photo.layerName
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -111,6 +119,11 @@ fun PhotoSessionScreen(
     val curvesShader = remember {
         if (Build.VERSION.SDK_INT >= 33) RuntimeShader(LiveGrade.CURVES_AGSL) else null
     }
+    val detailShader = remember {
+        if (Build.VERSION.SDK_INT >= 33) RuntimeShader(LiveGrade.DETAIL_AGSL) else null
+    }
+    var sharpen by remember { mutableStateOf(0f) }
+    var vignette by remember { mutableStateOf(0f) }
     var expand by remember { mutableStateOf(0.12f) }
     var brush by remember { mutableStateOf(0.05f) }
     var maskReveal by remember { mutableStateOf(false) }
@@ -165,6 +178,34 @@ fun PhotoSessionScreen(
     }
     DisposableEffect(Unit) {
         onDispose { preview?.let { if (!it.isRecycled) it.recycle() } }
+    }
+    val workManager = remember { WorkManager.getInstance(context) }
+    val exportInfos by workManager
+        .getWorkInfosForUniqueWorkFlow(PhotoExportWorker.uniqueName(project.id))
+        .collectAsState(initial = emptyList())
+    LaunchedEffect(exportInfos) {
+        val info = exportInfos.firstOrNull() ?: return@LaunchedEffect
+        when (info.state) {
+            WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING, WorkInfo.State.BLOCKED -> {
+                exporting = true
+                if (status == null) status = context.getString(R.string.studio_export_background)
+            }
+            WorkInfo.State.SUCCEEDED -> {
+                if (exporting) {
+                    exporting = false
+                    showExport = false
+                    status = context.getString(R.string.studio_export_ok)
+                }
+            }
+            WorkInfo.State.FAILED -> {
+                if (exporting) {
+                    exporting = false
+                    status = info.outputData.getString(PhotoExportWorker.KEY_ERROR)
+                        ?: context.getString(R.string.studio_export_failed)
+                }
+            }
+            else -> Unit
+        }
     }
 
     Column(
@@ -222,6 +263,8 @@ fun PhotoSessionScreen(
                     )
                     val liveAdjust = mode == SessionMode.Adjust &&
                         !LiveGrade.isAdjustIdentity(exposure, contrast, hue, saturation)
+                    val liveDetail = mode == SessionMode.Adjust &&
+                        (sharpen > 0.01f || vignette > 0.01f)
                     val liveCurves = mode == SessionMode.Curves && !LiveGrade.curvesIdentity(curveYs)
                     Image(
                         bitmap = bmp.asImageBitmap(),
@@ -237,19 +280,28 @@ fun PhotoSessionScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .then(
-                                if (liveCurves && Build.VERSION.SDK_INT >= 33 && curvesShader != null) {
-                                    Modifier.graphicsLayer {
-                                        curvesShader.setFloatUniform("y0", curveYs[0])
-                                        curvesShader.setFloatUniform("y1", curveYs[1])
-                                        curvesShader.setFloatUniform("y2", curveYs[2])
-                                        curvesShader.setFloatUniform("y3", curveYs[3])
-                                        curvesShader.setFloatUniform("y4", curveYs[4])
-                                        renderEffect = android.graphics.RenderEffect
-                                            .createRuntimeShaderEffect(curvesShader, "img")
-                                            .asComposeRenderEffect()
-                                    }
-                                } else {
-                                    Modifier
+                                when {
+                                    liveCurves && Build.VERSION.SDK_INT >= 33 && curvesShader != null ->
+                                        Modifier.graphicsLayer {
+                                            curvesShader.setFloatUniform("y0", curveYs[0])
+                                            curvesShader.setFloatUniform("y1", curveYs[1])
+                                            curvesShader.setFloatUniform("y2", curveYs[2])
+                                            curvesShader.setFloatUniform("y3", curveYs[3])
+                                            curvesShader.setFloatUniform("y4", curveYs[4])
+                                            renderEffect = android.graphics.RenderEffect
+                                                .createRuntimeShaderEffect(curvesShader, "img")
+                                                .asComposeRenderEffect()
+                                        }
+                                    liveDetail && Build.VERSION.SDK_INT >= 33 && detailShader != null ->
+                                        Modifier.graphicsLayer {
+                                            detailShader.setFloatUniform("size", size.width, size.height)
+                                            detailShader.setFloatUniform("sharpen", sharpen)
+                                            detailShader.setFloatUniform("vignette", vignette)
+                                            renderEffect = android.graphics.RenderEffect
+                                                .createRuntimeShaderEffect(detailShader, "img")
+                                                .asComposeRenderEffect()
+                                        }
+                                    else -> Modifier
                                 }
                             )
                     )
@@ -320,7 +372,18 @@ fun PhotoSessionScreen(
             onExpand = { expand = it },
             onBrush = { brush = it },
             onText = { text = it },
-            onApplyGrade = { push(PhotoOp.Grade(exposure, contrast)); push(PhotoOp.Hsl(hue, saturation)) },
+            onApplyGrade = {
+                push(PhotoOp.Grade(exposure, contrast))
+                push(PhotoOp.Hsl(hue, saturation))
+                if (sharpen > 0.01f) push(PhotoOp.Sharpen(sharpen))
+                if (vignette > 0.01f) push(PhotoOp.Vignette(vignette))
+                sharpen = 0f
+                vignette = 0f
+            },
+            sharpen = sharpen,
+            vignette = vignette,
+            onSharpenAmount = { sharpen = it },
+            onVignetteAmount = { vignette = it },
             onApplyCrop = { push(crop); mode = defaultMode(toolKey) },
             onApplyExpand = { push(PhotoOp.Expand(expand)) },
             onApplyHeal = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Heal(pendingStamps)) },
@@ -424,23 +487,25 @@ fun PhotoSessionScreen(
             onExport = {
                 if (exporting) return@ExportSheet
                 exporting = true
+                status = context.getString(R.string.studio_export_background)
+                showExport = false
                 scope.launch {
-                    val result = withContext(Dispatchers.IO) {
-                        engine.exportLayers(
-                            context,
-                            sources,
-                            layers,
-                            "PixiJoy_${project.title}_${System.currentTimeMillis()}.${format.extension}",
-                            format,
-                            quality
+                    repo.saveGraph(project.id, layers.encodeLayers())
+                    MovieExportWorker.ensureChannel(context)
+                    val request = OneTimeWorkRequestBuilder<PhotoExportWorker>()
+                        .setInputData(
+                            workDataOf(
+                                PhotoExportWorker.KEY_PROJECT to project.id,
+                                PhotoExportWorker.KEY_FORMAT to format.name.lowercase(),
+                                PhotoExportWorker.KEY_QUALITY to quality
+                            )
                         )
-                    }
-                    exporting = false
-                    showExport = false
-                    status = when (result) {
-                        is AppResult.Ok -> context.getString(R.string.studio_export_ok)
-                        is AppResult.Err -> result.message
-                    }
+                        .build()
+                    workManager.enqueueUniqueWork(
+                        PhotoExportWorker.uniqueName(project.id),
+                        ExistingWorkPolicy.KEEP,
+                        request
+                    )
                 }
             },
             onDismiss = { if (!exporting) showExport = false }
@@ -503,6 +568,10 @@ private fun ToolBody(
     onBrush: (Float) -> Unit,
     onText: (String) -> Unit,
     onApplyGrade: () -> Unit,
+    sharpen: Float,
+    vignette: Float,
+    onSharpenAmount: (Float) -> Unit,
+    onVignetteAmount: (Float) -> Unit,
     onApplyCrop: () -> Unit,
     onApplyExpand: () -> Unit,
     onApplyHeal: () -> Unit,
@@ -544,6 +613,8 @@ private fun ToolBody(
                 LabeledSlider(stringResource(R.string.studio_contrast), contrast, 0.4f..1.8f, "session_contrast", onContrast)
                 LabeledSlider(stringResource(R.string.studio_hue), hue, -180f..180f, "session_hue", onHue)
                 LabeledSlider(stringResource(R.string.studio_saturation), saturation, 0f..2f, "session_saturation", onSaturation)
+                LabeledSlider(stringResource(R.string.studio_sharpen), sharpen, 0f..1f, "session_sharpen_amount", onSharpenAmount)
+                LabeledSlider(stringResource(R.string.studio_vignette), vignette, 0f..1f, "session_vignette_amount", onVignetteAmount)
                 PixiPrimaryButton(stringResource(R.string.studio_apply), onApplyGrade)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FormatChip(stringResource(R.string.studio_blur), false, "session_blur", onBlur)

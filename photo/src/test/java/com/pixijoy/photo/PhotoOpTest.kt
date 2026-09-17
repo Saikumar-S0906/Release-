@@ -133,6 +133,16 @@ class PhotoOpTest {
     }
 
     @Test
+    fun vignetteMulMatchesCpuFalloff() {
+        assertEquals(1f, LiveGrade.vignetteMul(0.5f, 0.5f, 0.4f), 0.001f)
+        assertEquals(1f, LiveGrade.vignetteMul(0f, 0f, 0f), 0.001f)
+        val corner = LiveGrade.vignetteMul(0f, 0f, 1f)
+        assertTrue(corner < 0.05f)
+        val mid = LiveGrade.vignetteMul(0.15f, 0.15f, 0.8f)
+        assertTrue(mid in 0f..1f)
+    }
+
+    @Test
     fun liveGradeExposureDoublesGain() {
         val m = LiveGrade.gradeMatrix(1f, 1f)
         assertEquals(2f, m[0], 0.01f)
