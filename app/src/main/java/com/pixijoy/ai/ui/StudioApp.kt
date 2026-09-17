@@ -258,7 +258,7 @@ private fun SessionHost(
     if (session.kind == MediaKind.MOVIE) {
         MovieSessionScreen(project, label, onBack)
     } else {
-        PhotoSessionScreen(project, label, repo, engine, onBack)
+        PhotoSessionScreen(project, label, session.tool, repo, engine, onBack)
     }
 }
 

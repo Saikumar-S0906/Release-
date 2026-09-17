@@ -76,6 +76,42 @@ class ProjectRepository(
         )
     }
 
+    suspend fun addUri(projectId: String, uri: Uri): AppResult<Project> = withContext(dispatchers.io) {
+        runCatching {
+            val row = dao.get(projectId) ?: return@withContext AppResult.Err("Project missing.")
+            val dir = File(context.filesDir, "projects/$projectId").apply { mkdirs() }
+            val tmp = File(dir, "incoming-${System.currentTimeMillis()}")
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                tmp.outputStream().use { input.copyTo(it) }
+            } ?: return@withContext AppResult.Err("Could not read that file.")
+            val info = MediaProbe.probe(tmp)
+            val ext = if (info.mime.contains("png")) "png" else "jpg"
+            val dest = File(dir, "extra-${System.currentTimeMillis()}.$ext")
+            if (!tmp.renameTo(dest)) {
+                tmp.copyTo(dest, overwrite = true)
+                tmp.delete()
+            }
+            val order = dao.maxSortOrder(projectId) + 1
+            dao.upsertMedia(
+                MediaRefEntity(
+                    id = UUID.randomUUID().toString(),
+                    projectId = projectId,
+                    path = dest.absolutePath,
+                    mime = info.mime,
+                    width = info.width,
+                    height = info.height,
+                    durationMs = info.durationMs,
+                    sortOrder = order
+                )
+            )
+            dao.upsertProject(row.project.copy(updatedAt = System.currentTimeMillis()))
+            AppResult.Ok(dao.get(projectId)!!.toProject())
+        }.fold(
+            onSuccess = { it },
+            onFailure = { AppResult.Err("Could not add photo.", it) }
+        )
+    }
+
     suspend fun saveGraph(id: String, graph: String): Unit = withContext(dispatchers.io) {
         val row = dao.get(id)?.project ?: return@withContext
         dao.upsertProject(row.copy(graph = graph, updatedAt = System.currentTimeMillis()))

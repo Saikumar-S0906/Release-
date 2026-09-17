@@ -48,7 +48,7 @@
     <string name="studio_flip">Flip</string>
     <string name="studio_adjust">Adjust</string>
     <string name="studio_apply">Apply</string>
-    <string name="studio_export">Export JPEG</string>
+    <string name="studio_export">Export</string>
     <string name="studio_exporting">Exporting…</string>
     <string name="studio_export_ok">Saved to Pictures/PixiJoy. No watermark.</string>
     <string name="studio_exposure">Exposure</string>
@@ -56,4 +56,17 @@
     <string name="studio_loading">Opening…</string>
     <string name="studio_empty_canvas">Pick a tool, then a photo.</string>
     <string name="studio_movie_placeholder">Trim, concat, and talking stills land in the movie slice. The clip is already on this phone.</string>
+    <string name="studio_heal">Heal</string>
+    <string name="studio_erase">Erase</string>
+    <string name="studio_text">Text</string>
+    <string name="studio_stickers">Stickers</string>
+    <string name="studio_collage">Collage</string>
+    <string name="studio_expand_tool">Expand</string>
+    <string name="studio_brush">Brush</string>
+    <string name="studio_hue">Hue</string>
+    <string name="studio_saturation">Saturation</string>
+    <string name="studio_restore_now">Restore on this phone</string>
+    <string name="studio_cutout_now">Remove flat background</string>
+    <string name="studio_tap_place">Tap the photo to place it.</string>
+    <string name="studio_add_photo">Add another photo</string>
 </resources>

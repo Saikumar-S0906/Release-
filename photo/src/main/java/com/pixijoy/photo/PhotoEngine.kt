@@ -5,24 +5,26 @@ import android.graphics.Bitmap
 import com.pixijoy.core.common.AppResult
 
 interface PhotoEngine {
-    fun render(sourcePath: String, ops: List<PhotoOp>, maxEdge: Int): Bitmap
-    fun exportJpeg(
+    fun render(sources: List<String>, ops: List<PhotoOp>, maxEdge: Int): Bitmap
+    fun export(
         context: Context,
-        sourcePath: String,
+        sources: List<String>,
         ops: List<PhotoOp>,
-        displayName: String
+        displayName: String,
+        format: ExportFormat
     ): AppResult<String>
 }
 
 class StubPhotoEngine : PhotoEngine {
-    override fun render(sourcePath: String, ops: List<PhotoOp>, maxEdge: Int): Bitmap {
+    override fun render(sources: List<String>, ops: List<PhotoOp>, maxEdge: Int): Bitmap {
         error("Stub")
     }
 
-    override fun exportJpeg(
+    override fun export(
         context: Context,
-        sourcePath: String,
+        sources: List<String>,
         ops: List<PhotoOp>,
-        displayName: String
+        displayName: String,
+        format: ExportFormat
     ): AppResult<String> = AppResult.Err("Stub")
 }

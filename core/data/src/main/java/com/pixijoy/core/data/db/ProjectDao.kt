@@ -31,6 +31,9 @@ interface ProjectDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertMedia(entity: MediaRefEntity)
 
+    @Query("SELECT COALESCE(MAX(sortOrder), -1) FROM media_refs WHERE projectId = :projectId")
+    suspend fun maxSortOrder(projectId: String): Int
+
     @Query("DELETE FROM projects WHERE id = :id")
     suspend fun deleteProject(id: String)
 }
