@@ -117,6 +117,9 @@
     <string name="studio_replace_music">Replace music</string>
     <string name="studio_remove_music">Remove music</string>
     <string name="studio_music_volume">Music %1$.0f%%</string>
+    <string name="studio_duck">Under dialogue %1$.0f%%</string>
+    <string name="studio_export_background">Exporting in the background. You can leave this screen.</string>
+    <string name="studio_export_failed">Export failed.</string>
     <string name="studio_timeline_clips">%1$d clips on the timeline</string>
     <string name="studio_layers">Layers</string>
     <string name="studio_layers_hint">Tap a layer. Opacity and blend apply to that step.</string>

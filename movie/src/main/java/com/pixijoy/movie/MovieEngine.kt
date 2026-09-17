@@ -20,12 +20,16 @@ import androidx.media3.transformer.EditedMediaItemSequence
 import androidx.media3.transformer.Effects
 import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
+import androidx.media3.transformer.ProgressHolder
 import androidx.media3.transformer.Transformer
 import com.pixijoy.core.common.AppResult
 import com.pixijoy.core.media.MediaProbe
 import java.io.File
 import kotlin.coroutines.resume
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 
@@ -191,7 +195,8 @@ class Media3MovieEngine : MovieEngine {
                 resolved.second,
                 resolved.first,
                 pictureDurationMs.coerceAtLeast(250),
-                durationMs(resolved.second.absolutePath)
+                durationMs(resolved.second.absolutePath),
+                timeline.dialogueWindows()
             )
             val mixed = File(videoFile.parentFile, "mix-${videoFile.name}")
             val result = startTransformer(
@@ -223,7 +228,8 @@ class Media3MovieEngine : MovieEngine {
             resolved.second,
             resolved.first,
             timeline.totalMs().coerceAtLeast(250),
-            durationMs(resolved.second.absolutePath)
+            durationMs(resolved.second.absolutePath),
+            timeline.dialogueWindows()
         )
         return Composition.Builder(videoSeq, bedSeq).experimentalSetForceAudioTrack(true).build()
     }
@@ -240,16 +246,17 @@ class Media3MovieEngine : MovieEngine {
         file: File,
         bed: AudioBed,
         totalMs: Long,
-        bedDur: Long
+        bedDur: Long,
+        windows: List<ClipMix.Window>
     ): EditedMediaItemSequence {
         val slice = bedDur.coerceAtLeast(250)
         val items = ArrayList<EditedMediaItem>()
         var t = 0L
         var index = 0
+        val vol = ClipMix.volume(bed.volume)
+        val duck = ClipMix.volume(bed.duck)
         while (t < totalMs && index < 64) {
             val take = minOf(slice, totalMs - t).coerceAtLeast(1)
-            val first = index == 0
-            val last = t + take >= totalMs
             val media = MediaItem.Builder()
                 .setUri(Uri.fromFile(file))
                 .setClippingConfiguration(
@@ -260,16 +267,27 @@ class Media3MovieEngine : MovieEngine {
                 )
                 .build()
             val edited = EditedMediaItem.Builder(media).setRemoveVideo(true)
-            val vol = ClipMix.volume(bed.volume)
-            val fadeIn = if (first) bed.fadeInMs else 0L
-            val fadeOut = if (last) bed.fadeOutMs else 0L
-            val processors = ArrayList<AudioProcessor>()
-            if (fadeIn > 0 || fadeOut > 0) {
-                processors += EnvelopeAudioProcessor(take, vol, fadeIn, fadeOut)
-            } else if (vol != 1f) {
-                processors += volumeMixer(vol)
+            val needsMix = vol != 1f || bed.fadeInMs > 0 || bed.fadeOutMs > 0 ||
+                (duck < 0.999f && windows.isNotEmpty())
+            if (needsMix) {
+                edited.setEffects(
+                    Effects(
+                        listOf(
+                            EnvelopeAudioProcessor(
+                                durationMs = totalMs,
+                                volume = vol,
+                                fadeInMs = bed.fadeInMs,
+                                fadeOutMs = bed.fadeOutMs,
+                                offsetMs = t,
+                                windows = windows,
+                                duck = duck,
+                                attackMs = bed.attackMs
+                            )
+                        ),
+                        emptyList()
+                    )
+                )
             }
-            if (processors.isNotEmpty()) edited.setEffects(Effects(processors, emptyList()))
             items += edited.build()
             t += take
             index++
@@ -286,32 +304,48 @@ class Media3MovieEngine : MovieEngine {
         composition: Composition,
         cache: File,
         onProgress: (Float) -> Unit
-    ): AppResult<Unit> = suspendCancellableCoroutine { cont ->
-        val transformer = Transformer.Builder(context)
-            .setVideoMimeType(MimeTypes.VIDEO_H264)
-            .build()
-        transformer.addListener(
-            object : Transformer.Listener {
-                override fun onCompleted(composition: Composition, result: ExportResult) {
-                    onProgress(1f)
-                    if (cont.isActive) cont.resume(AppResult.Ok(Unit))
-                }
-
-                override fun onError(
-                    composition: Composition,
-                    result: ExportResult,
-                    exception: ExportException
-                ) {
-                    if (cont.isActive) {
-                        cont.resume(
-                            AppResult.Err(exception.localizedMessage ?: "Movie export failed.", exception)
-                        )
+    ): AppResult<Unit> = withContext(Dispatchers.Main) {
+        suspendCancellableCoroutine { cont ->
+            val transformer = Transformer.Builder(context)
+                .setVideoMimeType(MimeTypes.VIDEO_H264)
+                .build()
+            val holder = ProgressHolder()
+            val poll = launch {
+                while (isActive) {
+                    if (transformer.getProgress(holder) == Transformer.PROGRESS_STATE_AVAILABLE) {
+                        onProgress((holder.progress / 100f).coerceIn(0f, 1f))
                     }
+                    delay(250)
                 }
             }
-        )
-        transformer.start(composition, cache.absolutePath)
-        cont.invokeOnCancellation { transformer.cancel() }
+            transformer.addListener(
+                object : Transformer.Listener {
+                    override fun onCompleted(composition: Composition, result: ExportResult) {
+                        poll.cancel()
+                        onProgress(1f)
+                        if (cont.isActive) cont.resume(AppResult.Ok(Unit))
+                    }
+
+                    override fun onError(
+                        composition: Composition,
+                        result: ExportResult,
+                        exception: ExportException
+                    ) {
+                        poll.cancel()
+                        if (cont.isActive) {
+                            cont.resume(
+                                AppResult.Err(exception.localizedMessage ?: "Movie export failed.", exception)
+                            )
+                        }
+                    }
+                }
+            )
+            transformer.start(composition, cache.absolutePath)
+            cont.invokeOnCancellation {
+                poll.cancel()
+                transformer.cancel()
+            }
+        }
     }
 
     private fun clipEffects(clip: TimelineClip): Effects? {

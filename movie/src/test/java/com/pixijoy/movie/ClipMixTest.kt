@@ -39,4 +39,14 @@ class ClipMixTest {
     fun volumeScalesTheEnvelope() {
         assertEquals(0.25f, ClipMix.gain(500, 4000, 0.5f, 1000, 0), 0.001f)
     }
+
+    @Test
+    fun duckDropsInsideDialogueAndRampsAtEdges() {
+        val windows = listOf(ClipMix.Window(1000, 3000))
+        assertEquals(1f, ClipMix.duck(0, windows, 0.25f, 200), 0.001f)
+        assertEquals(0.25f, ClipMix.duck(2000, windows, 0.25f, 200), 0.001f)
+        assertEquals(0.625f, ClipMix.duck(900, windows, 0.25f, 200), 0.02f)
+        assertEquals(1f, ClipMix.duck(4000, windows, 0.25f, 200), 0.001f)
+        assertEquals(1f, ClipMix.duck(2000, emptyList(), 0.25f, 200), 0.001f)
+    }
 }

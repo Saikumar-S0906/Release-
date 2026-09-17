@@ -20,7 +20,9 @@ data class AudioBed(
     val volume: Float = 0.8f,
     val fadeInMs: Long = 400,
     val fadeOutMs: Long = 400,
-    val muted: Boolean = false
+    val muted: Boolean = false,
+    val duck: Float = 0.25f,
+    val attackMs: Long = 120
 )
 
 data class Timeline(
@@ -28,6 +30,18 @@ data class Timeline(
     val bed: AudioBed? = null
 ) {
     fun totalMs(): Long = clips.sumOf { it.durationMs }
+
+    fun dialogueWindows(): List<ClipMix.Window> {
+        var t = 0L
+        val out = ArrayList<ClipMix.Window>()
+        for (clip in clips) {
+            if (!clip.muted && clip.volume > 0.001f) {
+                out += ClipMix.Window(t, t + clip.durationMs)
+            }
+            t += clip.durationMs
+        }
+        return out
+    }
 
     fun clipAt(playheadMs: Long): Pair<TimelineClip, Long>? {
         var t = 0L
@@ -149,7 +163,7 @@ data class Timeline(
         val music = bed
         if (music != null) {
             if (isNotEmpty()) append('\n')
-            append("A,${music.fileName},${ClipMix.volume(music.volume)},${music.fadeInMs.coerceAtLeast(0)},${music.fadeOutMs.coerceAtLeast(0)},${if (music.muted) 1 else 0}")
+            append("A,${music.fileName},${ClipMix.volume(music.volume)},${music.fadeInMs.coerceAtLeast(0)},${music.fadeOutMs.coerceAtLeast(0)},${if (music.muted) 1 else 0},${ClipMix.volume(music.duck)},${music.attackMs.coerceAtLeast(0)}")
         }
     }
 
@@ -191,7 +205,9 @@ data class Timeline(
                         volume = p[2].toFloat().let(ClipMix::volume),
                         fadeInMs = p[3].toLong().coerceAtLeast(0),
                         fadeOutMs = p[4].toLong().coerceAtLeast(0),
-                        muted = p[5] == "1"
+                        muted = p[5] == "1",
+                        duck = p.getOrNull(6)?.toFloatOrNull()?.let(ClipMix::volume) ?: 0.25f,
+                        attackMs = p.getOrNull(7)?.toLongOrNull()?.coerceAtLeast(0) ?: 120L
                     )
                 }.getOrNull()
             }.firstOrNull()

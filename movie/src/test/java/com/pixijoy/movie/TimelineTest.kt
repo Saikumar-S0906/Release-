@@ -47,6 +47,22 @@ class TimelineTest {
         assertEquals("bed.m4a", split.bed?.fileName)
         assertEquals(0.6f, split.bed?.volume ?: 0f, 0.001f)
         assertEquals(2, split.clips.size)
+        assertEquals(0.25f, decoded.bed?.duck ?: 0f, 0.001f)
+    }
+
+    @Test
+    fun dialogueWindowsSkipMutedClips() {
+        val tl = Timeline(
+            listOf(
+                TimelineClip("a", 0, 0, 1000, muted = false, volume = 1f),
+                TimelineClip("b", 1, 0, 1000, muted = true, volume = 1f),
+                TimelineClip("c", 2, 0, 1000, muted = false, volume = 0f)
+            )
+        )
+        val windows = tl.dialogueWindows()
+        assertEquals(1, windows.size)
+        assertEquals(0L, windows[0].startMs)
+        assertEquals(1000L, windows[0].endMs)
     }
 
     @Test

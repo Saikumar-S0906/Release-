@@ -40,6 +40,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -62,8 +63,14 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import coil3.compose.AsyncImage
 import com.pixijoy.ai.R
+import com.pixijoy.ai.export.MovieExportWorker
 import com.pixijoy.core.common.AppResult
 import com.pixijoy.core.data.Project
 import com.pixijoy.core.data.ProjectRepository
@@ -236,6 +243,11 @@ fun MovieSessionScreen(
                     bed.volume,
                     bed.fadeInMs,
                     bed.fadeOutMs
+                ) * ClipMix.duck(
+                    composition,
+                    timeline.dialogueWindows(),
+                    bed.duck,
+                    bed.attackMs
                 )
             }
             delay(50)
@@ -245,26 +257,62 @@ fun MovieSessionScreen(
         repo.saveGraph(project.id, timeline.encode())
     }
 
+    val workManager = remember { WorkManager.getInstance(context) }
+    val exportInfos by workManager
+        .getWorkInfosForUniqueWorkFlow(MovieExportWorker.uniqueName(project.id))
+        .collectAsState(initial = emptyList())
+    LaunchedEffect(exportInfos) {
+        val info = exportInfos.firstOrNull() ?: return@LaunchedEffect
+        when (info.state) {
+            WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING, WorkInfo.State.BLOCKED -> {
+                exporting = true
+                progress = info.progress.getFloat(MovieExportWorker.KEY_PROGRESS, progress)
+                if (status == null) status = context.getString(R.string.studio_export_background)
+            }
+            WorkInfo.State.SUCCEEDED -> {
+                if (exporting) {
+                    exporting = false
+                    val gifOut = info.outputData.getBoolean(MovieExportWorker.KEY_GIF, false)
+                    status = context.getString(
+                        if (gifOut) R.string.studio_export_gif_ok else R.string.studio_export_movie_ok
+                    )
+                }
+            }
+            WorkInfo.State.FAILED -> {
+                if (exporting) {
+                    exporting = false
+                    status = info.outputData.getString(MovieExportWorker.KEY_ERROR)
+                        ?: context.getString(R.string.studio_export_failed)
+                }
+            }
+            else -> Unit
+        }
+    }
+
     fun runExport(gif: Boolean) {
+        player?.playWhenReady = false
+        bedPlayer.playWhenReady = false
         exporting = true
         progress = 0f
-        player?.playWhenReady = false
+        status = context.getString(R.string.studio_export_background)
+        showExport = false
         scope.launch {
-            val result = engine.export(
-                context = context,
-                paths = paths,
-                timeline = timeline,
-                talking = talking,
-                gif = gif,
-                onProgress = { progress = it }
-            )
-            exporting = false
-            status = when (result) {
-                is AppResult.Ok -> context.getString(
-                    if (gif) R.string.studio_export_gif_ok else R.string.studio_export_movie_ok
+            repo.saveGraph(project.id, timeline.encode())
+            MovieExportWorker.ensureChannel(context)
+            val request = OneTimeWorkRequestBuilder<MovieExportWorker>()
+                .setInputData(
+                    workDataOf(
+                        MovieExportWorker.KEY_PROJECT to project.id,
+                        MovieExportWorker.KEY_GIF to gif,
+                        MovieExportWorker.KEY_TALKING to talking
+                    )
                 )
-                is AppResult.Err -> result.message
-            }
+                .build()
+            workManager.enqueueUniqueWork(
+                MovieExportWorker.uniqueName(project.id),
+                ExistingWorkPolicy.KEEP,
+                request
+            )
         }
     }
 
@@ -550,6 +598,19 @@ fun MovieSessionScreen(
                     valueRange = 0f..2000f,
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_bed_fade_out")
+                )
+                Text(
+                    stringResource(R.string.studio_duck, bed.duck * 100f),
+                    color = PixiTextMuted
+                )
+                Slider(
+                    value = bed.duck,
+                    onValueChange = { v ->
+                        timeline = timeline.copy(bed = bed.copy(duck = ClipMix.volume(v)))
+                    },
+                    valueRange = 0f..1f,
+                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
+                    modifier = Modifier.testTag("movie_bed_duck")
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TextButton(
