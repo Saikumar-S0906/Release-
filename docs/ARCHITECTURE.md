@@ -1,5 +1,6 @@
 # PixiJoy local studio — architecture
 
+**Full plan (design, build, test, algorithms, patterns):** `docs/MASTER_PLAN.md`  
 **Branch:** `next` (greenfield). `main` stays the old product until this ships.  
 **Spine:** PixiJoy — the studio that never leaves the phone. Local. Photo and movie. No upload, no account, no watermark, no monthly fee.  
 **Spec:** `docs/LIBS_AND_FEATURES.md` (source: Downloads).  
