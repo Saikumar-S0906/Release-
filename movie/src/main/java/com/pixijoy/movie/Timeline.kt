@@ -48,6 +48,19 @@ data class Timeline(val clips: List<TimelineClip> = emptyList()) {
     fun update(id: String, transform: (TimelineClip) -> TimelineClip): Timeline =
         Timeline(clips.map { if (it.id == id) transform(it) else it })
 
+    fun remove(id: String): Timeline = Timeline(clips.filterNot { it.id == id })
+
+    fun move(id: String, delta: Int): Timeline {
+        val i = clips.indexOfFirst { it.id == id }
+        if (i < 0) return this
+        val j = (i + delta).coerceIn(0, clips.lastIndex)
+        if (i == j) return this
+        val copy = clips.toMutableList()
+        val clip = copy.removeAt(i)
+        copy.add(j, clip)
+        return Timeline(copy)
+    }
+
     fun encode(): String = clips.joinToString("\n") { c ->
         "C,${c.mediaIndex},${c.inMs},${c.outMs},${c.speed},${if (c.muted) 1 else 0},${c.id}"
     }

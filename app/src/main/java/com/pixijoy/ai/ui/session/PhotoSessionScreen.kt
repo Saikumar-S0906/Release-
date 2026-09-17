@@ -60,16 +60,20 @@ import com.pixijoy.designsystem.PixiSurface2
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
 import com.pixijoy.photo.BitmapPhotoEngine
+import com.pixijoy.photo.BlendMode
 import com.pixijoy.photo.ExportFormat
+import com.pixijoy.photo.LayeredOp
 import com.pixijoy.photo.PhotoOp
 import com.pixijoy.photo.Stamp
-import com.pixijoy.photo.decodeGraph
-import com.pixijoy.photo.encodeGraph
+import com.pixijoy.photo.decodeLayers
+import com.pixijoy.photo.encodeLayers
+import com.pixijoy.photo.layerName
+import com.pixijoy.photo.toOps
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private enum class SessionMode { Crop, Adjust, Heal, Erase, Text, Expand, Stickers, Collage, Curves }
+private enum class SessionMode { Crop, Adjust, Heal, Erase, Text, Expand, Stickers, Collage, Curves, Layers }
 
 @Composable
 fun PhotoSessionScreen(
@@ -85,8 +89,9 @@ fun PhotoSessionScreen(
     val sources = remember(project.media, project.coverPath) {
         project.media.map { it.path }.ifEmpty { listOf(project.coverPath) }
     }
-    var ops by remember(project.id) { mutableStateOf(project.graph.decodeGraph()) }
-    var redo by remember(project.id) { mutableStateOf(listOf<PhotoOp>()) }
+    var layers by remember(project.id) { mutableStateOf(project.graph.decodeLayers()) }
+    var redo by remember(project.id) { mutableStateOf(listOf<LayeredOp>()) }
+    var selectedLayer by remember { mutableStateOf<String?>(null) }
     var preview by remember { mutableStateOf<Bitmap?>(null) }
     var mode by remember { mutableStateOf(defaultMode(toolKey)) }
     var crop by remember { mutableStateOf(PhotoOp.Crop(0.08f, 0.08f, 0.92f, 0.92f)) }
@@ -110,38 +115,43 @@ fun PhotoSessionScreen(
     var exporting by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
 
+    fun push(op: PhotoOp) {
+        val layer = LayeredOp(
+            id = "L${System.currentTimeMillis()}",
+            name = op.layerName(),
+            op = op
+        )
+        layers = layers + layer
+        selectedLayer = layer.id
+        redo = emptyList()
+        status = null
+        pendingStamps = emptyList()
+        lastStamp = null
+    }
+
     val addPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
         if (uri != null) {
             scope.launch {
                 repo.addUri(project.id, uri)
-                if (ops.none { it is PhotoOp.Collage }) {
-                    ops = ops + PhotoOp.Collage(2)
-                    redo = emptyList()
+                if (layers.none { it.op is PhotoOp.Collage }) {
+                    push(PhotoOp.Collage(2))
                 }
             }
         }
     }
 
-    LaunchedEffect(sources, ops) {
+    LaunchedEffect(sources, layers) {
         busy = true
         val next = withContext(Dispatchers.Default) {
-            engine.render(sources, ops, maxEdge = 1600)
+            engine.renderLayers(sources, layers, maxEdge = 1600)
         }
         preview?.let { if (!it.isRecycled) it.recycle() }
         preview = next
-        repo.saveGraph(project.id, ops.encodeGraph())
+        repo.saveGraph(project.id, layers.encodeLayers())
         busy = false
     }
     DisposableEffect(Unit) {
         onDispose { preview?.let { if (!it.isRecycled) it.recycle() } }
-    }
-
-    fun push(op: PhotoOp) {
-        ops = ops + op
-        redo = emptyList()
-        status = null
-        pendingStamps = emptyList()
-        lastStamp = null
     }
 
     Column(
@@ -162,18 +172,18 @@ fun PhotoSessionScreen(
             Text(toolLabel, color = PixiText, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
             TextButton(
                 onClick = {
-                    if (ops.isNotEmpty()) {
-                        redo = redo + ops.last()
-                        ops = ops.dropLast(1)
+                    if (layers.isNotEmpty()) {
+                        redo = redo + layers.last()
+                        layers = layers.dropLast(1)
                     }
                 },
-                enabled = ops.isNotEmpty(),
+                enabled = layers.isNotEmpty(),
                 modifier = Modifier.testTag("session_undo")
             ) { Text(stringResource(R.string.studio_undo), color = PixiTextMuted) }
             TextButton(
                 onClick = {
                     if (redo.isNotEmpty()) {
-                        ops = ops + redo.last()
+                        layers = layers + redo.last()
                         redo = redo.dropLast(1)
                     }
                 },
@@ -289,6 +299,14 @@ fun PhotoSessionScreen(
                 }
             }
         }
+        if (layers.isNotEmpty()) {
+            LayerStack(
+                layers = layers,
+                selectedId = selectedLayer,
+                onSelect = { selectedLayer = it },
+                onChange = { layers = it }
+            )
+        }
         PixiPrimaryButton(
             text = stringResource(R.string.studio_export),
             onClick = { showExport = true },
@@ -327,7 +345,7 @@ fun PhotoSessionScreen(
                         engine.export(
                             context,
                             sources,
-                            ops,
+                            layers.toOps(),
                             "PixiJoy_${project.title}_${System.currentTimeMillis()}.${format.extension}",
                             format,
                             quality
@@ -376,7 +394,8 @@ private fun railsFor(toolKey: String): List<RailItem> = when (toolKey) {
         RailItem(R.string.studio_adjust, "session_adjust", SessionMode.Adjust),
         RailItem(R.string.studio_curves, "session_curves", SessionMode.Curves),
         RailItem(R.string.studio_heal, "session_heal", SessionMode.Heal),
-        RailItem(R.string.studio_text, "session_text", SessionMode.Text)
+        RailItem(R.string.studio_text, "session_text", SessionMode.Text),
+        RailItem(R.string.studio_layers, "session_layers", SessionMode.Layers)
     )
 }
 
@@ -489,6 +508,9 @@ private fun ToolBody(
                     FormatChip("✦", false, "sticker_spark") { onSticker("✦") }
                 }
             }
+            SessionMode.Layers -> {
+                Text(stringResource(R.string.studio_layers_hint), color = PixiTextMuted)
+            }
             SessionMode.Collage -> {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FormatChip("2-up", false, "collage_2") { onCollage(2) }
@@ -535,6 +557,62 @@ private fun FormatChip(label: String, selected: Boolean, tag: String, onClick: (
             .testTag(tag)
             .padding(horizontal = 14.dp, vertical = 8.dp)
     )
+}
+
+@Composable
+private fun LayerStack(
+    layers: List<LayeredOp>,
+    selectedId: String?,
+    onSelect: (String) -> Unit,
+    onChange: (List<LayeredOp>) -> Unit
+) {
+    val selected = layers.firstOrNull { it.id == selectedId } ?: layers.lastOrNull()
+    Column(Modifier.padding(horizontal = 12.dp).testTag("layer_stack")) {
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            layers.asReversed().forEach { layer ->
+                Text(
+                    layer.name + if (!layer.visible) " (off)" else "",
+                    color = PixiText,
+                    fontWeight = if (layer.id == selected?.id) FontWeight.SemiBold else FontWeight.Medium,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (layer.id == selected?.id) PixiAccent else PixiSurface2)
+                        .clickable { onSelect(layer.id) }
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                )
+            }
+        }
+        if (selected != null) {
+            LabeledSlider(
+                stringResource(R.string.studio_opacity),
+                selected.opacity,
+                0f..1f,
+                "layer_opacity"
+            ) { v ->
+                onChange(layers.map { if (it.id == selected.id) it.copy(opacity = v) else it })
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                BlendMode.entries.forEach { mode ->
+                    FormatChip(mode.name, selected.blend == mode, "blend_${mode.name}") {
+                        onChange(layers.map { if (it.id == selected.id) it.copy(blend = mode) else it })
+                    }
+                }
+            }
+            Row {
+                TextButton(onClick = {
+                    onChange(layers.map {
+                        if (it.id == selected.id) it.copy(visible = !it.visible) else it
+                    })
+                }) { Text(if (selected.visible) stringResource(R.string.studio_hide) else stringResource(R.string.studio_show), color = PixiText) }
+                TextButton(onClick = {
+                    onChange(layers.filterNot { it.id == selected.id })
+                }) { Text(stringResource(R.string.studio_library_delete), color = PixiText) }
+            }
+        }
+    }
 }
 
 @Composable

@@ -69,24 +69,56 @@ fun applyHeal(src: Bitmap, stamps: List<Stamp>): Bitmap {
     val out = src.copy(Bitmap.Config.ARGB_8888, true)
     val w = out.width
     val h = out.height
-    val px = IntArray(w * h)
-    out.getPixels(px, 0, w, 0, 0, w, h)
+    val srcPx = IntArray(w * h)
+    val dstPx = IntArray(w * h)
+    out.getPixels(srcPx, 0, w, 0, 0, w, h)
+    srcPx.copyInto(dstPx)
     for (stamp in stamps) {
         val cx = (stamp.x * w).roundToInt()
         val cy = (stamp.y * h).roundToInt()
-        val radius = (stamp.r * min(w, h)).roundToInt().coerceAtLeast(2)
-        val srcY = (cy - radius * 2).coerceIn(0, h - 1)
-        for (y in (cy - radius).coerceAtLeast(0)..(cy + radius).coerceAtMost(h - 1)) {
-            for (x in (cx - radius).coerceAtLeast(0)..(cx + radius).coerceAtMost(w - 1)) {
-                if (hypot((x - cx).toDouble(), (y - cy).toDouble()) > radius) continue
-                val sy = (srcY + (y - cy)).coerceIn(0, h - 1)
-                px[y * w + x] = px[sy * w + x]
+        val radius = (stamp.r * min(w, h)).roundToInt().coerceAtLeast(3)
+        val inner = radius
+        val outer = (radius * 1.7f).roundToInt()
+        for (y in (cy - inner).coerceAtLeast(0)..(cy + inner).coerceAtMost(h - 1)) {
+            for (x in (cx - inner).coerceAtLeast(0)..(cx + inner).coerceAtMost(w - 1)) {
+                val d = hypot((x - cx).toDouble(), (y - cy).toDouble()).toFloat()
+                if (d > inner) continue
+                var ar = 0.0
+                var ag = 0.0
+                var ab = 0.0
+                var aa = 0.0
+                var n = 0
+                for (yy in (cy - outer).coerceAtLeast(0)..(cy + outer).coerceAtMost(h - 1)) {
+                    for (xx in (cx - outer).coerceAtLeast(0)..(cx + outer).coerceAtMost(w - 1)) {
+                        val dd = hypot((xx - cx).toDouble(), (yy - cy).toDouble()).toFloat()
+                        if (dd < inner + 1 || dd > outer) continue
+                        val c = srcPx[yy * w + xx]
+                        ar += Color.red(c)
+                        ag += Color.green(c)
+                        ab += Color.blue(c)
+                        aa += Color.alpha(c)
+                        n++
+                    }
+                }
+                if (n == 0) continue
+                val fill = Color.argb((aa / n).roundToInt(), (ar / n).roundToInt(), (ag / n).roundToInt(), (ab / n).roundToInt())
+                val t = (1f - d / inner).coerceIn(0f, 1f)
+                val orig = srcPx[y * w + x]
+                dstPx[y * w + x] = Color.argb(
+                    mixByte(Color.alpha(orig), Color.alpha(fill), t),
+                    mixByte(Color.red(orig), Color.red(fill), t),
+                    mixByte(Color.green(orig), Color.green(fill), t),
+                    mixByte(Color.blue(orig), Color.blue(fill), t)
+                )
             }
         }
     }
-    out.setPixels(px, 0, w, 0, 0, w, h)
+    out.setPixels(dstPx, 0, w, 0, 0, w, h)
     return out
 }
+
+private fun mixByte(a: Int, b: Int, t: Float): Int =
+    (a + (b - a) * t).roundToInt().coerceIn(0, 255)
 
 fun applyErase(src: Bitmap, stamps: List<Stamp>): Bitmap {
     if (stamps.isEmpty()) return src

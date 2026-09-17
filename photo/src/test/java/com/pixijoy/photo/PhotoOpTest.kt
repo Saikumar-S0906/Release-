@@ -63,4 +63,16 @@ class PhotoOpTest {
     fun payloadEscapesCommas() {
         assertEquals("Hello, Pixi", "Hello, Pixi".encodePayload().decodePayload())
     }
+
+    @Test
+    fun layersRoundTripAndBlend() {
+        val layers = listOf(
+            LayeredOp("1", "Grade", true, 0.8f, BlendMode.Multiply, PhotoOp.Grade(0.1f, 1.1f)),
+            LayeredOp("2", "Type", false, 1f, BlendMode.Normal, PhotoOp.TextLayer("Hi", 0.5f, 0.5f, 0.1f, 1))
+        )
+        val decoded = layers.encodeLayers().decodeLayers()
+        assertEquals(layers, decoded)
+        assertEquals(128, blendChannel(128, 128, BlendMode.Normal))
+        assertTrue(blendChannel(200, 50, BlendMode.Multiply) < 50)
+    }
 }

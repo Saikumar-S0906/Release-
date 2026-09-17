@@ -34,4 +34,17 @@ class TimelineTest {
         val tl = Timeline(listOf(TimelineClip("a", 0, 0, 400, 1f, false)))
         assertEquals(1, tl.split(10).clips.size)
     }
+
+    @Test
+    fun rippleRemoveAndMove() {
+        val tl = Timeline(
+            listOf(
+                TimelineClip("a", 0, 0, 1000),
+                TimelineClip("b", 1, 0, 1000),
+                TimelineClip("c", 2, 0, 1000)
+            )
+        )
+        assertEquals(listOf("a", "c"), tl.remove("b").clips.map { it.id })
+        assertEquals(listOf("b", "a", "c"), tl.move("a", 1).clips.map { it.id })
+    }
 }

@@ -13,13 +13,25 @@ import kotlin.math.max
 class BitmapPhotoEngine(
     private val vision: com.pixijoy.ml.VisionFacade = com.pixijoy.ml.UnavailableVision
 ) : PhotoEngine {
-    override fun render(sources: List<String>, ops: List<PhotoOp>, maxEdge: Int): Bitmap {
+    override fun render(sources: List<String>, ops: List<PhotoOp>, maxEdge: Int): Bitmap =
+        renderLayers(sources, ops.toLayers(), maxEdge)
+
+    fun renderLayers(sources: List<String>, layers: List<LayeredOp>, maxEdge: Int): Bitmap {
         require(sources.isNotEmpty()) { "No media" }
         var current = decode(sources.first(), maxEdge)
-        for (op in ops) {
-            val next = applyOp(current, op, sources, maxEdge)
-            if (next !== current && !current.isRecycled) current.recycle()
-            current = next
+        for (layer in layers) {
+            if (!layer.visible) continue
+            val next = applyOp(current, layer.op, sources, maxEdge)
+            val composed = if (layer.op.isGeometry() ||
+                (layer.opacity >= 0.999f && layer.blend == BlendMode.Normal)
+            ) {
+                next
+            } else {
+                blendBitmaps(current, next, layer.opacity, layer.blend)
+            }
+            if (next !== current && next !== composed && !next.isRecycled) next.recycle()
+            if (composed !== current && !current.isRecycled) current.recycle()
+            current = composed
         }
         return current
     }
@@ -32,7 +44,7 @@ class BitmapPhotoEngine(
         format: ExportFormat,
         quality: Int
     ): AppResult<String> {
-        val bitmap = render(sources, ops, maxEdge = 8192)
+        val bitmap = renderLayers(sources, ops.toLayers(), maxEdge = 8192)
         val compressFormat = when (format) {
             ExportFormat.JPEG -> Bitmap.CompressFormat.JPEG
             ExportFormat.PNG -> Bitmap.CompressFormat.PNG

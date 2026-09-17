@@ -1,5 +1,6 @@
 package com.pixijoy.ai.ui.session
 
+import android.graphics.Bitmap
 import android.net.Uri
 import android.view.ViewGroup
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -11,13 +12,23 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -69,8 +80,10 @@ import com.pixijoy.movie.MovieSpeed
 import com.pixijoy.movie.MovieTrim
 import com.pixijoy.movie.Timeline
 import java.io.File
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun MovieSessionScreen(
@@ -310,6 +323,40 @@ fun MovieSessionScreen(
                     color = PixiTextMuted,
                     modifier = Modifier.testTag("movie_timeline")
                 )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .testTag("movie_timeline_strip"),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    timeline.clips.forEach { clip ->
+                        val w = (clip.durationMs / 12f).coerceIn(56f, 180f)
+                        Box(
+                            modifier = Modifier
+                                .width(w.dp)
+                                .height(44.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (clip.id == selected?.id) PixiAccent else PixiSurface)
+                                .clickable { selectedId = clip.id }
+                                .padding(6.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(clip.id, color = PixiText, maxLines = 1)
+                        }
+                    }
+                }
+                TextButton(
+                    onClick = {
+                        val id = selected?.id ?: return@TextButton
+                        timeline = timeline.remove(id)
+                        selectedId = timeline.clips.firstOrNull()?.id
+                    },
+                    modifier = Modifier.testTag("movie_delete_clip")
+                ) {
+                    Text(stringResource(R.string.studio_delete_clip), color = PixiText)
+                }
+                FilmstripRow(path = paths.getOrElse(selected?.mediaIndex ?: 0) { path })
                 PixiSecondaryButton(
                     text = stringResource(R.string.studio_add_clip),
                     onClick = {
@@ -387,6 +434,37 @@ fun MovieSessionScreen(
             },
             onDismiss = { if (!exporting) showExport = false }
         )
+    }
+}
+
+@Composable
+private fun FilmstripRow(path: String) {
+    var thumbs by remember(path) { mutableStateOf<List<Bitmap>>(emptyList()) }
+    LaunchedEffect(path) {
+        thumbs.forEach { if (!it.isRecycled) it.recycle() }
+        thumbs = withContext(Dispatchers.Default) { Filmstrip.thumbs(path, 10) }
+    }
+    DisposableEffect(path) {
+        onDispose { thumbs.forEach { if (!it.isRecycled) it.recycle() } }
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .height(56.dp)
+            .testTag("movie_filmstrip"),
+        horizontalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        thumbs.forEach { bmp ->
+            if (!bmp.isRecycled) {
+                Image(
+                    bitmap = bmp.asImageBitmap(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.height(56.dp).width(84.dp)
+                )
+            }
+        }
     }
 }
 
