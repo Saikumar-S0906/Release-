@@ -75,13 +75,16 @@ import com.pixijoy.designsystem.PixiSuccess
 import com.pixijoy.designsystem.PixiSurface
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
+import com.pixijoy.movie.ClipMix
 import com.pixijoy.movie.Filmstrip
+import com.pixijoy.movie.FilmstripFrame
 import com.pixijoy.movie.Media3MovieEngine
 import com.pixijoy.movie.MovieEngine
 import com.pixijoy.movie.MovieMotion
 import com.pixijoy.movie.MovieSpeed
 import com.pixijoy.movie.MovieTrim
 import com.pixijoy.movie.Timeline
+import com.pixijoy.movie.TimelineClip
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -172,16 +175,27 @@ fun MovieSessionScreen(
     LaunchedEffect(speed) {
         player?.setPlaybackSpeed(MovieSpeed.normalize(speed))
     }
-    LaunchedEffect(player, startMs, endMs, paths.size) {
+    LaunchedEffect(player, timeline.encode()) {
         val exo = player ?: return@LaunchedEffect
         while (true) {
-            val pos = exo.currentPosition
-            val total = exo.duration.takeIf { it > 0 } ?: duration
-            playhead = (pos / total.toFloat()).coerceIn(0f, 1f)
-            if (paths.size == 1 && pos >= endMs) {
-                exo.seekTo(startMs)
+            val clips = timeline.clips
+            val idx = exo.currentMediaItemIndex.coerceIn(0, (clips.size - 1).coerceAtLeast(0))
+            val before = clips.take(idx).sumOf { it.durationMs }
+            val composition = before + exo.currentPosition
+            val total = timeline.totalMs().coerceAtLeast(1)
+            playhead = (composition / total.toFloat()).coerceIn(0f, 1f)
+            val clip = clips.getOrNull(idx)
+            if (clip != null) {
+                exo.volume = if (clip.muted) 0f
+                else ClipMix.gain(
+                    exo.currentPosition,
+                    clip.durationMs,
+                    clip.volume,
+                    clip.fadeInMs,
+                    clip.fadeOutMs
+                )
             }
-            delay(200)
+            delay(50)
         }
     }
     LaunchedEffect(timeline, speed) {
@@ -196,9 +210,7 @@ fun MovieSessionScreen(
             val result = engine.export(
                 context = context,
                 paths = paths,
-                timeline = timeline.update(selected?.id ?: "") {
-                    it.copy(speed = MovieSpeed.normalize(speed), inMs = startMs, outMs = endMs)
-                }.let { if (it.clips.isEmpty()) timeline else it },
+                timeline = timeline,
                 talking = talking,
                 gif = gif,
                 onProgress = { progress = it }
@@ -262,26 +274,37 @@ fun MovieSessionScreen(
                     value = playhead.coerceIn(0f, 1f),
                     onValueChange = {
                         playhead = it
-                        player?.seekTo((it * duration).toLong())
+                        val total = timeline.totalMs().coerceAtLeast(1)
+                        timeline.windowSeek((it * total).toLong())?.let { (i, local) ->
+                            player?.seekTo(i, local)
+                        }
                     },
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_scrub")
                 )
-                val firstDuration = engine.durationMs(path).coerceAtLeast(1000)
+                val selectedSourceEnd = engine.durationMs(
+                    paths.getOrElse(selected?.mediaIndex ?: 0) { path }
+                ).coerceAtLeast(1000)
                 Text(stringResource(R.string.studio_trim_start), color = PixiTextMuted)
                 Slider(
-                    value = (startMs / firstDuration.toFloat()).coerceIn(0f, 1f),
+                    value = ((selected?.inMs ?: startMs) / selectedSourceEnd.toFloat()).coerceIn(0f, 1f),
                     onValueChange = {
-                        startMs = MovieTrim.normalize((it * firstDuration).toLong(), endMs, firstDuration).first
+                        val id = selected?.id ?: return@Slider
+                        val inn = (it * selectedSourceEnd).toLong()
+                        startMs = inn
+                        timeline = timeline.rippleTrimIn(id, inn)
                     },
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_trim_start")
                 )
                 Text(stringResource(R.string.studio_trim_end), color = PixiTextMuted)
                 Slider(
-                    value = (endMs / firstDuration.toFloat()).coerceIn(0f, 1f),
+                    value = ((selected?.outMs ?: endMs) / selectedSourceEnd.toFloat()).coerceIn(0f, 1f),
                     onValueChange = {
-                        endMs = MovieTrim.normalize(startMs, (it * firstDuration).toLong(), firstDuration).second
+                        val id = selected?.id ?: return@Slider
+                        val out = (it * selectedSourceEnd).toLong()
+                        endMs = out
+                        timeline = timeline.rippleTrimOut(id, out, selectedSourceEnd)
                     },
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_trim_end")
@@ -322,6 +345,48 @@ fun MovieSessionScreen(
                     )
                 }
                 Text(
+                    stringResource(R.string.studio_volume, (selected?.volume ?: 1f) * 100f),
+                    color = PixiTextMuted
+                )
+                Slider(
+                    value = selected?.volume ?: 1f,
+                    onValueChange = { v ->
+                        val id = selected?.id ?: return@Slider
+                        timeline = timeline.update(id) { it.copy(volume = ClipMix.volume(v)) }
+                    },
+                    valueRange = 0f..1f,
+                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
+                    modifier = Modifier.testTag("movie_volume")
+                )
+                Text(
+                    stringResource(R.string.studio_fade_in, (selected?.fadeInMs ?: 0L).toInt()),
+                    color = PixiTextMuted
+                )
+                Slider(
+                    value = (selected?.fadeInMs ?: 0L).toFloat(),
+                    onValueChange = { v ->
+                        val id = selected?.id ?: return@Slider
+                        timeline = timeline.update(id) { it.copy(fadeInMs = v.toLong().coerceAtLeast(0)) }
+                    },
+                    valueRange = 0f..2000f,
+                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
+                    modifier = Modifier.testTag("movie_fade_in")
+                )
+                Text(
+                    stringResource(R.string.studio_fade_out, (selected?.fadeOutMs ?: 0L).toInt()),
+                    color = PixiTextMuted
+                )
+                Slider(
+                    value = (selected?.fadeOutMs ?: 0L).toFloat(),
+                    onValueChange = { v ->
+                        val id = selected?.id ?: return@Slider
+                        timeline = timeline.update(id) { it.copy(fadeOutMs = v.toLong().coerceAtLeast(0)) }
+                    },
+                    valueRange = 0f..2000f,
+                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
+                    modifier = Modifier.testTag("movie_fade_out")
+                )
+                Text(
                     stringResource(R.string.studio_timeline_clips, timeline.clips.size),
                     color = PixiTextMuted,
                     modifier = Modifier.testTag("movie_timeline")
@@ -355,7 +420,20 @@ fun MovieSessionScreen(
                 ) {
                     Text(stringResource(R.string.studio_delete_clip), color = PixiText)
                 }
-                FilmstripRow(path = paths.getOrElse(selected?.mediaIndex ?: 0) { path })
+                FilmstripRow(
+                    path = paths.getOrElse(selected?.mediaIndex ?: 0) { path },
+                    startMs = selected?.inMs ?: 0L,
+                    endMs = selected?.outMs ?: Long.MAX_VALUE,
+                    onScrub = { sourceMs ->
+                        val clip = selected ?: return@FilmstripRow
+                        val idx = timeline.clips.indexOfFirst { it.id == clip.id }
+                        if (idx < 0) return@FilmstripRow
+                        val local = (sourceMs - clip.inMs).coerceAtLeast(0)
+                        player?.seekTo(idx, local)
+                        val total = timeline.totalMs().coerceAtLeast(1)
+                        playhead = ((timeline.startOf(clip.id) + local) / total.toFloat()).coerceIn(0f, 1f)
+                    }
+                )
                 PixiSecondaryButton(
                     text = stringResource(R.string.studio_add_clip),
                     onClick = {
@@ -379,10 +457,18 @@ fun MovieSessionScreen(
                     color = PixiTextMuted
                 )
             }
-            Text(stringResource(R.string.studio_speed, MovieSpeed.normalize(speed)), color = PixiTextMuted)
+            Text(
+                stringResource(R.string.studio_speed, MovieSpeed.normalize(selected?.speed ?: speed)),
+                color = PixiTextMuted
+            )
             Slider(
-                value = speed,
-                onValueChange = { speed = MovieSpeed.normalize(it) },
+                value = MovieSpeed.normalize(selected?.speed ?: speed),
+                onValueChange = {
+                    val s = MovieSpeed.normalize(it)
+                    speed = s
+                    val id = selected?.id
+                    if (id != null) timeline = timeline.update(id) { clip -> clip.copy(speed = s) }
+                },
                 valueRange = 0.5f..2f,
                 colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                 modifier = Modifier.testTag("movie_speed")
@@ -438,7 +524,7 @@ fun MovieSessionScreen(
 
 @Composable
 private fun TimelineClipBlock(
-    clip: com.pixijoy.movie.TimelineClip,
+    clip: TimelineClip,
     selected: Boolean,
     sourceEndMs: Long,
     onSelect: () -> Unit,
@@ -505,14 +591,19 @@ private fun TimelineClipBlock(
 }
 
 @Composable
-private fun FilmstripRow(path: String) {
-    var thumbs by remember(path) { mutableStateOf<List<Bitmap>>(emptyList()) }
-    LaunchedEffect(path) {
-        thumbs.forEach { if (!it.isRecycled) it.recycle() }
-        thumbs = withContext(Dispatchers.Default) { Filmstrip.thumbs(path, 10) }
+private fun FilmstripRow(
+    path: String,
+    startMs: Long,
+    endMs: Long,
+    onScrub: (Long) -> Unit
+) {
+    var thumbs by remember(path, startMs, endMs) { mutableStateOf<List<FilmstripFrame>>(emptyList()) }
+    LaunchedEffect(path, startMs, endMs) {
+        thumbs.forEach { if (!it.bitmap.isRecycled) it.bitmap.recycle() }
+        thumbs = withContext(Dispatchers.Default) { Filmstrip.frames(path, 10, startMs, endMs) }
     }
-    DisposableEffect(path) {
-        onDispose { thumbs.forEach { if (!it.isRecycled) it.recycle() } }
+    DisposableEffect(path, startMs, endMs) {
+        onDispose { thumbs.forEach { if (!it.bitmap.isRecycled) it.bitmap.recycle() } }
     }
     Row(
         modifier = Modifier
@@ -522,13 +613,17 @@ private fun FilmstripRow(path: String) {
             .testTag("movie_filmstrip"),
         horizontalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        thumbs.forEach { bmp ->
-            if (!bmp.isRecycled) {
+        thumbs.forEach { frame ->
+            if (!frame.bitmap.isRecycled) {
                 Image(
-                    bitmap = bmp.asImageBitmap(),
+                    bitmap = frame.bitmap.asImageBitmap(),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.height(56.dp).width(84.dp)
+                    modifier = Modifier
+                        .height(56.dp)
+                        .width(84.dp)
+                        .clickable { onScrub(frame.timeMs) }
+                        .testTag("filmstrip_frame")
                 )
             }
         }

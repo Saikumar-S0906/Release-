@@ -6,8 +6,12 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
+import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.audio.AudioProcessor
+import androidx.media3.common.audio.ChannelMixingAudioProcessor
+import androidx.media3.common.audio.ChannelMixingMatrix
 import androidx.media3.common.audio.SonicAudioProcessor
 import androidx.media3.effect.SpeedChangeEffect
 import androidx.media3.transformer.Composition
@@ -151,8 +155,8 @@ class Media3MovieEngine : MovieEngine {
                 )
             val edited = EditedMediaItem.Builder(builder.build())
             if (clip.muted) edited.setRemoveAudio(true)
-            val speed = MovieSpeed.normalize(clip.speed)
-            if (speed != 1f) edited.setEffects(speedEffects(speed))
+            val effects = clipEffects(clip)
+            if (effects != null) edited.setEffects(effects)
             edited.build()
         }
         val sequence = EditedMediaItemSequence.Builder(items).build()
@@ -186,12 +190,35 @@ class Media3MovieEngine : MovieEngine {
         }
     }
 
-    private fun speedEffects(speed: Float): Effects {
-        val audio = SonicAudioProcessor().apply {
-            setSpeed(speed)
-            setPitch(1f)
+    private fun clipEffects(clip: TimelineClip): Effects? {
+        val speed = MovieSpeed.normalize(clip.speed)
+        val audio = ArrayList<AudioProcessor>()
+        val video = ArrayList<Effect>()
+        if (speed != 1f) {
+            audio += SonicAudioProcessor().apply {
+                setSpeed(speed)
+                setPitch(1f)
+            }
+            video += SpeedChangeEffect(speed)
         }
-        return Effects(listOf(audio), listOf(SpeedChangeEffect(speed)))
+        if (!clip.muted) {
+            val vol = ClipMix.volume(clip.volume)
+            if (clip.fadeInMs > 0 || clip.fadeOutMs > 0) {
+                audio += EnvelopeAudioProcessor(clip.durationMs, vol, clip.fadeInMs, clip.fadeOutMs)
+            } else if (vol != 1f) {
+                audio += volumeMixer(vol)
+            }
+        }
+        if (audio.isEmpty() && video.isEmpty()) return null
+        return Effects(audio, video)
+    }
+
+    private fun volumeMixer(volume: Float): ChannelMixingAudioProcessor {
+        val processor = ChannelMixingAudioProcessor()
+        for (ch in 1..8) {
+            processor.putChannelMixingMatrix(ChannelMixingMatrix.create(ch, ch).scaleBy(volume))
+        }
+        return processor
     }
 
     private fun publish(

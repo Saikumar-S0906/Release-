@@ -6,7 +6,10 @@ data class TimelineClip(
     val inMs: Long,
     val outMs: Long,
     val speed: Float = 1f,
-    val muted: Boolean = false
+    val muted: Boolean = false,
+    val volume: Float = 1f,
+    val fadeInMs: Long = 0,
+    val fadeOutMs: Long = 0
 ) {
     val sourceDurationMs: Long get() = (outMs - inMs).coerceAtLeast(1)
     val durationMs: Long get() = MovieSpeed.outputDurationMs(sourceDurationMs, speed)
@@ -25,6 +28,22 @@ data class Timeline(val clips: List<TimelineClip> = emptyList()) {
         return clips.lastOrNull()?.let { it to (totalMs() - it.durationMs).coerceAtLeast(0) }
     }
 
+    fun startOf(id: String): Long {
+        var t = 0L
+        for (clip in clips) {
+            if (clip.id == id) return t
+            t += clip.durationMs
+        }
+        return 0L
+    }
+
+    fun windowSeek(playheadMs: Long): Pair<Int, Long>? {
+        val (clip, start) = clipAt(playheadMs) ?: return null
+        val i = clips.indexOfFirst { it.id == clip.id }
+        if (i < 0) return null
+        return i to (playheadMs - start).coerceAtLeast(0)
+    }
+
     fun split(playheadMs: Long): Timeline {
         var t = 0L
         val out = ArrayList<TimelineClip>(clips.size + 1)
@@ -34,8 +53,8 @@ data class Timeline(val clips: List<TimelineClip> = emptyList()) {
             if (!split && playheadMs > t + 120 && playheadMs < end - 120) {
                 val local = ((playheadMs - t) * clip.speed).toLong()
                 val mid = (clip.inMs + local).coerceIn(clip.inMs + 1, clip.outMs - 1)
-                out += clip.copy(id = clip.id + "a", outMs = mid)
-                out += clip.copy(id = clip.id + "b", inMs = mid)
+                out += clip.copy(id = clip.id + "a", outMs = mid, fadeOutMs = 0)
+                out += clip.copy(id = clip.id + "b", inMs = mid, fadeInMs = 0)
                 split = true
             } else {
                 out += clip
@@ -113,7 +132,7 @@ data class Timeline(val clips: List<TimelineClip> = emptyList()) {
     }
 
     fun encode(): String = clips.joinToString("\n") { c ->
-        "C,${c.mediaIndex},${c.inMs},${c.outMs},${c.speed},${if (c.muted) 1 else 0},${c.id}"
+        "C,${c.mediaIndex},${c.inMs},${c.outMs},${c.speed},${if (c.muted) 1 else 0},${c.id},${ClipMix.volume(c.volume)},${c.fadeInMs.coerceAtLeast(0)},${c.fadeOutMs.coerceAtLeast(0)}"
     }
 
     companion object {
@@ -138,7 +157,10 @@ data class Timeline(val clips: List<TimelineClip> = emptyList()) {
                         inMs = p[2].toLong(),
                         outMs = p[3].toLong(),
                         speed = p[4].toFloat(),
-                        muted = p[5] == "1"
+                        muted = p[5] == "1",
+                        volume = p.getOrNull(7)?.toFloatOrNull()?.let(ClipMix::volume) ?: 1f,
+                        fadeInMs = p.getOrNull(8)?.toLongOrNull()?.coerceAtLeast(0) ?: 0L,
+                        fadeOutMs = p.getOrNull(9)?.toLongOrNull()?.coerceAtLeast(0) ?: 0L
                     )
                 }.getOrNull()
             }.toList()

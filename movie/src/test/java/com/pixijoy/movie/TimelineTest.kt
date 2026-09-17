@@ -15,18 +15,46 @@ class TimelineTest {
         assertEquals(2000L, split.clips[0].outMs)
         assertEquals(2000L, split.clips[1].inMs)
         assertEquals(4000L, split.totalMs())
+        val faded = Timeline(listOf(TimelineClip("a", 0, 0, 4000, fadeInMs = 200, fadeOutMs = 200)))
+            .split(2000)
+        assertEquals(200L, faded.clips[0].fadeInMs)
+        assertEquals(0L, faded.clips[0].fadeOutMs)
+        assertEquals(0L, faded.clips[1].fadeInMs)
+        assertEquals(200L, faded.clips[1].fadeOutMs)
     }
 
     @Test
     fun roundTrip() {
         val tl = Timeline(
             listOf(
-                TimelineClip("a", 0, 0, 1000, 1f, false),
+                TimelineClip("a", 0, 0, 1000, 1f, false, 0.8f, 120, 80),
                 TimelineClip("b", 1, 200, 1800, 2f, true)
             )
         )
         val decoded = Timeline.decode(tl.encode(), 2) { 2000 }
         assertEquals(tl, decoded)
+    }
+
+    @Test
+    fun oldSevenFieldClipKeepsFullVolume() {
+        val decoded = Timeline.decode("C,0,0,1000,1.0,0,a", 1) { 1000 }
+        assertEquals(1f, decoded.clips[0].volume, 0.001f)
+        assertEquals(0L, decoded.clips[0].fadeInMs)
+        assertEquals(0L, decoded.clips[0].fadeOutMs)
+    }
+
+    @Test
+    fun windowSeekMapsCompositionTimeToClipWindow() {
+        val tl = Timeline(
+            listOf(
+                TimelineClip("a", 0, 0, 1000),
+                TimelineClip("b", 1, 0, 1000)
+            )
+        )
+        assertEquals(0 to 400L, tl.windowSeek(400))
+        assertEquals(1 to 100L, tl.windowSeek(1100))
+        assertEquals(0L, tl.startOf("a"))
+        assertEquals(1000L, tl.startOf("b"))
     }
 
     @Test

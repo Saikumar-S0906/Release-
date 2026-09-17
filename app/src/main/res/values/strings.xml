@@ -110,6 +110,9 @@
     <string name="studio_split">Split</string>
     <string name="studio_mute">Mute</string>
     <string name="studio_unmute">Unmute</string>
+    <string name="studio_volume">Volume %1$.0f%%</string>
+    <string name="studio_fade_in">Fade in %1$d ms</string>
+    <string name="studio_fade_out">Fade out %1$d ms</string>
     <string name="studio_timeline_clips">%1$d clips on the timeline</string>
     <string name="studio_layers">Layers</string>
     <string name="studio_layers_hint">Tap a layer. Opacity and blend apply to that step.</string>
