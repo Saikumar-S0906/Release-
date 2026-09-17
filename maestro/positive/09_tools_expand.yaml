@@ -15,8 +15,6 @@ tags:
     visible:
       id: "flow_c10_host"
     timeout: 25000
-- tapOn: "AI Expand"
-- waitForAnimationToEnd
 - runFlow: ../helpers/use_sample.yaml
 - extendedWaitUntil:
     visible:

@@ -142,14 +142,10 @@ fun BoardFlowC05Host(
 ) {
     val step = BoardCTool.stepOf(screenId)
     when (step) {
-        "intro", "hub", "" -> C05Landing(
-            onContinue = { onNavigate("b_c05_photo") },
-            onBack = onBack
-        )
-        "photo" -> C05PickPhoto(
+        "intro", "hub", "", "photo" -> C05PickPhoto(
             onSample = { onNavigate("b_c05_processing") },
             onGallery = { onNavigate("b_c05_processing") },
-            onBack = { onNavigate("b_c05") }
+            onBack = onBack
         )
         "options" -> C05ChooseType(
             onGenerate = { onNavigate("b_c05_processing") },
@@ -202,8 +198,9 @@ fun BoardFlowC05Host(
             onPrimary = { onNavigate("b_c05_photo") },
             onSecondary = onBack
         )
-        else -> C05Landing(
-            onContinue = { onNavigate("b_c05_photo") },
+        else -> C05PickPhoto(
+            onSample = { onNavigate("b_c05_processing") },
+            onGallery = { onNavigate("b_c05_processing") },
             onBack = onBack
         )
     }

@@ -47,12 +47,6 @@ tags:
     visible:
       id: "flow_c10_host"
     timeout: 20000
-- runFlow:
-    when:
-      visible: "AI Expand"
-    commands:
-      - tapOn: "AI Expand"
-      - waitForAnimationToEnd
 - runFlow: ../helpers/use_sample.yaml
 - waitForAnimationToEnd
 - takeScreenshot: chrome_expand_crop

@@ -203,7 +203,7 @@ object BoardFlowJourneys {
         ),
         Journey(
             id = "C10",
-            name = "AI Expand",
+            name = "Expand",
             entry = "b_c10",
             steps = listOf(
                 "b_c10", "b_c10_photo", "b_c10_options", "b_c10_filters",

@@ -137,17 +137,12 @@ fun BoardFlowC10Host(
 ) {
     val step = BoardCTool.stepOf(screenId)
     when (step) {
-        "intro", "hub", "" -> C10MoreTools(
-            onExpand = { onNavigate("b_c10_photo") },
-            onRemoveBg = { onNavigate("b_c04") },
-            onBack = onBack
-        )
-        "photo" -> C10Preview(
+        "intro", "hub", "", "photo" -> C10Preview(
             onCrop = { onNavigate("b_c10_options") },
             onAdjust = { onNavigate("b_c10_adjust") },
             onFilters = { onNavigate("b_c10_filters") },
             onMore = { onNavigate("b_c10_options") },
-            onBack = { onNavigate("b_c10") }
+            onBack = onBack
         )
         "options" -> C10Crop(
             onDone = { onNavigate("b_c10_adjust") },
@@ -196,9 +191,11 @@ fun BoardFlowC10Host(
             onPrimary = { onNavigate("b_c10_photo") },
             onSecondary = onBack
         )
-        else -> C10MoreTools(
-            onExpand = { onNavigate("b_c10_photo") },
-            onRemoveBg = { onNavigate("b_c04") },
+        else -> C10Preview(
+            onCrop = { onNavigate("b_c10_options") },
+            onAdjust = { onNavigate("b_c10_adjust") },
+            onFilters = { onNavigate("b_c10_filters") },
+            onMore = { onNavigate("b_c10_options") },
             onBack = onBack
         )
     }

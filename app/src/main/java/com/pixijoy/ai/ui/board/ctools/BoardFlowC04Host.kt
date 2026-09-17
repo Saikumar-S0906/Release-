@@ -159,14 +159,10 @@ fun BoardFlowC04Host(
 ) {
     val step = BoardCTool.stepOf(screenId)
     when (step) {
-        "intro", "hub", "" -> C04ChooseIntent(
-            onContinue = { onNavigate("b_c04_photo") },
-            onBack = onBack
-        )
-        "photo" -> C04Photo(
+        "intro", "hub", "", "photo" -> C04Photo(
             onSample = { onNavigate("b_c04_processing") },
             onGallery = { onNavigate("b_c04_processing") },
-            onBack = { onNavigate("b_c04") }
+            onBack = onBack
         )
         "options" -> C04Options(
             onContinue = { onNavigate("b_c04_processing") },
@@ -231,8 +227,9 @@ fun BoardFlowC04Host(
             onPrimary = { onNavigate("b_c04_photo") },
             onSecondary = onBack
         )
-        else -> C04ChooseIntent(
-            onContinue = { onNavigate("b_c04_photo") },
+        else -> C04Photo(
+            onSample = { onNavigate("b_c04_processing") },
+            onGallery = { onNavigate("b_c04_processing") },
             onBack = onBack
         )
     }

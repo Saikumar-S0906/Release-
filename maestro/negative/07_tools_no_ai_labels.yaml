@@ -1,0 +1,30 @@
+appId: com.pixijoy.ai
+tags:
+  - negative
+  - tools
+  - ia
+---
+# Tools hub/Expand must not say "AI Expand". Expand opens photo, not More Tools.
+- runFlow: ../helpers/onboard_skip_to_home.yaml
+- runFlow: ../helpers/open_create_hub.yaml
+- assertVisible:
+    id: "create_hub_editor"
+- assertVisible:
+    id: "create_hub_expand"
+- assertNotVisible: "AI Expand"
+- tapOn:
+    id: "create_hub_expand"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "flow_c10_host"
+    timeout: 20000
+- takeScreenshot: tools_expand_landing
+- assertNotVisible: "AI Expand"
+- assertNotVisible: "More Tools"
+- runFlow: ../helpers/use_sample.yaml
+- runFlow: ../helpers/back_to_create_hub.yaml
+- assertVisible:
+    id: "create_hub_expand"
+- assertVisible:
+    id: "nav_create"

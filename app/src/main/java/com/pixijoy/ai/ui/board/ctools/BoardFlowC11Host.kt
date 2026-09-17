@@ -65,7 +65,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.pixijoy.ai.R
 import com.pixijoy.ai.testing.TestTags
-import com.pixijoy.ai.ui.board.BoardProductionTabs
+
 import com.pixijoy.ai.ui.board.components.BoardAdaptiveFrame
 import com.pixijoy.ai.ui.board.components.BoardGateScreen
 import com.pixijoy.ai.ui.board.components.BoardMainShell
@@ -139,17 +139,11 @@ fun BoardFlowC11Host(
     onBack: () -> Unit,
     onNavigate: (String) -> Unit
 ) {
-    val tab = BoardProductionTabs.tabHandler(onNavigate)
     val step = BoardCTool.stepOf(screenId)
     when (step) {
-        "intro", "hub", "" -> C11Intro(
-            onStart = { onNavigate("b_c11_photo") },
-            onBack = onBack,
-            onTab = tab
-        )
-        "photo" -> C11SelectPhoto(
+        "intro", "hub", "", "photo" -> C11SelectPhoto(
             onGenerate = { onNavigate("b_c11_options") },
-            onBack = { onNavigate("b_c11_intro") }
+            onBack = onBack
         )
         "options" -> C11YourRequest(
             onGenerate = { onNavigate("b_c11_adjust") },
@@ -205,10 +199,9 @@ fun BoardFlowC11Host(
             secondary = stringResource(R.string.cd_back),
             onSecondary = onBack
         )
-        else -> C11Intro(
-            onStart = { onNavigate("b_c11_photo") },
-            onBack = onBack,
-            onTab = tab
+        else -> C11SelectPhoto(
+            onGenerate = { onNavigate("b_c11_options") },
+            onBack = onBack
         )
     }
 }
@@ -375,6 +368,10 @@ private fun C11SelectPhoto(onGenerate: () -> Unit, onBack: () -> Unit) {
                     }
                 }
             }
+            com.pixijoy.ai.ui.board.BoardUseSampleButton(
+                sampleRes = R.drawable.board_c11_talk,
+                onReady = onGenerate
+            )
             BoardPrimaryButton(text = stringResource(R.string.board_f14_generate), onClick = onGenerate)
             BoardTrustFooter()
         }
