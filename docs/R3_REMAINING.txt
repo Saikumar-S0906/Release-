@@ -1,0 +1,3 @@
+﻿See TOTAL_REMAINING.txt for the full product backlog.
+R3-only slice summary also in that file sections B–C.
+Updated: 2026-09-18 ~1:58 PM IST

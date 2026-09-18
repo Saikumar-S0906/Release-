@@ -1,0 +1,98 @@
+﻿PixiJoy — TOTAL remaining (all stages)
+Updated: 2026-09-18 ~1:58 PM IST
+Source: room status + docs/NORTH_STAR_ROADMAP.md + UX backlog
+Branch: origin/next (tip moving)
+
+================================================================
+A. DONE / EXITED (do not re-open)
+================================================================
+R2 Studio v1: Heal/Stamp, HD-FHD-4K export, collage, export %, rail, brush, sticky Export, movie Use sample, Ken Burns harden, export pending-URI + runBlocking hotfixes
+R3 photo depth so far: Layers first-slice, Curves, Looks (bundled Lut), glass scrim, Create sheet, Compare-hold, Selective HSL product (review-clear)
+Docs: NORTH_STAR_ROADMAP, R3_LAYER_OP_SHAPES (first-slice MET, Looks MET)
+
+================================================================
+B. LIVE / NEAR-TERM (this week — quality first)
+================================================================
+B1. Selective HSL Maestro honest green (Create → Try a sample → Color → Apply → Export) → call HSL exit
+B2. Soft canCompare: enable only when live delta or non-identity bake
+B3. R3.1 UX quality
+    - Studio Best-for… + Recommended row
+    - Library overflow + delete Snackbar Undo + empty CTA Create
+    - Export sticky Confirm, Balanced/High/Maximum, strip location default, success View/Share/Done
+    - Movie controls under glass scrim
+    - Less privacy spam; on-device badge
+B4. Color/Looks live preview: downscale on drag, full bake on Apply (if jank)
+B5. Push docs/R3_REMAINING.txt + this file to origin/next
+B6. R2 yellow/manual: system Gallery Photo Picker (documented; music/Downloads OK)
+
+================================================================
+C. FINISH R3 PHOTO (after B)
+================================================================
+C1. LUT import (user .cube / .3dl) — bundled Looks already done
+C2. RAW/DNG preview, then develop track
+C3. Content-aware Fill polish + on-device generative fill pack (:ml-inpaint)
+C4. Sky / background replace
+C5. Perspective + liquify
+C6. Presets + batch export
+C7. Wide-gamut / better color management
+C8. Portrait retouch packs (can slip to R5)
+
+================================================================
+D. R4 MOVIE (cinema-class depth)
+================================================================
+D1. Multi-track video + audio timeline
+D2. Ripple / roll trim; transitions; speed ramps
+D3. Keyframed transform / motion
+D4. Titles + captions
+D5. Grade + LUT + scopes on timeline
+D6. Audio finish: ducking, VO polish
+D7. PiP / multicam
+D8. Stabilize + reframe
+D9. Chroma key
+D10. Frame-interpolation slow-mo
+D11. HDR export (beyond HD/FHD/4K SDR)
+
+================================================================
+E. R5 ML PACKS (on-demand, base APK lean)
+================================================================
+E1. Inpaint / generative fill pack
+E2. Super-resolution
+E3. Denoise
+E4. Frame interp pack (shared with movie)
+E5. Keep base APK under ~40 MB via Play Feature Delivery
+
+================================================================
+F. R6+ AMBITION (opt-in packs, not base APK)
+================================================================
+F1. Tracking / roto-lite
+F2. VFX / particle packs
+F3. 3D / Filament titles
+F4. ARCore previz
+F5. Optional ffmpeg advanced export
+F6. Smart-object analog; advanced type; print/PDF
+
+================================================================
+G. PLATFORM / UX CHROME (ongoing)
+================================================================
+G1. Tablet / foldable two-pane (preview | tools) — NavigationSuite already partial
+G2. ViewModel + Hilt for PhotoSessionScreen / MovieSessionScreen (~1100 lines each)
+G3. Consistent Hilt in StudioApp (repos/engines)
+G4. Accessibility: 48dp chips, announce selected state
+G5. Haptics (crop snap, timeline, export done)
+G6. Skeleton loaders for Library thumbs
+G7. Friendly empty-state illustrations
+G8. Autosave indicator polish; rename after first create/export
+G9. Gradle BuildConfig deprecation cleanup
+
+================================================================
+H. SUGGESTED PATH (ASAP, no fake greens)
+================================================================
+1. Close B1 HSL Maestro → HSL exit
+2. Ship B2–B3 R3.1 UX quality (Create already landed)
+3. C1–C2 LUT import + RAW preview
+4. Start D1 multi-track timeline (R4)
+5. Parallel G1–G3 structural chrome
+6. E packs when photo/movie depth is solid
+7. F only as on-demand modules
+
+Hard rule stays: edit-graph or timeline op → engine → WorkManager export. Local-first. Quality > clock.
