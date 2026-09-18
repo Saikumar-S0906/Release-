@@ -93,6 +93,7 @@ fun StudioApp() {
     var session by remember { mutableStateOf<OpenSession?>(null) }
     var pending by remember { mutableStateOf<PendingPick?>(null) }
     var showPickSheet by remember { mutableStateOf(false) }
+    var showCreateSheet by remember { mutableStateOf(false) }
     var showCamera by remember { mutableStateOf(false) }
     var cameraRequest by remember { mutableStateOf<PendingPick?>(null) }
     val projects by repo.observeProjects().collectAsState(initial = emptyList())
@@ -111,6 +112,7 @@ fun StudioApp() {
         val request = pending
         pending = null
         showPickSheet = false
+        showCreateSheet = false
         if (uri != null && request != null) {
             scope.launch { openImported(repo, prefs, uri, request) { session = it; tab = StudioTab.Studio } }
         }
@@ -118,6 +120,7 @@ fun StudioApp() {
     fun launchGallery(request: PendingPick) {
         pending = request
         showPickSheet = false
+        showCreateSheet = false
         val type = if (request.kind == MediaKind.MOVIE) {
             ActivityResultContracts.PickVisualMedia.ImageAndVideo
         } else {
@@ -129,6 +132,7 @@ fun StudioApp() {
     fun launchCamera(request: PendingPick) {
         pending = null
         showPickSheet = false
+        showCreateSheet = false
         cameraRequest = request
         showCamera = true
     }
@@ -136,6 +140,7 @@ fun StudioApp() {
     fun launchSample(request: PendingPick) {
         pending = null
         showPickSheet = false
+        showCreateSheet = false
         scope.launch {
             val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.board_c00_hero)
                 ?: BitmapFactory.decodeResource(context.resources, R.drawable.board_logo_pixijoy)
@@ -170,7 +175,7 @@ fun StudioApp() {
         )
         Gate.Shell -> {
             val compactSession = session != null && !twoPane
-            val backEnabled = showCamera || showPickSheet || session != null
+            val backEnabled = showCamera || showPickSheet || showCreateSheet || session != null
             val motion = pixiMotionMs(emphasized = true)
             PredictiveBackHandler(enabled = backEnabled) { progress ->
                 progress.collect { }
@@ -183,6 +188,7 @@ fun StudioApp() {
                         showPickSheet = false
                         pending = null
                     }
+                    showCreateSheet -> showCreateSheet = false
                     session != null -> session = null
                 }
             }
@@ -210,15 +216,7 @@ fun StudioApp() {
                         projects = projects,
                         session = session,
                         onOpenStudio = { tab = StudioTab.Studio },
-                        onTakePhoto = {
-                            launchCamera(PendingPick("editor", MediaKind.PHOTO, context.getString(R.string.tool_editor)))
-                        },
-                        onGallery = {
-                            launchGallery(PendingPick("editor", MediaKind.PHOTO, context.getString(R.string.tool_editor)))
-                        },
-                        onSample = {
-                            launchSample(PendingPick("editor", MediaKind.PHOTO, context.getString(R.string.tool_editor)))
-                        },
+                        onCreate = { showCreateSheet = true },
                         onOpenProject = { project ->
                             session = OpenSession(
                                 project,
@@ -254,6 +252,47 @@ fun StudioApp() {
                         showPickSheet = false
                     },
                     isMovie = pick.kind == MediaKind.MOVIE
+                )
+            }
+            if (showCreateSheet) {
+                CreateSourceSheet(
+                    onPhoto = {
+                        launchGallery(
+                            PendingPick(
+                                "editor",
+                                MediaKind.PHOTO,
+                                context.getString(R.string.tool_editor)
+                            )
+                        )
+                    },
+                    onVideo = {
+                        launchGallery(
+                            PendingPick(
+                                "move",
+                                MediaKind.MOVIE,
+                                context.getString(R.string.tool_move)
+                            )
+                        )
+                    },
+                    onCamera = {
+                        launchCamera(
+                            PendingPick(
+                                "editor",
+                                MediaKind.PHOTO,
+                                context.getString(R.string.tool_editor)
+                            )
+                        )
+                    },
+                    onSample = {
+                        launchSample(
+                            PendingPick(
+                                "editor",
+                                MediaKind.PHOTO,
+                                context.getString(R.string.tool_editor)
+                            )
+                        )
+                    },
+                    onDismiss = { showCreateSheet = false }
                 )
             }
             if (showCamera) {
@@ -366,9 +405,7 @@ private fun StudioShell(
     projects: List<Project>,
     session: OpenSession?,
     onOpenStudio: () -> Unit,
-    onTakePhoto: () -> Unit,
-    onGallery: () -> Unit,
-    onSample: () -> Unit,
+    onCreate: () -> Unit,
     onOpenProject: (Project) -> Unit,
     onPickTool: (StudioTool) -> Unit,
     onCloseSession: () -> Unit,
@@ -400,9 +437,7 @@ private fun StudioShell(
                 StudioTab.Home -> HomePane(
                     projects = projects,
                     onOpenStudio = onOpenStudio,
-                    onTakePhoto = onTakePhoto,
-                    onGallery = onGallery,
-                    onSample = onSample,
+                    onCreate = onCreate,
                     onOpenProject = onOpenProject
                 )
                 StudioTab.Studio -> {

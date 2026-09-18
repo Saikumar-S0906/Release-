@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,9 +15,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,9 +46,7 @@ import java.io.File
 fun HomePane(
     projects: List<Project>,
     onOpenStudio: () -> Unit,
-    onTakePhoto: () -> Unit,
-    onGallery: () -> Unit,
-    onSample: () -> Unit,
+    onCreate: () -> Unit,
     onOpenProject: (Project) -> Unit
 ) {
     Column(
@@ -83,21 +80,23 @@ fun HomePane(
             modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
         )
         PixiPrimaryButton(
-            text = stringResource(R.string.studio_open),
-            onClick = onOpenStudio,
-            modifier = Modifier.testTag("home_open_studio")
+            text = stringResource(R.string.home_create),
+            onClick = onCreate,
+            modifier = Modifier.testTag("home_create")
         )
-        Spacer(Modifier.height(12.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            CaptureChip(stringResource(R.string.studio_take_photo), "home_take_photo", onTakePhoto, Modifier.weight(1f))
-            CaptureChip(stringResource(R.string.studio_gallery), "home_gallery", onGallery, Modifier.weight(1f))
-            CaptureChip(stringResource(R.string.studio_use_sample), "home_use_sample", onSample, Modifier.weight(1f))
+        TextButton(
+            onClick = onOpenStudio,
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("home_open_studio")
+        ) {
+            Text(stringResource(R.string.studio_open), color = PixiTextMuted)
         }
         Text(
             stringResource(R.string.studio_recents),
             color = PixiText,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(top = 24.dp, bottom = 12.dp)
+            modifier = Modifier.padding(top = 16.dp, bottom = 12.dp)
         )
         if (projects.isEmpty()) {
             Text(
@@ -120,23 +119,6 @@ fun HomePane(
             }
         }
     }
-}
-
-@Composable
-private fun CaptureChip(label: String, tag: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Text(
-        label,
-        color = PixiText,
-        fontWeight = FontWeight.Medium,
-        modifier = modifier
-            .clip(RoundedCornerShape(999.dp))
-            .background(PixiSurface2)
-            .clickable(onClick = onClick)
-            .testTag(tag)
-            .semantics { role = Role.Button }
-            .padding(horizontal = 8.dp, vertical = 12.dp),
-        maxLines = 1
-    )
 }
 
 @Composable
