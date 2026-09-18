@@ -67,3 +67,18 @@ Smart objects, vector paths, group folders, generative fill, RAW (parallel track
 ---
 
 *Architect - re-parked on next. Update when UX tags lock or first slice exits.*
+
+---
+
+## First-slice exit: MET
+
+**Tip:** `29b0753` / `2292dfd` (BOM soft-fix).
+**Met:** default Background Grade seed; Fade / visibility / Protect-Erase / Blend; encode/decode + Maestro visibility/blend/mask green on Pixel_7a.
+**Date noted:** 2026-09-18 ~12:01 IST.
+
+## Curves -> LUT handoff (next grade)
+
+- **Curves (current):** keep `PhotoOp.Curves` as the only tone-curve op. LiveGrade preview -> Apply bakes `PhotoOp.Curves` onto the active layer / graph -> export via existing photo path. No second curve model.
+- **Bundled LUT (next):** add `PhotoOp.Lut(assetKey)` applied after curves in composite order. Ship 3-5 bundled LUTs; **no file-picker import** in this burst.
+- **Order:** Background -> layer raster -> Curves -> Lut -> export. UI: Curves first; LUT later with plain names (Film / Cool / Warm).
+- **Do not:** invent a parallel grade graph, merge LUT into Curves points, or block on RAW.
