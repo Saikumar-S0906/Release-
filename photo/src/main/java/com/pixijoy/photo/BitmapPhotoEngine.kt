@@ -79,6 +79,8 @@ class BitmapPhotoEngine(
         }
         val q = if (effective == ExportFormat.PNG) 100 else quality.coerceIn(60, 100)
         val exifSource = sources.firstOrNull()
+        val resolver = context.contentResolver
+        var pendingUri: android.net.Uri? = null
         return try {
             val values = ContentValues().apply {
                 put(MediaStore.Images.Media.DISPLAY_NAME, outName)
@@ -89,13 +91,13 @@ class BitmapPhotoEngine(
                 )
                 put(MediaStore.Images.Media.IS_PENDING, 1)
             }
-            val resolver = context.contentResolver
             val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
                 ?: return AppResult.Err("Could not create a Pictures file.")
+            pendingUri = uri
             var finalFormat = effective
             var wrote = writeEncoded(resolver, uri, bitmap, finalFormat, q, context)
             if (!wrote && effective == ExportFormat.HEIC) {
-                // Runtime HEIC failure → JPEG fallback (chip already documents HEIC→JPEG when unavailable).
+                // Runtime HEIC failure -> JPEG fallback (chip already documents HEIC->JPEG when unavailable).
                 finalFormat = ExportFormat.JPEG
                 val jpegName = outName.substringBeforeLast('.', outName) + ".jpg"
                 values.clear()
@@ -106,9 +108,10 @@ class BitmapPhotoEngine(
             }
             if (!wrote) {
                 resolver.delete(uri, null, null)
+                pendingUri = null
                 return AppResult.Err("Could not write ${finalFormat.extension}.")
             }
-            // EXIF: JPEG/WebP/HEIC support rewrite; PNG typically has none — still try strip GPS.
+            // EXIF: JPEG/WebP/HEIC support rewrite; PNG typically has none - still try strip GPS.
             if (finalFormat != ExportFormat.PNG) {
                 resolver.openFileDescriptor(uri, "rw")?.use { pfd: ParcelFileDescriptor ->
                     applyExportExif(exifSource, pfd, keepExif = keepExif, stripGps = stripGps)
@@ -117,10 +120,17 @@ class BitmapPhotoEngine(
             values.clear()
             values.put(MediaStore.Images.Media.IS_PENDING, 0)
             resolver.update(uri, values, null, null)
+            pendingUri = null
             AppResult.Ok(uri.toString())
         } catch (t: Throwable) {
             AppResult.Err("Export failed.", t)
         } finally {
+            pendingUri?.let { orphan ->
+                try {
+                    resolver.delete(orphan, null, null)
+                } catch (_: Exception) {
+                }
+            }
             if (!bitmap.isRecycled) bitmap.recycle()
         }
     }

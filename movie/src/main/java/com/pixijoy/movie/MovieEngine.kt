@@ -482,6 +482,8 @@ class Media3MovieEngine : MovieEngine {
         mime: String,
         pictures: Boolean
     ): AppResult<String> {
+        val resolver = context.contentResolver
+        var pendingUri: android.net.Uri? = null
         return try {
             val collection = if (pictures) {
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI
@@ -499,18 +501,32 @@ class Media3MovieEngine : MovieEngine {
                 put(MediaStore.MediaColumns.RELATIVE_PATH, folder)
                 put(MediaStore.MediaColumns.IS_PENDING, 1)
             }
-            val resolver = context.contentResolver
             val uri = resolver.insert(collection, values)
                 ?: return AppResult.Err("Could not create an export file.")
-            resolver.openOutputStream(uri)?.use { out ->
-                file.inputStream().use { it.copyTo(out) }
-            } ?: return AppResult.Err("Could not open export stream.")
+            pendingUri = uri
+            val out = resolver.openOutputStream(uri)
+            if (out == null) {
+                resolver.delete(uri, null, null)
+                pendingUri = null
+                return AppResult.Err("Could not open export stream.")
+            }
+            out.use { stream ->
+                file.inputStream().use { it.copyTo(stream) }
+            }
             values.clear()
             values.put(MediaStore.MediaColumns.IS_PENDING, 0)
             resolver.update(uri, values, null, null)
+            pendingUri = null
             AppResult.Ok(uri.toString())
         } catch (t: Throwable) {
             AppResult.Err("Could not save the movie.", t)
+        } finally {
+            pendingUri?.let { orphan ->
+                try {
+                    resolver.delete(orphan, null, null)
+                } catch (_: Exception) {
+                }
+            }
         }
     }
 }
