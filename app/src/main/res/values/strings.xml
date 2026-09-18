@@ -40,7 +40,7 @@
     <string name="tool_talking_sub">Ken Burns GIF</string>
     <string name="studio_take_photo">Take photo</string>
     <string name="studio_gallery">Gallery</string>
-    <string name="studio_use_sample">Use sample</string>
+    <string name="studio_use_sample">Try a sample</string>
     <string name="studio_sample_title">Sample</string>
     <string name="studio_recents">Recents</string>
     <string name="studio_pick_body">Photo first, then the tool. Nothing leaves this phone.</string>
@@ -201,4 +201,8 @@
     <string name="studio_hsl_cyans">Cyans</string>
     <string name="studio_hsl_blues">Blues</string>
     <string name="studio_hsl_magentas">Magentas</string>
+    <string name="session_compare_hint">Hold to compare.</string>
+    <string name="session_compare_disabled">Apply an edit to compare.</string>
+    <string name="session_save_status_saved">Saved</string>
+    <string name="session_save_status_saving">Saving...</string>
 </resources>

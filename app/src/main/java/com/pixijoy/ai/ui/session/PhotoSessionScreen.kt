@@ -11,6 +11,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -48,6 +49,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
@@ -167,6 +169,8 @@ fun PhotoSessionScreen(
     var status by remember { mutableStateOf<String?>(null) }
     var exporting by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
+    var compareSnapshot by remember { mutableStateOf<Bitmap?>(null) }
+    var comparing by remember { mutableStateOf(false) }
 
     fun push(op: PhotoOp) {
         val layer = LayeredOp(
@@ -229,11 +233,16 @@ LaunchedEffect(sources, layers) {
         preview?.let { if (!it.isRecycled) it.recycle() }
         preview = next
         histogram = lumaHistogram(next)
+        compareSnapshot?.let { if (!it.isRecycled && it !== next) it.recycle() }
+        compareSnapshot = next.copy(next.config ?: Bitmap.Config.ARGB_8888, false)
         repo.saveGraph(project.id, layers.encodeLayers())
         busy = false
     }
     DisposableEffect(Unit) {
-        onDispose { preview?.let { if (!it.isRecycled) it.recycle() } }
+        onDispose {
+            preview?.let { if (!it.isRecycled) it.recycle() }
+            compareSnapshot?.let { if (!it.isRecycled) it.recycle() }
+        }
     }
     val workManager = remember { WorkManager.getInstance(context) }
     val exportInfos by workManager
@@ -300,6 +309,45 @@ LaunchedEffect(sources, layers) {
                 enabled = redo.isNotEmpty(),
                 modifier = Modifier.testTag("session_redo")
             ) { Text(stringResource(R.string.studio_redo), color = PixiTextMuted) }
+            val canCompare = compareSnapshot != null && !(compareSnapshot?.isRecycled ?: true)
+            Text(
+                text = stringResource(
+                    if (canCompare) R.string.session_compare_hint
+                    else R.string.session_compare_disabled
+                ),
+                color = if (canCompare) PixiText else PixiTextMuted,
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .testTag("session_compare")
+                    .then(
+                        if (canCompare) {
+                            Modifier.pointerInput(canCompare) {
+                                detectTapGestures(
+                                    onPress = {
+                                        comparing = true
+                                        try {
+                                            awaitRelease()
+                                        } finally {
+                                            comparing = false
+                                        }
+                                    }
+                                )
+                            }
+                        } else Modifier
+                    )
+            )
+            if (preview != null) {
+                Text(
+                    text = stringResource(
+                        if (busy) R.string.session_save_status_saving
+                        else R.string.session_save_status_saved
+                    ),
+                    color = PixiTextMuted,
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .testTag("session_save_status")
+                )
+            }
         }
         Box(
             modifier = Modifier
@@ -308,7 +356,12 @@ LaunchedEffect(sources, layers) {
                 .background(PixiSurface),
             contentAlignment = Alignment.Center
         ) {
-            val bmp = selectiveLivePreview ?: preview
+            val snap = compareSnapshot
+            val bmp = if (comparing && snap != null && !snap.isRecycled) {
+                snap
+            } else {
+                selectiveLivePreview ?: preview
+            }
             if (bmp != null && !bmp.isRecycled) {
                 BoxWithConstraints(Modifier.fillMaxSize()) {
                     val imageRect = fittedImageRect(
@@ -317,12 +370,13 @@ LaunchedEffect(sources, layers) {
                         bmp.width,
                         bmp.height
                     )
-                    val liveAdjust = mode == SessionMode.Adjust &&
+                    val showLiveFilters = !comparing
+                    val liveAdjust = showLiveFilters && mode == SessionMode.Adjust &&
                         !LiveGrade.isAdjustIdentity(exposure, contrast, hue, saturation)
-                    val liveDetail = mode == SessionMode.Adjust &&
+                    val liveDetail = showLiveFilters && mode == SessionMode.Adjust &&
                         (sharpen > 0.01f || vignette > 0.01f || blurRadius > 0.5f)
-                    val liveCurves = mode == SessionMode.Curves && !LiveGrade.curvesIdentity(curveYs)
-                    val liveLooks = mode == SessionMode.Looks && !BundledLooks.isIdentity(lookKey)
+                    val liveCurves = showLiveFilters && mode == SessionMode.Curves && !LiveGrade.curvesIdentity(curveYs)
+                    val liveLooks = showLiveFilters && mode == SessionMode.Looks && !BundledLooks.isIdentity(lookKey)
                     Image(
                         bitmap = bmp.asImageBitmap(),
                         contentDescription = project.title,
