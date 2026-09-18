@@ -1,0 +1,24 @@
+﻿appId: com.pixijoy.ai
+---
+# STUB - uncomment when session_compare lands
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "nav_create"
+- tapOn:
+    id: "create_hub_editor"
+- extendedWaitUntil:
+    visible: "Use sample"
+    timeout: 25000
+- tapOn: "Use sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+# - assertVisible:
+#     id: "session_compare"
+# - longPressOn:
+#     id: "session_compare"
+# - assertVisible:
+#     id: "session_save_status"
+- assertVisible:
+    id: "session_export"

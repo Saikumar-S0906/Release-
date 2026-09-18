@@ -1,0 +1,22 @@
+﻿appId: com.pixijoy.ai
+---
+# STUB - uncomment when home_create / create_source_sheet land
+- runFlow: ../launch-to-home.yaml
+# - assertVisible:
+#     id: "home_create"
+# - tapOn:
+#     id: "home_create"
+# - extendedWaitUntil:
+#     visible:
+#       id: "create_source_sheet"
+#     timeout: 15000
+# - assertVisible:
+#     id: "source_photo"
+# - assertVisible:
+#     id: "source_video"
+# - assertVisible:
+#     id: "source_camera"
+# - assertVisible:
+#     id: "source_sample"
+- assertVisible:
+    id: "nav_create"

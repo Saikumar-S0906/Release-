@@ -1,0 +1,52 @@
+﻿appId: com.pixijoy.ai
+---
+# Glass scrim + canvas + sticky Export; Apply bake then open export sheet
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "nav_create"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_editor"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_editor"
+- extendedWaitUntil:
+    visible: "Use sample"
+    timeout: 25000
+- tapOn: "Use sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "session_looks"
+    direction: RIGHT
+    timeout: 25000
+    visibilityPercentage: 40
+- tapOn:
+    id: "session_looks"
+- extendedWaitUntil:
+    visible:
+      id: "session_tool_scrim"
+    timeout: 15000
+- assertVisible:
+    id: "photo_session"
+- assertVisible:
+    id: "session_export"
+- tapOn:
+    id: "look_warm"
+- tapOn:
+    id: "session_apply_look"
+- extendedWaitUntil:
+    visible:
+      id: "session_export"
+    timeout: 30000
+- tapOn:
+    id: "session_export"
+- extendedWaitUntil:
+    visible:
+      id: "export_sheet"
+    timeout: 20000
+- assertVisible:
+    id: "export_sheet_confirm"

@@ -1,0 +1,21 @@
+﻿appId: com.pixijoy.ai
+---
+# STUB - Library overflow + delete Snackbar Undo
+# Uncomment when library_overflow_* / library_delete_undo land
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "nav_library"
+# - assertVisible:
+#     id: "library_overflow_menu"
+# - tapOn:
+#     id: "library_overflow_menu"
+# - tapOn:
+#     id: "library_overflow_delete"
+# - extendedWaitUntil:
+#     visible:
+#       id: "library_delete_undo"
+#     timeout: 10000
+# - tapOn:
+#     id: "library_delete_undo"
+- assertVisible:
+    id: "nav_library"

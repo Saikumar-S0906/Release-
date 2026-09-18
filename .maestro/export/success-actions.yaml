@@ -1,0 +1,41 @@
+﻿appId: com.pixijoy.ai
+---
+# STUB - Export success View / Share / Done + human quality chips
+# Uncomment when export_view / export_share / export_done / export_quality_* land
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "nav_create"
+- tapOn:
+    id: "create_hub_editor"
+- extendedWaitUntil:
+    visible: "Use sample"
+    timeout: 25000
+- tapOn: "Use sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+- tapOn:
+    id: "session_export"
+- extendedWaitUntil:
+    visible:
+      id: "export_sheet"
+    timeout: 20000
+- assertVisible:
+    id: "export_sheet_confirm"
+# - assertVisible:
+#     id: "export_quality_balanced"
+# - assertVisible:
+#     id: "export_quality_high"
+# - assertVisible:
+#     id: "export_quality_maximum"
+# - tapOn:
+#     id: "export_sheet_confirm"
+# - extendedWaitUntil:
+#     visible:
+#       id: "export_done"
+#     timeout: 120000
+# - assertVisible:
+#     id: "export_view"
+# - assertVisible:
+#     id: "export_share"

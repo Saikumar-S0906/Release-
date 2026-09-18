@@ -1,0 +1,19 @@
+﻿appId: com.pixijoy.ai
+---
+# STUB - Studio Best-for + Recommended row
+# Uncomment when hub_recommended_* land
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "nav_create"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_editor"
+    timeout: 20000
+# - assertVisible:
+#     id: "hub_recommended_edit_photo"
+# - assertVisible:
+#     id: "hub_recommended_remove_bg"
+# - assertVisible:
+#     id: "hub_recommended_create_video"
+- assertVisible:
+    id: "create_hub_editor"
