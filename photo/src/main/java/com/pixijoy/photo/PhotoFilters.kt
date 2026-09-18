@@ -4,6 +4,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Shader
@@ -457,4 +459,15 @@ private fun boxBlur(src: IntArray, dest: IntArray, w: Int, h: Int) {
             dest[y * w + x] = Color.argb(a / 9, r / 9, g / 9, b / 9)
         }
     }
+}
+
+fun applyLut(src: Bitmap, assetKey: String): Bitmap {
+    if (BundledLooks.isIdentity(assetKey)) return src
+    val out = Bitmap.createBitmap(src.width, src.height, Bitmap.Config.ARGB_8888)
+    val canvas = android.graphics.Canvas(out)
+    val paint = android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG).apply {
+        colorFilter = ColorMatrixColorFilter(BundledLooks.androidMatrix(assetKey))
+    }
+    canvas.drawBitmap(src, 0f, 0f, paint)
+    return out
 }

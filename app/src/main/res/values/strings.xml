@@ -108,6 +108,14 @@
     <string name="studio_export_destination_movies">Saves to Movies/PixiJoy</string>
     <string name="studio_export_no_watermark">No watermark. Nothing is uploaded.</string>
     <string name="studio_curves">Curves</string>
+    <string name="studio_looks">Looks</string>
+    <string name="studio_looks_hint">Tap a look. Apply to bake it.</string>
+    <string name="studio_look_original">Original</string>
+    <string name="studio_look_clean">Clean</string>
+    <string name="studio_look_warm">Warm</string>
+    <string name="studio_look_cool">Cool</string>
+    <string name="studio_look_film">Film</string>
+    <string name="studio_look_night">Night</string>
     <string name="studio_curves_hint">Shape brightness without washing color.</string>
     <string name="studio_blur">Blur</string>
     <string name="studio_sharpen">Sharpen</string>

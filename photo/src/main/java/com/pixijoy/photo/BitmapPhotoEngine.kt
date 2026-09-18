@@ -237,6 +237,7 @@ class BitmapPhotoEngine(
             bitmaps.forEach { if (!it.isRecycled) it.recycle() }
             collage
         }
+        is PhotoOp.Lut -> applyLut(src, op.assetKey)
         is PhotoOp.Curves -> applyCurves(src, op.y)
         is PhotoOp.Blur -> applyBlurPasses(src, op.radius)
         is PhotoOp.Sharpen -> applyUnsharp(src, op.amount)

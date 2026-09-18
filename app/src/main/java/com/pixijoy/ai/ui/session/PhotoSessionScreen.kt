@@ -73,6 +73,7 @@ import com.pixijoy.designsystem.PixiSurface2
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
 import com.pixijoy.photo.BitmapPhotoEngine
+import com.pixijoy.photo.BundledLooks
 import com.pixijoy.photo.BlendMode
 import com.pixijoy.photo.ExportFormat
 import com.pixijoy.photo.ExportFormatSupport
@@ -97,7 +98,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private enum class SessionMode { Crop, Adjust, Heal, Fill, Erase, Text, Expand, Stickers, Collage, Curves, Layers, Mask }
+private enum class SessionMode { Crop, Adjust, Heal, Fill, Erase, Text, Expand, Stickers, Collage, Curves, Looks, Layers, Mask }
 
 @Composable
 fun PhotoSessionScreen(
@@ -125,6 +126,7 @@ fun PhotoSessionScreen(
     var hue by remember { mutableStateOf(0f) }
     var saturation by remember { mutableStateOf(1f) }
     var curveYs by remember { mutableStateOf(floatArrayOf(0f, 0.25f, 0.5f, 0.75f, 1f)) }
+    var lookKey by remember { mutableStateOf(BundledLooks.ORIGINAL) }
     val curvesShader = remember {
         if (Build.VERSION.SDK_INT >= 33) RuntimeShader(LiveGrade.CURVES_AGSL) else null
     }
@@ -291,16 +293,19 @@ fun PhotoSessionScreen(
                     val liveDetail = mode == SessionMode.Adjust &&
                         (sharpen > 0.01f || vignette > 0.01f || blurRadius > 0.5f)
                     val liveCurves = mode == SessionMode.Curves && !LiveGrade.curvesIdentity(curveYs)
+                    val liveLooks = mode == SessionMode.Looks && !BundledLooks.isIdentity(lookKey)
                     Image(
                         bitmap = bmp.asImageBitmap(),
                         contentDescription = project.title,
                         contentScale = ContentScale.Fit,
-                        colorFilter = if (liveAdjust) {
-                            ColorFilter.colorMatrix(
+                        colorFilter = when {
+                            liveAdjust -> ColorFilter.colorMatrix(
                                 ColorMatrix(LiveGrade.colorMatrix(exposure, contrast, hue, saturation))
                             )
-                        } else {
-                            null
+                            liveLooks -> ColorFilter.colorMatrix(
+                                ColorMatrix(BundledLooks.colorMatrix(lookKey))
+                            )
+                            else -> null
                         },
                         modifier = Modifier
                             .fillMaxSize()
@@ -529,6 +534,9 @@ fun PhotoSessionScreen(
             onApplyCurves = { push(PhotoOp.Curves(it.copyOf())) },
             curveYs = curveYs,
             onCurveYs = { curveYs = it },
+            lookKey = lookKey,
+            onLookKey = { lookKey = it },
+            onApplyLook = { key -> if (!BundledLooks.isIdentity(key)) push(PhotoOp.Lut(key)) },
             onBlur = { push(PhotoOp.Blur(2)) },
             onSharpen = { push(PhotoOp.Sharpen(0.55f)) },
             onVignette = { push(PhotoOp.Vignette(0.4f)) },
@@ -689,6 +697,7 @@ private fun railsFor(toolKey: String): List<RailItem> = when (toolKey) {
         RailItem(R.string.studio_crop, "session_crop", SessionMode.Crop),
         RailItem(R.string.studio_adjust, "session_adjust", SessionMode.Adjust),
         RailItem(R.string.studio_curves, "session_curves", SessionMode.Curves),
+        RailItem(R.string.studio_looks, "session_looks", SessionMode.Looks),
         RailItem(R.string.studio_heal, "session_heal", SessionMode.Heal),
         RailItem(R.string.studio_fill, "session_fill", SessionMode.Fill),
         RailItem(R.string.studio_text, "session_text", SessionMode.Text),
@@ -736,6 +745,9 @@ private fun ToolBody(
     onApplyCurves: (FloatArray) -> Unit,
     curveYs: FloatArray,
     onCurveYs: (FloatArray) -> Unit,
+    lookKey: String,
+    onLookKey: (String) -> Unit,
+    onApplyLook: (String) -> Unit,
     onBlur: () -> Unit,
     onSharpen: () -> Unit,
     onVignette: () -> Unit,
@@ -799,6 +811,38 @@ private fun ToolBody(
                     stringResource(R.string.studio_apply),
                     { onApplyCurves(curveYs.copyOf()) },
                     Modifier.testTag("session_apply_curves")
+                )
+            }
+
+            SessionMode.Looks -> {
+                Text(
+                    stringResource(R.string.studio_looks_hint),
+                    color = PixiTextMuted,
+                    modifier = Modifier.testTag("session_looks_hint")
+                )
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    listOf(
+                        BundledLooks.ORIGINAL to R.string.studio_look_original,
+                        BundledLooks.CLEAN to R.string.studio_look_clean,
+                        BundledLooks.WARM to R.string.studio_look_warm,
+                        BundledLooks.COOL to R.string.studio_look_cool,
+                        BundledLooks.FILM to R.string.studio_look_film,
+                        BundledLooks.NIGHT to R.string.studio_look_night
+                    ).forEach { (key, label) ->
+                        FormatChip(
+                            stringResource(label),
+                            lookKey == key,
+                            "look_$key"
+                        ) { onLookKey(key) }
+                    }
+                }
+                PixiPrimaryButton(
+                    stringResource(R.string.studio_apply),
+                    { onApplyLook(lookKey) },
+                    Modifier.testTag("session_apply_look")
                 )
             }
             SessionMode.Expand -> {

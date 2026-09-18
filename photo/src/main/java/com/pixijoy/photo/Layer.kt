@@ -43,6 +43,7 @@ fun PhotoOp.layerName(): String = when (this) {
     is PhotoOp.TextLayer -> "Type"
     is PhotoOp.Sticker -> "Sticker"
     is PhotoOp.Collage -> "Collage"
+    is PhotoOp.Lut -> "Look"
     is PhotoOp.Curves -> "Curves"
     is PhotoOp.Blur -> "Blur"
     is PhotoOp.Sharpen -> "Sharpen"

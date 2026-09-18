@@ -52,6 +52,7 @@ sealed interface PhotoOp {
         val scale: Float
     ) : PhotoOp
     data class Collage(val columns: Int) : PhotoOp
+    data class Lut(val assetKey: String) : PhotoOp
     data class Curves(val y: FloatArray) : PhotoOp {
         override fun equals(other: Any?): Boolean =
             other is Curves && y.contentEquals(other.y)
@@ -119,6 +120,7 @@ fun List<PhotoOp>.encodeGraph(): String =
                 "T,${op.x},${op.y},${op.size},${op.color},${op.text.encodePayload()}"
             is PhotoOp.Sticker -> "P,${op.glyph.encodePayload()},${op.x},${op.y},${op.scale}"
             is PhotoOp.Collage -> "L,${op.columns}"
+            is PhotoOp.Lut -> "U,${op.assetKey}"
             is PhotoOp.Curves -> "Q,${op.y.joinToString(",")}"
             is PhotoOp.Blur -> "W,${op.radius}"
             is PhotoOp.Sharpen -> "X,${op.amount}"
@@ -164,6 +166,7 @@ fun String.decodeGraph(): List<PhotoOp> {
                     )
                 } else null
                 "L" -> if (parts.size == 2) PhotoOp.Collage(parts[1].toInt().coerceIn(1, 4)) else null
+                "U" -> if (parts.size >= 2) PhotoOp.Lut(parts[1].ifBlank { BundledLooks.ORIGINAL }) else null
                 "Q" -> if (parts.size == 6) {
                     PhotoOp.Curves(floatArrayOf(
                         parts[1].toFloat(), parts[2].toFloat(), parts[3].toFloat(),
