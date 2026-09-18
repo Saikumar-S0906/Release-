@@ -1,57 +1,61 @@
 ﻿appId: com.pixijoy.ai
 ---
-# STUB - Selective HSL under glass scrim (PhotoOp.SelectiveHsl / graph A)
-# Uncomment when tags land: session_selective_hsl, hsl_range_*, session_apply_selective_hsl
+# Selective HSL under glass scrim — PhotoOp.SelectiveHsl / graph A
+# Create Dialog: use text (testTags not in a11y). Band row may need horizontal scroll.
 - runFlow: ../launch-to-home.yaml
 - tapOn:
-    id: "nav_create"
+    id: "home_create"
 - extendedWaitUntil:
-    visible:
-      id: "create_hub_editor"
+    visible: "Try a sample"
     timeout: 20000
-- tapOn:
-    id: "create_hub_editor"
-- extendedWaitUntil:
-    visible: "Use sample"
-    timeout: 25000
-- tapOn: "Use sample"
+- tapOn: "Try a sample"
 - extendedWaitUntil:
     visible:
       id: "photo_session"
     timeout: 60000
-# - scrollUntilVisible:
-#     element:
-#       id: "session_selective_hsl"
-#     direction: RIGHT
-#     timeout: 25000
-#     visibilityPercentage: 40
-# - tapOn:
-#     id: "session_selective_hsl"
-# - extendedWaitUntil:
-#     visible:
-#       id: "session_tool_scrim"
-#     timeout: 15000
-# - assertVisible:
-#     id: "hsl_range_reds"
-# - assertVisible:
-#     id: "hsl_range_oranges"
-# - assertVisible:
-#     id: "hsl_range_yellows"
-# - assertVisible:
-#     id: "hsl_range_greens"
-# - assertVisible:
-#     id: "hsl_range_cyans"
-# - assertVisible:
-#     id: "hsl_range_blues"
-# - assertVisible:
-#     id: "hsl_range_magentas"
-# - tapOn:
-#     id: "hsl_range_reds"
-# - assertVisible:
-#     id: "session_apply_selective_hsl"
-# - tapOn:
-#     id: "session_apply_selective_hsl"
-# - assertVisible:
-#     id: "session_export"
+- scrollUntilVisible:
+    element:
+      id: "session_selective_hsl"
+    direction: RIGHT
+    timeout: 25000
+    visibilityPercentage: 40
+- tapOn:
+    id: "session_selective_hsl"
+- extendedWaitUntil:
+    visible:
+      id: "session_tool_scrim"
+    timeout: 15000
+- assertVisible:
+    id: "photo_session"
 - assertVisible:
     id: "session_export"
+- assertVisible:
+    id: "hsl_range_reds"
+- assertVisible:
+    id: "hsl_range_greens"
+- scrollUntilVisible:
+    element:
+      id: "hsl_range_magentas"
+    direction: RIGHT
+    timeout: 15000
+    visibilityPercentage: 40
+- assertVisible:
+    id: "hsl_range_magentas"
+- tapOn:
+    id: "hsl_range_greens"
+- assertVisible:
+    id: "session_apply_selective_hsl"
+- tapOn:
+    id: "session_apply_selective_hsl"
+- extendedWaitUntil:
+    visible:
+      id: "session_export"
+    timeout: 30000
+- tapOn:
+    id: "session_export"
+- extendedWaitUntil:
+    visible:
+      id: "export_sheet"
+    timeout: 20000
+- assertVisible:
+    id: "export_sheet_confirm"

@@ -1,6 +1,6 @@
-appId: com.pixijoy.ai
+﻿appId: com.pixijoy.ai
 ---
-# clearState -> Privacy ("Continue"). Emulator may show System UI ANR over it — dismiss Wait first.
+# clearState -> Privacy ("Continue"). Emulator may show System UI ANR — dismiss Wait first.
 - launchApp:
     clearState: true
 - repeat:
@@ -28,9 +28,7 @@ appId: com.pixijoy.ai
             - tapOn: "Wait"
 - extendedWaitUntil:
     visible:
-      id: "home_use_sample"
+      id: "home_create"
     timeout: 30000
 - assertVisible:
-    id: "nav_home"
-- assertVisible:
-    id: "nav_create"
+    id: "home_create"
