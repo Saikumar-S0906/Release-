@@ -1,4 +1,4 @@
-﻿package com.pixijoy.photo
+package com.pixijoy.photo
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
