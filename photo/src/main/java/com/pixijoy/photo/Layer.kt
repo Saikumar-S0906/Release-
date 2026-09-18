@@ -23,6 +23,7 @@ fun PhotoOp.layerName(): String = when (this) {
     is PhotoOp.Expand -> "Expand"
     is PhotoOp.Cutout -> "Cutout"
     is PhotoOp.Heal -> "Heal"
+    is PhotoOp.Fill -> "Fill"
     is PhotoOp.Erase -> "Erase"
     is PhotoOp.TextLayer -> "Type"
     is PhotoOp.Sticker -> "Sticker"

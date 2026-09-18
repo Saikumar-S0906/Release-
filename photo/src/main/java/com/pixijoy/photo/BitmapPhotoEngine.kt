@@ -227,6 +227,7 @@ class BitmapPhotoEngine(
         is PhotoOp.Expand -> applyExpand(src, op.fraction)
         is PhotoOp.Cutout -> applyCutout(src)
         is PhotoOp.Heal -> applyHeal(src, op.stamps)
+        is PhotoOp.Fill -> applyFill(src, op.stamps)
         is PhotoOp.Erase -> applyErase(src, op.stamps)
         is PhotoOp.TextLayer -> applyText(src, op)
         is PhotoOp.Sticker -> applySticker(src, op)

@@ -96,7 +96,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private enum class SessionMode { Crop, Adjust, Heal, Erase, Text, Expand, Stickers, Collage, Curves, Layers, Mask }
+private enum class SessionMode { Crop, Adjust, Heal, Fill, Erase, Text, Expand, Stickers, Collage, Curves, Layers, Mask }
 
 @Composable
 fun PhotoSessionScreen(
@@ -393,6 +393,27 @@ fun PhotoSessionScreen(
 
                         }
 
+                        SessionMode.Fill -> BrushOverlay(
+
+                            imageRect = imageRect,
+
+                            radius = brush,
+
+                            onStamp = { stamp ->
+
+                                if (stampSpacing(lastStamp, stamp)) {
+
+                                    lastStamp = stamp
+
+                                    pendingStamps = pendingStamps + stamp
+
+                                }
+
+                            },
+
+                            modifier = Modifier.fillMaxSize()
+
+                        )
                         SessionMode.Erase -> BrushOverlay(
 
                             imageRect = imageRect,
@@ -490,6 +511,7 @@ fun PhotoSessionScreen(
             onApplyCrop = { push(crop); mode = defaultMode(toolKey) },
             onApplyExpand = { push(PhotoOp.Expand(expand)) },
             onApplyHeal = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Heal(pendingStamps)) },
+            onApplyFill = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Fill(pendingStamps)); pendingStamps = emptyList() },
             onApplyErase = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Erase(pendingStamps)) },
             onApplyText = { push(PhotoOp.TextLayer(text, placeX, placeY, 0.08f, 0xFFFFFFFF.toInt())) },
             onRestore = { push(PhotoOp.Restore) },
@@ -641,7 +663,8 @@ private fun railsFor(toolKey: String): List<RailItem> = when (toolKey) {
     )
     "restore" -> listOf(
         RailItem(R.string.studio_adjust, "session_adjust", SessionMode.Adjust),
-        RailItem(R.string.studio_heal, "session_heal", SessionMode.Heal)
+        RailItem(R.string.studio_heal, "session_heal", SessionMode.Heal),
+        RailItem(R.string.studio_fill, "session_fill", SessionMode.Fill)
     )
     "expand" -> listOf(RailItem(R.string.studio_expand_tool, "session_expand", SessionMode.Expand))
     "cutout" -> listOf(
@@ -657,6 +680,7 @@ private fun railsFor(toolKey: String): List<RailItem> = when (toolKey) {
         RailItem(R.string.studio_adjust, "session_adjust", SessionMode.Adjust),
         RailItem(R.string.studio_curves, "session_curves", SessionMode.Curves),
         RailItem(R.string.studio_heal, "session_heal", SessionMode.Heal),
+        RailItem(R.string.studio_fill, "session_fill", SessionMode.Fill),
         RailItem(R.string.studio_text, "session_text", SessionMode.Text),
         RailItem(R.string.studio_layers, "session_layers", SessionMode.Layers),
         RailItem(R.string.studio_mask, "session_mask", SessionMode.Mask)
@@ -691,6 +715,7 @@ private fun ToolBody(
     onApplyCrop: () -> Unit,
     onApplyExpand: () -> Unit,
     onApplyHeal: () -> Unit,
+    onApplyFill: () -> Unit,
     onApplyErase: () -> Unit,
     onApplyText: () -> Unit,
     onRestore: () -> Unit,
@@ -798,6 +823,11 @@ private fun ToolBody(
                     modifier = Modifier.testTag("session_heal_source_status")
                 )
                 PixiPrimaryButton(stringResource(R.string.studio_apply), onApplyHeal, Modifier.testTag("session_apply_heal"))
+            }
+            SessionMode.Fill -> {
+                LabeledSlider(stringResource(R.string.studio_brush), brush, 0.02f..0.12f, "session_brush_size", onBrush)
+                Text(stringResource(R.string.studio_fill_hint), color = PixiTextMuted)
+                PixiPrimaryButton(stringResource(R.string.studio_apply), onApplyFill, Modifier.testTag("session_apply_fill"))
             }
             SessionMode.Erase -> {
                 LabeledSlider(stringResource(R.string.studio_brush), brush, 0.02f..0.12f, "session_brush_size", onBrush)

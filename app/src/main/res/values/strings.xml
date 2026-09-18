@@ -86,6 +86,8 @@
     <string name="studio_camera_stop">Stop</string>
     <string name="studio_heal">Heal</string>
     <string name="studio_erase">Erase</string>
+    <string name="studio_fill">Fill</string>
+    <string name="studio_fill_hint">Paint the area to remove. Fill rebuilds it from nearby pixels on this device.</string>
     <string name="studio_text">Text</string>
     <string name="studio_stickers">Stickers</string>
     <string name="studio_collage">Collage</string>
@@ -162,7 +164,7 @@
     <string name="studio_export_resolution">Resolution</string>
     <string name="studio_export_exif_keep">Keep EXIF</string>
     <string name="studio_export_exif_strip">Strip EXIF</string>
-    <string name="studio_export_exif_gps_hint">Includes location and camera data when kept.</string>
+    <string name="studio_export_exif_gps_hint">Location (GPS) is always removed.</string>
     <string name="studio_collage_2">2-up</string>
     <string name="studio_collage_4">4-up</string>
     <string name="studio_collage_2_hint">2-photo grid</string>

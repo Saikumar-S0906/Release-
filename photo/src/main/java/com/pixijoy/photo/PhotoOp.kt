@@ -36,6 +36,7 @@ sealed interface PhotoOp {
     data class Expand(val fraction: Float) : PhotoOp
     data object Cutout : PhotoOp
     data class Heal(val stamps: List<Stamp>) : PhotoOp
+    data class Fill(val stamps: List<Stamp>) : PhotoOp
     data class Erase(val stamps: List<Stamp>) : PhotoOp
     data class TextLayer(
         val text: String,
@@ -112,6 +113,7 @@ fun List<PhotoOp>.encodeGraph(): String =
             is PhotoOp.Expand -> "E,${op.fraction}"
             is PhotoOp.Cutout -> "K"
             is PhotoOp.Heal -> "B,${op.stamps.pack()}"
+            is PhotoOp.Fill -> "I,${op.stamps.pack()}"
             is PhotoOp.Erase -> "Z,${op.stamps.pack()}"
             is PhotoOp.TextLayer ->
                 "T,${op.x},${op.y},${op.size},${op.color},${op.text.encodePayload()}"
@@ -142,6 +144,7 @@ fun String.decodeGraph(): List<PhotoOp> {
                 "E" -> if (parts.size == 2) PhotoOp.Expand(parts[1].toFloat()) else null
                 "K" -> PhotoOp.Cutout
                 "B" -> PhotoOp.Heal(line.substringAfter(',').unpackStamps())
+                "I" -> PhotoOp.Fill(line.substringAfter(',').unpackStamps())
                 "Z" -> PhotoOp.Erase(line.substringAfter(',').unpackStamps())
                 "T" -> if (parts.size >= 6) {
                     PhotoOp.TextLayer(
