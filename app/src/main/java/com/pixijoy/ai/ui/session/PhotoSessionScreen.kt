@@ -86,6 +86,7 @@ import com.pixijoy.photo.decodeLayers
 import com.pixijoy.photo.histogramClip
 import com.pixijoy.photo.lumaHistogram
 import com.pixijoy.photo.encodeLayers
+import com.pixijoy.photo.withBackgroundSeed
 import com.pixijoy.photo.layerName
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -178,6 +179,15 @@ fun PhotoSessionScreen(
                 }
             }
         }
+    }
+
+
+    LaunchedEffect(mode, project.id) {
+        if (mode != SessionMode.Layers) return@LaunchedEffect
+        if (layers.isNotEmpty()) return@LaunchedEffect
+        val seeded = layers.withBackgroundSeed(id = "L-bg-${project.id}")
+        layers = seeded
+        selectedLayer = seeded.first().id
     }
 
     LaunchedEffect(sources, layers) {
@@ -987,7 +997,10 @@ private fun LayerStack(
             ) { v ->
                 onChange(layers.map { if (it.id == selected.id) it.copy(opacity = v) else it })
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
                 BlendMode.entries.forEach { mode ->
                     FormatChip(
                         blendUiLabel(mode),

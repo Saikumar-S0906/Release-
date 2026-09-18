@@ -48,4 +48,22 @@ class LayerStackTest {
         assertEquals(1, ops.size)
         assertTrue(ops[0] is PhotoOp.Grade)
     }
+
+    @Test
+    fun withBackgroundSeed_empty_addsIdentityGrade() {
+        val seeded = emptyList<LayeredOp>().withBackgroundSeed(id = "L-bg", name = "Background")
+        assertEquals(1, seeded.size)
+        assertEquals("L-bg", seeded[0].id)
+        assertEquals("Background", seeded[0].name)
+        assertTrue(seeded[0].visible)
+        val grade = seeded[0].op as PhotoOp.Grade
+        assertEquals(0f, grade.exposure, 0.001f)
+        assertEquals(1f, grade.contrast, 0.001f)
+    }
+
+    @Test
+    fun withBackgroundSeed_nonEmpty_unchanged() {
+        val existing = listOf(LayeredOp("a", "Heal", op = PhotoOp.Heal(emptyList())))
+        assertEquals(existing, existing.withBackgroundSeed())
+    }
 }

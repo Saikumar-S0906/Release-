@@ -12,6 +12,21 @@ data class LayeredOp(
     val mask: List<MaskStroke> = emptyList(),
     val maskFill: MaskFill = MaskFill.None
 )
+/** Empty stack -> single identity Grade so Layers hub is never a dead end. */
+fun List<LayeredOp>.withBackgroundSeed(
+    id: String = "L-bg",
+    name: String = "Background"
+): List<LayeredOp> {
+    if (isNotEmpty()) return this
+    return listOf(
+        LayeredOp(
+            id = id,
+            name = name,
+            op = PhotoOp.Grade(0f, 1f)
+        )
+    )
+}
+
 
 fun PhotoOp.layerName(): String = when (this) {
     is PhotoOp.Crop -> "Crop"
