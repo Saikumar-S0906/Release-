@@ -780,6 +780,11 @@ private fun ToolBody(
                 }
             }
             SessionMode.Curves -> {
+                Text(
+                    stringResource(R.string.studio_curves_hint),
+                    color = PixiTextMuted,
+                    modifier = Modifier.testTag("session_curves_hint")
+                )
                 fun set(i: Int, v: Float) {
                     val next = curveYs.copyOf()
                     next[i] = v

@@ -108,12 +108,13 @@
     <string name="studio_export_destination_movies">Saves to Movies/PixiJoy</string>
     <string name="studio_export_no_watermark">No watermark. Nothing is uploaded.</string>
     <string name="studio_curves">Curves</string>
+    <string name="studio_curves_hint">Shape brightness without washing color.</string>
     <string name="studio_blur">Blur</string>
     <string name="studio_sharpen">Sharpen</string>
     <string name="studio_vignette">Vignette</string>
     <string name="studio_curve_black">Blacks</string>
     <string name="studio_curve_shadow">Shadows</string>
-    <string name="studio_curve_mid">Mids</string>
+    <string name="studio_curve_mid">Midtones</string>
     <string name="studio_curve_light">Lights</string>
     <string name="studio_curve_white">Whites</string>
     <string name="studio_split">Split</string>
