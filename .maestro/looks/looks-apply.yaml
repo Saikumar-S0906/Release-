@@ -1,0 +1,55 @@
+﻿appId: com.pixijoy.ai
+---
+# Looks (bundled LUT) — chip live-preview → Apply bake → export
+# Tags per UX: session_looks, look_*, session_apply_look
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "nav_create"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_editor"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_editor"
+- extendedWaitUntil:
+    visible: "Use sample"
+    timeout: 25000
+- tapOn: "Use sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "session_looks"
+    direction: RIGHT
+    timeout: 25000
+    visibilityPercentage: 40
+- tapOn:
+    id: "session_looks"
+- extendedWaitUntil:
+    visible:
+      id: "look_clean"
+    timeout: 15000
+- assertVisible:
+    id: "look_warm"
+- assertVisible:
+    id: "look_cool"
+- assertVisible:
+    id: "look_film"
+- assertVisible:
+    id: "look_night"
+- assertVisible:
+    id: "look_original"
+- tapOn:
+    id: "look_warm"
+- assertVisible:
+    id: "session_apply_look"
+- tapOn:
+    id: "session_apply_look"
+- extendedWaitUntil:
+    visible:
+      id: "session_export"
+    timeout: 30000
+- assertVisible:
+    id: "session_export"

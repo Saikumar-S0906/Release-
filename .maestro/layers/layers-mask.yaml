@@ -1,0 +1,34 @@
+﻿appId: com.pixijoy.ai
+---
+# Layers hub exposes session_mask on the short rail
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "nav_create"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_layers"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_layers"
+- extendedWaitUntil:
+    visible: "Use sample"
+    timeout: 25000
+- tapOn: "Use sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+- assertVisible:
+    id: "session_mask"
+- tapOn:
+    id: "session_mask"
+- extendedWaitUntil:
+    visible:
+      id: "mask_protect"
+    timeout: 20000
+- assertVisible:
+    id: "mask_erase"
+- tapOn:
+    id: "mask_protect"
+- tapOn:
+    id: "mask_erase"

@@ -82,3 +82,22 @@ Smart objects, vector paths, group folders, generative fill, RAW (parallel track
 - **Bundled LUT (next):** add `PhotoOp.Lut(assetKey)` applied after curves in composite order. Ship 3-5 bundled LUTs; **no file-picker import** in this burst.
 - **Order:** Background -> layer raster -> Curves -> Lut -> export. UI: Curves first; LUT later with plain names (Film / Cool / Warm).
 - **Do not:** invent a parallel grade graph, merge LUT into Curves points, or block on RAW.
+
+---
+
+## Looks / LUT exit: MET
+
+**Tip:** `3aa262e`
+**Met:** `PhotoOp.Lut(assetKey)` / graph `U`; bundled Original/Clean/Warm/Cool/Film/Night (ColorMatrix); chip live preview; Apply bakes; Maestro looks-apply green on Pixel_7a.
+**Date noted:** 2026-09-18 ~12:48 IST.
+**Explicitly later:** file-picker LUT import; true 3D `.cube` LUTs.
+
+## Next R3 depth (pick — no serial wait)
+
+**Next: Selective color / HSL ranges** (not RAW yet).
+
+- Extend existing `PhotoOp.Hsl` (and/or add `PhotoOp.SelectiveHsl(range, h, s, l)`) so users tweak Reds/Oranges/Yellows/Greens/Blues/Purples without a full RAW pipeline.
+- Live preview under glass scrim; Apply bakes; same op -> engine -> export path.
+- RAW/DNG develop stays the slice after that (heavier `:core:media` work).
+
+**Glass scrim:** session chrome only (`session_tool_scrim`); preview texture updates live; no engine change.

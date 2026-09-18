@@ -1,0 +1,36 @@
+appId: com.pixijoy.ai
+---
+# clearState -> Privacy ("Continue"). Emulator may show System UI ANR over it — dismiss Wait first.
+- launchApp:
+    clearState: true
+- repeat:
+    times: 5
+    commands:
+      - runFlow:
+          when:
+            visible: "System UI isn't responding"
+          commands:
+            - tapOn: "Wait"
+            - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "privacy_accept"
+    timeout: 45000
+- tapOn:
+    id: "privacy_accept"
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            visible: "System UI isn't responding"
+          commands:
+            - tapOn: "Wait"
+- extendedWaitUntil:
+    visible:
+      id: "home_use_sample"
+    timeout: 30000
+- assertVisible:
+    id: "nav_home"
+- assertVisible:
+    id: "nav_create"

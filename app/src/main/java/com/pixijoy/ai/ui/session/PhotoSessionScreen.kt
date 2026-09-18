@@ -12,6 +12,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -53,6 +55,7 @@ import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -490,7 +493,19 @@ fun PhotoSessionScreen(
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp).testTag("session_status")
             )
         }
-        ToolBody(
+        val scrimMax = (LocalConfiguration.current.screenHeightDp * 0.42f).dp
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = scrimMax)
+                .background(Color.Black.copy(alpha = 0.50f))
+                .testTag("session_tool_scrim")
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {        ToolBody(
             mode = mode,
             toolKey = toolKey,
             exposure = exposure,
@@ -581,6 +596,8 @@ fun PhotoSessionScreen(
                 addPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
             }
         )
+            }
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
