@@ -1,16 +1,13 @@
 ﻿appId: com.pixijoy.ai
 ---
-# STUB - Export success View / Share / Done + human quality chips
-# Uncomment when export_view / export_share / export_done / export_quality_* land
+# R3.1 Export: quality chips + success View/Share/Done (stub until tags land)
 - runFlow: ../launch-to-home.yaml
 - tapOn:
-    id: "nav_create"
-- tapOn:
-    id: "create_hub_editor"
+    id: "home_create"
 - extendedWaitUntil:
-    visible: "Use sample"
-    timeout: 25000
-- tapOn: "Use sample"
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
 - extendedWaitUntil:
     visible:
       id: "photo_session"
@@ -29,6 +26,7 @@
 #     id: "export_quality_high"
 # - assertVisible:
 #     id: "export_quality_maximum"
+# - assertVisible: "Remove location from exported photo"
 # - tapOn:
 #     id: "export_sheet_confirm"
 # - extendedWaitUntil:

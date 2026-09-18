@@ -1,24 +1,22 @@
 ﻿appId: com.pixijoy.ai
 ---
-# STUB - uncomment when session_compare lands
+# Press-hold session_compare (no sticky). Soft: canCompare only with live delta.
 - runFlow: ../launch-to-home.yaml
 - tapOn:
-    id: "nav_create"
-- tapOn:
-    id: "create_hub_editor"
+    id: "home_create"
 - extendedWaitUntil:
-    visible: "Use sample"
-    timeout: 25000
-- tapOn: "Use sample"
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
 - extendedWaitUntil:
     visible:
       id: "photo_session"
     timeout: 60000
-# - assertVisible:
-#     id: "session_compare"
-# - longPressOn:
-#     id: "session_compare"
-# - assertVisible:
-#     id: "session_save_status"
+- assertVisible:
+    id: "session_compare"
+- assertVisible:
+    id: "session_save_status"
+- longPressOn:
+    id: "session_compare"
 - assertVisible:
     id: "session_export"

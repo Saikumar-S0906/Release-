@@ -1,22 +1,20 @@
 ﻿appId: com.pixijoy.ai
 ---
-# STUB - uncomment when home_create / create_source_sheet land
+# Create → source sheet. Prefer text until Dialog testTagsAsResourceId.
 - runFlow: ../launch-to-home.yaml
+- assertVisible:
+    id: "home_create"
+- tapOn:
+    id: "home_create"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- assertVisible: "Photo"
+- assertVisible: "Video"
+- assertVisible: "Camera"
+- assertVisible: "Try a sample"
+# Soft when Dialog tags merge:
 # - assertVisible:
-#     id: "home_create"
-# - tapOn:
-#     id: "home_create"
-# - extendedWaitUntil:
-#     visible:
-#       id: "create_source_sheet"
-#     timeout: 15000
-# - assertVisible:
-#     id: "source_photo"
-# - assertVisible:
-#     id: "source_video"
-# - assertVisible:
-#     id: "source_camera"
+#     id: "create_source_sheet"
 # - assertVisible:
 #     id: "source_sample"
-- assertVisible:
-    id: "nav_create"

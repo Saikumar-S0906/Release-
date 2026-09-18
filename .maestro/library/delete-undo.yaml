@@ -1,7 +1,7 @@
 ﻿appId: com.pixijoy.ai
 ---
-# STUB - Library overflow + delete Snackbar Undo
-# Uncomment when library_overflow_* / library_delete_undo land
+# STUB R3.1 Library overflow + delete Snackbar Undo 5s
+# Tags expected: library_overflow_*, library_delete_undo
 - runFlow: ../launch-to-home.yaml
 - tapOn:
     id: "nav_library"
