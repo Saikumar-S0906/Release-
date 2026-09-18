@@ -7,6 +7,9 @@
     <string name="studio_privacy_body">PixiJoy edits photos and movies on this device. Nothing is uploaded. There is no account and no watermark.</string>
     <string name="studio_accept">Continue</string>
     <string name="studio_open">Open studio</string>
+    <string name="home_create">Create</string>
+    <string name="create_source_title">Create</string>
+    <string name="create_source_camera">Camera</string>
     <string name="studio_hub_sub">Photo and movie. All on this phone.</string>
     <string name="studio_photo">Photo</string>
     <string name="studio_movie">Movie</string>
@@ -188,9 +191,9 @@
     <string name="studio_mask_erase">Erase area</string>
     <string name="studio_fade">Fade</string>
 
-    <string name="studio_selective_hsl">Selective HSL</string>
-    <string name="studio_selective_hsl_hint">Pick a color range, then tweak H/S/L. Apply bakes.</string>
-    <string name="studio_selective_light">Light</string>
+    <string name="studio_selective_hsl">Color</string>
+    <string name="studio_selective_hsl_hint">Pick a color range, then tweak hue, saturation, and brightness. Apply bakes.</string>
+    <string name="studio_selective_light">Brightness</string>
     <string name="studio_hsl_reds">Reds</string>
     <string name="studio_hsl_oranges">Oranges</string>
     <string name="studio_hsl_yellows">Yellows</string>

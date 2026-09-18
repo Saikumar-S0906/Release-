@@ -34,7 +34,7 @@ fun PhotoOp.layerName(): String = when (this) {
     is PhotoOp.FlipH -> "Flip"
     is PhotoOp.Grade -> "Grade"
     is PhotoOp.Hsl -> "HSL"
-        is PhotoOp.SelectiveHsl -> "Selective HSL"
+        is PhotoOp.SelectiveHsl -> "Color"
     is PhotoOp.Restore -> "Restore"
     is PhotoOp.Expand -> "Expand"
     is PhotoOp.Cutout -> "Cutout"
