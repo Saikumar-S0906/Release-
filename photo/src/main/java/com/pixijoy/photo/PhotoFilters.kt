@@ -77,44 +77,89 @@ fun applyHeal(src: Bitmap, stamps: List<Stamp>): Bitmap {
         val cx = (stamp.x * w).roundToInt()
         val cy = (stamp.y * h).roundToInt()
         val radius = (stamp.r * min(w, h)).roundToInt().coerceAtLeast(3)
-        val inner = radius
-        val outer = (radius * 1.7f).roundToInt()
-        for (y in (cy - inner).coerceAtLeast(0)..(cy + inner).coerceAtMost(h - 1)) {
-            for (x in (cx - inner).coerceAtLeast(0)..(cx + inner).coerceAtMost(w - 1)) {
-                val d = hypot((x - cx).toDouble(), (y - cy).toDouble()).toFloat()
-                if (d > inner) continue
-                var ar = 0.0
-                var ag = 0.0
-                var ab = 0.0
-                var aa = 0.0
-                var n = 0
-                for (yy in (cy - outer).coerceAtLeast(0)..(cy + outer).coerceAtMost(h - 1)) {
-                    for (xx in (cx - outer).coerceAtLeast(0)..(cx + outer).coerceAtMost(w - 1)) {
-                        val dd = hypot((xx - cx).toDouble(), (yy - cy).toDouble()).toFloat()
-                        if (dd < inner + 1 || dd > outer) continue
-                        val c = srcPx[yy * w + xx]
-                        ar += Color.red(c)
-                        ag += Color.green(c)
-                        ab += Color.blue(c)
-                        aa += Color.alpha(c)
-                        n++
-                    }
-                }
-                if (n == 0) continue
-                val fill = Color.argb((aa / n).roundToInt(), (ar / n).roundToInt(), (ag / n).roundToInt(), (ab / n).roundToInt())
-                val t = (1f - d / inner).coerceIn(0f, 1f)
-                val orig = srcPx[y * w + x]
-                dstPx[y * w + x] = Color.argb(
-                    mixByte(Color.alpha(orig), Color.alpha(fill), t),
-                    mixByte(Color.red(orig), Color.red(fill), t),
-                    mixByte(Color.green(orig), Color.green(fill), t),
-                    mixByte(Color.blue(orig), Color.blue(fill), t)
-                )
-            }
+        if (stamp.hasSource) {
+            val ox = ((stamp.sx!! - stamp.x) * w).roundToInt()
+            val oy = ((stamp.sy!! - stamp.y) * h).roundToInt()
+            cloneStamp(srcPx, dstPx, w, h, cx, cy, radius, ox, oy)
+        } else {
+            ringHealStamp(srcPx, dstPx, w, h, cx, cy, radius)
         }
     }
     out.setPixels(dstPx, 0, w, 0, 0, w, h)
     return out
+}
+
+fun cloneStamp(
+    srcPx: IntArray,
+    dstPx: IntArray,
+    w: Int,
+    h: Int,
+    cx: Int,
+    cy: Int,
+    radius: Int,
+    ox: Int,
+    oy: Int
+) {
+    for (y in (cy - radius).coerceAtLeast(0)..(cy + radius).coerceAtMost(h - 1)) {
+        for (x in (cx - radius).coerceAtLeast(0)..(cx + radius).coerceAtMost(w - 1)) {
+            val d = hypot((x - cx).toDouble(), (y - cy).toDouble()).toFloat()
+            if (d > radius) continue
+            val sx = (x + ox).coerceIn(0, w - 1)
+            val sy = (y + oy).coerceIn(0, h - 1)
+            val t = (1f - d / radius).coerceIn(0f, 1f)
+            dstPx[y * w + x] = mixArgb(dstPx[y * w + x], srcPx[sy * w + sx], t)
+        }
+    }
+}
+
+private fun ringHealStamp(
+    srcPx: IntArray,
+    dstPx: IntArray,
+    w: Int,
+    h: Int,
+    cx: Int,
+    cy: Int,
+    radius: Int
+) {
+    val inner = radius
+    val outer = (radius * 1.7f).roundToInt()
+    for (y in (cy - inner).coerceAtLeast(0)..(cy + inner).coerceAtMost(h - 1)) {
+        for (x in (cx - inner).coerceAtLeast(0)..(cx + inner).coerceAtMost(w - 1)) {
+            val d = hypot((x - cx).toDouble(), (y - cy).toDouble()).toFloat()
+            if (d > inner) continue
+            var ar = 0.0
+            var ag = 0.0
+            var ab = 0.0
+            var aa = 0.0
+            var n = 0
+            for (yy in (cy - outer).coerceAtLeast(0)..(cy + outer).coerceAtMost(h - 1)) {
+                for (xx in (cx - outer).coerceAtLeast(0)..(cx + outer).coerceAtMost(w - 1)) {
+                    val dd = hypot((xx - cx).toDouble(), (yy - cy).toDouble()).toFloat()
+                    if (dd < inner + 1 || dd > outer) continue
+                    val c = srcPx[yy * w + xx]
+                    ar += (c shr 16) and 0xff
+                    ag += (c shr 8) and 0xff
+                    ab += c and 0xff
+                    aa += (c ushr 24) and 0xff
+                    n++
+                }
+            }
+            if (n == 0) continue
+            val fill = (aa / n).roundToInt().shl(24) or
+                (ar / n).roundToInt().shl(16) or
+                (ag / n).roundToInt().shl(8) or
+                (ab / n).roundToInt()
+            dstPx[y * w + x] = mixArgb(srcPx[y * w + x], fill, (1f - d / inner).coerceIn(0f, 1f))
+        }
+    }
+}
+
+private fun mixArgb(orig: Int, fill: Int, t: Float): Int {
+    val a = mixByte((orig ushr 24) and 0xff, (fill ushr 24) and 0xff, t)
+    val r = mixByte((orig shr 16) and 0xff, (fill shr 16) and 0xff, t)
+    val g = mixByte((orig shr 8) and 0xff, (fill shr 8) and 0xff, t)
+    val b = mixByte(orig and 0xff, fill and 0xff, t)
+    return (a shl 24) or (r shl 16) or (g shl 8) or b
 }
 
 private fun mixByte(a: Int, b: Int, t: Float): Int =

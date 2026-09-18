@@ -75,6 +75,7 @@ import com.pixijoy.designsystem.PixiTextMuted
 import com.pixijoy.photo.BitmapPhotoEngine
 import com.pixijoy.photo.BlendMode
 import com.pixijoy.photo.ExportFormat
+import com.pixijoy.photo.ExportFormatSupport
 import com.pixijoy.photo.LayeredOp
 import com.pixijoy.photo.LiveGrade
 import com.pixijoy.photo.MaskFill
@@ -137,6 +138,9 @@ fun PhotoSessionScreen(
     var maskReveal by remember { mutableStateOf(false) }
     var pendingStamps by remember { mutableStateOf(listOf<Stamp>()) }
     var lastStamp by remember { mutableStateOf<Stamp?>(null) }
+    var healSource by remember { mutableStateOf<Pair<Float, Float>?>(null) }
+    var pickingHealSource by remember { mutableStateOf(false) }
+    var collageCols by remember { mutableStateOf(2) }
     var text by remember { mutableStateOf("PixiJoy") }
     var placeX by remember { mutableStateOf(0.5f) }
     var placeY by remember { mutableStateOf(0.82f) }
@@ -144,6 +148,7 @@ fun PhotoSessionScreen(
         mutableStateOf(if (toolKey == "cutout" || toolKey == "stickers") ExportFormat.PNG else ExportFormat.JPEG)
     }
     var quality by remember { mutableStateOf(92) }
+    var keepExif by remember { mutableStateOf(false) }
     var showExport by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf<String?>(null) }
     var exporting by remember { mutableStateOf(false) }
@@ -161,6 +166,7 @@ fun PhotoSessionScreen(
         status = null
         pendingStamps = emptyList()
         lastStamp = null
+        pickingHealSource = false
     }
 
     val addPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
@@ -335,16 +341,78 @@ fun PhotoSessionScreen(
                             },
                             modifier = Modifier.fillMaxSize()
                         )
-                        SessionMode.Heal, SessionMode.Erase -> BrushOverlay(
+                        SessionMode.Heal -> {
+
+                            if (pickingHealSource) {
+
+                                TapPlaceOverlay(
+
+                                    imageRect = imageRect,
+
+                                    onPlace = { x, y ->
+
+                                        healSource = x to y
+
+                                        pickingHealSource = false
+
+                                    },
+
+                                    modifier = Modifier.fillMaxSize()
+
+                                )
+
+                            } else {
+
+                                BrushOverlay(
+
+                                    imageRect = imageRect,
+
+                                    radius = brush,
+
+                                    onStamp = { stamp ->
+
+                                        if (stampSpacing(lastStamp, stamp)) {
+
+                                            val src = healSource
+
+                                            val next = if (src != null) stamp.copy(sx = src.first, sy = src.second) else stamp
+
+                                            lastStamp = next
+
+                                            pendingStamps = pendingStamps + next
+
+                                        }
+
+                                    },
+
+                                    modifier = Modifier.fillMaxSize()
+
+                                )
+
+                            }
+
+                        }
+
+                        SessionMode.Erase -> BrushOverlay(
+
                             imageRect = imageRect,
+
                             radius = brush,
+
                             onStamp = { stamp ->
+
                                 if (stampSpacing(lastStamp, stamp)) {
+
                                     lastStamp = stamp
+
                                     pendingStamps = pendingStamps + stamp
+
                                 }
+
                             },
+
                             modifier = Modifier.fillMaxSize()
+
                         )
                         SessionMode.Text, SessionMode.Stickers -> TapPlaceOverlay(
                             imageRect = imageRect,
@@ -352,6 +420,18 @@ fun PhotoSessionScreen(
                             modifier = Modifier.fillMaxSize()
                         )
                         else -> Unit
+                    }
+                    val source = healSource
+                    if (source != null && (mode == SessionMode.Heal || mode == SessionMode.Erase)) {
+                        Canvas(modifier = Modifier.fillMaxSize().testTag("heal_source_crosshair")) {
+                            if (imageRect.width <= 0f || imageRect.height <= 0f) return@Canvas
+                            val cx = imageRect.left + source.first * imageRect.width
+                            val cy = imageRect.top + source.second * imageRect.height
+                            val arm = 14.dp.toPx()
+                            drawLine(Color.White, Offset(cx - arm, cy), Offset(cx + arm, cy), strokeWidth = 2.dp.toPx())
+                            drawLine(Color.White, Offset(cx, cy - arm), Offset(cx, cy + arm), strokeWidth = 2.dp.toPx())
+                            drawCircle(Color(0xFFFF5AA5), radius = 5.dp.toPx(), center = Offset(cx, cy))
+                        }
                     }
                     val bins = histogram
                     if (bins != null && (mode == SessionMode.Adjust || mode == SessionMode.Curves)) {
@@ -370,7 +450,7 @@ fun PhotoSessionScreen(
         status?.let {
             Text(
                 it,
-                color = PixiSuccess,
+                color = if (exporting) PixiTextMuted else PixiSuccess,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp).testTag("session_status")
             )
         }
@@ -444,8 +524,19 @@ fun PhotoSessionScreen(
                     if (it.id == id) it.copy(maskFill = MaskFill.Background) else it
                 }
             },
+            collageCols = collageCols,
+            pickingHealSource = pickingHealSource,
+            healSourceSet = healSource != null,
+            onPickHealSource = { pickingHealSource = true },
+            onPaintHeal = { pickingHealSource = false },
             onSticker = { glyph -> push(PhotoOp.Sticker(glyph, placeX, placeY, 0.18f)) },
-            onCollage = { cols -> push(PhotoOp.Collage(cols)) },
+            onCollage = { cols ->
+                collageCols = cols
+                push(PhotoOp.Collage(cols))
+                status = context.getString(
+                    if (cols >= 4) R.string.studio_collage_4_hint else R.string.studio_collage_2_hint
+                )
+            },
             onAddPhoto = {
                 addPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
             }
@@ -458,7 +549,7 @@ fun PhotoSessionScreen(
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             railsFor(toolKey).forEach { item ->
-                RailAction(stringResource(item.label), item.tag) { mode = item.mode }
+                RailAction(stringResource(item.label), item.tag, selected = mode == item.mode) { mode = item.mode }
             }
             if (toolKey == "editor") {
                 RailAction(stringResource(R.string.studio_rotate), "session_rotate") {
@@ -489,24 +580,17 @@ fun PhotoSessionScreen(
     if (showExport) {
         ExportSheet(
             title = stringResource(R.string.studio_export_sheet_title),
-            formats = listOf(
-                "jpeg" to "JPEG",
-                "png" to "PNG",
-                "webp" to "WebP"
-            ),
+            formats = ExportFormatSupport.chipFormats(),
             selectedKey = format.name.lowercase(),
             quality = quality,
             showQuality = format != ExportFormat.PNG,
             destination = stringResource(R.string.studio_export_destination_pictures),
             exporting = exporting,
-            onSelectFormat = { key ->
-                format = when (key) {
-                    "png" -> ExportFormat.PNG
-                    "webp" -> ExportFormat.WEBP
-                    else -> ExportFormat.JPEG
-                }
-            },
+            onSelectFormat = { key -> format = ExportFormatSupport.parseKey(key) },
             onQuality = { quality = it },
+            showKeepExif = true,
+            keepExif = keepExif,
+            onKeepExif = { keepExif = it },
             onExport = {
                 if (exporting) return@ExportSheet
                 exporting = true
@@ -520,7 +604,9 @@ fun PhotoSessionScreen(
                             workDataOf(
                                 PhotoExportWorker.KEY_PROJECT to project.id,
                                 PhotoExportWorker.KEY_FORMAT to format.name.lowercase(),
-                                PhotoExportWorker.KEY_QUALITY to quality
+                                PhotoExportWorker.KEY_QUALITY to quality,
+                                PhotoExportWorker.KEY_KEEP_EXIF to keepExif,
+                                PhotoExportWorker.KEY_STRIP_GPS to true
                             )
                         )
                         .build()
@@ -539,6 +625,7 @@ fun PhotoSessionScreen(
 private data class RailItem(val label: Int, val tag: String, val mode: SessionMode)
 
 private fun defaultMode(toolKey: String): SessionMode = when (toolKey) {
+    "layers" -> SessionMode.Layers
     "restore" -> SessionMode.Adjust
     "expand" -> SessionMode.Expand
     "cutout" -> SessionMode.Erase
@@ -548,6 +635,10 @@ private fun defaultMode(toolKey: String): SessionMode = when (toolKey) {
 }
 
 private fun railsFor(toolKey: String): List<RailItem> = when (toolKey) {
+    "layers" -> listOf(
+        RailItem(R.string.studio_layers, "session_layers", SessionMode.Layers),
+        RailItem(R.string.studio_mask, "session_mask", SessionMode.Mask)
+    )
     "restore" -> listOf(
         RailItem(R.string.studio_adjust, "session_adjust", SessionMode.Adjust),
         RailItem(R.string.studio_heal, "session_heal", SessionMode.Heal)
@@ -618,7 +709,12 @@ private fun ToolBody(
     onMaskReveal: (Boolean) -> Unit,
     onClearMask: () -> Unit,
     onSubjectMask: () -> Unit,
-    onBackgroundMask: () -> Unit
+    onBackgroundMask: () -> Unit,
+    collageCols: Int = 2,
+    pickingHealSource: Boolean = false,
+    healSourceSet: Boolean = false,
+    onPickHealSource: () -> Unit = {},
+    onPaintHeal: () -> Unit = {}
 ) {
     Column(Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (toolKey == "restore") {
@@ -671,6 +767,36 @@ private fun ToolBody(
             }
             SessionMode.Heal -> {
                 LabeledSlider(stringResource(R.string.studio_brush), brush, 0.02f..0.12f, "session_brush_size", onBrush)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        stringResource(R.string.studio_heal_set_source),
+                        color = PixiText,
+                        fontWeight = if (pickingHealSource) FontWeight.SemiBold else FontWeight.Medium,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(if (pickingHealSource) PixiAccent else PixiBg)
+                            .clickable(onClick = onPickHealSource)
+                            .testTag("session_heal_set_source")
+                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                    )
+                    Text(
+                        stringResource(R.string.studio_heal_paint),
+                        color = PixiText,
+                        fontWeight = if (!pickingHealSource) FontWeight.SemiBold else FontWeight.Medium,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(if (!pickingHealSource) PixiAccent else PixiBg)
+                            .clickable(onClick = onPaintHeal)
+                            .testTag("session_heal_paint")
+                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                    )
+                }
+                Text(
+                    if (healSourceSet) stringResource(R.string.studio_heal_source_set)
+                    else stringResource(R.string.studio_heal_source_ring),
+                    color = PixiTextMuted,
+                    modifier = Modifier.testTag("session_heal_source_status")
+                )
                 PixiPrimaryButton(stringResource(R.string.studio_apply), onApplyHeal, Modifier.testTag("session_apply_heal"))
             }
             SessionMode.Erase -> {
@@ -715,6 +841,12 @@ private fun ToolBody(
                     )
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FormatChip(stringResource(R.string.studio_mask_protect), maskReveal, "mask_protect") {
+                        onMaskReveal(true)
+                    }
+                    FormatChip(stringResource(R.string.studio_mask_erase), !maskReveal, "mask_erase") {
+                        onMaskReveal(false)
+                    }
                     FormatChip(stringResource(R.string.studio_mask_hide), !maskReveal, "mask_hide") {
                         onMaskReveal(false)
                     }
@@ -727,11 +859,24 @@ private fun ToolBody(
             }
             SessionMode.Layers -> {
                 Text(stringResource(R.string.studio_layers_hint), color = PixiTextMuted)
+                Text(
+                    stringResource(R.string.studio_mask_hint),
+                    color = PixiTextMuted,
+                    modifier = Modifier.testTag("layers_panel_hint")
+                )
             }
             SessionMode.Collage -> {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FormatChip("2-up", false, "collage_2") { onCollage(2) }
-                    FormatChip("4-up", false, "collage_4") { onCollage(2) }
+                    FormatChip(
+                        stringResource(R.string.studio_collage_2),
+                        collageCols == 2,
+                        "collage_2"
+                    ) { onCollage(2) }
+                    FormatChip(
+                        stringResource(R.string.studio_collage_4),
+                        collageCols == 4,
+                        "collage_4"
+                    ) { onCollage(4) }
                 }
                 PixiPrimaryButton(
                     stringResource(R.string.studio_add_photo),
@@ -784,7 +929,7 @@ private fun LayerStack(
     onChange: (List<LayeredOp>) -> Unit
 ) {
     val selected = layers.firstOrNull { it.id == selectedId } ?: layers.lastOrNull()
-    Column(Modifier.padding(horizontal = 12.dp).testTag("layer_stack")) {
+    Column(Modifier.padding(horizontal = 12.dp).testTag("layers_panel")) {
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -798,32 +943,46 @@ private fun LayerStack(
                         .clip(RoundedCornerShape(8.dp))
                         .background(if (layer.id == selected?.id) PixiAccent else PixiSurface2)
                         .clickable { onSelect(layer.id) }
+                        .testTag("layer_row_${layer.id}")
                         .padding(horizontal = 10.dp, vertical = 6.dp)
                 )
             }
         }
         if (selected != null) {
             LabeledSlider(
-                stringResource(R.string.studio_opacity),
+                stringResource(R.string.studio_fade),
                 selected.opacity,
                 0f..1f,
-                "layer_opacity"
+                "layer_fade"
             ) { v ->
                 onChange(layers.map { if (it.id == selected.id) it.copy(opacity = v) else it })
             }
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 BlendMode.entries.forEach { mode ->
-                    FormatChip(mode.name, selected.blend == mode, "blend_${mode.name}") {
+                    FormatChip(
+                        mode.name,
+                        selected.blend == mode,
+                        "blend_${mode.name.lowercase()}"
+                    ) {
                         onChange(layers.map { if (it.id == selected.id) it.copy(blend = mode) else it })
                     }
                 }
             }
             Row {
-                TextButton(onClick = {
-                    onChange(layers.map {
-                        if (it.id == selected.id) it.copy(visible = !it.visible) else it
-                    })
-                }) { Text(if (selected.visible) stringResource(R.string.studio_hide) else stringResource(R.string.studio_show), color = PixiText) }
+                TextButton(
+                    onClick = {
+                        onChange(layers.map {
+                            if (it.id == selected.id) it.copy(visible = !it.visible) else it
+                        })
+                    },
+                    modifier = Modifier.testTag("layer_visibility")
+                ) {
+                    Text(
+                        if (selected.visible) stringResource(R.string.studio_hide)
+                        else stringResource(R.string.studio_show),
+                        color = PixiText
+                    )
+                }
                 TextButton(onClick = {
                     onChange(layers.filterNot { it.id == selected.id })
                 }) { Text(stringResource(R.string.studio_library_delete), color = PixiText) }
@@ -833,10 +992,23 @@ private fun LayerStack(
 }
 
 @Composable
-private fun RailAction(label: String, tag: String, onClick: () -> Unit) {
-    TextButton(onClick = onClick, modifier = Modifier.testTag(tag)) {
-        Text(label, color = PixiText, fontWeight = FontWeight.SemiBold)
-    }
+private fun RailAction(
+    label: String,
+    tag: String,
+    selected: Boolean = false,
+    onClick: () -> Unit
+) {
+    Text(
+        label,
+        color = PixiText,
+        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+        modifier = Modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(if (selected) PixiAccent else PixiBg)
+            .clickable(onClick = onClick)
+            .testTag(tag)
+            .padding(horizontal = 14.dp, vertical = 8.dp)
+    )
 }
 
 @Composable

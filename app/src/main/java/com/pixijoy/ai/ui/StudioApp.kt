@@ -140,7 +140,13 @@ fun StudioApp() {
             val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.board_c00_hero)
                 ?: BitmapFactory.decodeResource(context.resources, R.drawable.board_logo_pixijoy)
             if (bitmap == null) return@launch
-            when (val result = repo.importBitmap(bitmap, context.getString(R.string.studio_sample_title))) {
+            when (
+                val result = repo.importBitmap(
+                    bitmap,
+                    context.getString(R.string.studio_sample_title),
+                    kind = request.kind
+                )
+            ) {
                 is AppResult.Ok -> {
                     if (!bitmap.isRecycled) bitmap.recycle()
                     prefs.setLastProject(result.value.id)
@@ -246,7 +252,8 @@ fun StudioApp() {
                     onDismiss = {
                         pending = null
                         showPickSheet = false
-                    }
+                    },
+                    isMovie = pick.kind == MediaKind.MOVIE
                 )
             }
             if (showCamera) {

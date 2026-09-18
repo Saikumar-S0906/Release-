@@ -29,7 +29,8 @@ fun MediaSourceSheet(
     onGallery: () -> Unit,
     onCamera: () -> Unit,
     onSample: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    isMovie: Boolean = false
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Column(
@@ -42,7 +43,9 @@ fun MediaSourceSheet(
         ) {
             Text(title, color = PixiText, fontWeight = FontWeight.SemiBold)
             Text(
-                stringResource(R.string.studio_pick_body),
+                stringResource(
+                    if (isMovie) R.string.studio_pick_body_movie else R.string.studio_pick_body
+                ),
                 color = PixiTextMuted
             )
             PixiPrimaryButton(
@@ -53,7 +56,9 @@ fun MediaSourceSheet(
                     .testTag("studio_gallery")
             )
             PixiSecondaryButton(
-                text = stringResource(R.string.studio_take_photo),
+                text = stringResource(
+                    if (isMovie) R.string.studio_camera_video else R.string.studio_take_photo
+                ),
                 onClick = onCamera,
                 modifier = Modifier
                     .fillMaxWidth()

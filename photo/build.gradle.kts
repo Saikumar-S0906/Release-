@@ -18,5 +18,7 @@ dependencies {
     implementation(project(":core:common"))
     implementation(project(":core:media"))
     implementation(project(":ml"))
+    implementation(libs.androidx.exifinterface)
+    implementation(libs.androidx.heifwriter)
     testImplementation(libs.junit)
 }

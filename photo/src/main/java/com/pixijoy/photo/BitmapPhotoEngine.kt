@@ -6,8 +6,12 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.os.Environment
+import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
+import androidx.heifwriter.HeifWriter
 import com.pixijoy.core.common.AppResult
+import java.io.File
+import java.io.FileInputStream
 import kotlin.math.max
 
 class BitmapPhotoEngine(
@@ -41,8 +45,19 @@ class BitmapPhotoEngine(
         ops: List<PhotoOp>,
         displayName: String,
         format: ExportFormat,
-        quality: Int
-    ): AppResult<String> = exportLayers(context, sources, ops.toLayers(), displayName, format, quality)
+        quality: Int,
+        keepExif: Boolean,
+        stripGps: Boolean
+    ): AppResult<String> = exportLayers(
+        context,
+        sources,
+        ops.toLayers(),
+        displayName,
+        format,
+        quality,
+        keepExif,
+        stripGps
+    )
 
     fun exportLayers(
         context: Context,
@@ -50,19 +65,24 @@ class BitmapPhotoEngine(
         layers: List<LayeredOp>,
         displayName: String,
         format: ExportFormat,
-        quality: Int
+        quality: Int,
+        keepExif: Boolean = false,
+        stripGps: Boolean = ExportExifPolicy.DEFAULT_STRIP_GPS
     ): AppResult<String> {
         val bitmap = renderLayers(sources, layers, maxEdge = 8192)
-        val compressFormat = when (format) {
-            ExportFormat.JPEG -> Bitmap.CompressFormat.JPEG
-            ExportFormat.PNG -> Bitmap.CompressFormat.PNG
-            ExportFormat.WEBP -> Bitmap.CompressFormat.WEBP_LOSSY
+        val requested = format
+        val effective = ExportFormatSupport.resolve(requested)
+        val outName = if (effective == requested) {
+            displayName
+        } else {
+            displayName.substringBeforeLast('.', displayName) + "." + effective.extension
         }
-        val q = if (format == ExportFormat.PNG) 100 else quality.coerceIn(60, 100)
+        val q = if (effective == ExportFormat.PNG) 100 else quality.coerceIn(60, 100)
+        val exifSource = sources.firstOrNull()
         return try {
             val values = ContentValues().apply {
-                put(MediaStore.Images.Media.DISPLAY_NAME, displayName)
-                put(MediaStore.Images.Media.MIME_TYPE, format.mime)
+                put(MediaStore.Images.Media.DISPLAY_NAME, outName)
+                put(MediaStore.Images.Media.MIME_TYPE, effective.mime)
                 put(
                     MediaStore.Images.Media.RELATIVE_PATH,
                     Environment.DIRECTORY_PICTURES + "/PixiJoy"
@@ -72,11 +92,28 @@ class BitmapPhotoEngine(
             val resolver = context.contentResolver
             val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
                 ?: return AppResult.Err("Could not create a Pictures file.")
-            resolver.openOutputStream(uri)?.use { out ->
-                if (!bitmap.compress(compressFormat, q, out)) {
-                    return AppResult.Err("Could not write ${format.extension}.")
+            var finalFormat = effective
+            var wrote = writeEncoded(resolver, uri, bitmap, finalFormat, q, context)
+            if (!wrote && effective == ExportFormat.HEIC) {
+                // Runtime HEIC failure → JPEG fallback (chip already documents HEIC→JPEG when unavailable).
+                finalFormat = ExportFormat.JPEG
+                val jpegName = outName.substringBeforeLast('.', outName) + ".jpg"
+                values.clear()
+                values.put(MediaStore.Images.Media.DISPLAY_NAME, jpegName)
+                values.put(MediaStore.Images.Media.MIME_TYPE, finalFormat.mime)
+                resolver.update(uri, values, null, null)
+                wrote = writeEncoded(resolver, uri, bitmap, finalFormat, q, context)
+            }
+            if (!wrote) {
+                resolver.delete(uri, null, null)
+                return AppResult.Err("Could not write ${finalFormat.extension}.")
+            }
+            // EXIF: JPEG/WebP/HEIC support rewrite; PNG typically has none — still try strip GPS.
+            if (finalFormat != ExportFormat.PNG) {
+                resolver.openFileDescriptor(uri, "rw")?.use { pfd: ParcelFileDescriptor ->
+                    applyExportExif(exifSource, pfd, keepExif = keepExif, stripGps = stripGps)
                 }
-            } ?: return AppResult.Err("Could not open export stream.")
+            }
             values.clear()
             values.put(MediaStore.Images.Media.IS_PENDING, 0)
             resolver.update(uri, values, null, null)
@@ -85,6 +122,52 @@ class BitmapPhotoEngine(
             AppResult.Err("Export failed.", t)
         } finally {
             if (!bitmap.isRecycled) bitmap.recycle()
+        }
+    }
+
+
+    private fun writeEncoded(
+        resolver: android.content.ContentResolver,
+        uri: android.net.Uri,
+        bitmap: Bitmap,
+        format: ExportFormat,
+        quality: Int,
+        context: Context
+    ): Boolean = when (format) {
+        ExportFormat.HEIC -> writeHeic(context, bitmap, uri, quality)
+        ExportFormat.AVIF -> false
+        ExportFormat.JPEG, ExportFormat.PNG, ExportFormat.WEBP -> {
+            val compressFormat = when (format) {
+                ExportFormat.JPEG -> Bitmap.CompressFormat.JPEG
+                ExportFormat.PNG -> Bitmap.CompressFormat.PNG
+                else -> Bitmap.CompressFormat.WEBP_LOSSY
+            }
+            resolver.openOutputStream(uri)?.use { out ->
+                bitmap.compress(compressFormat, quality, out)
+            } == true
+        }
+    }
+
+    private fun writeHeic(context: Context, bitmap: Bitmap, uri: android.net.Uri, quality: Int): Boolean {
+        val tmp = File(context.cacheDir, "pixijoy-export-${System.currentTimeMillis()}.heic")
+        return try {
+            val writer = HeifWriter.Builder(
+                tmp.absolutePath,
+                bitmap.width,
+                bitmap.height,
+                HeifWriter.INPUT_MODE_BITMAP
+            ).setQuality(quality.coerceIn(60, 100)).build()
+            writer.start()
+            writer.addBitmap(bitmap)
+            writer.stop(0)
+            writer.close()
+            context.contentResolver.openOutputStream(uri)?.use { out ->
+                FileInputStream(tmp).use { input -> input.copyTo(out) }
+            } != null
+        } catch (_: Throwable) {
+            false
+        } finally {
+            if (tmp.exists()) tmp.delete()
         }
     }
 

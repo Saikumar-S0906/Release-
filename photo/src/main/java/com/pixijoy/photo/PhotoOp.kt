@@ -2,12 +2,22 @@ package com.pixijoy.photo
 
 import kotlin.math.roundToInt
 
-data class Stamp(val x: Float, val y: Float, val r: Float)
+data class Stamp(
+    val x: Float,
+    val y: Float,
+    val r: Float,
+    val sx: Float? = null,
+    val sy: Float? = null
+) {
+    val hasSource: Boolean get() = sx != null && sy != null
+}
 
 enum class ExportFormat(val mime: String, val extension: String) {
     JPEG("image/jpeg", "jpg"),
     PNG("image/png", "png"),
-    WEBP("image/webp", "webp")
+    WEBP("image/webp", "webp"),
+    HEIC("image/heic", "heic"),
+    AVIF("image/avif", "avif")
 }
 
 sealed interface PhotoOp {
@@ -66,14 +76,27 @@ fun PhotoOp.Crop.toPixels(width: Int, height: Int): PixelRect {
 }
 
 fun List<Stamp>.pack(): String =
-    joinToString(";") { "${it.x},${it.y},${it.r}" }
+    joinToString(";") { s ->
+        if (s.hasSource) "${s.x},${s.y},${s.r},${s.sx},${s.sy}" else "${s.x},${s.y},${s.r}"
+    }
 
 fun String.unpackStamps(): List<Stamp> {
     if (isBlank()) return emptyList()
     return split(';').mapNotNull { token ->
         val p = token.split(',')
-        if (p.size != 3) return@mapNotNull null
-        runCatching { Stamp(p[0].toFloat(), p[1].toFloat(), p[2].toFloat()) }.getOrNull()
+        runCatching {
+            when (p.size) {
+                3 -> Stamp(p[0].toFloat(), p[1].toFloat(), p[2].toFloat())
+                5 -> Stamp(
+                    x = p[0].toFloat(),
+                    y = p[1].toFloat(),
+                    r = p[2].toFloat(),
+                    sx = p[3].toFloat(),
+                    sy = p[4].toFloat()
+                )
+                else -> null
+            }
+        }.getOrNull()
     }
 }
 

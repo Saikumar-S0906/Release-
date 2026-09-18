@@ -11,7 +11,8 @@ import com.pixijoy.core.common.AppResult
 import com.pixijoy.core.data.ProjectRepository
 import com.pixijoy.ml.MediaPipeVision
 import com.pixijoy.photo.BitmapPhotoEngine
-import com.pixijoy.photo.ExportFormat
+import com.pixijoy.photo.ExportExifPolicy
+import com.pixijoy.photo.ExportFormatSupport
 import com.pixijoy.photo.decodeLayers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -24,12 +25,10 @@ class PhotoExportWorker(
         val projectId = inputData.getString(KEY_PROJECT) ?: return Result.failure(
             workDataOf(KEY_ERROR to "Missing project.")
         )
-        val format = when (inputData.getString(KEY_FORMAT)) {
-            "png" -> ExportFormat.PNG
-            "webp" -> ExportFormat.WEBP
-            else -> ExportFormat.JPEG
-        }
+        val format = ExportFormatSupport.parseKey(inputData.getString(KEY_FORMAT) ?: "jpeg")
         val quality = inputData.getInt(KEY_QUALITY, 92)
+        val keepExif = inputData.getBoolean(KEY_KEEP_EXIF, false)
+        val stripGps = inputData.getBoolean(KEY_STRIP_GPS, ExportExifPolicy.DEFAULT_STRIP_GPS)
         setForeground(foreground(0))
         return withContext(Dispatchers.IO) {
             val repo = ProjectRepository(applicationContext)
@@ -48,7 +47,9 @@ class PhotoExportWorker(
                 layers,
                 name,
                 format,
-                quality
+                quality,
+                keepExif = keepExif,
+                stripGps = stripGps
             )
             when (result) {
                 is AppResult.Ok -> {
@@ -76,6 +77,8 @@ class PhotoExportWorker(
         const val KEY_PROJECT = "projectId"
         const val KEY_FORMAT = "format"
         const val KEY_QUALITY = "quality"
+        const val KEY_KEEP_EXIF = "keepExif"
+        const val KEY_STRIP_GPS = "stripGps"
         const val KEY_PROGRESS = "progress"
         const val KEY_URI = "uri"
         const val KEY_ERROR = "error"

@@ -14,6 +14,8 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.horizontalScroll
@@ -33,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -83,6 +86,8 @@ import com.pixijoy.designsystem.PixiSurface
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
 import com.pixijoy.movie.AudioBed
+import com.pixijoy.movie.AudioMasterFx
+import com.pixijoy.movie.AudioStem
 import com.pixijoy.movie.ClipMix
 import com.pixijoy.movie.CompositionPreview
 import com.pixijoy.movie.Filmstrip
@@ -93,6 +98,7 @@ import com.pixijoy.movie.MovieFrame
 import com.pixijoy.movie.MovieMotion
 import com.pixijoy.movie.MovieSpeed
 import com.pixijoy.movie.MovieTrim
+import com.pixijoy.movie.MovieExportSize
 import com.pixijoy.movie.Timeline
 import com.pixijoy.movie.TimelineClip
 import java.io.File
@@ -171,6 +177,27 @@ fun MovieSessionScreen(
             }
         }
     }
+    val addSfx = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            scope.launch {
+                when (val result = repo.importAudioFile(project.id, uri, "sfx")) {
+                    is AppResult.Ok -> {
+                        val name = File(result.value).name
+                        val id = "sfx${timeline.extraStems.size + 1}"
+                        timeline = timeline.copy(
+                            extraStems = timeline.extraStems + AudioStem(
+                                id = id,
+                                fileName = name,
+                                volume = 1f,
+                                role = "sfx"
+                            )
+                        )
+                    }
+                    is AppResult.Err -> status = result.message
+                }
+            }
+        }
+    }
     val selected = timeline.clips.firstOrNull { it.id == selectedId } ?: timeline.clips.firstOrNull()
     val projectDir = remember(path) { File(path).parent }
     val bedFile = timeline.bed?.let { File(projectDir, it.fileName) }?.takeIf { it.exists() }
@@ -224,7 +251,7 @@ fun MovieSessionScreen(
     LaunchedEffect(paths.size) {
         if (!still && timeline.clips.size != paths.size) {
             timeline = Timeline.fromMedia(paths.size) { engine.durationMs(paths[it]) }
-                .copy(bed = timeline.bed, voice = timeline.voice)
+                .copy(bed = timeline.bed, voice = timeline.voice, extraStems = timeline.extraStems, masterFx = timeline.masterFx)
             selectedId = timeline.clips.firstOrNull()?.id
         }
     }
@@ -253,7 +280,8 @@ fun MovieSessionScreen(
             WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING, WorkInfo.State.BLOCKED -> {
                 exporting = true
                 progress = info.progress.getFloat(MovieExportWorker.KEY_PROGRESS, progress)
-                if (status == null) status = context.getString(R.string.studio_export_background)
+                val pct = (progress * 100f).toInt().coerceIn(0, 100)
+                status = context.getString(R.string.studio_export_pct, pct)
             }
             WorkInfo.State.SUCCEEDED -> {
                 if (exporting) {
@@ -296,7 +324,7 @@ fun MovieSessionScreen(
         voicePlayer?.playWhenReady = false
         exporting = true
         progress = 0f
-        status = context.getString(R.string.studio_export_background)
+        status = context.getString(R.string.studio_export_pct, 0)
         showExport = false
         scope.launch {
             repo.saveGraph(project.id, timeline.encode())
@@ -360,7 +388,13 @@ fun MovieSessionScreen(
                 )
             }
         }
-        Column(Modifier.padding(horizontal = 20.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(
+            Modifier
+                .weight(1f, fill = false)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
             if (!still) {
                 Text(stringResource(R.string.studio_scrub), color = PixiTextMuted)
                 Slider(
@@ -723,6 +757,141 @@ fun MovieSessionScreen(
                     }
                 }
             }
+            PixiSecondaryButton(
+                text = stringResource(
+                    if (timeline.extraStems.isEmpty()) R.string.studio_add_sfx else R.string.studio_replace_sfx
+                ),
+                onClick = { addSfx.launch("audio/*") },
+                modifier = Modifier.fillMaxWidth().testTag("movie_add_sfx")
+            )
+            val sfx = timeline.extraStems.firstOrNull()
+            if (sfx != null) {
+                Text(
+                    stringResource(R.string.studio_sfx_volume, sfx.volume * 100f),
+                    color = PixiTextMuted
+                )
+                Slider(
+                    value = sfx.volume,
+                    onValueChange = { v ->
+                        timeline = timeline.copy(
+                            extraStems = timeline.extraStems.map {
+                                if (it.id == sfx.id) it.copy(volume = ClipMix.volume(v)) else it
+                            }
+                        )
+                    },
+                    valueRange = 0f..1f,
+                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
+                    modifier = Modifier.testTag("movie_sfx_volume")
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(
+                        onClick = {
+                            timeline = timeline.copy(
+                                extraStems = timeline.extraStems.map {
+                                    if (it.id == sfx.id) it.copy(muted = !it.muted) else it
+                                }
+                            )
+                        },
+                        modifier = Modifier.testTag("movie_sfx_mute")
+                    ) {
+                        Text(
+                            if (sfx.muted) stringResource(R.string.studio_unmute)
+                            else stringResource(R.string.studio_mute),
+                            color = PixiText
+                        )
+                    }
+                    TextButton(
+                        onClick = {
+                            timeline = timeline.copy(
+                                extraStems = timeline.extraStems.filterNot { it.id == sfx.id }
+                            )
+                        },
+                        modifier = Modifier.testTag("movie_sfx_remove")
+                    ) {
+                        Text(stringResource(R.string.studio_remove_sfx), color = PixiText)
+                    }
+                }
+            }
+            Text(stringResource(R.string.studio_master_eq), color = PixiTextMuted)
+            val fx = timeline.masterFx
+            Text(
+                stringResource(R.string.studio_eq_low, fx.lowGainDb),
+                color = PixiTextMuted
+            )
+            Slider(
+                value = fx.lowGainDb,
+                onValueChange = { timeline = timeline.copy(masterFx = fx.copy(lowGainDb = it)) },
+                valueRange = -12f..12f,
+                colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
+                modifier = Modifier.testTag("movie_eq_low")
+            )
+            Text(
+                stringResource(R.string.studio_eq_mid, fx.midGainDb),
+                color = PixiTextMuted
+            )
+            Slider(
+                value = fx.midGainDb,
+                onValueChange = { timeline = timeline.copy(masterFx = fx.copy(midGainDb = it)) },
+                valueRange = -12f..12f,
+                colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
+                modifier = Modifier.testTag("movie_eq_mid")
+            )
+            Text(
+                stringResource(R.string.studio_eq_high, fx.highGainDb),
+                color = PixiTextMuted
+            )
+            Slider(
+                value = fx.highGainDb,
+                onValueChange = { timeline = timeline.copy(masterFx = fx.copy(highGainDb = it)) },
+                valueRange = -12f..12f,
+                colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
+                modifier = Modifier.testTag("movie_eq_high")
+            )
+            Text(stringResource(R.string.studio_master_dynamics), color = PixiTextMuted)
+            Text(
+                stringResource(R.string.studio_comp_threshold, fx.compThresholdDb),
+                color = PixiTextMuted
+            )
+            Slider(
+                value = fx.compThresholdDb,
+                onValueChange = { timeline = timeline.copy(masterFx = fx.copy(compThresholdDb = it)) },
+                valueRange = -40f..0f,
+                colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
+                modifier = Modifier.testTag("movie_comp_threshold")
+            )
+            Text(
+                stringResource(R.string.studio_comp_ratio, fx.compRatio),
+                color = PixiTextMuted
+            )
+            Slider(
+                value = fx.compRatio,
+                onValueChange = { timeline = timeline.copy(masterFx = fx.copy(compRatio = it.coerceAtLeast(1f))) },
+                valueRange = 1f..8f,
+                colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
+                modifier = Modifier.testTag("movie_comp_ratio")
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(
+                    onClick = {
+                        timeline = timeline.copy(
+                            masterFx = fx.copy(limiterEnabled = !fx.limiterEnabled)
+                        )
+                    },
+                    modifier = Modifier.testTag("movie_limiter_toggle")
+                ) {
+                    Text(
+                        if (fx.limiterEnabled) stringResource(R.string.studio_limiter_on)
+                        else stringResource(R.string.studio_limiter_off),
+                        color = PixiText
+                    )
+                }
+                TextButton(
+                    onClick = { timeline = timeline.copy(masterFx = AudioMasterFx()) },
+                    modifier = Modifier.testTag("movie_fx_reset")
+                ) {
+                    Text(stringResource(R.string.studio_fx_reset), color = PixiText)
+                }
+            }
             Text(
                 stringResource(R.string.studio_speed, MovieSpeed.normalize(selected?.speed ?: speed)),
                 color = PixiTextMuted
@@ -739,8 +908,40 @@ fun MovieSessionScreen(
                 colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                 modifier = Modifier.testTag("movie_speed")
             )
+        }
+
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .background(PixiBg)
+                .padding(horizontal = 20.dp, vertical = 8.dp)
+                .testTag("session_export_bar"),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            if (exporting) {
+                if (progress <= 0.01f) {
+                    LinearProgressIndicator(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("session_export_progress"),
+                        color = PixiAccent,
+                    )
+                } else {
+                    LinearProgressIndicator(
+                        progress = { progress.coerceIn(0f, 1f) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("session_export_progress"),
+                        color = PixiAccent,
+                    )
+                }
+            }
             status?.let {
-                Text(it, color = PixiSuccess, modifier = Modifier.testTag("session_status"))
+                Text(
+                    it,
+                    color = if (exporting) PixiTextMuted else PixiSuccess,
+                    modifier = Modifier.testTag("session_status")
+                )
             }
             PixiPrimaryButton(
                 text = stringResource(R.string.studio_export),
@@ -765,6 +966,7 @@ fun MovieSessionScreen(
             }
         }
     }
+
     if (showExport) {
         ExportSheet(
             title = stringResource(R.string.studio_export_sheet_title),
@@ -777,13 +979,16 @@ fun MovieSessionScreen(
                 else R.string.studio_export_destination_movies
             ),
             exporting = exporting,
+            progress = progress,
             onSelectFormat = { exportGif = it == "gif" },
             onQuality = {},
             onExport = {
-                showExport = false
                 runExport(gif = exportGif)
             },
-            onDismiss = { if (!exporting) showExport = false }
+            onDismiss = { if (!exporting) showExport = false },
+            resolutions = MovieExportSize.heights.map { it to MovieExportSize.label(it) },
+            selectedHeight = MovieExportSize.normalize(timeline.outputHeight),
+            onSelectHeight = { height -> timeline = timeline.copy(outputHeight = height) }
         )
     }
 }

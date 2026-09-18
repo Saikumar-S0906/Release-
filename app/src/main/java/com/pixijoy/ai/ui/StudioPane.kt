@@ -55,7 +55,8 @@ val PhotoTools = listOf(
     StudioTool(R.string.tool_expand, R.string.tool_expand_sub, R.drawable.pj_ic_expand, "create_hub_expand", MediaKind.PHOTO, "expand"),
     StudioTool(R.string.tool_cutout, R.string.tool_cutout_sub, R.drawable.pj_ic_cut, "create_hub_remove_bg", MediaKind.PHOTO, "cutout"),
     StudioTool(R.string.tool_stickers, R.string.tool_stickers_sub, R.drawable.pj_ic_sticker, "create_hub_sticker", MediaKind.PHOTO, "stickers"),
-    StudioTool(R.string.tool_collage, R.string.tool_collage_sub, R.drawable.pj_ic_grid, "create_hub_collage", MediaKind.PHOTO, "collage")
+    StudioTool(R.string.tool_collage, R.string.tool_collage_sub, R.drawable.pj_ic_grid, "create_hub_collage", MediaKind.PHOTO, "collage"),
+    StudioTool(R.string.tool_layers, R.string.tool_layers_sub, R.drawable.pj_ic_layers, "create_hub_layers", MediaKind.PHOTO, "layers")
 )
 
 val MovieTools = listOf(

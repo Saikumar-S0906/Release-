@@ -77,7 +77,8 @@ class ProjectRepository(
 
     suspend fun importBitmap(
         bitmap: Bitmap,
-        title: String
+        title: String,
+        kind: MediaKind = MediaKind.PHOTO
     ): AppResult<Project> = withContext(dispatchers.io) {
         runCatching {
             val id = UUID.randomUUID().toString()
@@ -86,7 +87,7 @@ class ProjectRepository(
             tmp.outputStream().use { out ->
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 92, out)
             }
-            finishImport(id, dir, tmp, MediaKind.PHOTO, title)
+            finishImport(id, dir, tmp, kind, title)
         }.fold(
             onSuccess = { it },
             onFailure = { AppResult.Err("Could not save sample.", it) }

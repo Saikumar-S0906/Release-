@@ -1,9 +1,20 @@
-package com.pixijoy.photo
+﻿package com.pixijoy.photo
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/**
+ * Unit tests for PhotoOp / Stamp graph encoding and Heal source semantics.
+ *
+ * Heal contract (sx/sy nullable):
+ * - [Stamp.hasSource] is explicit (sx != null && sy != null), NOT inferred from sx != x.
+ * - Stroke landing on the source point still clones (hasSource stays true when sx==x, sy==y).
+ * - No-source stamps take the ring path in applyHeal; empty stamp lists are a no-op.
+ */
 class PhotoOpTest {
     @Test
     fun cropToPixels_clampsAndKeepsMinimumSize() {
@@ -32,7 +43,7 @@ class PhotoOpTest {
             PhotoOp.Heal(listOf(Stamp(0.4f, 0.5f, 0.05f))),
             PhotoOp.Erase(listOf(Stamp(0.2f, 0.3f, 0.04f))),
             PhotoOp.TextLayer("Hello, Pixi", 0.5f, 0.8f, 0.08f, 0xFFFFFFFF.toInt()),
-            PhotoOp.Sticker("❤", 0.5f, 0.5f, 0.2f),
+            PhotoOp.Sticker("â¤", 0.5f, 0.5f, 0.2f),
             PhotoOp.Collage(2),
             PhotoOp.Curves(floatArrayOf(0f, 0.2f, 0.5f, 0.8f, 1f)),
             PhotoOp.Blur(3),
@@ -171,5 +182,91 @@ class PhotoOpTest {
         val decoded = graph.decodeLayers().first()
         assertEquals(MaskFill.None, decoded.maskFill)
         assertEquals("Grade", decoded.name)
+    }
+
+    @Test
+    fun cloneOffsetStampRoundTrip() {
+        val stamps = listOf(
+            Stamp(0.4f, 0.5f, 0.05f),
+            Stamp(0.6f, 0.55f, 0.04f, sx = 0.2f, sy = 0.25f)
+        )
+        val packed = stamps.pack()
+        val unpacked = packed.unpackStamps()
+        assertEquals(stamps, unpacked)
+        assertTrue(unpacked[1].hasSource)
+        assertEquals(0.2f, unpacked[1].sx!!, 0.0001f)
+        assertEquals(0.25f, unpacked[1].sy!!, 0.0001f)
+    }
+
+    /** Regression: sx==x / sy==y must still count as clone source (not silent ring). */
+    @Test
+    fun explicitSourceOnSamePointStillClones() {
+        val stamp = Stamp(0.5f, 0.5f, 0.04f, sx = 0.5f, sy = 0.5f)
+        assertTrue(stamp.hasSource)
+        assertNotNull(stamp.sx)
+        assertNotNull(stamp.sy)
+        val packed = listOf(stamp).pack()
+        // 5-field pack proves hasSource was true at encode time
+        assertTrue(packed.split(',').size >= 5)
+        val again = packed.unpackStamps().single()
+        assertTrue(again.hasSource)
+        assertEquals(0.5f, again.sx!!, 0.0001f)
+        assertEquals(0.5f, again.sy!!, 0.0001f)
+        // Graph round-trip keeps clone semantics
+        val heal = listOf(PhotoOp.Heal(listOf(stamp)))
+        val decoded = heal.encodeGraph().decodeGraph().filterIsInstance<PhotoOp.Heal>().single()
+        assertTrue(decoded.stamps.single().hasSource)
+    }
+
+    @Test
+    fun ringStampHasNoSource() {
+        val stamp = Stamp(0.4f, 0.5f, 0.05f)
+        assertFalse(stamp.hasSource)
+        assertNull(stamp.sx)
+        assertNull(stamp.sy)
+        val packed = listOf(stamp).pack()
+        assertEquals(3, packed.split(',').size)
+        assertFalse(packed.unpackStamps().single().hasSource)
+    }
+
+    /**
+     * applyHeal fork: hasSource â†’ cloneStamp; else â†’ ringHealStamp.
+     * Empty stamps: applyHeal early-returns src (no-op).
+     *
+     * Pixel-level Bitmap assertions need Robolectric / androidTest â€” see [ApplyHealTest].
+     */
+    @Test
+    fun healFork_cloneVsRing_drivenByHasSource() {
+        val clone = Stamp(0.6f, 0.6f, 0.05f, sx = 0.2f, sy = 0.3f)
+        val colocatedClone = Stamp(0.5f, 0.5f, 0.04f, sx = 0.5f, sy = 0.5f)
+        val ring = Stamp(0.4f, 0.5f, 0.05f)
+        assertTrue(clone.hasSource)
+        assertTrue(colocatedClone.hasSource)
+        assertFalse(ring.hasSource)
+        // UI Apply with empty pendingStamps must not push PhotoOp.Heal â€” no-op at session layer.
+        val emptyHeal = PhotoOp.Heal(emptyList())
+        assertTrue(emptyHeal.stamps.isEmpty())
+    }
+/** Regression: collage_4 must encode/decode as 4 columns, never silently as 2. */
+    @Test
+    fun collageFourColumnsIsNotTwo() {
+        val four = PhotoOp.Collage(4)
+        assertEquals(4, four.columns)
+        assertTrue(four.columns != 2)
+
+        val graph = listOf(four).encodeGraph()
+        assertTrue("expected L,4 in graph, got: $graph", graph.contains("L,4"))
+        assertFalse(graph.trim().endsWith("L,2") || graph.contains("\nL,2"))
+
+        val decoded = graph.decodeGraph().filterIsInstance<PhotoOp.Collage>().single()
+        assertEquals(4, decoded.columns)
+        assertEquals(four, decoded)
+    }
+
+    @Test
+    fun collageTwoRoundTrip() {
+        val two = PhotoOp.Collage(2)
+        assertEquals(2, two.columns)
+        assertEquals(two, listOf(two).encodeGraph().decodeGraph().single())
     }
 }

@@ -13,6 +13,7 @@ import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.common.audio.ChannelMixingAudioProcessor
 import androidx.media3.common.audio.ChannelMixingMatrix
 import androidx.media3.common.audio.SonicAudioProcessor
+import androidx.media3.effect.Presentation
 import androidx.media3.effect.SpeedChangeEffect
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.EditedMediaItem
@@ -87,7 +88,7 @@ class Media3MovieEngine : MovieEngine {
         val encoded = when {
             gif -> encodeGif(primary, cache, talking, rate, onProgress)
             still -> {
-                val stillResult = encodeStill(primary, cache, talking, rate, onProgress)
+                val stillResult = encodeStill(primary, cache, talking, rate, timeline.outputHeight, onProgress)
                 if (stillResult is AppResult.Err) stillResult
                 else attachBed(
                     context,
@@ -147,13 +148,14 @@ class Media3MovieEngine : MovieEngine {
         cache: File,
         talking: Boolean,
         speed: Float,
+        height: Int,
         onProgress: (Float) -> Unit
     ): AppResult<Unit> = withContext(Dispatchers.Default) {
         val bitmap = BitmapFactory.decodeFile(path)
             ?: return@withContext AppResult.Err("Could not read the still.")
         try {
             val duration = MovieSpeed.outputDurationMs(MovieTrim.stillDurationMs(talking), speed)
-            KenBurnsEncoder().encode(bitmap, cache, duration, talking, onProgress)
+            KenBurnsEncoder().encode(bitmap, cache, duration, talking, height, onProgress)
         } finally {
             if (!bitmap.isRecycled) bitmap.recycle()
         }
@@ -241,10 +243,51 @@ class Media3MovieEngine : MovieEngine {
         voice?.let { (stem, file) ->
             sequences += voiceSequence(file, stem, total, durationMs(file.absolutePath))
         }
+        for (stem in timeline.extraStems) {
+            if (stem.muted || stem.fileName.isBlank()) continue
+            val dir = File(paths.first()).parentFile ?: continue
+            val file = File(dir, stem.fileName)
+            if (!file.exists()) continue
+            val asBed = AudioBed(
+                fileName = stem.fileName,
+                volume = stem.volume,
+                fadeInMs = stem.fadeInMs,
+                fadeOutMs = stem.fadeOutMs,
+                muted = false,
+                duck = 0.25f,
+                attackMs = 120
+            )
+            val dur = durationMs(file.absolutePath)
+            if (stem.role.equals("music", ignoreCase = true)) {
+                sequences += bedSequence(file, asBed, total, dur, windows)
+            } else {
+                sequences += voiceSequence(file, asBed, total, dur)
+            }
+        }
+        val height = MovieExportSize.normalize(timeline.outputHeight)
+        val videoEffects = listOf<Effect>(Presentation.createForHeight(height))
+        val audioProcessors = ArrayList<AudioProcessor>()
+        val fx = timeline.masterFx
+        if (!fx.isNeutral()) {
+            audioProcessors += EqAudioProcessor(fx.lowGainDb, fx.midGainDb, fx.highGainDb)
+            audioProcessors += DynamicsAudioProcessor(
+                thresholdDb = fx.compThresholdDb,
+                ratio = fx.compRatio,
+                attackMs = fx.compAttackMs,
+                releaseMs = fx.compReleaseMs,
+                makeupDb = fx.compMakeupDb,
+                limiterCeilingDb = fx.limiterCeilingDb,
+                limiterEnabled = fx.limiterEnabled
+            )
+        }
+        val compositionEffects = Effects(audioProcessors, videoEffects)
         return if (sequences.size == 1) {
-            Composition.Builder(videoSeq).build()
+            Composition.Builder(videoSeq).setEffects(compositionEffects).build()
         } else {
-            Composition.Builder(sequences).experimentalSetForceAudioTrack(true).build()
+            Composition.Builder(sequences)
+                .experimentalSetForceAudioTrack(true)
+                .setEffects(compositionEffects)
+                .build()
         }
     }
 

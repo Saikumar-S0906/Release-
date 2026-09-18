@@ -25,10 +25,77 @@ data class AudioBed(
     val attackMs: Long = 120
 )
 
+data class AudioStem(
+    val id: String,
+    val fileName: String,
+    val volume: Float = 1f,
+    val fadeInMs: Long = 0,
+    val fadeOutMs: Long = 0,
+    val muted: Boolean = false,
+    val role: String = "sfx"
+)
+
+data class AudioMasterFx(
+    val lowGainDb: Float = 0f,
+    val midGainDb: Float = 0f,
+    val highGainDb: Float = 0f,
+    val compThresholdDb: Float = 0f,
+    val compRatio: Float = 1f,
+    val compAttackMs: Float = 10f,
+    val compReleaseMs: Float = 100f,
+    val compMakeupDb: Float = 0f,
+    val limiterCeilingDb: Float = -1f,
+    val limiterEnabled: Boolean = false
+) {
+    fun isNeutral(): Boolean =
+        kotlin.math.abs(lowGainDb) < 0.01f &&
+            kotlin.math.abs(midGainDb) < 0.01f &&
+            kotlin.math.abs(highGainDb) < 0.01f &&
+            kotlin.math.abs(compThresholdDb) < 0.01f &&
+            kotlin.math.abs(compRatio - 1f) < 0.01f &&
+            kotlin.math.abs(compMakeupDb) < 0.01f &&
+            !limiterEnabled
+
+    fun encode(): String =
+        "X," + listOf(
+            lowGainDb, midGainDb, highGainDb,
+            compThresholdDb, compRatio, compAttackMs, compReleaseMs,
+            compMakeupDb, limiterCeilingDb
+        ).joinToString(",") { fmt(it) } + ",${if (limiterEnabled) 1 else 0}"
+
+    companion object {
+        val Neutral = AudioMasterFx()
+
+        fun decode(parts: List<String>): AudioMasterFx? {
+            if (parts.size < 11) return null
+            return runCatching {
+                AudioMasterFx(
+                    lowGainDb = parts[1].toFloat(),
+                    midGainDb = parts[2].toFloat(),
+                    highGainDb = parts[3].toFloat(),
+                    compThresholdDb = parts[4].toFloat(),
+                    compRatio = parts[5].toFloat().coerceAtLeast(1f),
+                    compAttackMs = parts[6].toFloat().coerceAtLeast(0f),
+                    compReleaseMs = parts[7].toFloat().coerceAtLeast(0f),
+                    compMakeupDb = parts[8].toFloat(),
+                    limiterCeilingDb = parts[9].toFloat(),
+                    limiterEnabled = parts[10] == "1"
+                )
+            }.getOrNull()
+        }
+
+        private fun fmt(v: Float): String =
+            if (v == v.toLong().toFloat()) v.toLong().toString() else v.toString()
+    }
+}
+
 data class Timeline(
     val clips: List<TimelineClip> = emptyList(),
     val bed: AudioBed? = null,
-    val voice: AudioBed? = null
+    val voice: AudioBed? = null,
+    val outputHeight: Int = 720,
+    val extraStems: List<AudioStem> = emptyList(),
+    val masterFx: AudioMasterFx = AudioMasterFx()
 ) {
     fun totalMs(): Long = clips.sumOf { it.durationMs }
 
@@ -180,6 +247,22 @@ data class Timeline(
             if (isNotEmpty()) append('\n')
             append("V,${vo.fileName},${ClipMix.volume(vo.volume)},${vo.fadeInMs.coerceAtLeast(0)},${vo.fadeOutMs.coerceAtLeast(0)},${if (vo.muted) 1 else 0}")
         }
+        for (stem in extraStems) {
+            if (isNotEmpty()) append('\n')
+            append(
+                "S,${stem.id},${stem.fileName},${ClipMix.volume(stem.volume)}," +
+                    "${stem.fadeInMs.coerceAtLeast(0)},${stem.fadeOutMs.coerceAtLeast(0)}," +
+                    "${if (stem.muted) 1 else 0},${stem.role.ifBlank { "sfx" }}"
+            )
+        }
+        if (MovieExportSize.normalize(outputHeight) != 720) {
+            if (isNotEmpty()) append('\n')
+            append("H,${MovieExportSize.normalize(outputHeight)}")
+        }
+        if (!masterFx.isNeutral()) {
+            if (isNotEmpty()) append('\n')
+            append(masterFx.encode())
+        }
     }
 
     companion object {
@@ -240,8 +323,33 @@ data class Timeline(
                     )
                 }.getOrNull()
             }.firstOrNull()
+            val height = raw.lineSequence().mapNotNull { line ->
+                val p = line.trim().split(',')
+                if (p.getOrNull(0) != "H" || p.size < 2) return@mapNotNull null
+                p[1].toIntOrNull()?.let(MovieExportSize::normalize)
+            }.firstOrNull() ?: 720
+            val extraStems = raw.lineSequence().mapNotNull { line ->
+                val p = line.trim().split(',')
+                if (p.getOrNull(0) != "S" || p.size < 7) return@mapNotNull null
+                runCatching {
+                    AudioStem(
+                        id = p[1],
+                        fileName = p[2],
+                        volume = p[3].toFloat().let(ClipMix::volume),
+                        fadeInMs = p[4].toLong().coerceAtLeast(0),
+                        fadeOutMs = p[5].toLong().coerceAtLeast(0),
+                        muted = p[6] == "1",
+                        role = p.getOrNull(7)?.ifBlank { "sfx" } ?: "sfx"
+                    )
+                }.getOrNull()
+            }.toList()
+            val masterFx = raw.lineSequence().mapNotNull { line ->
+                val p = line.trim().split(',')
+                if (p.getOrNull(0) != "X") return@mapNotNull null
+                AudioMasterFx.decode(p)
+            }.firstOrNull() ?: AudioMasterFx()
             val clips = if (parsed.isEmpty()) fromMedia(count, durationMs).clips else parsed
-            return Timeline(clips, bed, voice)
+            return Timeline(clips, bed, voice, height, extraStems, masterFx)
         }
     }
 }

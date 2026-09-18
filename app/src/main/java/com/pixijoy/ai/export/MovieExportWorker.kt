@@ -46,6 +46,10 @@ class MovieExportWorker(
                     setProgressAsync(workDataOf(KEY_PROGRESS to p))
                     val nm = applicationContext.getSystemService(NotificationManager::class.java)
                     nm.notify(NOTIF_ID, ExportNotifications.notification(applicationContext, pct))
+                    // Keep FGS notification in sync with WorkManager progress for OS / shade %.
+                    try {
+                        kotlinx.coroutines.runBlocking { setForeground(foreground(pct)) }
+                    } catch (_: Exception) { }
                 }
             )
             when (result) {

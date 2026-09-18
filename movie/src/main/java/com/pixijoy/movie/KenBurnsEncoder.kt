@@ -1,4 +1,4 @@
-package com.pixijoy.movie
+﻿package com.pixijoy.movie
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -12,7 +12,9 @@ import android.media.MediaFormat
 import android.media.MediaMuxer
 import com.pixijoy.core.common.AppResult
 import java.io.File
+import java.nio.ByteBuffer
 import kotlin.math.max
+import kotlin.math.roundToInt
 
 internal class KenBurnsEncoder {
     fun encode(
@@ -20,34 +22,51 @@ internal class KenBurnsEncoder {
         output: File,
         durationMs: Long,
         talking: Boolean,
+        height: Int = 720,
         onProgress: (Float) -> Unit
     ): AppResult<Unit> {
-        val width = 1280
-        val height = 720
+        val outHeight = MovieExportSize.normalize(height)
+        val width = MovieExportSize.width(outHeight)
         val fps = 24
-        val frameCount = ((durationMs.coerceAtLeast(1000) / 1000f) * fps).toInt().coerceAtLeast(24)
+        val frameCount = ((durationMs.coerceAtLeast(1000L) / 1000f) * fps).toInt().coerceAtLeast(24)
+        val scaled = scaleForEncode(source, width, outHeight)
         val mime = MediaFormat.MIMETYPE_VIDEO_AVC
-        val format = MediaFormat.createVideoFormat(mime, width, height).apply {
-            setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible)
-            setInteger(MediaFormat.KEY_BIT_RATE, 4_000_000)
+        val format = MediaFormat.createVideoFormat(mime, width, outHeight).apply {
+            setInteger(
+                MediaFormat.KEY_COLOR_FORMAT,
+                MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar
+            )
+            setInteger(MediaFormat.KEY_BIT_RATE, MovieExportSize.bitrate(outHeight))
             setInteger(MediaFormat.KEY_FRAME_RATE, fps)
             setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
         }
-        val codec = MediaCodec.createEncoderByType(mime)
-        val frame = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        var codec: MediaCodec? = null
+        val frame = Bitmap.createBitmap(width, outHeight, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(frame)
         val paint = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG)
-        val cover = coverScale(source.width, source.height, width, height)
+        val cover = coverScale(scaled.width, scaled.height, width, outHeight)
+        var muxer: MediaMuxer? = null
         return try {
-            codec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            codec = MediaCodec.createEncoderByType(mime)
+            try {
+                codec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            } catch (_: Throwable) {
+                // Emulators sometimes reject SemiPlanar — fall back to Flexible.
+                format.setInteger(
+                    MediaFormat.KEY_COLOR_FORMAT,
+                    MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible
+                )
+                codec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            }
             codec.start()
-            val muxer = MediaMuxer(output.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+            muxer = MediaMuxer(output.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
             var track = -1
             var muxerStarted = false
             val bufferInfo = MediaCodec.BufferInfo()
             var inputEos = false
             var outputEos = false
             var frameIndex = 0
+            var idleLoops = 0
             while (!outputEos) {
                 if (!inputEos) {
                     val inIndex = codec.dequeueInputBuffer(10_000)
@@ -63,12 +82,14 @@ internal class KenBurnsEncoder {
                             inputEos = true
                         } else {
                             val t = frameIndex / (frameCount - 1).toFloat().coerceAtLeast(1f)
-                            drawFrame(canvas, source, cover, width, height, t, talking, paint)
-                            val image = codec.getInputImage(inIndex)
+                            drawFrame(canvas, scaled, cover, width, outHeight, t, talking, paint)
                             val pts = frameIndex * 1_000_000L / fps
+                            val image = codec.getInputImage(inIndex)
                             if (image != null) {
                                 fillYuv(image, frame)
-                                codec.queueInputBuffer(inIndex, 0, image.width * image.height * 3 / 2, pts, 0)
+                                val size = image.planes.sumOf { it.buffer.remaining() }
+                                    .coerceAtLeast(width * outHeight * 3 / 2)
+                                codec.queueInputBuffer(inIndex, 0, size, pts, 0)
                             } else {
                                 val buffer = codec.getInputBuffer(inIndex)
                                     ?: return AppResult.Err("Encoder input missing.")
@@ -77,22 +98,30 @@ internal class KenBurnsEncoder {
                                 buffer.put(nv12)
                                 codec.queueInputBuffer(inIndex, 0, nv12.size, pts, 0)
                             }
-                            onProgress(frameIndex / frameCount.toFloat())
+                            onProgress((frameIndex + 1) / frameCount.toFloat())
                             frameIndex++
                         }
+                        idleLoops = 0
                     }
                 }
-                val outIndex = codec.dequeueOutputBuffer(bufferInfo, 10_000)
-                when {
-                    outIndex == MediaCodec.INFO_TRY_AGAIN_LATER -> Unit
-                    outIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
+                when (val outIndex = codec.dequeueOutputBuffer(bufferInfo, 10_000)) {
+                    MediaCodec.INFO_TRY_AGAIN_LATER -> {
+                        idleLoops++
+                        if (idleLoops > 200) {
+                            return AppResult.Err("Could not encode motion.")
+                        }
+                    }
+                    MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                         track = muxer.addTrack(codec.outputFormat)
                         muxer.start()
                         muxerStarted = true
+                        idleLoops = 0
                     }
-                    outIndex >= 0 -> {
+                    else -> if (outIndex >= 0) {
+                        idleLoops = 0
                         val encoded = codec.getOutputBuffer(outIndex)
-                        if (encoded != null &&
+                        if (
+                            encoded != null &&
                             bufferInfo.size > 0 &&
                             muxerStarted &&
                             bufferInfo.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG == 0
@@ -109,15 +138,26 @@ internal class KenBurnsEncoder {
                 }
             }
             if (muxerStarted) muxer.stop()
-            muxer.release()
             AppResult.Ok(Unit)
         } catch (t: Throwable) {
             AppResult.Err("Could not encode motion.", t)
         } finally {
-            runCatching { codec.stop() }
-            runCatching { codec.release() }
+            runCatching { codec?.stop() }
+            runCatching { codec?.release() }
+            runCatching { muxer?.release() }
             if (!frame.isRecycled) frame.recycle()
+            if (scaled !== source && !scaled.isRecycled) scaled.recycle()
         }
+    }
+
+    private fun scaleForEncode(source: Bitmap, dstW: Int, dstH: Int): Bitmap {
+        val maxEdge = max(dstW, dstH) * 2
+        val longEdge = max(source.width, source.height)
+        if (longEdge <= maxEdge) return source
+        val scale = maxEdge / longEdge.toFloat()
+        val w = (source.width * scale).roundToInt().coerceAtLeast(2) and 1.inv()
+        val h = (source.height * scale).roundToInt().coerceAtLeast(2) and 1.inv()
+        return Bitmap.createScaledBitmap(source, w, h, true)
     }
 
     private fun coverScale(srcW: Int, srcH: Int, dstW: Int, dstH: Int): Float =
@@ -161,6 +201,9 @@ private fun fillYuv(image: Image, bitmap: Bitmap) {
     val vStride = vPlane.rowStride
     val uPixel = uPlane.pixelStride
     val vPixel = vPlane.pixelStride
+    yBuf.clear()
+    uBuf.clear()
+    vBuf.clear()
     for (row in 0 until height) {
         for (col in 0 until width) {
             val c = argb[row * width + col]

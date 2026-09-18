@@ -12,7 +12,9 @@ interface PhotoEngine {
         ops: List<PhotoOp>,
         displayName: String,
         format: ExportFormat,
-        quality: Int = 92
+        quality: Int = 92,
+        keepExif: Boolean = false,
+        stripGps: Boolean = ExportExifPolicy.DEFAULT_STRIP_GPS
     ): AppResult<String>
 }
 
@@ -27,6 +29,8 @@ class StubPhotoEngine : PhotoEngine {
         ops: List<PhotoOp>,
         displayName: String,
         format: ExportFormat,
-        quality: Int
+        quality: Int,
+        keepExif: Boolean,
+        stripGps: Boolean
     ): AppResult<String> = AppResult.Err("Stub")
 }
