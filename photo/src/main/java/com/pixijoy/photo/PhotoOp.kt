@@ -32,6 +32,12 @@ sealed interface PhotoOp {
     data object FlipH : PhotoOp
     data class Grade(val exposure: Float, val contrast: Float) : PhotoOp
     data class Hsl(val hue: Float, val saturation: Float) : PhotoOp
+    data class SelectiveHsl(
+        val range: SelectiveHslRange,
+        val hue: Float,
+        val sat: Float,
+        val light: Float
+    ) : PhotoOp
     data object Restore : PhotoOp
     data class Expand(val fraction: Float) : PhotoOp
     data object Cutout : PhotoOp
@@ -110,6 +116,7 @@ fun List<PhotoOp>.encodeGraph(): String =
             is PhotoOp.FlipH -> "F"
             is PhotoOp.Grade -> "G,${op.exposure},${op.contrast}"
             is PhotoOp.Hsl -> "Y,${op.hue},${op.saturation}"
+            is PhotoOp.SelectiveHsl -> "A,${op.range.name},${op.hue},${op.sat},${op.light}"
             is PhotoOp.Restore -> "S"
             is PhotoOp.Expand -> "E,${op.fraction}"
             is PhotoOp.Cutout -> "K"
@@ -142,6 +149,17 @@ fun String.decodeGraph(): List<PhotoOp> {
                 "F" -> PhotoOp.FlipH
                 "G" -> if (parts.size == 3) PhotoOp.Grade(parts[1].toFloat(), parts[2].toFloat()) else null
                 "Y" -> if (parts.size == 3) PhotoOp.Hsl(parts[1].toFloat(), parts[2].toFloat()) else null
+                "A" -> if (parts.size == 5) {
+                    val range = runCatching { SelectiveHslRange.valueOf(parts[1]) }.getOrNull()
+                    if (range != null) {
+                        PhotoOp.SelectiveHsl(
+                            range = range,
+                            hue = parts[2].toFloat(),
+                            sat = parts[3].toFloat(),
+                            light = parts[4].toFloat()
+                        )
+                    } else null
+                } else null
                 "S" -> PhotoOp.Restore
                 "E" -> if (parts.size == 2) PhotoOp.Expand(parts[1].toFloat()) else null
                 "K" -> PhotoOp.Cutout

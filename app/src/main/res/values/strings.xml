@@ -187,4 +187,15 @@
     <string name="studio_mask_protect">Protect</string>
     <string name="studio_mask_erase">Erase area</string>
     <string name="studio_fade">Fade</string>
+
+    <string name="studio_selective_hsl">Selective HSL</string>
+    <string name="studio_selective_hsl_hint">Pick a color range, then tweak H/S/L. Apply bakes.</string>
+    <string name="studio_selective_light">Light</string>
+    <string name="studio_hsl_reds">Reds</string>
+    <string name="studio_hsl_oranges">Oranges</string>
+    <string name="studio_hsl_yellows">Yellows</string>
+    <string name="studio_hsl_greens">Greens</string>
+    <string name="studio_hsl_cyans">Cyans</string>
+    <string name="studio_hsl_blues">Blues</string>
+    <string name="studio_hsl_magentas">Magentas</string>
 </resources>

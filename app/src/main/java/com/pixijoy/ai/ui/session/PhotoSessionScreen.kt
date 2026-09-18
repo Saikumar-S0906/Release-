@@ -85,6 +85,9 @@ import com.pixijoy.photo.LiveGrade
 import com.pixijoy.photo.MaskFill
 import com.pixijoy.photo.MaskStroke
 import com.pixijoy.photo.PhotoOp
+import com.pixijoy.photo.SelectiveHslRange
+import com.pixijoy.photo.applySelectiveHsl
+import com.pixijoy.photo.isIdentity
 import com.pixijoy.photo.Stamp
 import com.pixijoy.photo.decodeLayers
 import com.pixijoy.photo.histogramClip
@@ -101,7 +104,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private enum class SessionMode { Crop, Adjust, Heal, Fill, Erase, Text, Expand, Stickers, Collage, Curves, Looks, Layers, Mask }
+private enum class SessionMode { Crop, Adjust, Heal, Fill, Erase, Text, Expand, Stickers, Collage, Curves, SelectiveHsl, Looks, Layers, Mask }
 
 @Composable
 fun PhotoSessionScreen(
@@ -128,6 +131,11 @@ fun PhotoSessionScreen(
     var contrast by remember { mutableStateOf(1f) }
     var hue by remember { mutableStateOf(0f) }
     var saturation by remember { mutableStateOf(1f) }
+    var selectiveRange by remember { mutableStateOf(SelectiveHslRange.Reds) }
+    var selectiveHue by remember { mutableStateOf(0f) }
+    var selectiveSat by remember { mutableStateOf(1f) }
+    var selectiveLight by remember { mutableStateOf(0f) }
+    var selectiveLivePreview by remember { mutableStateOf<Bitmap?>(null) }
     var curveYs by remember { mutableStateOf(floatArrayOf(0f, 0.25f, 0.5f, 0.75f, 1f)) }
     var lookKey by remember { mutableStateOf(BundledLooks.ORIGINAL) }
     val curvesShader = remember {
@@ -195,7 +203,25 @@ fun PhotoSessionScreen(
         selectedLayer = seeded.first().id
     }
 
-    LaunchedEffect(sources, layers) {
+        LaunchedEffect(mode, selectiveRange, selectiveHue, selectiveSat, selectiveLight, preview) {
+        val src = preview
+        if (mode != SessionMode.SelectiveHsl || src == null || src.isRecycled) {
+            selectiveLivePreview?.let { if (!it.isRecycled) it.recycle() }
+            selectiveLivePreview = null
+            return@LaunchedEffect
+        }
+        val op = PhotoOp.SelectiveHsl(selectiveRange, selectiveHue, selectiveSat, selectiveLight)
+        if (op.isIdentity()) {
+            selectiveLivePreview?.let { if (!it.isRecycled) it.recycle() }
+            selectiveLivePreview = null
+            return@LaunchedEffect
+        }
+        val baked = applySelectiveHsl(src, selectiveRange, selectiveHue, selectiveSat, selectiveLight)
+        selectiveLivePreview?.let { if (!it.isRecycled && it !== baked) it.recycle() }
+        selectiveLivePreview = if (baked !== src) baked else null
+    }
+
+LaunchedEffect(sources, layers) {
         busy = true
         val next = withContext(Dispatchers.Default) {
             engine.renderLayers(sources, layers, maxEdge = 1600)
@@ -282,7 +308,7 @@ fun PhotoSessionScreen(
                 .background(PixiSurface),
             contentAlignment = Alignment.Center
         ) {
-            val bmp = preview
+            val bmp = selectiveLivePreview ?: preview
             if (bmp != null && !bmp.isRecycled) {
                 BoxWithConstraints(Modifier.fillMaxSize()) {
                     val imageRect = fittedImageRect(
@@ -547,6 +573,23 @@ fun PhotoSessionScreen(
             onRestore = { push(PhotoOp.Restore) },
             onCutout = { push(PhotoOp.Subject); format = ExportFormat.PNG },
             onApplyCurves = { push(PhotoOp.Curves(it.copyOf())) },
+            selectiveRange = selectiveRange,
+            selectiveHue = selectiveHue,
+            selectiveSat = selectiveSat,
+            selectiveLight = selectiveLight,
+            onSelectiveRange = { selectiveRange = it },
+            onSelectiveHue = { selectiveHue = it },
+            onSelectiveSat = { selectiveSat = it },
+            onSelectiveLight = { selectiveLight = it },
+            onApplySelectiveHsl = {
+                val op = PhotoOp.SelectiveHsl(selectiveRange, selectiveHue, selectiveSat, selectiveLight)
+                if (!op.isIdentity()) {
+                    push(op)
+                    selectiveHue = 0f
+                    selectiveSat = 1f
+                    selectiveLight = 0f
+                }
+            },
             curveYs = curveYs,
             onCurveYs = { curveYs = it },
             lookKey = lookKey,
@@ -714,7 +757,8 @@ private fun railsFor(toolKey: String): List<RailItem> = when (toolKey) {
         RailItem(R.string.studio_crop, "session_crop", SessionMode.Crop),
         RailItem(R.string.studio_adjust, "session_adjust", SessionMode.Adjust),
         RailItem(R.string.studio_curves, "session_curves", SessionMode.Curves),
-        RailItem(R.string.studio_looks, "session_looks", SessionMode.Looks),
+        RailItem(R.string.studio_selective_hsl, "session_selective_hsl", SessionMode.SelectiveHsl),
+                RailItem(R.string.studio_looks, "session_looks", SessionMode.Looks),
         RailItem(R.string.studio_heal, "session_heal", SessionMode.Heal),
         RailItem(R.string.studio_fill, "session_fill", SessionMode.Fill),
         RailItem(R.string.studio_text, "session_text", SessionMode.Text),
@@ -760,6 +804,15 @@ private fun ToolBody(
     onCollage: (Int) -> Unit,
     onAddPhoto: () -> Unit,
     onApplyCurves: (FloatArray) -> Unit,
+    selectiveRange: SelectiveHslRange,
+    selectiveHue: Float,
+    selectiveSat: Float,
+    selectiveLight: Float,
+    onSelectiveRange: (SelectiveHslRange) -> Unit,
+    onSelectiveHue: (Float) -> Unit,
+    onSelectiveSat: (Float) -> Unit,
+    onSelectiveLight: (Float) -> Unit,
+    onApplySelectiveHsl: () -> Unit,
     curveYs: FloatArray,
     onCurveYs: (FloatArray) -> Unit,
     lookKey: String,
@@ -830,6 +883,46 @@ private fun ToolBody(
                     Modifier.testTag("session_apply_curves")
                 )
             }
+
+            SessionMode.SelectiveHsl -> {
+                Text(
+                    stringResource(R.string.studio_selective_hsl_hint),
+                    color = PixiTextMuted,
+                    modifier = Modifier.testTag("session_selective_hsl_hint")
+                )
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    SelectiveHslRange.values().forEach { range ->
+                        FormatChip(
+                            label = stringResource(
+                                when (range) {
+                                    SelectiveHslRange.Reds -> R.string.studio_hsl_reds
+                                    SelectiveHslRange.Oranges -> R.string.studio_hsl_oranges
+                                    SelectiveHslRange.Yellows -> R.string.studio_hsl_yellows
+                                    SelectiveHslRange.Greens -> R.string.studio_hsl_greens
+                                    SelectiveHslRange.Cyans -> R.string.studio_hsl_cyans
+                                    SelectiveHslRange.Blues -> R.string.studio_hsl_blues
+                                    SelectiveHslRange.Magentas -> R.string.studio_hsl_magentas
+                                }
+                            ),
+                            selected = selectiveRange == range,
+                            tag = "hsl_range_${range.name.lowercase()}",
+                            onClick = { onSelectiveRange(range) }
+                        )
+                    }
+                }
+                LabeledSlider(stringResource(R.string.studio_hue), selectiveHue, -180f..180f, "session_selective_hue", onSelectiveHue)
+                LabeledSlider(stringResource(R.string.studio_saturation), selectiveSat, 0f..2f, "session_selective_sat", onSelectiveSat)
+                LabeledSlider(stringResource(R.string.studio_selective_light), selectiveLight, -0.5f..0.5f, "session_selective_light", onSelectiveLight)
+                PixiPrimaryButton(
+                    stringResource(R.string.studio_apply),
+                    onApplySelectiveHsl,
+                    Modifier.testTag("session_apply_selective_hsl")
+                )
+            }
+
 
             SessionMode.Looks -> {
                 Text(

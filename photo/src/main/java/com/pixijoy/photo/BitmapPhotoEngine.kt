@@ -233,6 +233,7 @@ class BitmapPhotoEngine(
         }
         is PhotoOp.Grade -> applyGradeBitmap(src, op.exposure, op.contrast)
         is PhotoOp.Hsl -> applyHsl(src, op.hue, op.saturation)
+        is PhotoOp.SelectiveHsl -> applySelectiveHsl(src, op.range, op.hue, op.sat, op.light)
         is PhotoOp.Restore -> applyRestore(src)
         is PhotoOp.Expand -> applyExpand(src, op.fraction)
         is PhotoOp.Cutout -> applyCutout(src)
