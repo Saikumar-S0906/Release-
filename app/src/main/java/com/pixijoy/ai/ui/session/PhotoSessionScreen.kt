@@ -966,7 +966,7 @@ private fun LayerStack(
         ) {
             layers.asReversed().forEach { layer ->
                 Text(
-                    layer.name + if (!layer.visible) " (off)" else "",
+                    layer.name,
                     color = PixiText,
                     fontWeight = if (layer.id == selected?.id) FontWeight.SemiBold else FontWeight.Medium,
                     modifier = Modifier
@@ -990,7 +990,7 @@ private fun LayerStack(
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 BlendMode.entries.forEach { mode ->
                     FormatChip(
-                        mode.name,
+                        blendUiLabel(mode),
                         selected.blend == mode,
                         "blend_${mode.name.lowercase()}"
                     ) {
@@ -1021,6 +1021,13 @@ private fun LayerStack(
     }
 }
 
+
+private fun blendUiLabel(mode: BlendMode): String = when (mode) {
+    BlendMode.Normal -> "Normal"
+    BlendMode.Multiply -> "Darken"
+    BlendMode.Screen -> "Lighten"
+    BlendMode.Overlay -> "Contrast"
+}
 @Composable
 private fun RailAction(
     label: String,

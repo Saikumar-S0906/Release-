@@ -149,7 +149,7 @@
     <string name="studio_export_failed">Export failed.</string>
     <string name="studio_timeline_clips">%1$d clips on the timeline</string>
     <string name="studio_layers">Layers</string>
-    <string name="studio_layers_hint">Tap a layer. Opacity and blend apply to that step.</string>
+    <string name="studio_layers_hint">Tap a layer. Fade and blend apply to that step.</string>
     <string name="studio_opacity">Opacity</string>
     <string name="studio_hide">Hide</string>
     <string name="studio_show">Show</string>
