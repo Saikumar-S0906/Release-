@@ -9,10 +9,27 @@ data class TimelineClip(
     val muted: Boolean = false,
     val volume: Float = 1f,
     val fadeInMs: Long = 0,
-    val fadeOutMs: Long = 0
+    val fadeOutMs: Long = 0,
+    /** Transition into the following clip (D2). */
+    val transition: ClipTransition = ClipTransition.None,
+    val transitionMs: Long = 0,
+    /**
+     * End speed for a linear ramp across the clip (D2). When equal to [speed], constant.
+     * Engine expands into stepped segments for Media3.
+     */
+    val speedEnd: Float = speed
 ) {
     val sourceDurationMs: Long get() = (outMs - inMs).coerceAtLeast(1)
-    val durationMs: Long get() = MovieSpeed.outputDurationMs(sourceDurationMs, speed)
+    val durationMs: Long
+        get() = if (!hasSpeedRamp) {
+            MovieSpeed.outputDurationMs(sourceDurationMs, speed)
+        } else {
+            MovieSpeed.expandRamp(this).sumOf { it.durationMs }
+        }
+    val hasSpeedRamp: Boolean
+        get() = kotlin.math.abs(MovieSpeed.normalize(speedEnd) - MovieSpeed.normalize(speed)) > 0.01f
+    val hasTransition: Boolean
+        get() = transition != ClipTransition.None && transitionMs > 0L
 }
 
 data class AudioBed(
@@ -222,6 +239,42 @@ data class Timeline(
         return copy(clips = copy)
     }
 
+    /**
+     * D2 roll: move the shared cut between [id] and the next clip by [deltaSourceMs]
+     * (positive expands left / trims right). Requires adjacent same-media clips.
+     */
+    fun rollCut(id: String, deltaSourceMs: Long, minHoldMs: Long = 250): Timeline {
+        val i = clips.indexOfFirst { it.id == id }
+        if (i < 0 || i >= clips.lastIndex) return this
+        val left = clips[i]
+        val right = clips[i + 1]
+        if (left.mediaIndex != right.mediaIndex || left.outMs != right.inMs) return this
+        val cut = (left.outMs + deltaSourceMs).coerceIn(
+            left.inMs + minHoldMs,
+            right.outMs - minHoldMs
+        )
+        if (cut == left.outMs) return this
+        val copy = clips.toMutableList()
+        copy[i] = left.copy(outMs = cut)
+        copy[i + 1] = right.copy(inMs = cut)
+        return copy(clips = copy)
+    }
+
+    /** Apply soft-dissolve pair fades for adjacent clips that declare a transition. */
+    fun withTransitionFadesApplied(): Timeline {
+        if (clips.size < 2) return this
+        val copy = clips.toMutableList()
+        for (i in 0 until copy.lastIndex) {
+            val cur = copy[i]
+            if (!cur.hasTransition || cur.transition != ClipTransition.Soft) continue
+            val next = copy[i + 1]
+            val ms = cur.transitionMs.coerceIn(40L, minOf(cur.durationMs, next.durationMs) / 2)
+            copy[i] = cur.copy(fadeOutMs = maxOf(cur.fadeOutMs, ms))
+            copy[i + 1] = next.copy(fadeInMs = maxOf(next.fadeInMs, ms))
+        }
+        return copy(clips = copy)
+    }
+
     fun move(id: String, delta: Int): Timeline {
         val i = clips.indexOfFirst { it.id == id }
         if (i < 0) return this
@@ -235,7 +288,9 @@ data class Timeline(
 
     fun encode(): String = buildString {
         append(clips.joinToString("\n") { c ->
-            "C,${c.mediaIndex},${c.inMs},${c.outMs},${c.speed},${if (c.muted) 1 else 0},${c.id},${ClipMix.volume(c.volume)},${c.fadeInMs.coerceAtLeast(0)},${c.fadeOutMs.coerceAtLeast(0)}"
+            "C,${c.mediaIndex},${c.inMs},${c.outMs},${c.speed},${if (c.muted) 1 else 0},${c.id}," +
+                "${ClipMix.volume(c.volume)},${c.fadeInMs.coerceAtLeast(0)},${c.fadeOutMs.coerceAtLeast(0)}," +
+                "${c.transition.name},${c.transitionMs.coerceAtLeast(0)},${c.speedEnd}"
         })
         val music = bed
         if (music != null) {
@@ -281,19 +336,22 @@ data class Timeline(
                 val p = line.trim().split(',')
                 if (p.getOrNull(0) != "C" || p.size < 7) return@mapNotNull null
                 runCatching {
+                    val speed = p[4].toFloat()
                     TimelineClip(
                         id = p[6],
                         mediaIndex = p[1].toInt().coerceIn(0, (count - 1).coerceAtLeast(0)),
                         inMs = p[2].toLong(),
                         outMs = p[3].toLong(),
-                        speed = p[4].toFloat(),
+                        speed = speed,
                         muted = p[5] == "1",
                         volume = p.getOrNull(7)?.toFloatOrNull()?.let(ClipMix::volume) ?: 1f,
                         fadeInMs = p.getOrNull(8)?.toLongOrNull()?.coerceAtLeast(0) ?: 0L,
-                        fadeOutMs = p.getOrNull(9)?.toLongOrNull()?.coerceAtLeast(0) ?: 0L
+                        fadeOutMs = p.getOrNull(9)?.toLongOrNull()?.coerceAtLeast(0) ?: 0L,
+                        transition = ClipTransition.parse(p.getOrNull(10)),
+                        transitionMs = p.getOrNull(11)?.toLongOrNull()?.coerceAtLeast(0) ?: 0L,
+                        speedEnd = p.getOrNull(12)?.toFloatOrNull() ?: speed
                     )
-                }.getOrNull()
-            }.toList()
+                }.getOrNull()            }.toList()
             val bed = raw.lineSequence().mapNotNull { line ->
                 val p = line.trim().split(',')
                 if (p.getOrNull(0) != "A" || p.size < 6) return@mapNotNull null

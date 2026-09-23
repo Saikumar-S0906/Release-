@@ -1,5 +1,5 @@
 ﻿PixiJoy — TOTAL remaining (all stages)
-Updated: 2026-09-23 ~4:00 PM IST
+Updated: 2026-09-23 ~4:30 PM IST
 Source: room status + docs/NORTH_STAR_ROADMAP.md + UX backlog
 Branch: origin/next (tip moving)
 
@@ -18,6 +18,7 @@ C6 PhotoPreset + BatchPhotoExportWorker; Library Export all photos
 C7 ColorIntent sRGB/Display P3 on export (best-effort)
 C8 Soften (O) light; model-heavy → R5
 D1 MultiTrackTimeline composition E2E (preview+export from MT; track mute UI)
+D2 Ripple/roll + Soft transitions + speed ramps (Maestro d2-transition-speed green Pixel_7a 2026-09-23)
 Docs: NORTH_STAR_ROADMAP, R3_LAYER_OP_SHAPES, REMAINING_MASTER_PLAN, HANDS_OFF
 Wave B quality gates EXITED 2026-09-23 (Phase 0 land)
 Wave C EXITED 2026-09-23
@@ -36,7 +37,7 @@ C1–C8 MET. See section A.
 D. R4 MOVIE (cinema-class depth)
 ================================================================
 D1. Multi-track video + audio timeline — MET (composition E2E 2026-09-23)
-D2. Ripple / roll trim; transitions; speed ramps
+D2. Ripple / roll trim; transitions; speed ramps — MET (2026-09-23)
 D3. Keyframed transform / motion
 D4. Titles + captions
 D5. Grade + LUT + scopes on timeline

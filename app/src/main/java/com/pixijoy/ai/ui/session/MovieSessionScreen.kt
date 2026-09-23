@@ -92,6 +92,7 @@ import com.pixijoy.movie.AudioBed
 import com.pixijoy.movie.AudioMasterFx
 import com.pixijoy.movie.AudioStem
 import com.pixijoy.movie.ClipMix
+import com.pixijoy.movie.ClipTransition
 import com.pixijoy.movie.CompositionPreview
 import com.pixijoy.movie.Filmstrip
 import com.pixijoy.movie.FilmstripFrame
@@ -459,6 +460,35 @@ fun MovieSessionScreen(
                     )
                 }
             }
+            val canRoll = run {
+                val id = selected?.id ?: return@run false
+                val i = timeline.clips.indexOfFirst { it.id == id }
+                if (i < 0 || i >= timeline.clips.lastIndex) return@run false
+                val left = timeline.clips[i]
+                val right = timeline.clips[i + 1]
+                left.mediaIndex == right.mediaIndex && left.outMs == right.inMs
+            }
+            MovieEditOpsPanel(
+                selected = selected,
+                canRoll = canRoll,
+                onRoll = { delta ->
+                    val id = selected?.id ?: return@MovieEditOpsPanel
+                    commitTimeline(timeline.rollCut(id, delta))
+                },
+                onTransition = { kind, ms ->
+                    val id = selected?.id ?: return@MovieEditOpsPanel
+                    commitTimeline(
+                        timeline.update(id) {
+                            it.copy(transition = kind, transitionMs = if (kind == ClipTransition.None) 0L else ms)
+                        }
+                    )
+                },
+                onSpeedRamp = { start, end ->
+                    val id = selected?.id ?: return@MovieEditOpsPanel
+                    speed = start
+                    commitTimeline(timeline.update(id) { it.copy(speed = start, speedEnd = end) })
+                }
+            )
             if (!still) {
                 Text(stringResource(R.string.studio_scrub), color = PixiTextMuted)
                 Slider(
@@ -966,7 +996,9 @@ fun MovieSessionScreen(
                     val s = MovieSpeed.normalize(it)
                     speed = s
                     val id = selected?.id
-                    if (id != null) commitTimeline(timeline.update(id) { clip -> clip.copy(speed = s) })
+                    if (id != null) {
+                        commitTimeline(timeline.update(id) { clip -> clip.copy(speed = s, speedEnd = s) })
+                    }
                 },
                 valueRange = 0.5f..2f,
                 colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),

@@ -1,0 +1,57 @@
+appId: com.pixijoy.ai
+---
+# D2 — soft transition chip in movie session
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "home_open_studio"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_segment_movie"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_segment_movie"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_move"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_move"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "movie_session"
+    timeout: 90000
+- scrollUntilVisible:
+    element:
+      id: "movie_d2_hint"
+    direction: DOWN
+    timeout: 40000
+    visibilityPercentage: 40
+    speed: 40
+- assertVisible:
+    id: "movie_transition_none"
+- assertVisible:
+    id: "movie_transition_soft"
+- tapOn:
+    id: "movie_transition_soft"
+- extendedWaitUntil:
+    visible:
+      id: "movie_transition_ms"
+    timeout: 10000
+# Soft adds a duration slider; speed-end can sit below the fold.
+- scrollUntilVisible:
+    element:
+      id: "movie_speed_end"
+    direction: DOWN
+    timeout: 20000
+    visibilityPercentage: 40
+    speed: 40
+- assertVisible:
+    id: "movie_speed_start"
+- assertVisible:
+    id: "movie_speed_end"
+- assertVisible:
+    id: "movie_session"

@@ -76,18 +76,21 @@ class Media3MovieEngine : MovieEngine {
 
     override fun composition(paths: List<String>, timeline: MultiTrackTimeline): Composition {
         val mt = timeline.ensureDefaultTracks()
-        val clips = mt.composedVideoClips().ifEmpty {
-            Timeline.fromMedia(paths.size) { durationMs(paths[it]) }.clips
-        }
+        val prepared = mt.toFlatTimeline()
+            .copy(clips = mt.composedVideoClips().ifEmpty {
+                Timeline.fromMedia(paths.size) { durationMs(paths[it]) }.clips
+            })
+            .withTransitionFadesApplied()
+        val clips = MovieSpeed.expandTimeline(prepared.clips)
         val items = clips.map { clip -> videoItem(paths, clip) }
         val videoSeq = EditedMediaItemSequence.Builder(items).build()
         val audioTrackSeqs = mt.unmutedAudioTracksWithClips().map { track ->
-            audioClipSequence(paths, track.clips)
+            audioClipSequence(paths, MovieSpeed.expandTimeline(track.clips))
         }
         return composeAudio(
             videoSeq = videoSeq,
             paths = paths,
-            timeline = mt.toFlatTimeline().copy(clips = clips),
+            timeline = prepared.copy(clips = clips),
             durationOverrideMs = null,
             extraAudioSequences = audioTrackSeqs
         )

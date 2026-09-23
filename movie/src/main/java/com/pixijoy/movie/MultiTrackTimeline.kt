@@ -111,7 +111,8 @@ data class MultiTrackTimeline(
                 appendLine(
                     "TC,${track.id},${clip.id},${clip.mediaIndex},${clip.inMs},${clip.outMs}," +
                         "${clip.speed},${if (clip.muted) 1 else 0},${clip.volume}," +
-                        "${clip.fadeInMs},${clip.fadeOutMs}"
+                        "${clip.fadeInMs},${clip.fadeOutMs},${clip.transition.name}," +
+                        "${clip.transitionMs},${clip.speedEnd}"
                 )
             }
         }
@@ -188,16 +189,20 @@ data class MultiTrackTimeline(
                     }
                     "TC" -> if (parts.size >= 11) {
                         val trackId = parts[1]
+                        val speed = parts[6].toFloat()
                         val clip = TimelineClip(
                             id = parts[2],
                             mediaIndex = parts[3].toInt(),
                             inMs = parts[4].toLong(),
                             outMs = parts[5].toLong(),
-                            speed = parts[6].toFloat(),
+                            speed = speed,
                             muted = parts[7] == "1",
                             volume = parts[8].toFloat(),
                             fadeInMs = parts[9].toLong(),
-                            fadeOutMs = parts[10].toLong()
+                            fadeOutMs = parts[10].toLong(),
+                            transition = ClipTransition.parse(parts.getOrNull(11)),
+                            transitionMs = parts.getOrNull(12)?.toLongOrNull() ?: 0L,
+                            speedEnd = parts.getOrNull(13)?.toFloatOrNull() ?: speed
                         )
                         val track = trackMap[trackId] ?: return@forEach
                         trackMap[trackId] = track.copy(clips = track.clips + clip)

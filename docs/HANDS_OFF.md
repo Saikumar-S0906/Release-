@@ -71,7 +71,8 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **C2 RAW/DNG** — open + Exif + `preview.jpg` sidecar + RAW badge.
 - **C3–C8 Wave C** — Fill undo · Warp · Presets/batch · ColorIntent · Soften (light). See exit note.
 - **D1** — `MultiTrackTimeline` composition E2E (preview+export from MT; track mute).
-**In progress:** D2+ cinema ops on MT composition.
+- **D2** — ripple/roll + Soft transition fades + speed ramps; Maestro `d2-transition-speed` **green** Pixel_7a.
+**In progress:** D3 keyframed transform / motion.
 
 **Blockers:** None.
 
@@ -93,10 +94,11 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **C4 Sky / background replace** — `PhotoOp.SkyReplace` graph `H`; heuristic sky/backdrop matte; Maestro green
 - **Wave C** — C3 Fill undo/clear · C5 Perspective/Liquify · C6 presets + batch export · C7 export color intent · C8 light Soften (model-heavy → R5)
 - **D1 multi-track composition** — MT preview/export parity; track mute; Maestro `multitrack-lanes`
+- **D2 ripple/roll + transitions + speed ramps** — `rollCut`, Soft fade pair, `MovieSpeed.expandRamp`; Maestro `d2-transition-speed` green Pixel_7a
 
 ### Live gate
 
-**D2** ripple/roll + transitions (on landed MT composition).
+**D3** keyframed transform / motion.
 
 ### Follow-up epic (not a feature gate)
 
