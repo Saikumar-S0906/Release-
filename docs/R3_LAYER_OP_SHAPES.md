@@ -103,9 +103,19 @@ Smart objects, vector paths, group folders, generative fill, RAW (parallel track
 **Met:** `PhotoOp.SkyReplace(target, color)` graph `H`; HSV + top-bias sky matte; background via subject mask or corner-key; solid presets; session rail under glass; Maestro `sky-replace-apply.yaml` **green** Pixel_7a.
 **Explicitly later:** image fill / LUT sky packs; MediaPipe sky segmenter as optional ML pack.
 
-## Next R3 depth
+## Wave C depth (C3/C5–C8): MET
 
-**Next:** D1 multi-track E2E → C5 perspective/liquify.
+**Met:**
+- **C3** Fill undo stroke + clear; Telea; E1 `LiteRtInpaintHook` stub.
+- **C5** `PhotoOp.Perspective` (`D`) + `Liquify` (`M`); `WarpOps`; session Warp rail.
+- **C6** `PhotoPreset` local files; Library **Export all photos** via `BatchPhotoExportWorker`.
+- **C7** `ColorIntent` sRGB / Display P3 on export path (best-effort device support).
+- **C8** light `PhotoOp.Soften` (`O`); model-heavy portrait → R5.
+**Units:** `WarpOpsTest` + graph round-trip. Maestro: `.maestro/warp/`, `.maestro/soften/`.
+
+## Next R3 / R4
+
+**Next:** D1 multi-track composition E2E (preview + export).
 
 See `TOTAL_REMAINING.txt` and `REMAINING_MASTER_PLAN.md`.
 

@@ -52,7 +52,10 @@ class PhotoOpTest {
             PhotoOp.Subject,
             PhotoOp.Fill(listOf(Stamp(0.3f, 0.4f, 0.06f))),
             PhotoOp.SkyReplace(SkyReplaceTarget.Sky, SkyReplacePresets.BlueSky),
-            PhotoOp.SkyReplace(SkyReplaceTarget.Background, SkyReplacePresets.StudioGreen)
+            PhotoOp.SkyReplace(SkyReplaceTarget.Background, SkyReplacePresets.StudioGreen),
+            PhotoOp.Perspective(0.1f, -0.05f),
+            PhotoOp.Liquify(0.5f, 0.4f, 0.15f, 0.3f),
+            PhotoOp.Soften(0.35f)
         )
         val decoded = ops.encodeGraph().decodeGraph()
         assertEquals(ops, decoded)

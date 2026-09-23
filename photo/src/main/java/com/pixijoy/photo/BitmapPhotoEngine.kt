@@ -71,9 +71,11 @@ class BitmapPhotoEngine(
         format: ExportFormat,
         quality: Int,
         keepExif: Boolean = false,
-        stripGps: Boolean = ExportExifPolicy.DEFAULT_STRIP_GPS
+        stripGps: Boolean = ExportExifPolicy.DEFAULT_STRIP_GPS,
+        colorIntent: ColorIntent = ColorIntent.Srgb
     ): AppResult<String> {
-        val bitmap = renderLayers(sources, layers, maxEdge = 8192)
+        val rendered = renderLayers(sources, layers, maxEdge = 8192)
+        val bitmap = rendered.withColorIntent(colorIntent)
         val requested = format
         val effective = ExportFormatSupport.resolve(requested)
         val outName = if (effective == requested) {
@@ -278,5 +280,8 @@ class BitmapPhotoEngine(
             if (mask != null && !mask.isRecycled) mask.recycle()
             out
         }
+        is PhotoOp.Perspective -> applyPerspectiveKeystone(src, op.horizontal, op.vertical)
+        is PhotoOp.Liquify -> applyLiquify(src, op.x, op.y, op.radius, op.amount)
+        is PhotoOp.Soften -> applyPortraitSoften(src, op.amount)
     }
 }

@@ -51,11 +51,14 @@ fun PhotoOp.layerName(): String = when (this) {
     is PhotoOp.Vignette -> "Vignette"
     is PhotoOp.Subject -> "Subject"
     is PhotoOp.SkyReplace -> if (target == SkyReplaceTarget.Sky) "Sky" else "Backdrop"
+    is PhotoOp.Perspective -> "Perspective"
+    is PhotoOp.Liquify -> "Liquify"
+    is PhotoOp.Soften -> "Soften"
 }
 
 fun PhotoOp.isGeometry(): Boolean =
     this is PhotoOp.Crop || this is PhotoOp.Rotate || this is PhotoOp.FlipH ||
-        this is PhotoOp.Expand || this is PhotoOp.Collage
+        this is PhotoOp.Expand || this is PhotoOp.Collage || this is PhotoOp.Perspective
 
 /**
  * True when an operation changes pixels on its own. This keeps UI affordances such as
@@ -81,6 +84,9 @@ fun PhotoOp.isIdentity(): Boolean = when (this) {
     is PhotoOp.Blur -> radius <= 0
     is PhotoOp.Sharpen -> amount <= 0f
     is PhotoOp.Vignette -> amount <= 0f
+    is PhotoOp.Perspective -> kotlin.math.abs(horizontal) < 0.001f && kotlin.math.abs(vertical) < 0.001f
+    is PhotoOp.Liquify -> kotlin.math.abs(amount) < 0.001f || radius <= 0f
+    is PhotoOp.Soften -> amount <= 0.01f
 }
 
 /** A visible layer with a non-identity operation is eligible for image comparison. */

@@ -59,7 +59,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.pixijoy.ai.R
+import com.pixijoy.ai.export.BatchPhotoExportWorker
 import com.pixijoy.ai.ui.camera.CameraCaptureScreen
 import com.pixijoy.ai.ui.session.MovieSessionScreen
 import com.pixijoy.ai.ui.session.PhotoSessionScreen
@@ -488,6 +493,7 @@ private fun StudioShell(
     engine: BitmapPhotoEngine,
     movieEngine: Media3MovieEngine
 ) {
+    val context = LocalContext.current
     NavigationSuiteScaffold(
         navigationSuiteItems = {
             StudioTab.entries.forEach { dest ->
@@ -539,7 +545,29 @@ private fun StudioShell(
                     onOpenProject = onOpenProject,
                     onRequestDelete = onRequestDelete,
                     onRenameProject = onRenameProject,
-                    onCreate = onCreate
+                    onCreate = onCreate,
+                    onExportAllPhotos = {
+                        val ids = projects.filter { it.kind == MediaKind.PHOTO }.map { it.id }
+                        if (ids.isEmpty()) return@LibraryPane
+                        val request = OneTimeWorkRequestBuilder<BatchPhotoExportWorker>()
+                            .setInputData(
+                                workDataOf(
+                                    BatchPhotoExportWorker.KEY_PROJECTS to ids.toTypedArray(),
+                                    BatchPhotoExportWorker.KEY_FORMAT to "jpeg",
+                                    BatchPhotoExportWorker.KEY_QUALITY to 92,
+                                    BatchPhotoExportWorker.KEY_KEEP_EXIF to false,
+                                    BatchPhotoExportWorker.KEY_STRIP_GPS to true,
+                                    BatchPhotoExportWorker.KEY_COLOR_INTENT to "srgb"
+                                )
+                            )
+                            .build()
+                        WorkManager.getInstance(context)
+                            .enqueueUniqueWork(
+                                BatchPhotoExportWorker.uniqueName(),
+                                ExistingWorkPolicy.REPLACE,
+                                request
+                            )
+                    }
                 )
             }
             SnackbarHost(

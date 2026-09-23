@@ -70,6 +70,17 @@ sealed interface PhotoOp {
     data object Subject : PhotoOp
     /** C4: replace sky or flat background with [color] (ARGB). Graph `H`. */
     data class SkyReplace(val target: SkyReplaceTarget, val color: Int) : PhotoOp
+    /** C5: keystone perspective. Graph `D`. */
+    data class Perspective(val horizontal: Float, val vertical: Float) : PhotoOp
+    /** C5: local liquify push. Graph `M`. */
+    data class Liquify(
+        val x: Float,
+        val y: Float,
+        val radius: Float,
+        val amount: Float
+    ) : PhotoOp
+    /** C8 lightweight portrait soften. Graph `O`. Model-heavy → R5. */
+    data class Soften(val amount: Float) : PhotoOp
 }
 
 data class PixelRect(val left: Int, val top: Int, val right: Int, val bottom: Int) {
@@ -136,6 +147,9 @@ fun List<PhotoOp>.encodeGraph(): String =
             is PhotoOp.Vignette -> "V,${op.amount}"
             is PhotoOp.Subject -> "J"
             is PhotoOp.SkyReplace -> "H,${op.target.name},${op.color}"
+            is PhotoOp.Perspective -> "D,${op.horizontal},${op.vertical}"
+            is PhotoOp.Liquify -> "M,${op.x},${op.y},${op.radius},${op.amount}"
+            is PhotoOp.Soften -> "O,${op.amount}"
         }
     }
 
@@ -203,6 +217,18 @@ fun String.decodeGraph(): List<PhotoOp> {
                     val color = parts[2].toIntOrNull()
                     if (target != null && color != null) PhotoOp.SkyReplace(target, color) else null
                 } else null
+                "D" -> if (parts.size == 3) {
+                    PhotoOp.Perspective(parts[1].toFloat(), parts[2].toFloat())
+                } else null
+                "M" -> if (parts.size == 5) {
+                    PhotoOp.Liquify(
+                        x = parts[1].toFloat(),
+                        y = parts[2].toFloat(),
+                        radius = parts[3].toFloat(),
+                        amount = parts[4].toFloat()
+                    )
+                } else null
+                "O" -> if (parts.size == 2) PhotoOp.Soften(parts[1].toFloat()) else null
                 else -> null
             }
         } catch (_: NumberFormatException) {

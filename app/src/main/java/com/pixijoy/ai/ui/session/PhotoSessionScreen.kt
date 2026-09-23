@@ -98,6 +98,7 @@ import com.pixijoy.photo.LiveGrade
 import com.pixijoy.photo.MaskFill
 import com.pixijoy.photo.MaskStroke
 import com.pixijoy.photo.PhotoOp
+import com.pixijoy.photo.PhotoPreset
 import com.pixijoy.photo.SelectiveHslRange
 import com.pixijoy.photo.SkyReplacePresets
 import com.pixijoy.photo.SkyReplaceTarget
@@ -120,7 +121,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private enum class SessionMode { Crop, Adjust, Heal, Fill, Erase, Text, Expand, Stickers, Collage, Curves, SelectiveHsl, Looks, Layers, Mask, Sky }
+private enum class SessionMode { Crop, Adjust, Heal, Fill, Erase, Text, Expand, Stickers, Collage, Curves, SelectiveHsl, Looks, Layers, Mask, Sky, Warp, Soften, Presets }
 
 @Composable
 fun PhotoSessionScreen(
@@ -183,6 +184,12 @@ fun PhotoSessionScreen(
     var brush by remember { mutableStateOf(0.05f) }
     var maskReveal by remember { mutableStateOf(false) }
     var pendingStamps by remember { mutableStateOf(listOf<Stamp>()) }
+    var presets by remember { mutableStateOf(listOf<PhotoPreset>()) }
+    LaunchedEffect(Unit) {
+        presets = repo.listPresetFiles().mapNotNull { file ->
+            runCatching { PhotoPreset.decode(file.readText()) }.getOrNull()
+        }
+    }
     var lastStamp by remember { mutableStateOf<Stamp?>(null) }
     var healSource by remember { mutableStateOf<Pair<Float, Float>?>(null) }
     var pickingHealSource by remember { mutableStateOf(false) }
@@ -195,6 +202,7 @@ fun PhotoSessionScreen(
     }
     var quality by remember { mutableStateOf(92) }
     var keepExif by remember { mutableStateOf(false) }
+    var colorIntent by remember { mutableStateOf(com.pixijoy.photo.ColorIntent.Srgb) }
     var showExport by remember { mutableStateOf(false) }
     var exportSuccessUri by remember { mutableStateOf<String?>(null) }
     var status by remember { mutableStateOf<String?>(null) }
@@ -747,7 +755,54 @@ LaunchedEffect(sources, layers) {
             onApplySkyReplace = { target, color -> push(PhotoOp.SkyReplace(target, color)) },
             onApplyHeal = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Heal(pendingStamps)) },
             onApplyFill = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Fill(pendingStamps)); pendingStamps = emptyList() },
+            onUndoFillStroke = {
+                if (pendingStamps.isNotEmpty()) pendingStamps = pendingStamps.dropLast(1)
+                lastStamp = pendingStamps.lastOrNull()
+            },
             onClearFillStrokes = { pendingStamps = emptyList(); lastStamp = null },
+            onApplyPerspective = { h, v ->
+                if (!PhotoOp.Perspective(h, v).isIdentity()) push(PhotoOp.Perspective(h, v))
+            },
+            onApplyLiquify = { x, y, r, a ->
+                if (!PhotoOp.Liquify(x, y, r, a).isIdentity()) push(PhotoOp.Liquify(x, y, r, a))
+            },
+            onApplySoften = { a -> if (!PhotoOp.Soften(a).isIdentity()) push(PhotoOp.Soften(a)) },
+            onSavePreset = { name ->
+                scope.launch {
+                    val id = "p${System.currentTimeMillis()}"
+                    val preset = PhotoPreset(
+                        id = id,
+                        name = name.trim().ifBlank { "Preset" },
+                        layersEncoded = layers.encodeLayers()
+                    )
+                    when (val r = repo.writePresetFile(id, preset.encode())) {
+                        is AppResult.Ok -> {
+                            presets = listOf(preset) + presets.filterNot { it.id == id }
+                            status = context.getString(R.string.studio_preset_save)
+                        }
+                        is AppResult.Err -> status = r.message
+                    }
+                }
+            },
+            onApplyPreset = { id ->
+                scope.launch {
+                    when (val r = repo.readPresetFile(id)) {
+                        is AppResult.Ok -> {
+                            val preset = PhotoPreset.decode(r.value)
+                            if (preset == null) {
+                                status = "Preset unreadable."
+                            } else {
+                                repo.saveGraph(project.id, preset.layersEncoded)
+                                layers = preset.layersEncoded.decodeLayers()
+                                    .ifEmpty { layers }
+                                status = context.getString(R.string.studio_presets)
+                            }
+                        }
+                        is AppResult.Err -> status = r.message
+                    }
+                }
+            },
+            presets = presets,
             onApplyErase = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Erase(pendingStamps)) },
             onApplyText = { push(PhotoOp.TextLayer(text, placeX, placeY, 0.08f, 0xFFFFFFFF.toInt())) },
             onRestore = { push(PhotoOp.Restore) },
@@ -886,6 +941,17 @@ LaunchedEffect(sources, layers) {
             showKeepExif = true,
             keepExif = keepExif,
             onKeepExif = { keepExif = it },
+            showColorIntent = true,
+            colorIntentKey = when (colorIntent) {
+                com.pixijoy.photo.ColorIntent.DisplayP3 -> "display_p3"
+                else -> "srgb"
+            },
+            onColorIntent = { key ->
+                colorIntent = when (key) {
+                    "display_p3" -> com.pixijoy.photo.ColorIntent.DisplayP3
+                    else -> com.pixijoy.photo.ColorIntent.Srgb
+                }
+            },
             successUri = exportSuccessUri,
             onView = {
                 exportSuccessUri?.let { uri ->
@@ -931,7 +997,11 @@ LaunchedEffect(sources, layers) {
                                 PhotoExportWorker.KEY_FORMAT to format.name.lowercase(),
                                 PhotoExportWorker.KEY_QUALITY to quality,
                                 PhotoExportWorker.KEY_KEEP_EXIF to keepExif,
-                                PhotoExportWorker.KEY_STRIP_GPS to true
+                                PhotoExportWorker.KEY_STRIP_GPS to true,
+                                PhotoExportWorker.KEY_COLOR_INTENT to when (colorIntent) {
+                                    com.pixijoy.photo.ColorIntent.DisplayP3 -> "display_p3"
+                                    else -> "srgb"
+                                }
                             )
                         )
                         .build()
@@ -990,6 +1060,9 @@ private fun railsFor(toolKey: String): List<RailItem> = when (toolKey) {
         RailItem(R.string.studio_selective_hsl, "session_selective_hsl", SessionMode.SelectiveHsl),
         RailItem(R.string.studio_looks, "session_looks", SessionMode.Looks),
         RailItem(R.string.studio_sky, "session_sky", SessionMode.Sky),
+        RailItem(R.string.studio_warp, "session_warp", SessionMode.Warp),
+        RailItem(R.string.studio_soften, "session_soften", SessionMode.Soften),
+        RailItem(R.string.studio_presets, "session_presets", SessionMode.Presets),
         RailItem(R.string.studio_heal, "session_heal", SessionMode.Heal),
         RailItem(R.string.studio_fill, "session_fill", SessionMode.Fill),
         RailItem(R.string.studio_text, "session_text", SessionMode.Text),
@@ -1029,6 +1102,13 @@ private fun ToolBody(
     onApplyHeal: () -> Unit,
     onApplyFill: () -> Unit,
     onClearFillStrokes: () -> Unit,
+    onUndoFillStroke: () -> Unit,
+    onApplyPerspective: (Float, Float) -> Unit,
+    onApplyLiquify: (Float, Float, Float, Float) -> Unit,
+    onApplySoften: (Float) -> Unit,
+    onSavePreset: (String) -> Unit,
+    onApplyPreset: (String) -> Unit,
+    presets: List<PhotoPreset>,
     onApplyErase: () -> Unit,
     onApplyText: () -> Unit,
     onRestore: () -> Unit,
@@ -1248,17 +1328,23 @@ private fun ToolBody(
                 )
                 PixiPrimaryButton(stringResource(R.string.studio_apply), onApplyHeal, Modifier.testTag("session_apply_heal"))
             }
-            SessionMode.Fill -> {
-                LabeledSlider(stringResource(R.string.studio_brush), brush, 0.02f..0.12f, "session_brush_size", onBrush)
-                Text(stringResource(R.string.studio_fill_hint), color = PixiTextMuted)
-                TextButton(
-                    onClick = onClearFillStrokes,
-                    modifier = Modifier.testTag("session_fill_clear")
-                ) {
-                    Text(stringResource(R.string.studio_fill_clear_strokes), color = PixiTextMuted)
-                }
-                PixiPrimaryButton(stringResource(R.string.studio_apply), onApplyFill, Modifier.testTag("session_apply_fill"))
-            }
+            SessionMode.Fill -> FillToolPanel(
+                brush = brush,
+                onBrush = onBrush,
+                onUndoStroke = onUndoFillStroke,
+                onClear = onClearFillStrokes,
+                onApply = onApplyFill
+            )
+            SessionMode.Warp -> WarpToolPanel(
+                onApplyPerspective = onApplyPerspective,
+                onApplyLiquify = onApplyLiquify
+            )
+            SessionMode.Soften -> SoftenToolPanel(onApply = onApplySoften)
+            SessionMode.Presets -> PresetToolPanel(
+                presets = presets,
+                onSave = onSavePreset,
+                onApply = onApplyPreset
+            )
             SessionMode.Erase -> {
                 LabeledSlider(stringResource(R.string.studio_brush), brush, 0.02f..0.12f, "session_brush_size", onBrush)
                 PixiPrimaryButton(stringResource(R.string.studio_apply), onApplyErase, Modifier.testTag("session_apply_erase"))

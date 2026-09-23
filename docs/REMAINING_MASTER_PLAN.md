@@ -5,7 +5,7 @@
 **Branch:** land on `origin/next` after review-clear.  
 **Excluded:** Section A (done/exited) — do not reopen.
 
-**Snapshot (2026-09-23):** **Wave B EXITED** · **C4 SkyReplace MET** · **D1 persistence bridge landed** (MT graph save/load; preview/export still flatten V1) · Live gate: **D1 composition E2E** · C5+.
+**Snapshot (2026-09-23):** **Wave B EXITED** · **Wave C EXITED** (C3–C8) · **D1 persistence bridge landed** (MT graph save/load; preview/export still flatten V1) · Live gate: **D1 composition E2E**.
 
 ```
 B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5 ML packs) ──▶ F (R6+ opt-in)
@@ -36,7 +36,7 @@ B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5
 | **B5** | Docs on `origin/next` | **EXITED** with Phase 0 land | Status docs in same commit |
 | **B6** | Gallery Photo Picker | Yellow/manual | Keep documented; no fake green |
 
-**Immediate next:** **D1** multi-track E2E (preview + export) · **C5** perspective/liquify.
+**Immediate next:** **D1** multi-track composition E2E (preview + export).
 
 **G overlap with B:** **G4** exited with B3 (chips ≥48dp, announced selection).
 
@@ -50,12 +50,12 @@ Dependency order is fixed. Each op: graph letter → `:photo` engine → session
 |----|-------|------------|--------------|-------|
 | **C1** | LUT import | B3 stable | `.cube` + `.3dl`; project `luts/`; `lut:` keys; Looks Import; export; units; picker yellow/manual | **MET 2026-09-23** |
 | **C2** | RAW/DNG | C1 | Open/metadata/preview sidecar; edit on preview; develop track later | **MET path** (develop later) |
-| **C3** | Content-aware Fill polish | Layers/masks | Better mask UX, quality, undo; **edit-graph contract stable for E1** | Clear+Telea+stub MET; further polish open |
+| **C3** | Content-aware Fill polish | Layers/masks | Better mask UX, quality, undo; **edit-graph contract stable for E1** | **MET** undo stroke + clear; Telea; LiteRt stub |
 | **C4** | Sky / background replace | C3 masks + Subject | Op + ML/heuristic sky matte; preview/export | **MET 2026-09-23** (heuristic; Maestro green) |
-| **C5** | Perspective + liquify | Stable warp pipeline | Two ops; live preview budget; export | |
-| **C6** | Presets + batch export | C1–C5 ops serializable | Preset encode/decode; multi-project WorkManager batch | |
-| **C7** | Wide-gamut / color mgmt | Decode/export path | Display P3 awareness; export color intent | After LUT serialization story |
-| **C8** | Portrait retouch | — | **Lightweight** tools may late-R3; **model-heavy** → R5 pack | Split explicitly in exit notes |
+| **C5** | Perspective + liquify | Stable warp pipeline | Two ops; live preview budget; export | **MET** graph D/M; WarpOps; session Warp |
+| **C6** | Presets + batch export | C1–C5 ops serializable | Preset encode/decode; multi-project WorkManager batch | **MET** PhotoPreset + BatchPhotoExportWorker |
+| **C7** | Wide-gamut / color mgmt | Decode/export path | Display P3 awareness; export color intent | **MET** best-effort ColorIntent on export |
+| **C8** | Portrait retouch | — | **Lightweight** tools may late-R3; **model-heavy** → R5 pack | **Light Soften MET** (O); heavy → R5 |
 
 **Intentional overlap:** C3 = polished fill UX + graph contract; **E1** = optional generative inpaint engine that plugs into C3.
 
@@ -142,14 +142,13 @@ Never land F* as isolated effects without listed primitives.
 | Phase | Focus | Parallel G |
 |-------|-------|------------|
 | **P0** | **DONE** — Wave B exit + C1–C3 foundations + B1 green | G4 with B3 |
-| **P1** | C4 sky/background → further C3 polish | G1 start; G8 rename |
-| **P2** | C5 perspective/liquify → C6/C7 | G2/G3 gradual |
-| **P3** | C6 presets/batch → C7 wide-gamut; C8 light-only if cheap | G5–G7 |
-| **P4** | D1 multi-track **end-to-end** (preview + export) | — |
-| **P5** | D2–D6 cinema core | — |
-| **P6** | D7–D11 | — |
-| **P7** | ML-pack foundation + E5 size gate → E1 → E2/E3 → E4 | — |
-| **P8** | F1→F6 as opt-in modules | — |
+| **P1** | **DONE** — C4 sky + Wave C foundations | G1 start; G8 rename |
+| **P2** | **DONE** — C5–C8 Wave C exit | G2/G3 gradual |
+| **P3** | D1 multi-track composition E2E | G5–G7 |
+| **P4** | D2–D6 cinema core | — |
+| **P5** | D7–D11 | — |
+| **P6** | ML-pack foundation + E5 size gate → E1 → E2/E3 → E4 | — |
+| **P7** | F1→F6 as opt-in modules | — |
 
 ---
 
@@ -178,8 +177,7 @@ Never land F* as isolated effects without listed primitives.
 
 ## Next concrete slice (start here)
 
-1. **D1 E2E** — promote `MultiTrackTimeline` to preview composition + persistence + export parity  
-2. **C5** perspective + liquify  
-3. **Kick G1** tablet two-pane refinement in parallel  
+1. **D1 E2E** — promote MultiTrackTimeline to preview composition + export parity  
+2. **Kick G1** tablet two-pane refinement in parallel  
 
 When this plan drifts, update this file and `TOTAL_REMAINING.txt` in the same commit as the exit.

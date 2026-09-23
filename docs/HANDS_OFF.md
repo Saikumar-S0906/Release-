@@ -69,10 +69,9 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **B4** — measure-deferred (`PHASE3_LIVE_PREVIEW_MEASURE.md`); no downscale without jank evidence.
 - **C1 LUT import** — wired (`CubeLutParser`, `lut:` keys, Looks Import); picker yellow/manual; chip Maestro green.
 - **C2 RAW/DNG** — open + Exif + `preview.jpg` sidecar + RAW badge.
-- **C3 Fill** — Clear strokes + Telea + `LiteRtInpaintHook` stub for E1.
-- **D1** — `MultiTrackTimeline` encode/decode foundation only (preview/export still single-track).
-
-**In progress:** D1 multi-track E2E · C5+.
+- **C3–C8 Wave C** — Fill undo · Warp · Presets/batch · ColorIntent · Soften (light). See exit note.
+- **D1** — `MultiTrackTimeline` encode/decode + persist; preview/export still flatten.
+**In progress:** D1 multi-track composition E2E (preview/export still flatten).
 
 **Blockers:** None.
 
@@ -92,10 +91,11 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **R3.1 Library / Export / Recommended** — B3 MET
 - **Wave B** — quality gates + R3.1 UX **exited** 2026-09-23
 - **C4 Sky / background replace** — `PhotoOp.SkyReplace` graph `H`; heuristic sky/backdrop matte; Maestro green
+- **Wave C** — C3 Fill undo/clear · C5 Perspective/Liquify · C6 presets + batch export · C7 export color intent · C8 light Soften (model-heavy → R5)
 
 ### Live gate
 
-**D1** multi-track timeline E2E. Parallel: **C5** perspective + liquify.
+**D1** multi-track timeline composition E2E (preview + export match MT).
 
 ### Follow-up epic (not a feature gate)
 

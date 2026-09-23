@@ -1,0 +1,49 @@
+appId: com.pixijoy.ai
+---
+# C5 Warp — rail + Apply perspective
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "home_create"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "session_sky"
+    direction: RIGHT
+    timeout: 40000
+    visibilityPercentage: 30
+    speed: 40
+- swipe:
+    start: 85%, 87%
+    end: 20%, 87%
+    duration: 500
+- swipe:
+    start: 85%, 87%
+    end: 20%, 87%
+    duration: 500
+- extendedWaitUntil:
+    visible:
+      id: "session_warp"
+    timeout: 10000
+- tapOn:
+    id: "session_warp"
+- extendedWaitUntil:
+    visible:
+      id: "session_warp_hint"
+    timeout: 10000
+- assertVisible:
+    id: "warp_perspective_h"
+- assertVisible:
+    id: "session_apply_perspective"
+- tapOn:
+    id: "session_apply_perspective"
+- assertVisible:
+    id: "session_export"
+- assertVisible:
+    id: "session_tool_scrim"

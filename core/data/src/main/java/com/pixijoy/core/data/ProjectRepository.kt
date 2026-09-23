@@ -180,6 +180,32 @@ class ProjectRepository(
 
     fun projectDir(id: String): File = File(context.filesDir, "projects/$id")
 
+    fun presetsDir(): File = File(context.filesDir, "presets").also { it.mkdirs() }
+
+    suspend fun listPresetFiles(): List<File> = withContext(dispatchers.io) {
+        presetsDir().listFiles()?.filter { it.extension == "preset" }?.sortedByDescending { it.lastModified() }.orEmpty()
+    }
+
+    suspend fun writePresetFile(id: String, body: String): AppResult<File> = withContext(dispatchers.io) {
+        runCatching {
+            val dest = File(presetsDir(), "$id.preset")
+            dest.writeText(body)
+            AppResult.Ok(dest)
+        }.fold(
+            onSuccess = { it },
+            onFailure = { AppResult.Err("Could not save preset.", it) }
+        )
+    }
+
+    suspend fun readPresetFile(presetId: String): AppResult<String> = withContext(dispatchers.io) {
+        val file = File(presetsDir(), "$presetId.preset")
+        if (!file.exists()) return@withContext AppResult.Err("Preset missing.")
+        runCatching { AppResult.Ok(file.readText()) }.fold(
+            onSuccess = { it },
+            onFailure = { AppResult.Err("Preset unreadable.", it) }
+        )
+    }
+
     /**
      * Copies a LUT file into `{project}/luts/`. Caller must validate parse before Apply.
      * @return destination file on success

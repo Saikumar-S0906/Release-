@@ -1,5 +1,5 @@
 ﻿PixiJoy — TOTAL remaining (all stages)
-Updated: 2026-09-23 ~1:30 PM IST
+Updated: 2026-09-23 ~2:50 PM IST
 Source: room status + docs/NORTH_STAR_ROADMAP.md + UX backlog
 Branch: origin/next (tip moving)
 
@@ -11,10 +11,16 @@ R3 photo depth so far: Layers first-slice, Curves, Looks (bundled Lut), glass sc
 R3.1 UX (B3): Library deferred delete+Undo, Export View/Share/Done + quality presets, Recommended/Best-for, privacy badge, movie glass + 48dp
 C1 LUT import wired (CubeLutParser + .3dl; picker yellow/manual; chip Maestro green)
 C2 RAW/DNG open + Exif + preview.jpg sidecar + RAW badge
-C3 Fill Clear strokes + Telea + LiteRtInpaintHook stub (further polish open under C)
-D1 MultiTrackTimeline encode/decode foundation (preview/export still single-track)
+C3 Fill undo stroke + clear + Telea + LiteRtInpaintHook stub
+C4 SkyReplace graph H; heuristic matte; Maestro green
+C5 Perspective/Liquify (D/M); WarpOps; session Warp
+C6 PhotoPreset + BatchPhotoExportWorker; Library Export all photos
+C7 ColorIntent sRGB/Display P3 on export (best-effort)
+C8 Soften (O) light; model-heavy → R5
+D1 MultiTrackTimeline encode/decode + persist bridge (preview/export still flatten)
 Docs: NORTH_STAR_ROADMAP, R3_LAYER_OP_SHAPES, REMAINING_MASTER_PLAN, HANDS_OFF
 Wave B quality gates EXITED 2026-09-23 (Phase 0 land)
+Wave C EXITED 2026-09-23
 
 ================================================================
 B. LIVE / NEAR-TERM — CLOSED (moved to A)
@@ -22,21 +28,14 @@ B. LIVE / NEAR-TERM — CLOSED (moved to A)
 B1–B3, B5 MET. B4 measure-deferred. B6 Gallery picker remains yellow/manual (documented).
 
 ================================================================
-C. FINISH R3 PHOTO (live gate after B)
+C. FINISH R3 PHOTO — CLOSED (moved to A)
 ================================================================
-C1. LUT import — MET (picker yellow/manual)
-C2. RAW/DNG preview path — MET (develop track later)
-C3. Content-aware Fill polish — partial MET (Clear + stub); further quality/mask polish open
-C4. Sky / background replace — MET (PhotoOp.SkyReplace graph H; heuristic matte; Maestro green Pixel_7a)
-C5. Perspective + liquify — NEXT (with D1 E2E)
-C6. Presets + batch export
-C7. Wide-gamut / better color management
-C8. Portrait retouch packs (can slip to R5)
+C1–C8 MET. See section A.
 
 ================================================================
 D. R4 MOVIE (cinema-class depth)
 ================================================================
-D1. Multi-track video + audio timeline — foundation only; E2E preview+export NEXT
+D1. Multi-track video + audio timeline — persistence MET; composition E2E NEXT
 D2. Ripple / roll trim; transitions; speed ramps
 D3. Keyframed transform / motion
 D4. Titles + captions
@@ -83,10 +82,9 @@ G9. Gradle BuildConfig deprecation cleanup
 ================================================================
 H. SUGGESTED PATH (ASAP, no fake greens)
 ================================================================
-1. D1 multi-track timeline E2E (preview + export)
-2. C5 perspective/liquify → C6/C7
-3. Parallel G1–G3 structural chrome
-4. E packs when photo/movie depth is solid
-5. F only as on-demand modules
+1. D1 multi-track timeline composition E2E (preview + export)
+2. Parallel G1–G3 structural chrome
+3. E packs when photo/movie depth is solid
+4. F only as on-demand modules
 
 Hard rule stays: edit-graph or timeline op → engine → WorkManager export. Local-first. Quality > clock.

@@ -76,6 +76,9 @@ fun ExportSheet(
     showKeepExif: Boolean = false,
     keepExif: Boolean = false,
     onKeepExif: (Boolean) -> Unit = {},
+    showColorIntent: Boolean = false,
+    colorIntentKey: String = "srgb",
+    onColorIntent: (String) -> Unit = {},
     successUri: String? = null,
     onView: () -> Unit = {},
     onShare: () -> Unit = {},
@@ -193,6 +196,33 @@ fun ExportSheet(
                             colors = SwitchDefaults.colors(checkedTrackColor = PixiAccent),
                             modifier = Modifier.testTag("export_keep_exif")
                         )
+                    }
+                }
+                if (showColorIntent) {
+                    Text(stringResource(R.string.studio_export_color_label), color = PixiTextMuted)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(
+                            "srgb" to stringResource(R.string.studio_export_color_srgb),
+                            "display_p3" to stringResource(R.string.studio_export_color_p3)
+                        ).forEach { (key, label) ->
+                            val selected = colorIntentKey == key
+                            Text(
+                                label,
+                                color = PixiText,
+                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                                modifier = Modifier
+                                    .heightIn(min = 48.dp)
+                                    .clip(RoundedCornerShape(999.dp))
+                                    .background(if (selected) PixiAccent else PixiBg)
+                                    .clickable { onColorIntent(key) }
+                                    .testTag("export_color_$key")
+                                    .semantics {
+                                        role = Role.RadioButton
+                                        this.selected = selected
+                                    }
+                                    .padding(horizontal = 14.dp, vertical = 12.dp)
+                            )
+                        }
                     }
                 }
                 if (resolutions.isNotEmpty() && selectedKey != "gif") {

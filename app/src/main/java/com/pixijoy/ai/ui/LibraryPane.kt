@@ -72,11 +72,13 @@ fun LibraryPane(
     onOpenProject: (Project) -> Unit,
     onRequestDelete: (Project) -> Unit,
     onRenameProject: (Project, String) -> Unit,
-    onCreate: () -> Unit
+    onCreate: () -> Unit,
+    onExportAllPhotos: (() -> Unit)? = null
 ) {
     var filter by rememberSaveable { mutableStateOf(LibraryFilter.ALL) }
     var renameTarget by remember { mutableStateOf<Project?>(null) }
     val visible = projects.filterBy(filter)
+    val photoCount = projects.count { it.kind == MediaKind.PHOTO }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -106,6 +108,17 @@ fun LibraryPane(
             }
             FilterChip(stringResource(R.string.studio_movie), filter == LibraryFilter.MOVIE, "library_filter_movie") {
                 filter = LibraryFilter.MOVIE
+            }
+        }
+        if (onExportAllPhotos != null && photoCount > 0) {
+            TextButton(
+                onClick = onExportAllPhotos,
+                modifier = Modifier
+                    .padding(bottom = 12.dp)
+                    .heightIn(min = 48.dp)
+                    .testTag("library_export_photos")
+            ) {
+                Text(stringResource(R.string.studio_library_export_photos), color = PixiAccent)
             }
         }
         if (projects.isEmpty()) {

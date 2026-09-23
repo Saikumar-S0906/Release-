@@ -30,6 +30,10 @@ class PhotoExportWorker(
         val quality = inputData.getInt(KEY_QUALITY, 92)
         val keepExif = inputData.getBoolean(KEY_KEEP_EXIF, false)
         val stripGps = inputData.getBoolean(KEY_STRIP_GPS, ExportExifPolicy.DEFAULT_STRIP_GPS)
+        val colorIntent = when (inputData.getString(KEY_COLOR_INTENT)) {
+            "display_p3" -> com.pixijoy.photo.ColorIntent.DisplayP3
+            else -> com.pixijoy.photo.ColorIntent.Srgb
+        }
         setForeground(foreground(0))
         return withContext(Dispatchers.IO) {
             val repo = ProjectRepository(applicationContext)
@@ -52,7 +56,8 @@ class PhotoExportWorker(
                 format,
                 quality,
                 keepExif = keepExif,
-                stripGps = stripGps
+                stripGps = stripGps,
+                colorIntent = colorIntent
             )
             when (result) {
                 is AppResult.Ok -> {
@@ -82,6 +87,7 @@ class PhotoExportWorker(
         const val KEY_QUALITY = "quality"
         const val KEY_KEEP_EXIF = "keepExif"
         const val KEY_STRIP_GPS = "stripGps"
+        const val KEY_COLOR_INTENT = "colorIntent"
         const val KEY_PROGRESS = "progress"
         const val KEY_URI = "uri"
         const val KEY_ERROR = "error"
