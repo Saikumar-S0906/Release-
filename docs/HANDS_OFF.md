@@ -76,7 +76,8 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **D4** — TimelineTitle layers + OverlayEffect; Maestro `d4-titles-captions` **green** Pixel_7a.
 - **D5** — TimelineGrade + bundled looks + scopes meters; Maestro `d5-grade-scopes` **green** Pixel_7a.
 - **D6** — duck Soft/Med/Hard + separate attack/release; Maestro `d6-audio-finish` **green** Pixel_7a.
-**In progress:** D7 PiP / multicam.
+- **D7** — PiP / Split / Grid via `VideoLayout` + `VideoCompositorSettings`; Maestro `d7-pip-layout` **green** Pixel_7a.
+**In progress:** D8 Stabilize + reframe.
 
 **Blockers:** None.
 
@@ -103,10 +104,11 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **D4 titles + captions** — `TimelineTitle` layers + `OverlayEffect`; Maestro `d4-titles-captions` green Pixel_7a
 - **D5 grade + LUT + scopes** — `TimelineGrade` + `SingleColorLut` + scope meters; Maestro `d5-grade-scopes` green Pixel_7a
 - **D6 audio finish** — duck Soft/Med/Hard + `releaseMs`; Maestro `d6-audio-finish` green Pixel_7a
+- **D7 PiP / multicam** — `VideoLayout` + parallel sequences + compositor; Maestro `d7-pip-layout` green Pixel_7a
 
 ### Live gate
 
-**D7** PiP / multicam.
+**D8** Stabilize + reframe.
 
 ### Follow-up epic (not a feature gate)
 

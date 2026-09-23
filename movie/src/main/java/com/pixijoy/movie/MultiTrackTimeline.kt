@@ -26,7 +26,9 @@ data class MultiTrackTimeline(
     /** Timed title / caption layers (D4). */
     val titles: List<TimelineTitle> = emptyList(),
     /** Timeline grade + look (D5). */
-    val grade: TimelineGrade = TimelineGrade.Neutral
+    val grade: TimelineGrade = TimelineGrade.Neutral,
+    /** Multi-video frame layout (D7). */
+    val layout: VideoLayout = VideoLayout.Single
 ) {
     fun videoTracks(): List<TimelineTrack> = tracks.filter { it.kind == TrackKind.Video }
     fun audioTracks(): List<TimelineTrack> = tracks.filter { it.kind == TrackKind.Audio }
@@ -56,7 +58,8 @@ data class MultiTrackTimeline(
             extraStems = extraStems,
             masterFx = masterFx,
             titles = titles,
-            grade = grade
+            grade = grade,
+            layout = layout
         )
     }
 
@@ -75,7 +78,8 @@ data class MultiTrackTimeline(
             masterFx = flat.masterFx,
             outputHeight = flat.outputHeight,
             titles = flat.titles,
-            grade = flat.grade
+            grade = flat.grade,
+            layout = flat.layout
         )
     }
 
@@ -98,10 +102,11 @@ data class MultiTrackTimeline(
 
     /**
      * Plan for Media3 Composition sequences (testable without Transformer).
-     * Video = 1 sequence; each unmuted audio track with clips = 1 sequence; beds/stems separate.
+     * Video = [layout.videoInputs] parallel sequences when multi; else 1.
+     * Each unmuted audio track with clips = 1 sequence; beds/stems separate.
      */
     fun compositionSequencePlan(hasBedFile: Boolean, hasVoiceFile: Boolean, stemCount: Int): Int {
-        var n = 1 // primary video sequence (may be empty placeholder)
+        var n = layout.videoInputs.coerceAtLeast(1)
         n += unmutedAudioTracksWithClips().size
         if (hasBedFile) n++
         if (hasVoiceFile) n++
@@ -135,6 +140,7 @@ data class MultiTrackTimeline(
         if (!masterFx.isNeutral()) appendLine(masterFx.encode())
         titles.filter { it.text.isNotBlank() }.forEach { appendLine(it.encodeLine()) }
         if (!grade.isNeutral()) appendLine(grade.encodeLine())
+        if (layout != VideoLayout.Single) appendLine("L,${layout.encode()}")
     }
 
     companion object {
@@ -166,7 +172,8 @@ data class MultiTrackTimeline(
                 masterFx = timeline.masterFx,
                 outputHeight = timeline.outputHeight,
                 titles = timeline.titles,
-                grade = timeline.grade
+                grade = timeline.grade,
+                layout = timeline.layout
             )
         }
 
@@ -184,6 +191,7 @@ data class MultiTrackTimeline(
             var fx = AudioMasterFx.Neutral
             val titles = ArrayList<TimelineTitle>()
             var grade = TimelineGrade.Neutral
+            var layout = VideoLayout.Single
             raw.lineSequence().forEach { line ->
                 val parts = line.split(',')
                 when (parts.firstOrNull()) {
@@ -260,6 +268,7 @@ data class MultiTrackTimeline(
                     "X" -> AudioMasterFx.decode(parts)?.let { fx = it }
                     "TT" -> TimelineTitle.decodeLine(parts)?.let { titles += it }
                     "G" -> TimelineGrade.decodeLine(parts)?.let { grade = it }
+                    "L" -> if (parts.size >= 2) layout = VideoLayout.parse(parts[1])
                 }
             }
             return MultiTrackTimeline(
@@ -271,7 +280,8 @@ data class MultiTrackTimeline(
                 masterFx = fx,
                 outputHeight = height,
                 titles = titles,
-                grade = grade
+                grade = grade,
+                layout = layout
             )
         }
     }

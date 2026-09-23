@@ -123,7 +123,9 @@ data class Timeline(
     /** Timed title / caption layers (D4). */
     val titles: List<TimelineTitle> = emptyList(),
     /** Timeline grade + look (D5). */
-    val grade: TimelineGrade = TimelineGrade.Neutral
+    val grade: TimelineGrade = TimelineGrade.Neutral,
+    /** Multi-video frame layout (D7). */
+    val layout: VideoLayout = VideoLayout.Single
 ) {
     fun totalMs(): Long = clips.sumOf { it.durationMs }
 
@@ -338,6 +340,10 @@ data class Timeline(
             if (isNotEmpty()) append('\n')
             append(grade.encodeLine())
         }
+        if (layout != VideoLayout.Single) {
+            if (isNotEmpty()) append('\n')
+            append("L,${layout.encode()}")
+        }
     }
 
     companion object {
@@ -437,8 +443,13 @@ data class Timeline(
             val grade = raw.lineSequence().mapNotNull { line ->
                 TimelineGrade.decodeLine(line.trim().split(','))
             }.firstOrNull() ?: TimelineGrade.Neutral
+            val layout = raw.lineSequence().mapNotNull { line ->
+                val p = line.trim().split(',')
+                if (p.getOrNull(0) != "L" || p.size < 2) return@mapNotNull null
+                VideoLayout.parse(p[1])
+            }.firstOrNull() ?: VideoLayout.Single
             val clips = if (parsed.isEmpty()) fromMedia(count, durationMs).clips else parsed
-            return Timeline(clips, bed, voice, height, extraStems, masterFx, titles, grade)
+            return Timeline(clips, bed, voice, height, extraStems, masterFx, titles, grade, layout)
         }
     }
 }

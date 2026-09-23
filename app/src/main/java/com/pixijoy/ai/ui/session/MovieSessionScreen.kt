@@ -544,6 +544,10 @@ fun MovieSessionScreen(
                 },
                 onBedChange = { bed -> commitTimeline(timeline.copy(bed = bed)) }
             )
+            MovieLayoutPanel(
+                layout = multi.layout,
+                onLayout = { next -> commitMulti(multi.copy(layout = next)) }
+            )
             if (!still) {
                 Text(stringResource(R.string.studio_scrub), color = PixiTextMuted)
                 Slider(

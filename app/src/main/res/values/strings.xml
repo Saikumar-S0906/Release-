@@ -137,6 +137,12 @@
     <string name="studio_duck_hard">Hard</string>
     <string name="studio_duck_attack">Duck attack %1$d ms</string>
     <string name="studio_duck_release">Duck release %1$d ms</string>
+    <string name="studio_movie_d7_hint">PiP, split, or grid layout. Extra clips fill empty slots; same layout composites on export.</string>
+    <string name="studio_movie_layout">Frame layout</string>
+    <string name="studio_layout_single">Single</string>
+    <string name="studio_layout_pip">PiP</string>
+    <string name="studio_layout_split">Split</string>
+    <string name="studio_layout_grid">Grid</string>
     <string name="studio_add_clip">Add another clip</string>
     <string name="studio_clip_count">%1$d clips · joined on export</string>
     <string name="studio_export_gif">Export GIF</string>

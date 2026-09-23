@@ -17,7 +17,13 @@ class CompositionPreview(
     fun bind(paths: List<String>, timeline: MultiTrackTimeline, playWhenReady: Boolean) {
         val compositionPlayer = player as CompositionPlayer
         val pos = compositionPlayer.currentPosition
-        compositionPlayer.setComposition(engine.composition(paths, timeline))
+        // Media3 1.5 CompositionPlayer is single-input preview; multi layouts composite on export.
+        val previewTimeline = if (timeline.layout.isMulti()) {
+            timeline.copy(layout = VideoLayout.Single)
+        } else {
+            timeline
+        }
+        compositionPlayer.setComposition(engine.composition(paths, previewTimeline))
         compositionPlayer.repeatMode = Player.REPEAT_MODE_ALL
         compositionPlayer.prepare()
         val end = timeline.totalMs().coerceAtLeast(1)

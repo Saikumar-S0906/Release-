@@ -15,6 +15,7 @@ import androidx.media3.common.audio.ChannelMixingMatrix
 import androidx.media3.common.audio.SonicAudioProcessor
 import androidx.media3.effect.Presentation
 import androidx.media3.effect.SpeedChangeEffect
+import androidx.media3.effect.VideoCompositorSettings
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.EditedMediaItem
 import androidx.media3.transformer.EditedMediaItemSequence
@@ -82,15 +83,33 @@ class Media3MovieEngine : MovieEngine {
             })
             .withTransitionFadesApplied()
         val clips = MovieSpeed.expandTimeline(prepared.clips)
-        val items = clips.map { clip -> videoItem(paths, clip) }
-        val videoSeq = EditedMediaItemSequence.Builder(items).build()
+        val flat = prepared.copy(clips = clips)
         val audioTrackSeqs = mt.unmutedAudioTracksWithClips().map { track ->
             audioClipSequence(paths, MovieSpeed.expandTimeline(track.clips))
         }
+        val layout = flat.layout
+        if (layout.isMulti()) {
+            val inputPaths = VideoLayoutPlan.inputPaths(paths, layout)
+            val totalMs = flat.totalMs().coerceAtLeast(250)
+            val videoSeqs = ArrayList<EditedMediaItemSequence>(inputPaths.size)
+            videoSeqs += EditedMediaItemSequence.Builder(clips.map { videoItem(paths, it) }).build()
+            for (i in 1 until inputPaths.size) {
+                videoSeqs += parallelVideoSequence(inputPaths[i], totalMs, removeAudio = true)
+            }
+            return composeAudio(
+                videoSequences = videoSeqs,
+                paths = paths,
+                timeline = flat,
+                durationOverrideMs = totalMs,
+                extraAudioSequences = audioTrackSeqs,
+                compositor = layout.compositor()
+            )
+        }
+        val videoSeq = EditedMediaItemSequence.Builder(clips.map { videoItem(paths, it) }).build()
         return composeAudio(
-            videoSeq = videoSeq,
+            videoSequences = listOf(videoSeq),
             paths = paths,
-            timeline = prepared.copy(clips = clips),
+            timeline = flat,
             durationOverrideMs = null,
             extraAudioSequences = audioTrackSeqs
         )
@@ -130,7 +149,7 @@ class Media3MovieEngine : MovieEngine {
         val encoded = when {
             gif -> encodeGif(primary, cache, talking, rate, onProgress)
             still -> {
-                if (timeline.titles.isNotEmpty() || !timeline.grade.isNeutral()) {
+                if (timeline.titles.isNotEmpty() || !timeline.grade.isNeutral() || timeline.layout.isMulti()) {
                     encodeClips(context, paths, timeline, cache, onProgress)
                 } else {
                     val stillResult = encodeStill(primary, cache, talking, rate, flat.outputHeight, onProgress)
@@ -279,7 +298,12 @@ class Media3MovieEngine : MovieEngine {
             val mixed = File(videoFile.parentFile, "mix-${videoFile.name}")
             val result = startTransformer(
                 context,
-                composeAudio(videoSeq, paths, timeline, pictureDurationMs.coerceAtLeast(250)),
+                composeAudio(
+                    videoSequences = listOf(videoSeq),
+                    paths = paths,
+                    timeline = timeline,
+                    durationOverrideMs = pictureDurationMs.coerceAtLeast(250)
+                ),
                 mixed,
                 onProgress
             )
@@ -297,15 +321,16 @@ class Media3MovieEngine : MovieEngine {
     }
 
     private fun composeAudio(
-        videoSeq: EditedMediaItemSequence,
+        videoSequences: List<EditedMediaItemSequence>,
         paths: List<String>,
         timeline: Timeline,
         durationOverrideMs: Long? = null,
-        extraAudioSequences: List<EditedMediaItemSequence> = emptyList()
+        extraAudioSequences: List<EditedMediaItemSequence> = emptyList(),
+        compositor: VideoCompositorSettings = VideoCompositorSettings.DEFAULT
     ): Composition {
         val total = (durationOverrideMs ?: timeline.totalMs()).coerceAtLeast(250)
         val sequences = ArrayList<EditedMediaItemSequence>()
-        sequences += videoSeq
+        sequences += videoSequences
         sequences += extraAudioSequences
         val voice = resolveStem(paths, timeline.voice)
         val voiceEnd = voice?.let { minOf(durationMs(it.second.absolutePath), total) } ?: 0L
@@ -363,14 +388,41 @@ class Media3MovieEngine : MovieEngine {
             )
         }
         val compositionEffects = Effects(audioProcessors, videoEffects)
-        return if (sequences.size == 1) {
-            Composition.Builder(videoSeq).setEffects(compositionEffects).build()
+        val multiVideo = videoSequences.size > 1
+        return if (sequences.size == 1 && !multiVideo) {
+            Composition.Builder(videoSequences.first()).setEffects(compositionEffects).build()
         } else {
-            Composition.Builder(sequences)
+            val builder = Composition.Builder(sequences)
                 .experimentalSetForceAudioTrack(true)
                 .setEffects(compositionEffects)
-                .build()
+            if (multiVideo) {
+                builder.setVideoCompositorSettings(compositor)
+            }
+            builder.build()
         }
+    }
+
+    /** Parallel video input for PiP / Split / Grid (D7). Duration locked to primary timeline. */
+    private fun parallelVideoSequence(
+        path: String,
+        totalMs: Long,
+        removeAudio: Boolean
+    ): EditedMediaItemSequence {
+        val sourceMs = durationMs(path).coerceAtLeast(1)
+        val endMs = minOf(sourceMs, totalMs.coerceAtLeast(1))
+        val media = MediaItem.Builder()
+            .setUri(Uri.fromFile(File(path)))
+            .setClippingConfiguration(
+                MediaItem.ClippingConfiguration.Builder()
+                    .setStartPositionMs(0)
+                    .setEndPositionMs(endMs)
+                    .build()
+            )
+            .build()
+        val edited = EditedMediaItem.Builder(media)
+            .setDurationUs(totalMs.coerceAtLeast(1) * 1000)
+        if (removeAudio) edited.setRemoveAudio(true)
+        return EditedMediaItemSequence.Builder(listOf(edited.build())).build()
     }
 
     private fun resolveStem(paths: List<String>, stem: AudioBed?): Pair<AudioBed, File>? {

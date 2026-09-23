@@ -5,7 +5,7 @@
 **Branch:** land on `origin/next` after review-clear.  
 **Excluded:** Section A (done/exited) — do not reopen.
 
-**Snapshot (2026-09-23):** **Wave B EXITED** · **Wave C EXITED** · **D1–D6 MET** · Live gate: **D7** PiP / multicam.
+**Snapshot (2026-09-23):** **Wave B EXITED** · **Wave C EXITED** · **D1–D7 MET** · Live gate: **D8** Stabilize + reframe.
 
 ```
 B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5 ML packs) ──▶ F (R6+ opt-in)
@@ -36,7 +36,7 @@ B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5
 | **B5** | Docs on `origin/next` | **EXITED** with Phase 0 land | Status docs in same commit |
 | **B6** | Gallery Photo Picker | Yellow/manual | Keep documented; no fake green |
 
-**Immediate next:** **D7** PiP / multicam.
+**Immediate next:** **D8** Stabilize + reframe.
 
 **G overlap with B:** **G4** exited with B3 (chips ≥48dp, announced selection).
 
@@ -73,7 +73,7 @@ Dependency order is fixed. Each op: graph letter → `:photo` engine → session
 | **D4** | Titles + captions | D3 | Text layers on timeline | **MET 2026-09-23** TimelineTitle + OverlayEffect; Maestro `d4-titles-captions` green Pixel_7a |
 | **D5** | Grade + LUT + scopes | D1, C1 | Timeline grade; scopes UI | **MET 2026-09-23** TimelineGrade + SingleColorLut + scopes meters; Maestro `d5-grade-scopes` green Pixel_7a |
 | **D6** | Audio finish | D1 | Ducking polish, VO UX beyond current stems | **MET 2026-09-23** releaseMs + Soft/Med/Hard presets; Maestro `d6-audio-finish` green Pixel_7a |
-| **D7** | PiP / multicam | D1, D3 | Multi-video layout |
+| **D7** | PiP / multicam | D1, D3 | Multi-video layout | **MET 2026-09-23** VideoLayout + VideoCompositorSettings; Maestro `d7-pip-layout` green Pixel_7a |
 | **D8** | Stabilize + reframe | D1 | Op + export |
 | **D9** | Chroma key | D1, masks | Keyer op |
 | **D10** | Frame-interp slow-mo UX | D1, speed model | Timeline/export **contract** for slow-mo | Engine may be heuristic first |
@@ -177,7 +177,7 @@ Never land F* as isolated effects without listed primitives.
 
 ## Next concrete slice (start here)
 
-1. **D7** PiP / multicam  
+1. **D8** Stabilize + reframe  
 2. **Kick G1** tablet two-pane refinement in parallel  
 
 When this plan drifts, update this file and `TOTAL_REMAINING.txt` in the same commit as the exit.
