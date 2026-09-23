@@ -1,5 +1,5 @@
 ﻿PixiJoy — TOTAL remaining (all stages)
-Updated: 2026-09-18 ~1:58 PM IST
+Updated: 2026-09-23 ~11:28 AM IST
 Source: room status + docs/NORTH_STAR_ROADMAP.md + UX backlog
 Branch: origin/next (tip moving)
 
@@ -7,14 +7,12 @@ Branch: origin/next (tip moving)
 A. DONE / EXITED (do not re-open)
 ================================================================
 R2 Studio v1: Heal/Stamp, HD-FHD-4K export, collage, export %, rail, brush, sticky Export, movie Use sample, Ken Burns harden, export pending-URI + runBlocking hotfixes
-R3 photo depth so far: Layers first-slice, Curves, Looks (bundled Lut), glass scrim, Create sheet, Compare-hold, Selective HSL product (review-clear)
+R3 photo depth so far: Layers first-slice, Curves, Looks (bundled Lut), glass scrim, Create sheet, Compare-hold (B2 MET: live peel + pre-bake snapshot, identity-gated, leak-free), Selective HSL (exited 2026-09-23: units 9/9 green, Maestro green on Pixel_7a)
 Docs: NORTH_STAR_ROADMAP, R3_LAYER_OP_SHAPES (first-slice MET, Looks MET)
 
 ================================================================
 B. LIVE / NEAR-TERM (this week — quality first)
 ================================================================
-B1. Selective HSL Maestro honest green (Create → Try a sample → Color → Apply → Export) → call HSL exit
-B2. Soft canCompare: enable only when live delta or non-identity bake
 B3. R3.1 UX quality
     - Studio Best-for… + Recommended row
     - Library overflow + delete Snackbar Undo + empty CTA Create

@@ -1,8 +1,8 @@
-# PixiJoy — Hands-off operating guide
+﻿# PixiJoy — Hands-off operating guide
 
 Saikumar acts as **client**. Day-to-day ownership sits with **ProjectManager** and the team. Do not wait on him for routine decisions. Ask only when a true client approval or product call is required.
 
-Last updated: 2026-09-18 (IST)
+Last updated: 2026-09-23 (IST)
 
 ## North star
 
@@ -57,6 +57,20 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - Soft nits do not block exits.
 - ViewModel / Hilt split and BuildConfig hygiene = **named follow-up epic**, not a gate on features.
 
+## Status snapshot (2026-09-23 ~11:30 AM IST)
+
+### Group pulse — Phase 0 HSL exit (2026-09-23)
+
+**Flipped:** Selective HSL formally exited. Units 9/9 green (`SelectiveHslTest` + `PhotoOpTest` 21/21). Maestro confirmed green on Pixel_7a — Create → Try a sample → Color/HSL scroll → Apply → Export sheet confirm, all steps COMPLETED. No new HSL feature behavior. `_hsl_pkg/` stays untracked; probe YAMLs and logs not committed.
+
+**In progress:** Phase 1 — Compare B2 contract (live peel + pre-bake snapshot, identity-gated, Maestro `compare-hold.yaml`).
+
+**Who:** test_automator ran units + Maestro; ProjectManager called exit.
+
+**Blockers:** None.
+
+---
+
 ## Status snapshot (2026-09-18 afternoon IST)
 
 ### MET / exited
@@ -67,13 +81,13 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **Looks / Lut** — `PhotoOp.Lut` bundled Clean/Warm/Cool/Film/Night/Original; Maestro green
 - **Glass scrim** — `session_tool_scrim`
 - **Export hotfixes** — abandon pending MediaStore URIs; no `runBlocking` in movie progress
-- **Selective HSL** — product + units + review-clear (`PhotoOp.SelectiveHsl` graph `A`); **Maestro exit still open** (Create → Try a sample flake)
+- **Selective HSL** — product + units + review-clear (`PhotoOp.SelectiveHsl` graph `A`); Maestro green on Pixel_7a (Create → Try a sample → Color/HSL → Apply → Export; all steps COMPLETED)
 - **R3.1 Create** — `home_create` → `create_source_sheet`
-- **R3.1 Compare** — press-hold `session_compare` + Saved/Saving (soft: enable only when compare delta exists)
+- **R3.1 Compare** — live peel (hold shows baked canvas while live adjustments on) + pre-bake snapshot peel; `canCompare` identity-gated (`hasVisibleEffect`); identity Grade/Curves/Look Apply does not push no-ops; bitmap recycle leak-free; Maestro `compare-hold.yaml` covers disabled/live/baked states (B2 MET 2026-09-23)
 
 ### Live gate
 
-Selective HSL Maestro: Create → `source_sample` / “Try a sample” → Color tool → Apply → Export.
+*None.* Selective HSL exited 2026-09-23 (units 9/9 green; Maestro green on Pixel_7a — all steps COMPLETED).
 
 ### Parallel open (R3.1)
 

@@ -92,12 +92,15 @@ Smart objects, vector paths, group folders, generative fill, RAW (parallel track
 **Date noted:** 2026-09-18 ~12:48 IST.
 **Explicitly later:** file-picker LUT import; true 3D `.cube` LUTs.
 
+## Selective HSL exit: MET
+
+**Tip:** commit `af7dc8f` (Maestro yaml) / `78b66b4` (stubs).
+**Met:** `PhotoOp.SelectiveHsl(range, h, s, l)` graph `A`; 9 unit tests green (encode/decode, soft-mask math, identity, all ranges); Maestro green on Pixel_7a (Create → Try a sample → Color/HSL chip → Apply → Export sheet confirm, all steps COMPLETED).
+**Date noted:** 2026-09-23 ~11:28 IST.
+**Explicitly later:** RAW/DNG develop (heavier `:core:media` work); global Hsl already op `Y`.
+
 ## Next R3 depth (pick — no serial wait)
 
-**Next: Selective color / HSL ranges** (not RAW yet).
+**Next: LUT import** (`PhotoOp.Lut` user `.cube`/`.3dl`); or RAW/DNG preview develop track.
 
-- Extend existing `PhotoOp.Hsl` (and/or add `PhotoOp.SelectiveHsl(range, h, s, l)`) so users tweak Reds/Oranges/Yellows/Greens/Blues/Purples without a full RAW pipeline.
-- Live preview under glass scrim; Apply bakes; same op -> engine -> export path.
-- RAW/DNG develop stays the slice after that (heavier `:core:media` work).
-
-**Glass scrim:** session chrome only (`session_tool_scrim`); preview texture updates live; no engine change.
+See `TOTAL_REMAINING.txt` C1–C2 for sequencing.
