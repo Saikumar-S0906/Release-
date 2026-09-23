@@ -5,7 +5,7 @@
 **Branch:** land on `origin/next` after review-clear.  
 **Excluded:** Section A (done/exited) — do not reopen.
 
-**Snapshot (2026-09-23):** **Wave B EXITED** · **C4 SkyReplace MET** · C1–C3 foundations MET · D1 encode/decode only. Live gate: **D1 E2E** · C5+.
+**Snapshot (2026-09-23):** **Wave B EXITED** · **C4 SkyReplace MET** · **D1 persistence bridge landed** (MT graph save/load; preview/export still flatten V1) · Live gate: **D1 composition E2E** · C5+.
 
 ```
 B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5 ML packs) ──▶ F (R6+ opt-in)
@@ -67,7 +67,7 @@ Dependency order is fixed. Each op: graph letter → `:photo` engine → session
 
 | ID | Slice | Depends on | Deliverables |
 |----|-------|------------|--------------|
-| **D1** | Multi-track V/A | B3 | Promote `MultiTrackTimeline` to source of truth; preview composition; persistence; export match | Foundation encode/decode only today |
+| **D1** | Multi-track V/A | B3 | Promote `MultiTrackTimeline` to source of truth; preview composition; persistence; export match | **Persistence MET** (MT encode save/load + flatten); composition still single-sequence |
 | **D2** | Ripple/roll; transitions; speed ramps | D1 | Edit ops on tracks; Maestro trim/transition |
 | **D3** | Keyframed transform / motion | D1 | Keyframe model + preview + export |
 | **D4** | Titles + captions | D3 | Text layers on timeline |

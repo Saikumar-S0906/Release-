@@ -30,9 +30,21 @@ data class MultiTrackTimeline(
     fun totalMs(): Long =
         videoTracks()
             .flatMap { it.clips }
-            .maxOfOrNull { it.durationMs }
-            ?.coerceAtLeast(1)
-            ?: 1
+            .sumOf { it.durationMs }
+            .coerceAtLeast(1)
+
+    /** Flatten primary video lane (+ beds/fx) for current Media3 single-sequence preview/export. */
+    fun toFlatTimeline(): Timeline {
+        val videoClips = videoTracks().firstOrNull()?.clips.orEmpty()
+        return Timeline(
+            clips = videoClips,
+            bed = bed,
+            voice = voice,
+            outputHeight = outputHeight,
+            extraStems = extraStems,
+            masterFx = masterFx
+        )
+    }
 
     fun encode(): String = buildString {
         appendLine("MT,$version,$outputHeight")
@@ -50,16 +62,48 @@ data class MultiTrackTimeline(
         }
         bed?.let { appendLine("B,${it.fileName},${it.volume},${it.fadeInMs},${it.fadeOutMs},${if (it.muted) 1 else 0},${it.duck},${it.attackMs}") }
         voice?.let { appendLine("V,${it.fileName},${it.volume},${it.fadeInMs},${it.fadeOutMs},${if (it.muted) 1 else 0},${it.duck},${it.attackMs}") }
+        extraStems.forEach { stem ->
+            appendLine(
+                "S,${stem.id},${stem.fileName},${stem.volume},${stem.fadeInMs},${stem.fadeOutMs}," +
+                    "${if (stem.muted) 1 else 0},${stem.role.encodeTrack()}"
+            )
+        }
         if (!masterFx.isNeutral()) appendLine(masterFx.encode())
     }
 
     companion object {
-        fun fromSingleVideo(clips: List<TimelineClip>): MultiTrackTimeline =
-            MultiTrackTimeline(
-                tracks = listOf(
-                    TimelineTrack(id = "V1", kind = TrackKind.Video, name = "Video 1", clips = clips)
+        fun fromFlatTimeline(timeline: Timeline): MultiTrackTimeline {
+            val tracks = buildList {
+                add(
+                    TimelineTrack(
+                        id = "V1",
+                        kind = TrackKind.Video,
+                        name = "Video 1",
+                        clips = timeline.clips
+                    )
                 )
+                // Reserved audio lane for future clip-based audio; beds stay on B/V/S lines.
+                add(
+                    TimelineTrack(
+                        id = "A1",
+                        kind = TrackKind.Audio,
+                        name = "Audio 1",
+                        clips = emptyList()
+                    )
+                )
+            }
+            return MultiTrackTimeline(
+                tracks = tracks,
+                bed = timeline.bed,
+                voice = timeline.voice,
+                extraStems = timeline.extraStems,
+                masterFx = timeline.masterFx,
+                outputHeight = timeline.outputHeight
             )
+        }
+
+        fun fromSingleVideo(clips: List<TimelineClip>): MultiTrackTimeline =
+            fromFlatTimeline(Timeline(clips = clips))
 
         fun decode(raw: String): MultiTrackTimeline? {
             if (!raw.lineSequence().any { it.startsWith("MT,") }) return null
@@ -68,6 +112,7 @@ data class MultiTrackTimeline(
             val trackMap = linkedMapOf<String, TimelineTrack>()
             var bed: AudioBed? = null
             var voice: AudioBed? = null
+            val stems = ArrayList<AudioStem>()
             var fx = AudioMasterFx.Neutral
             raw.lineSequence().forEach { line ->
                 val parts = line.split(',')
@@ -124,6 +169,17 @@ data class MultiTrackTimeline(
                             attackMs = parts[7].toLong()
                         )
                     }
+                    "S" -> if (parts.size >= 8) {
+                        stems += AudioStem(
+                            id = parts[1],
+                            fileName = parts[2],
+                            volume = parts[3].toFloat(),
+                            fadeInMs = parts[4].toLong(),
+                            fadeOutMs = parts[5].toLong(),
+                            muted = parts[6] == "1",
+                            role = parts[7].decodeTrack()
+                        )
+                    }
                     "X" -> AudioMasterFx.decode(parts)?.let { fx = it }
                 }
             }
@@ -132,6 +188,7 @@ data class MultiTrackTimeline(
                 tracks = trackMap.values.toList(),
                 bed = bed,
                 voice = voice,
+                extraStems = stems,
                 masterFx = fx,
                 outputHeight = height
             )

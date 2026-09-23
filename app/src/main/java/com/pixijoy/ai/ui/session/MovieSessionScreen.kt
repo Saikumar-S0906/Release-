@@ -102,6 +102,7 @@ import com.pixijoy.movie.MovieMotion
 import com.pixijoy.movie.MovieSpeed
 import com.pixijoy.movie.MovieTrim
 import com.pixijoy.movie.MovieExportSize
+import com.pixijoy.movie.MultiTrackTimeline
 import com.pixijoy.movie.Timeline
 import com.pixijoy.movie.TimelineClip
 import java.io.File
@@ -133,9 +134,10 @@ fun MovieSessionScreen(
     }
     var timeline by remember {
         mutableStateOf(
-            Timeline.decode(project.graph, paths.size) { i ->
-                engine.durationMs(paths.getOrElse(i) { path })
-            }
+            MultiTrackTimeline.decode(project.graph)?.toFlatTimeline()
+                ?: Timeline.decode(project.graph, paths.size) { i ->
+                    engine.durationMs(paths.getOrElse(i) { path })
+                }
         )
     }
     var selectedId by remember { mutableStateOf(timeline.clips.firstOrNull()?.id) }
@@ -271,7 +273,7 @@ fun MovieSessionScreen(
         }
     }
     LaunchedEffect(timeline, speed) {
-        repo.saveGraph(project.id, timeline.encode())
+        repo.saveGraph(project.id, MultiTrackTimeline.fromFlatTimeline(timeline).encode())
     }
 
     val workManager = remember { WorkManager.getInstance(context) }
@@ -333,7 +335,7 @@ fun MovieSessionScreen(
         status = context.getString(R.string.studio_export_pct, 0)
         exportSuccessUri = null
         scope.launch {
-            repo.saveGraph(project.id, timeline.encode())
+            repo.saveGraph(project.id, MultiTrackTimeline.fromFlatTimeline(timeline).encode())
             MovieExportWorker.ensureChannel(context)
             val request = OneTimeWorkRequestBuilder<MovieExportWorker>()
                 .setInputData(
