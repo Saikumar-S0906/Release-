@@ -489,6 +489,13 @@ fun MovieSessionScreen(
                     commitTimeline(timeline.update(id) { it.copy(speed = start, speedEnd = end) })
                 }
             )
+            MovieMotionPanel(
+                selected = selected,
+                onMotion = { motion ->
+                    val id = selected?.id ?: return@MovieMotionPanel
+                    commitTimeline(timeline.update(id) { it.copy(motion = motion) })
+                }
+            )
             if (!still) {
                 Text(stringResource(R.string.studio_scrub), color = PixiTextMuted)
                 Slider(

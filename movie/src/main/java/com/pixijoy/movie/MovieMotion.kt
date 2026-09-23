@@ -53,7 +53,8 @@ object MovieSpeed {
                 fadeInMs = if (i == 0) clip.fadeInMs else 0L,
                 fadeOutMs = if (i == n - 1) clip.fadeOutMs else 0L,
                 transition = if (i == n - 1) clip.transition else ClipTransition.None,
-                transitionMs = if (i == n - 1) clip.transitionMs else 0L
+                transitionMs = if (i == n - 1) clip.transitionMs else 0L,
+                motion = clip.motion.withWindow(t0, t1)
             )
         }
         return out.ifEmpty { listOf(clip.copy(speedEnd = clip.speed)) }

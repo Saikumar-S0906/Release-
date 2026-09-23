@@ -112,7 +112,7 @@ data class MultiTrackTimeline(
                     "TC,${track.id},${clip.id},${clip.mediaIndex},${clip.inMs},${clip.outMs}," +
                         "${clip.speed},${if (clip.muted) 1 else 0},${clip.volume}," +
                         "${clip.fadeInMs},${clip.fadeOutMs},${clip.transition.name}," +
-                        "${clip.transitionMs},${clip.speedEnd}"
+                        "${clip.transitionMs},${clip.speedEnd},${clip.motion.encode()}"
                 )
             }
         }
@@ -202,7 +202,8 @@ data class MultiTrackTimeline(
                             fadeOutMs = parts[10].toLong(),
                             transition = ClipTransition.parse(parts.getOrNull(11)),
                             transitionMs = parts.getOrNull(12)?.toLongOrNull() ?: 0L,
-                            speedEnd = parts.getOrNull(13)?.toFloatOrNull() ?: speed
+                            speedEnd = parts.getOrNull(13)?.toFloatOrNull() ?: speed,
+                            motion = ClipMotion.decode(parts.getOrNull(14))
                         )
                         val track = trackMap[trackId] ?: return@forEach
                         trackMap[trackId] = track.copy(clips = track.clips + clip)

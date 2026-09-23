@@ -72,7 +72,8 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **C3–C8 Wave C** — Fill undo · Warp · Presets/batch · ColorIntent · Soften (light). See exit note.
 - **D1** — `MultiTrackTimeline` composition E2E (preview+export from MT; track mute).
 - **D2** — ripple/roll + Soft transition fades + speed ramps; Maestro `d2-transition-speed` **green** Pixel_7a.
-**In progress:** D3 keyframed transform / motion.
+- **D3** — keyframed ClipMotion (zoom/pan/drift) via MatrixTransformation; Maestro `d3-keyframed-motion` **green** Pixel_7a.
+**In progress:** D4 titles + captions.
 
 **Blockers:** None.
 
@@ -95,10 +96,11 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **Wave C** — C3 Fill undo/clear · C5 Perspective/Liquify · C6 presets + batch export · C7 export color intent · C8 light Soften (model-heavy → R5)
 - **D1 multi-track composition** — MT preview/export parity; track mute; Maestro `multitrack-lanes`
 - **D2 ripple/roll + transitions + speed ramps** — `rollCut`, Soft fade pair, `MovieSpeed.expandRamp`; Maestro `d2-transition-speed` green Pixel_7a
+- **D3 keyframed transform / motion** — `ClipMotion` keyframes + Media3 `MatrixTransformation`; Maestro `d3-keyframed-motion` green Pixel_7a
 
 ### Live gate
 
-**D3** keyframed transform / motion.
+**D4** titles + captions.
 
 ### Follow-up epic (not a feature gate)
 

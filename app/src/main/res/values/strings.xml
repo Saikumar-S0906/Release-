@@ -109,6 +109,14 @@
     <string name="studio_transition_ms">Dissolve %1$d ms</string>
     <string name="studio_speed_ramp">Speed ramp</string>
     <string name="studio_speed_ramp_values">Start ×%1$.1f → end ×%2$.1f</string>
+    <string name="studio_movie_d3_hint">Keyframed zoom and pan on the selected clip. Same motion in preview and export.</string>
+    <string name="studio_motion">Motion</string>
+    <string name="studio_motion_none">None</string>
+    <string name="studio_motion_zoom_in">Zoom in</string>
+    <string name="studio_motion_zoom_out">Zoom out</string>
+    <string name="studio_motion_pan_left">Pan ←</string>
+    <string name="studio_motion_pan_right">Pan →</string>
+    <string name="studio_motion_drift">Drift</string>
     <string name="studio_add_clip">Add another clip</string>
     <string name="studio_clip_count">%1$d clips · joined on export</string>
     <string name="studio_export_gif">Export GIF</string>

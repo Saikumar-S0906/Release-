@@ -524,6 +524,10 @@ class Media3MovieEngine : MovieEngine {
             }
             video += SpeedChangeEffect(speed)
         }
+        if (clip.hasMotion) {
+            val durationUs = clip.durationMs.coerceAtLeast(1) * 1000L
+            video += clip.motion.toMatrixTransformation(durationUs)
+        }
         if (!clip.muted) {
             val vol = ClipMix.volume(clip.volume)
             if (clip.fadeInMs > 0 || clip.fadeOutMs > 0) {

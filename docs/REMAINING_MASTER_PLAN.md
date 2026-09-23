@@ -5,7 +5,7 @@
 **Branch:** land on `origin/next` after review-clear.  
 **Excluded:** Section A (done/exited) — do not reopen.
 
-**Snapshot (2026-09-23):** **Wave B EXITED** · **Wave C EXITED** · **D1 composition E2E MET** · **D2 ripple/roll + transitions + speed ramps MET** · Live gate: **D3** keyframed motion.
+**Snapshot (2026-09-23):** **Wave B EXITED** · **Wave C EXITED** · **D1–D3 MET** · Live gate: **D4** titles + captions.
 
 ```
 B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5 ML packs) ──▶ F (R6+ opt-in)
@@ -36,7 +36,7 @@ B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5
 | **B5** | Docs on `origin/next` | **EXITED** with Phase 0 land | Status docs in same commit |
 | **B6** | Gallery Photo Picker | Yellow/manual | Keep documented; no fake green |
 
-**Immediate next:** **D3** keyframed transform / motion.
+**Immediate next:** **D4** titles + captions.
 
 **G overlap with B:** **G4** exited with B3 (chips ≥48dp, announced selection).
 
@@ -69,7 +69,7 @@ Dependency order is fixed. Each op: graph letter → `:photo` engine → session
 |----|-------|------------|--------------|
 | **D1** | Multi-track V/A | B3 | Promote `MultiTrackTimeline` to source of truth; preview composition; persistence; export match | **MET 2026-09-23** composition E2E + track mute UI |
 | **D2** | Ripple/roll; transitions; speed ramps | D1 | Edit ops on tracks; Maestro trim/transition | **MET 2026-09-23** rollCut + Soft fades + expandRamp; Maestro `d2-transition-speed` green Pixel_7a |
-| **D3** | Keyframed transform / motion | D1 | Keyframe model + preview + export |
+| **D3** | Keyframed transform / motion | D1 | Keyframe model + preview + export | **MET 2026-09-23** ClipMotion + MatrixTransformation; Maestro `d3-keyframed-motion` green Pixel_7a |
 | **D4** | Titles + captions | D3 | Text layers on timeline |
 | **D5** | Grade + LUT + scopes | D1, C1 | Timeline grade; scopes UI |
 | **D6** | Audio finish | D1 | Ducking polish, VO UX beyond current stems |
@@ -177,7 +177,7 @@ Never land F* as isolated effects without listed primitives.
 
 ## Next concrete slice (start here)
 
-1. **D3** keyframed transform / motion on MT  
+1. **D4** titles + captions on MT  
 2. **Kick G1** tablet two-pane refinement in parallel  
 
 When this plan drifts, update this file and `TOTAL_REMAINING.txt` in the same commit as the exit.

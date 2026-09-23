@@ -17,7 +17,9 @@ data class TimelineClip(
      * End speed for a linear ramp across the clip (D2). When equal to [speed], constant.
      * Engine expands into stepped segments for Media3.
      */
-    val speedEnd: Float = speed
+    val speedEnd: Float = speed,
+    /** Keyframed scale/pan/rotate (D3). */
+    val motion: ClipMotion = ClipMotion.None
 ) {
     val sourceDurationMs: Long get() = (outMs - inMs).coerceAtLeast(1)
     val durationMs: Long
@@ -30,6 +32,7 @@ data class TimelineClip(
         get() = kotlin.math.abs(MovieSpeed.normalize(speedEnd) - MovieSpeed.normalize(speed)) > 0.01f
     val hasTransition: Boolean
         get() = transition != ClipTransition.None && transitionMs > 0L
+    val hasMotion: Boolean get() = !motion.isIdentity
 }
 
 data class AudioBed(
@@ -290,7 +293,7 @@ data class Timeline(
         append(clips.joinToString("\n") { c ->
             "C,${c.mediaIndex},${c.inMs},${c.outMs},${c.speed},${if (c.muted) 1 else 0},${c.id}," +
                 "${ClipMix.volume(c.volume)},${c.fadeInMs.coerceAtLeast(0)},${c.fadeOutMs.coerceAtLeast(0)}," +
-                "${c.transition.name},${c.transitionMs.coerceAtLeast(0)},${c.speedEnd}"
+                "${c.transition.name},${c.transitionMs.coerceAtLeast(0)},${c.speedEnd},${c.motion.encode()}"
         })
         val music = bed
         if (music != null) {
@@ -349,9 +352,11 @@ data class Timeline(
                         fadeOutMs = p.getOrNull(9)?.toLongOrNull()?.coerceAtLeast(0) ?: 0L,
                         transition = ClipTransition.parse(p.getOrNull(10)),
                         transitionMs = p.getOrNull(11)?.toLongOrNull()?.coerceAtLeast(0) ?: 0L,
-                        speedEnd = p.getOrNull(12)?.toFloatOrNull() ?: speed
+                        speedEnd = p.getOrNull(12)?.toFloatOrNull() ?: speed,
+                        motion = ClipMotion.decode(p.getOrNull(13))
                     )
-                }.getOrNull()            }.toList()
+                }.getOrNull()
+            }.toList()
             val bed = raw.lineSequence().mapNotNull { line ->
                 val p = line.trim().split(',')
                 if (p.getOrNull(0) != "A" || p.size < 6) return@mapNotNull null
