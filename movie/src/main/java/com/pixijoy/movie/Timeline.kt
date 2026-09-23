@@ -23,22 +23,26 @@ data class TimelineClip(
     /** Stabilize + reframe crop (D8). */
     val frame: ClipFrame = ClipFrame.None,
     /** Chroma key (D9). */
-    val chroma: ClipChroma = ClipChroma.None
+    val chroma: ClipChroma = ClipChroma.None,
+    /** Frame-interp slow-mo contract (D10); E4 ML plugs in via [FrameInterp]. */
+    val slowMo: ClipSlowMo = ClipSlowMo.None
 ) {
     val sourceDurationMs: Long get() = (outMs - inMs).coerceAtLeast(1)
     val durationMs: Long
-        get() = if (!hasSpeedRamp) {
-            MovieSpeed.outputDurationMs(sourceDurationMs, speed)
-        } else {
-            MovieSpeed.expandRamp(this).sumOf { it.durationMs }
+        get() = when {
+            hasSlowMo -> MovieSpeed.outputDurationMs(sourceDurationMs, slowMo.rate)
+            hasSpeedRamp -> MovieSpeed.expandRamp(this).sumOf { it.durationMs }
+            else -> MovieSpeed.outputDurationMs(sourceDurationMs, speed)
         }
     val hasSpeedRamp: Boolean
-        get() = kotlin.math.abs(MovieSpeed.normalize(speedEnd) - MovieSpeed.normalize(speed)) > 0.01f
+        get() = !hasSlowMo &&
+            kotlin.math.abs(MovieSpeed.normalize(speedEnd) - MovieSpeed.normalize(speed)) > 0.01f
     val hasTransition: Boolean
         get() = transition != ClipTransition.None && transitionMs > 0L
     val hasMotion: Boolean get() = !motion.isIdentity
     val hasFrame: Boolean get() = !frame.isIdentity
     val hasChroma: Boolean get() = !chroma.isIdentity
+    val hasSlowMo: Boolean get() = slowMo.isActive
 }
 
 data class AudioBed(
@@ -309,7 +313,7 @@ data class Timeline(
         append(clips.joinToString("\n") { c ->
             "C,${c.mediaIndex},${c.inMs},${c.outMs},${c.speed},${if (c.muted) 1 else 0},${c.id}," +
                 "${ClipMix.volume(c.volume)},${c.fadeInMs.coerceAtLeast(0)},${c.fadeOutMs.coerceAtLeast(0)}," +
-                "${c.transition.name},${c.transitionMs.coerceAtLeast(0)},${c.speedEnd},${c.motion.encode()},${c.frame.encode()},${c.chroma.encode()}"
+                "${c.transition.name},${c.transitionMs.coerceAtLeast(0)},${c.speedEnd},${c.motion.encode()},${c.frame.encode()},${c.chroma.encode()},${c.slowMo.encode()}"
         })
         val music = bed
         if (music != null) {
@@ -384,7 +388,8 @@ data class Timeline(
                         speedEnd = p.getOrNull(12)?.toFloatOrNull() ?: speed,
                         motion = ClipMotion.decode(p.getOrNull(13)),
                         frame = ClipFrame.decode(p.getOrNull(14)),
-                        chroma = ClipChroma.decode(p.getOrNull(15))
+                        chroma = ClipChroma.decode(p.getOrNull(15)),
+                        slowMo = ClipSlowMo.decode(p.getOrNull(16))
                     )
                 }.getOrNull()
             }.toList()

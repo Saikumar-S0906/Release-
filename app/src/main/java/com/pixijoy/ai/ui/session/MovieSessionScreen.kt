@@ -524,6 +524,13 @@ fun MovieSessionScreen(
                     commitTimeline(timeline.update(id) { it.copy(chroma = chroma) })
                 }
             )
+            MovieSlowMoPanel(
+                selected = selected,
+                onSlowMo = { slowMo ->
+                    val id = selected?.id ?: return@MovieSlowMoPanel
+                    commitTimeline(timeline.update(id) { it.copy(slowMo = slowMo) })
+                }
+            )
             MovieTitlesPanel(
                 titles = multi.titles,
                 selectedId = selectedTitleId,

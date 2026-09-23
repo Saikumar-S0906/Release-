@@ -165,6 +165,17 @@
     <string name="studio_chroma_medium">Medium</string>
     <string name="studio_chroma_wide">Wide</string>
     <string name="studio_chroma_softness">Edge soft %1$d%%</string>
+    <string name="studio_movie_d10_hint">Slow-mo on the selected clip. Heuristic stretch now; ML interp plugs in when the pack is installed. Same rate in preview and export.</string>
+    <string name="studio_slow_mo">Slow-mo</string>
+    <string name="studio_slowmo_off">Off</string>
+    <string name="studio_slowmo_half">½×</string>
+    <string name="studio_slowmo_quarter">¼×</string>
+    <string name="studio_slowmo_eighth">⅛×</string>
+    <string name="studio_slowmo_engine">Interp engine</string>
+    <string name="studio_slowmo_heuristic">Smooth</string>
+    <string name="studio_slowmo_ml">ML</string>
+    <string name="studio_slowmo_ml_locked">ML (pack)</string>
+    <string name="studio_slowmo_resolved">Using %1$s for export</string>
     <string name="studio_add_clip">Add another clip</string>
     <string name="studio_clip_count">%1$d clips · joined on export</string>
     <string name="studio_export_gif">Export GIF</string>

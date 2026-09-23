@@ -125,7 +125,7 @@ data class MultiTrackTimeline(
                     "TC,${track.id},${clip.id},${clip.mediaIndex},${clip.inMs},${clip.outMs}," +
                         "${clip.speed},${if (clip.muted) 1 else 0},${clip.volume}," +
                         "${clip.fadeInMs},${clip.fadeOutMs},${clip.transition.name}," +
-                        "${clip.transitionMs},${clip.speedEnd},${clip.motion.encode()},${clip.frame.encode()},${clip.chroma.encode()}"
+                        "${clip.transitionMs},${clip.speedEnd},${clip.motion.encode()},${clip.frame.encode()},${clip.chroma.encode()},${clip.slowMo.encode()}"
                 )
             }
         }
@@ -227,7 +227,8 @@ data class MultiTrackTimeline(
                             speedEnd = parts.getOrNull(13)?.toFloatOrNull() ?: speed,
                             motion = ClipMotion.decode(parts.getOrNull(14)),
                             frame = ClipFrame.decode(parts.getOrNull(15)),
-                            chroma = ClipChroma.decode(parts.getOrNull(16))
+                            chroma = ClipChroma.decode(parts.getOrNull(16)),
+                            slowMo = ClipSlowMo.decode(parts.getOrNull(17))
                         )
                         val track = trackMap[trackId] ?: return@forEach
                         trackMap[trackId] = track.copy(clips = track.clips + clip)

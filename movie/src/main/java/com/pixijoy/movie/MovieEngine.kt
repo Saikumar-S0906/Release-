@@ -580,10 +580,10 @@ class Media3MovieEngine : MovieEngine {
     }
 
     private fun clipEffects(clip: TimelineClip): Effects? {
-        val speed = MovieSpeed.normalize(clip.speed)
+        val speed = MovieSpeed.playbackRate(clip)
         val audio = ArrayList<AudioProcessor>()
         val video = ArrayList<Effect>()
-        if (speed != 1f) {
+        if (kotlin.math.abs(speed - 1f) > 0.01f) {
             audio += SonicAudioProcessor().apply {
                 setSpeed(speed)
                 setPitch(1f)

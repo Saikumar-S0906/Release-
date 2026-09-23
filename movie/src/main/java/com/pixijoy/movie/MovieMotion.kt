@@ -19,16 +19,36 @@ object MovieMotion {
 }
 
 object MovieSpeed {
-    fun normalize(speed: Float): Float = speed.coerceIn(0.5f, 2f)
+    const val MIN = 0.5f
+    const val MAX = 2f
+    const val MIN_SLOW_MO = 0.125f
 
-    fun outputDurationMs(sourceMs: Long, speed: Float): Long =
-        (sourceMs / normalize(speed)).toLong().coerceAtLeast(250)
+    fun normalize(speed: Float): Float = speed.coerceIn(MIN, MAX)
+
+    /** D10 slow-mo rates (¼ / ⅛) — wider floor than edit-speed. */
+    fun normalizeSlowMo(rate: Float): Float = rate.coerceIn(MIN_SLOW_MO, 1f)
+
+    /**
+     * Effective Media3 playback rate for a clip. Slow-mo contract wins over D2 speed
+     * when active (constant ultra-slow; ramps deferred while slow-mo is on).
+     */
+    fun playbackRate(clip: TimelineClip): Float =
+        if (clip.hasSlowMo) normalizeSlowMo(clip.slowMo.rate) else normalize(clip.speed)
+
+    fun outputDurationMs(sourceMs: Long, speed: Float): Long {
+        val rate = speed.coerceIn(MIN_SLOW_MO, MAX).coerceAtLeast(0.05f)
+        return (sourceMs / rate).toLong().coerceAtLeast(250)
+    }
 
     /**
      * D2 speed ramp: expand one clip into constant-speed steps Media3 can encode.
-     * Returns the original clip alone when there is no ramp.
+     * Returns the original clip alone when there is no ramp or D10 slow-mo is active.
      */
     fun expandRamp(clip: TimelineClip, steps: Int = 6): List<TimelineClip> {
+        if (clip.hasSlowMo) {
+            val rate = normalizeSlowMo(clip.slowMo.rate)
+            return listOf(clip.copy(speed = rate, speedEnd = rate))
+        }
         if (!clip.hasSpeedRamp) return listOf(clip)
         val n = steps.coerceIn(2, 12)
         val span = clip.sourceDurationMs

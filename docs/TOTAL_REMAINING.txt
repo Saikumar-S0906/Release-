@@ -1,5 +1,5 @@
 ﻿PixiJoy — TOTAL remaining (all stages)
-Updated: 2026-09-23 ~7:20 PM IST
+Updated: 2026-09-23 ~7:45 PM IST
 Source: room status + docs/NORTH_STAR_ROADMAP.md + UX backlog
 Branch: origin/next (tip moving)
 
@@ -26,6 +26,7 @@ D6 Audio finish duck Soft/Med/Hard + releaseMs (Maestro d6-audio-finish green Pi
 D7 PiP / multicam VideoLayout + compositor (Maestro d7-pip-layout green Pixel_7a 2026-09-23)
 D8 Stabilize + reframe ClipFrame Crop/zoom (Maestro d8-stabilize-reframe green Pixel_7a 2026-09-23)
 D9 Chroma key ClipChroma + GlEffect (Maestro d9-chroma-key green Pixel_7a 2026-09-23)
+D10 Slow-mo FrameInterp contract + heuristic (Maestro d10-slowmo-interp green Pixel_7a 2026-09-23)
 Docs: NORTH_STAR_ROADMAP, R3_LAYER_OP_SHAPES, REMAINING_MASTER_PLAN, HANDS_OFF
 Wave B quality gates EXITED 2026-09-23 (Phase 0 land)
 Wave C EXITED 2026-09-23
@@ -52,7 +53,7 @@ D6. Audio finish: ducking, VO polish — MET (2026-09-23)
 D7. PiP / multicam — MET (2026-09-23)
 D8. Stabilize + reframe — MET (2026-09-23)
 D9. Chroma key — MET (2026-09-23)
-D10. Frame-interpolation slow-mo
+D10. Frame-interpolation slow-mo — MET (2026-09-23 contract; E4 ML pack later)
 D11. HDR export (beyond HD/FHD/4K SDR)
 
 ================================================================
@@ -90,9 +91,9 @@ G9. Gradle BuildConfig deprecation cleanup
 ================================================================
 H. SUGGESTED PATH (ASAP, no fake greens)
 ================================================================
-1. D10 Frame-interp slow-mo UX
+1. D11 HDR export
 2. Parallel G1–G3 structural chrome
-3. E packs when photo/movie depth is solid
+3. E packs when photo/movie depth is solid (E4 plugs into D10 FrameInterp)
 4. F only as on-demand modules
 
 Hard rule stays: edit-graph or timeline op → engine → WorkManager export. Local-first. Quality > clock.
