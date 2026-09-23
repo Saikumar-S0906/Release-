@@ -1,0 +1,67 @@
+appId: com.pixijoy.ai
+---
+# D9 — chroma key presets in movie session
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "home_open_studio"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_segment_movie"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_segment_movie"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_move"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_move"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "movie_session"
+    timeout: 90000
+- scrollUntilVisible:
+    element:
+      id: "movie_d9_hint"
+    direction: DOWN
+    timeout: 40000
+    visibilityPercentage: 40
+    speed: 40
+- scrollUntilVisible:
+    element:
+      id: "movie_chroma_keys"
+    direction: DOWN
+    timeout: 20000
+    visibilityPercentage: 30
+    speed: 40
+- assertVisible:
+    id: "movie_chroma_off"
+- assertVisible:
+    id: "movie_chroma_green"
+- assertVisible:
+    id: "movie_chroma_blue"
+- tapOn:
+    id: "movie_chroma_green"
+- scrollUntilVisible:
+    element:
+      id: "movie_chroma_similarity_presets"
+    direction: DOWN
+    timeout: 20000
+    visibilityPercentage: 30
+    speed: 40
+- assertVisible:
+    id: "movie_chroma_tight"
+- assertVisible:
+    id: "movie_chroma_medium"
+- assertVisible:
+    id: "movie_chroma_wide"
+- tapOn:
+    id: "movie_chroma_wide"
+- assertVisible:
+    id: "movie_chroma_softness"
+- assertVisible:
+    id: "movie_session"

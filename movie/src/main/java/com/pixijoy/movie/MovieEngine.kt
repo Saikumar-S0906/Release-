@@ -597,6 +597,7 @@ class Media3MovieEngine : MovieEngine {
         if (clip.hasFrame) {
             video += clip.frame.toEffects()
         }
+        ChromaKeyEffect.from(clip.chroma)?.let { video += it }
         if (!clip.muted) {
             val vol = ClipMix.volume(clip.volume)
             if (clip.fadeInMs > 0 || clip.fadeOutMs > 0) {

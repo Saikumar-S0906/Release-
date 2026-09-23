@@ -78,7 +78,8 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **D6** — duck Soft/Med/Hard + separate attack/release; Maestro `d6-audio-finish` **green** Pixel_7a.
 - **D7** — PiP / Split / Grid via `VideoLayout` + `VideoCompositorSettings`; Maestro `d7-pip-layout` **green** Pixel_7a.
 - **D8** — ClipFrame stabilize zoom-crop + reframe Crop; Maestro `d8-stabilize-reframe` **green** Pixel_7a.
-**In progress:** D9 Chroma key.
+- **D9** — ClipChroma green/blue key + GlEffect; Maestro `d9-chroma-key` **green** Pixel_7a.
+**In progress:** D10 Frame-interp slow-mo UX.
 
 **Blockers:** None.
 
@@ -107,10 +108,11 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **D6 audio finish** — duck Soft/Med/Hard + `releaseMs`; Maestro `d6-audio-finish` green Pixel_7a
 - **D7 PiP / multicam** — `VideoLayout` + parallel sequences + compositor; Maestro `d7-pip-layout` green Pixel_7a
 - **D8 stabilize + reframe** — `ClipFrame` + Media3 `Crop`/zoom; Maestro `d8-stabilize-reframe` green Pixel_7a
+- **D9 chroma key** — `ClipChroma` + `ChromaKeyEffect` GlEffect; Maestro `d9-chroma-key` green Pixel_7a
 
 ### Live gate
 
-**D9** Chroma key.
+**D10** Frame-interp slow-mo UX.
 
 ### Follow-up epic (not a feature gate)
 

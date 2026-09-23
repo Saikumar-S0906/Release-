@@ -517,6 +517,13 @@ fun MovieSessionScreen(
                     commitTimeline(timeline.update(id) { it.copy(frame = frame) })
                 }
             )
+            MovieChromaPanel(
+                selected = selected,
+                onChroma = { chroma ->
+                    val id = selected?.id ?: return@MovieChromaPanel
+                    commitTimeline(timeline.update(id) { it.copy(chroma = chroma) })
+                }
+            )
             MovieTitlesPanel(
                 titles = multi.titles,
                 selectedId = selectedTitleId,

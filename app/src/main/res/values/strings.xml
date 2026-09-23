@@ -155,6 +155,16 @@
     <string name="studio_reframe_left">Left</string>
     <string name="studio_reframe_right">Right</string>
     <string name="studio_reframe_vertical">Vertical</string>
+    <string name="studio_movie_d9_hint">Punch green or blue screen on the selected clip. Same key in preview and export.</string>
+    <string name="studio_chroma_key">Chroma key</string>
+    <string name="studio_chroma_off">Off</string>
+    <string name="studio_chroma_green">Green</string>
+    <string name="studio_chroma_blue">Blue</string>
+    <string name="studio_chroma_similarity_preset">Key range</string>
+    <string name="studio_chroma_tight">Tight</string>
+    <string name="studio_chroma_medium">Medium</string>
+    <string name="studio_chroma_wide">Wide</string>
+    <string name="studio_chroma_softness">Edge soft %1$d%%</string>
     <string name="studio_add_clip">Add another clip</string>
     <string name="studio_clip_count">%1$d clips · joined on export</string>
     <string name="studio_export_gif">Export GIF</string>
