@@ -130,16 +130,20 @@ class Media3MovieEngine : MovieEngine {
         val encoded = when {
             gif -> encodeGif(primary, cache, talking, rate, onProgress)
             still -> {
-                val stillResult = encodeStill(primary, cache, talking, rate, flat.outputHeight, onProgress)
-                if (stillResult is AppResult.Err) stillResult
-                else attachBed(
-                    context,
-                    cache,
-                    paths,
-                    flat,
-                    MovieSpeed.outputDurationMs(MovieTrim.stillDurationMs(talking), rate),
-                    onProgress
-                )
+                if (timeline.titles.isNotEmpty()) {
+                    encodeClips(context, paths, timeline, cache, onProgress)
+                } else {
+                    val stillResult = encodeStill(primary, cache, talking, rate, flat.outputHeight, onProgress)
+                    if (stillResult is AppResult.Err) stillResult
+                    else attachBed(
+                        context,
+                        cache,
+                        paths,
+                        flat,
+                        MovieSpeed.outputDurationMs(MovieTrim.stillDurationMs(talking), rate),
+                        onProgress
+                    )
+                }
             }
             else -> encodeClips(context, paths, timeline, cache, onProgress)
         }
@@ -334,7 +338,9 @@ class Media3MovieEngine : MovieEngine {
             }
         }
         val height = MovieExportSize.normalize(timeline.outputHeight)
-        val videoEffects = listOf<Effect>(Presentation.createForHeight(height))
+        val videoEffects = ArrayList<Effect>()
+        videoEffects += Presentation.createForHeight(height)
+        TitleOverlays.effect(timeline.titles, total)?.let { videoEffects += it }
         val audioProcessors = ArrayList<AudioProcessor>()
         val fx = timeline.masterFx
         if (!fx.isNeutral()) {

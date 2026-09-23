@@ -115,7 +115,9 @@ data class Timeline(
     val voice: AudioBed? = null,
     val outputHeight: Int = 720,
     val extraStems: List<AudioStem> = emptyList(),
-    val masterFx: AudioMasterFx = AudioMasterFx()
+    val masterFx: AudioMasterFx = AudioMasterFx(),
+    /** Timed title / caption layers (D4). */
+    val titles: List<TimelineTitle> = emptyList()
 ) {
     fun totalMs(): Long = clips.sumOf { it.durationMs }
 
@@ -321,6 +323,11 @@ data class Timeline(
             if (isNotEmpty()) append('\n')
             append(masterFx.encode())
         }
+        for (title in titles) {
+            if (title.text.isBlank()) continue
+            if (isNotEmpty()) append('\n')
+            append(title.encodeLine())
+        }
     }
 
     companion object {
@@ -411,8 +418,11 @@ data class Timeline(
                 if (p.getOrNull(0) != "X") return@mapNotNull null
                 AudioMasterFx.decode(p)
             }.firstOrNull() ?: AudioMasterFx()
+            val titles = raw.lineSequence().mapNotNull { line ->
+                TimelineTitle.decodeLine(line.trim().split(','))
+            }.toList()
             val clips = if (parsed.isEmpty()) fromMedia(count, durationMs).clips else parsed
-            return Timeline(clips, bed, voice, height, extraStems, masterFx)
+            return Timeline(clips, bed, voice, height, extraStems, masterFx, titles)
         }
     }
 }

@@ -117,6 +117,12 @@
     <string name="studio_motion_pan_left">Pan ←</string>
     <string name="studio_motion_pan_right">Pan →</string>
     <string name="studio_motion_drift">Drift</string>
+    <string name="studio_movie_d4_hint">Add a title or caption on the timeline. Same text in preview and export.</string>
+    <string name="studio_title_add">Add title</string>
+    <string name="studio_caption_add">Add caption</string>
+    <string name="studio_titles_clear">Clear text</string>
+    <string name="studio_title_chip">Title · %1$s</string>
+    <string name="studio_caption_chip">Caption · %1$s</string>
     <string name="studio_add_clip">Add another clip</string>
     <string name="studio_clip_count">%1$d clips · joined on export</string>
     <string name="studio_export_gif">Export GIF</string>

@@ -1,5 +1,5 @@
 ﻿PixiJoy — TOTAL remaining (all stages)
-Updated: 2026-09-23 ~4:45 PM IST
+Updated: 2026-09-23 ~5:15 PM IST
 Source: room status + docs/NORTH_STAR_ROADMAP.md + UX backlog
 Branch: origin/next (tip moving)
 
@@ -20,6 +20,7 @@ C8 Soften (O) light; model-heavy → R5
 D1 MultiTrackTimeline composition E2E (preview+export from MT; track mute UI)
 D2 Ripple/roll + Soft transitions + speed ramps (Maestro d2-transition-speed green Pixel_7a 2026-09-23)
 D3 Keyframed ClipMotion + MatrixTransformation (Maestro d3-keyframed-motion green Pixel_7a 2026-09-23)
+D4 Titles + captions TimelineTitle + OverlayEffect (Maestro d4-titles-captions green Pixel_7a 2026-09-23)
 Docs: NORTH_STAR_ROADMAP, R3_LAYER_OP_SHAPES, REMAINING_MASTER_PLAN, HANDS_OFF
 Wave B quality gates EXITED 2026-09-23 (Phase 0 land)
 Wave C EXITED 2026-09-23
@@ -40,7 +41,7 @@ D. R4 MOVIE (cinema-class depth)
 D1. Multi-track video + audio timeline — MET (composition E2E 2026-09-23)
 D2. Ripple / roll trim; transitions; speed ramps — MET (2026-09-23)
 D3. Keyframed transform / motion — MET (2026-09-23)
-D4. Titles + captions
+D4. Titles + captions — MET (2026-09-23)
 D5. Grade + LUT + scopes on timeline
 D6. Audio finish: ducking, VO polish
 D7. PiP / multicam
@@ -84,7 +85,7 @@ G9. Gradle BuildConfig deprecation cleanup
 ================================================================
 H. SUGGESTED PATH (ASAP, no fake greens)
 ================================================================
-1. D4 titles + captions
+1. D5 grade + LUT + scopes on timeline
 2. Parallel G1–G3 structural chrome
 3. E packs when photo/movie depth is solid
 4. F only as on-demand modules

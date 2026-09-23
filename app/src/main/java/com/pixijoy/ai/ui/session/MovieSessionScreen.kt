@@ -106,6 +106,7 @@ import com.pixijoy.movie.MovieExportSize
 import com.pixijoy.movie.MultiTrackTimeline
 import com.pixijoy.movie.Timeline
 import com.pixijoy.movie.TimelineClip
+import com.pixijoy.movie.TimelineTitle
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -155,6 +156,7 @@ fun MovieSessionScreen(
         timeline = multi.toFlatTimeline()
     }
     var selectedId by remember { mutableStateOf(timeline.clips.firstOrNull()?.id) }
+    var selectedTitleId by remember { mutableStateOf<String?>(null) }
     var startMs by remember { mutableLongStateOf(0L) }
     var endMs by remember { mutableLongStateOf(if (still) duration else engine.durationMs(path).coerceAtLeast(1000)) }
     var speed by remember { mutableFloatStateOf(1f) }
@@ -494,6 +496,27 @@ fun MovieSessionScreen(
                 onMotion = { motion ->
                     val id = selected?.id ?: return@MovieMotionPanel
                     commitTimeline(timeline.update(id) { it.copy(motion = motion) })
+                }
+            )
+            MovieTitlesPanel(
+                titles = multi.titles,
+                selectedId = selectedTitleId,
+                onSelect = { selectedTitleId = it },
+                onAddTitle = {
+                    val total = multi.totalMs()
+                    val next = TimelineTitle.titleDefault(total, id = "t${multi.titles.size}")
+                    commitMulti(multi.copy(titles = multi.titles + next))
+                    selectedTitleId = next.id
+                },
+                onAddCaption = {
+                    val total = multi.totalMs()
+                    val next = TimelineTitle.captionDefault(total, id = "c${multi.titles.size}")
+                    commitMulti(multi.copy(titles = multi.titles + next))
+                    selectedTitleId = next.id
+                },
+                onClear = {
+                    commitMulti(multi.copy(titles = emptyList()))
+                    selectedTitleId = null
                 }
             )
             if (!still) {
