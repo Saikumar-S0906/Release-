@@ -2,16 +2,21 @@ package com.pixijoy.ai.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,6 +33,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -64,10 +70,15 @@ val MovieTools = listOf(
     StudioTool(R.string.tool_talking, R.string.tool_talking_sub, R.drawable.pj_ic_gif, "create_hub_talking", MediaKind.MOVIE, "talking")
 )
 
+private val RecommendedPhoto = listOf("editor", "cutout")
+private val RecommendedMovie = listOf("move")
+
 @Composable
 fun StudioPane(onPickTool: (StudioTool) -> Unit, modifier: Modifier = Modifier) {
     var photo by rememberSaveable { mutableStateOf(true) }
     val tools = if (photo) PhotoTools else MovieTools
+    val recommendedKeys = if (photo) RecommendedPhoto else RecommendedMovie
+    val recommended = tools.filter { it.key in recommendedKeys }
     val columns = if (LocalConfiguration.current.screenWidthDp >= 600) 3 else 2
 
     Column(
@@ -83,9 +94,11 @@ fun StudioPane(onPickTool: (StudioTool) -> Unit, modifier: Modifier = Modifier) 
             color = PixiText
         )
         Text(
-            stringResource(R.string.studio_hub_sub),
+            stringResource(R.string.studio_on_device_badge),
             color = PixiTextMuted,
-            modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
+            modifier = Modifier
+                .padding(top = 4.dp, bottom = 12.dp)
+                .testTag("studio_on_device_badge")
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Segment(
@@ -101,19 +114,52 @@ fun StudioPane(onPickTool: (StudioTool) -> Unit, modifier: Modifier = Modifier) 
                 onClick = { photo = false }
             )
         }
-        Text(
-            stringResource(if (photo) R.string.studio_photo_caption else R.string.studio_movie_caption),
-            color = PixiTextMuted,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(vertical = 12.dp)
-        )
         LazyVerticalGrid(
             columns = GridCells.Fixed(columns),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
-            contentPadding = PaddingValues(bottom = 24.dp),
+            contentPadding = PaddingValues(bottom = 24.dp, top = 12.dp),
             modifier = Modifier.fillMaxSize()
         ) {
+            if (recommended.isNotEmpty()) {
+                item(span = { GridItemSpan(columns) }) {
+                    Text(
+                        stringResource(R.string.studio_recommended),
+                        color = PixiText,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .padding(bottom = 4.dp)
+                            .testTag("studio_recommended_label")
+                    )
+                }
+                item(span = { GridItemSpan(columns) }) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                            .testTag("studio_recommended_row")
+                    ) {
+                        recommended.forEach { tool ->
+                            PixiToolTile(
+                                title = stringResource(tool.title),
+                                subtitle = stringResource(
+                                    when (tool.key) {
+                                        "editor" -> R.string.tool_best_for_editor
+                                        "cutout" -> R.string.tool_best_for_cutout
+                                        "move" -> R.string.tool_best_for_move
+                                        else -> tool.subtitle
+                                    }
+                                ),
+                                icon = painterResource(tool.icon),
+                                onClick = { onPickTool(tool) },
+                                modifier = Modifier
+                                    .testTag("recommended_${tool.tag}")
+                            )
+                        }
+                    }
+                }
+            }
             items(tools, key = { it.tag }) { tool ->
                 PixiToolTile(
                     title = stringResource(tool.title),
@@ -131,12 +177,16 @@ fun StudioPane(onPickTool: (StudioTool) -> Unit, modifier: Modifier = Modifier) 
 private fun Segment(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
     Box(
         modifier = Modifier
+            .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(999.dp))
             .background(if (selected) PixiAccent else PixiSurface2)
             .clickable(onClick = onClick)
             .testTag(tag)
-            .semantics { role = Role.Tab }
-            .padding(horizontal = 20.dp, vertical = 10.dp)
+            .semantics {
+                role = Role.Tab
+                this.selected = selected
+            }
+            .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
         Text(
             label,

@@ -11,6 +11,7 @@ import com.pixijoy.core.data.db.ProjectWithMedia
 import com.pixijoy.core.data.db.StudioDatabase
 import com.pixijoy.core.media.MediaKind
 import com.pixijoy.core.media.MediaProbe
+import com.pixijoy.core.media.RawPreview
 import java.io.File
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
@@ -103,7 +104,7 @@ class ProjectRepository(
                 tmp.outputStream().use { input.copyTo(it) }
             } ?: return@withContext AppResult.Err("Could not read that file.")
             val info = MediaProbe.probe(tmp)
-            val ext = extensionFor(info.mime, info.durationMs)
+            val ext = extensionFor(info.mime, info.durationMs, pathHint = tmp.name)
             val dest = File(dir, "extra-${System.currentTimeMillis()}.$ext")
             if (!tmp.renameTo(dest)) {
                 tmp.copyTo(dest, overwrite = true)
@@ -165,9 +166,66 @@ class ProjectRepository(
         dao.upsertProject(row.copy(graph = graph, updatedAt = System.currentTimeMillis()))
     }
 
+    suspend fun rename(id: String, title: String): Unit = withContext(dispatchers.io) {
+        val row = dao.get(id)?.project ?: return@withContext
+        val cleaned = title.trim().ifBlank { row.title }
+        dao.upsertProject(row.copy(title = cleaned, updatedAt = System.currentTimeMillis()))
+    }
+
+    /** Hard-delete project row and on-disk media. Call only after an Undo window expires. */
     suspend fun delete(id: String): Unit = withContext(dispatchers.io) {
         dao.deleteProject(id)
         File(context.filesDir, "projects/$id").deleteRecursively()
+    }
+
+    fun projectDir(id: String): File = File(context.filesDir, "projects/$id")
+
+    /**
+     * Copies a LUT file into `{project}/luts/`. Caller must validate parse before Apply.
+     * @return destination file on success
+     */
+    suspend fun importLut(projectId: String, uri: Uri, suggestedName: String): AppResult<File> =
+        withContext(dispatchers.io) {
+            runCatching {
+                val dir = File(projectDir(projectId), "luts").apply { mkdirs() }
+                val name = sanitizeLutFileName(suggestedName)
+                val dest = File(dir, name)
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    dest.outputStream().use { output -> input.copyTo(output) }
+                } ?: return@withContext AppResult.Err("Could not read LUT.")
+                if (dest.length() < 8L) {
+                    dest.delete()
+                    return@withContext AppResult.Err("LUT file is empty.")
+                }
+                if (dest.length() > 8L * 1024L * 1024L) {
+                    dest.delete()
+                    return@withContext AppResult.Err("LUT file is too large.")
+                }
+                AppResult.Ok(dest)
+            }.fold(
+                onSuccess = { it },
+                onFailure = { AppResult.Err("Could not import LUT.", it) }
+            )
+        }
+
+    private fun sanitizeLutFileName(raw: String): String {
+        val base = raw.substringAfterLast('/').substringAfterLast('\\')
+        val cleaned = buildString {
+            for (ch in base) {
+                append(
+                    when {
+                        ch.isLetterOrDigit() || ch == '.' || ch == '_' || ch == '-' -> ch
+                        else -> '_'
+                    }
+                )
+            }
+        }.ifBlank { "import" }
+        val lower = cleaned.lowercase()
+        val named = when {
+            lower.endsWith(".cube") || lower.endsWith(".3dl") -> cleaned
+            else -> "$cleaned.cube"
+        }
+        return named.take(120)
     }
 
     private suspend fun finishImport(
@@ -181,12 +239,27 @@ class ProjectRepository(
         val ext = extensionFor(
             info.mime,
             info.durationMs,
-            movie = kind == MediaKind.MOVIE
+            movie = kind == MediaKind.MOVIE,
+            pathHint = tmp.name
         )
         val dest = File(dir, "source.$ext")
         if (!tmp.renameTo(dest)) {
             tmp.copyTo(dest, overwrite = true)
             tmp.delete()
+        }
+        var coverPath = dest.absolutePath
+        var width = info.width
+        var height = info.height
+        var mime = info.mime
+        if (kind == MediaKind.PHOTO && (RawPreview.looksLikeRaw(dest.absolutePath) || RawPreview.isRawMime(mime))) {
+            val raw = RawPreview.open(dest)
+            width = raw.width.takeIf { it > 0 } ?: width
+            height = raw.height.takeIf { it > 0 } ?: height
+            mime = raw.mime
+            if (RawPreview.ensurePreviewJpeg(dest)) {
+                val preview = File(dir, "preview.jpg")
+                if (preview.isFile) coverPath = preview.absolutePath
+            }
         }
         val now = System.currentTimeMillis()
         val entity = ProjectEntity(
@@ -195,16 +268,16 @@ class ProjectRepository(
             kind = kind.name,
             createdAt = now,
             updatedAt = now,
-            coverPath = dest.absolutePath,
+            coverPath = coverPath,
             graph = ""
         )
         val media = MediaRefEntity(
             id = UUID.randomUUID().toString(),
             projectId = id,
             path = dest.absolutePath,
-            mime = info.mime,
-            width = info.width,
-            height = info.height,
+            mime = mime,
+            width = width,
+            height = height,
             durationMs = info.durationMs,
             sortOrder = 0
         )
@@ -234,9 +307,16 @@ private fun com.pixijoy.core.data.db.ProjectWithMedia.toProject() = Project(
     }
 )
 
-internal fun extensionFor(mime: String, durationMs: Long?, movie: Boolean = false): String {
+internal fun extensionFor(mime: String, durationMs: Long?, movie: Boolean = false, pathHint: String = ""): String {
     val m = mime.lowercase()
+    val hint = pathHint.lowercase()
     return when {
+        m.contains("dng") || hint.endsWith(".dng") -> "dng"
+        m.contains("nef") || hint.endsWith(".nef") -> "nef"
+        m.contains("cr2") || hint.endsWith(".cr2") -> "cr2"
+        m.contains("arw") || hint.endsWith(".arw") -> "arw"
+        RawPreview.isRawMime(m) || RawPreview.looksLikeRaw(hint) ->
+            hint.substringAfterLast('.', "dng").ifBlank { "dng" }
         m.contains("png") -> "png"
         m.contains("webp") -> "webp"
         m.startsWith("audio") || m.contains("mpeg") && !m.contains("video") -> audioExtension(m)

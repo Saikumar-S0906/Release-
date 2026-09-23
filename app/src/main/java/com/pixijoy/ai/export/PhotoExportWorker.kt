@@ -14,6 +14,7 @@ import com.pixijoy.photo.BitmapPhotoEngine
 import com.pixijoy.photo.ExportExifPolicy
 import com.pixijoy.photo.ExportFormatSupport
 import com.pixijoy.photo.decodeLayers
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -35,7 +36,9 @@ class PhotoExportWorker(
             val project = repo.get(projectId) ?: return@withContext Result.failure(
                 workDataOf(KEY_ERROR to "Project missing.")
             )
-            val engine = BitmapPhotoEngine(MediaPipeVision(applicationContext))
+            val engine = BitmapPhotoEngine(MediaPipeVision(applicationContext)).also {
+                it.lutDirectory = File(applicationContext.filesDir, "projects/$projectId")
+            }
             val sources = project.media.map { it.path }.ifEmpty { listOf(project.coverPath) }
             val layers = project.graph.decodeLayers()
             val name = "PixiJoy_${project.title}_${System.currentTimeMillis()}.${format.extension}"

@@ -1,21 +1,46 @@
 ﻿appId: com.pixijoy.ai
 ---
-# STUB R3.1 Library overflow + delete Snackbar Undo 5s
-# Tags expected: library_overflow_*, library_delete_undo
+# R3.1 Library overflow + delete Snackbar Undo
+# Nav tag is nav_my_stuff (StudioTab.Library). Sample open lands on Studio tab.
+# Popup menu items: prefer text (resource-id may miss in separate window).
 - runFlow: ../launch-to-home.yaml
 - tapOn:
-    id: "nav_library"
-# - assertVisible:
-#     id: "library_overflow_menu"
-# - tapOn:
-#     id: "library_overflow_menu"
-# - tapOn:
-#     id: "library_overflow_delete"
-# - extendedWaitUntil:
-#     visible:
-#       id: "library_delete_undo"
-#     timeout: 10000
-# - tapOn:
-#     id: "library_delete_undo"
+    id: "home_create"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+- tapOn:
+    id: "session_back"
+- extendedWaitUntil:
+    visible:
+      id: "nav_my_stuff"
+    timeout: 30000
+- tapOn:
+    id: "nav_my_stuff"
+- extendedWaitUntil:
+    visible:
+      id: "library_project_card"
+    timeout: 20000
+- tapOn:
+    id: "library_project_overflow"
+- extendedWaitUntil:
+    visible: "Delete"
+    timeout: 10000
+- tapOn: "Delete"
+- extendedWaitUntil:
+    visible: "Project removed"
+    timeout: 10000
 - assertVisible:
-    id: "nav_library"
+    id: "library_delete_snackbar"
+- tapOn: "Undo"
+- extendedWaitUntil:
+    visible:
+      id: "library_project_card"
+    timeout: 15000
+- assertVisible:
+    id: "nav_my_stuff"

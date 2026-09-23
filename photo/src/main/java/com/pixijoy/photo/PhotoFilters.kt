@@ -461,13 +461,47 @@ private fun boxBlur(src: IntArray, dest: IntArray, w: Int, h: Int) {
     }
 }
 
-fun applyLut(src: Bitmap, assetKey: String): Bitmap {
-    if (BundledLooks.isIdentity(assetKey)) return src
+fun applyLut(src: Bitmap, assetKey: String, lutDir: java.io.File? = null): Bitmap {
+    if (BundledLooks.isIdentity(assetKey) && !ImportedLuts.isImported(assetKey)) return src
+    if (ImportedLuts.isImported(assetKey)) {
+        val file = ImportedLuts.resolve(lutDir, assetKey)
+            ?: return src
+        return when (val parsed = CubeLutParser.parseFile(file, maxSize = 33)) {
+            is LutParseResult.Ok -> applyCubeLut(src, parsed.lut)
+            is LutParseResult.Err -> src
+        }
+    }
     val out = Bitmap.createBitmap(src.width, src.height, Bitmap.Config.ARGB_8888)
     val canvas = android.graphics.Canvas(out)
     val paint = android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG).apply {
         colorFilter = ColorMatrixColorFilter(BundledLooks.androidMatrix(assetKey))
     }
     canvas.drawBitmap(src, 0f, 0f, paint)
+    return out
+}
+
+fun applyCubeLut(src: Bitmap, lut: CubeLut): Bitmap {
+    val w = src.width
+    val h = src.height
+    val pixels = IntArray(w * h)
+    src.getPixels(pixels, 0, w, 0, 0, w, h)
+    for (i in pixels.indices) {
+        val c = pixels[i]
+        val a = Color.alpha(c)
+        val rgb = CubeLutParser.sampleNearest(
+            lut,
+            Color.red(c) / 255f,
+            Color.green(c) / 255f,
+            Color.blue(c) / 255f
+        )
+        pixels[i] = Color.argb(
+            a,
+            (rgb[0] * 255f).toInt().coerceIn(0, 255),
+            (rgb[1] * 255f).toInt().coerceIn(0, 255),
+            (rgb[2] * 255f).toInt().coerceIn(0, 255)
+        )
+    }
+    val out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+    out.setPixels(pixels, 0, w, 0, 0, w, h)
     return out
 }

@@ -1,21 +1,23 @@
 package com.pixijoy.ai.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.pixijoy.ai.R
 import com.pixijoy.designsystem.PixiPrimaryButton
 import com.pixijoy.designsystem.PixiSecondaryButton
@@ -23,21 +25,28 @@ import com.pixijoy.designsystem.PixiSurface2
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateSourceSheet(
     onPhoto: () -> Unit,
     onVideo: () -> Unit,
     onCamera: () -> Unit,
     onSample: () -> Unit,
+    onOpenFile: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    Dialog(onDismissRequest = onDismiss) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = PixiSurface2,
+        modifier = Modifier.testTag("create_source_sheet")
+    ) {
         Column(
             modifier = Modifier
-                .clip(RoundedCornerShape(24.dp))
-                .background(PixiSurface2)
-                .padding(24.dp)
-                .testTag("create_source_sheet"),
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 28.dp)
+                .testTag("create_source_sheet_body"),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
@@ -50,13 +59,23 @@ fun CreateSourceSheet(
                 onClick = onPhoto,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .heightIn(min = 48.dp)
                     .testTag("source_photo")
+            )
+            PixiSecondaryButton(
+                text = stringResource(R.string.create_source_files),
+                onClick = onOpenFile,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+                    .testTag("source_files")
             )
             PixiSecondaryButton(
                 text = stringResource(R.string.studio_camera_video),
                 onClick = onVideo,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .heightIn(min = 48.dp)
                     .testTag("source_video")
             )
             PixiSecondaryButton(
@@ -64,6 +83,7 @@ fun CreateSourceSheet(
                 onClick = onCamera,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .heightIn(min = 48.dp)
                     .testTag("source_camera")
             )
             PixiSecondaryButton(
@@ -71,11 +91,18 @@ fun CreateSourceSheet(
                 onClick = onSample,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .heightIn(min = 48.dp)
                     .testTag("source_sample")
             )
-            TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+            ) {
                 Text(stringResource(R.string.studio_cancel), color = PixiTextMuted)
             }
+            Spacer(Modifier.height(8.dp))
         }
     }
 }

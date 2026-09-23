@@ -1,0 +1,30 @@
+appId: com.pixijoy.ai
+---
+# Looks → Import LUT affordance visible (file pick is yellow/manual on emulator)
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "home_create"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "session_looks"
+    direction: RIGHT
+    timeout: 20000
+    visibilityPercentage: 40
+- tapOn:
+    id: "session_looks"
+- extendedWaitUntil:
+    visible:
+      id: "session_lut_import"
+    timeout: 15000
+- assertVisible:
+    id: "session_apply_look"
+- assertVisible:
+    id: "session_export"

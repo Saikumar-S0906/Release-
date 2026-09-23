@@ -159,6 +159,58 @@ class PhotoOpTest {
     }
 
     @Test
+    fun compareEligibility_ignoresIdentityAndHiddenLayers() {
+        val identityGrade = PhotoOp.Grade(0f, 1f)
+        assertTrue(identityGrade.isIdentity())
+        assertTrue(PhotoOp.Crop(0f, 0f, 1f, 1f).isIdentity())
+        assertTrue(PhotoOp.Lut(BundledLooks.ORIGINAL).isIdentity())
+        assertFalse(PhotoOp.Grade(0.2f, 1f).isIdentity())
+
+        assertFalse(LayeredOp("base", "Background", op = identityGrade).hasVisibleEffect())
+        assertFalse(
+            LayeredOp("hidden", "Grade", visible = false, op = PhotoOp.Grade(0.2f, 1f))
+                .hasVisibleEffect()
+        )
+        assertFalse(
+            LayeredOp("transparent", "Grade", opacity = 0f, op = PhotoOp.Grade(0.2f, 1f))
+                .hasVisibleEffect()
+        )
+        assertTrue(LayeredOp("grade", "Grade", op = PhotoOp.Grade(0.2f, 1f)).hasVisibleEffect())
+        assertTrue(LayeredOp("rotate", "Rotate", opacity = 0f, op = PhotoOp.Rotate(90)).hasVisibleEffect())
+    }
+
+    /**
+     * Compare hygiene: Apply for Grade / HSL / Curves must NOT push a no-op layer.
+     * The UI guards ([onApplyGrade], [onApplyCurves]) call [PhotoOp.isIdentity] before push;
+     * these tests document the identity contract so a future refactor cannot regress it.
+     */
+    @Test
+    fun identityApplyHygiene_noOpsShouldNotPush() {
+        // Grade at slider defaults is identity
+        assertTrue(PhotoOp.Grade(0f, 1f).isIdentity())
+        // HSL at slider defaults is identity
+        assertTrue(PhotoOp.Hsl(0f, 1f).isIdentity())
+        // Curves at default five-point diagonal is identity
+        assertTrue(PhotoOp.Curves(floatArrayOf(0f, 0.25f, 0.5f, 0.75f, 1f)).isIdentity())
+        // Any deviation from defaults is NOT identity
+        assertFalse(PhotoOp.Grade(0.1f, 1f).isIdentity())
+        assertFalse(PhotoOp.Grade(0f, 1.1f).isIdentity())
+        assertFalse(PhotoOp.Hsl(5f, 1f).isIdentity())
+        assertFalse(PhotoOp.Hsl(0f, 1.1f).isIdentity())
+        assertFalse(PhotoOp.Curves(floatArrayOf(0f, 0.25f, 0.6f, 0.75f, 1f)).isIdentity())
+        // hasVisibleEffect must return false for identity layers — Compare stays disabled
+        assertFalse(LayeredOp("id1", "Grade", op = PhotoOp.Grade(0f, 1f)).hasVisibleEffect())
+        assertFalse(LayeredOp("id2", "HSL", op = PhotoOp.Hsl(0f, 1f)).hasVisibleEffect())
+        assertFalse(
+            LayeredOp("id3", "Curves", op = PhotoOp.Curves(floatArrayOf(0f, 0.25f, 0.5f, 0.75f, 1f)))
+                .hasVisibleEffect()
+        )
+        // Non-identity layers must enable hasVisibleEffect (Compare can activate)
+        assertTrue(LayeredOp("id4", "Grade", op = PhotoOp.Grade(0.2f, 1f)).hasVisibleEffect())
+        assertTrue(LayeredOp("id5", "Curves", op = PhotoOp.Curves(floatArrayOf(0f, 0.25f, 0.6f, 0.75f, 1f))).hasVisibleEffect())
+    }
+
+    @Test
     fun vignetteMulMatchesCpuFalloff() {
         assertEquals(1f, LiveGrade.vignetteMul(0.5f, 0.5f, 0.4f), 0.001f)
         assertEquals(1f, LiveGrade.vignetteMul(0f, 0f, 0f), 0.001f)

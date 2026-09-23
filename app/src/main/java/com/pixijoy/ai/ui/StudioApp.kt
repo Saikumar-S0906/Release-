@@ -29,6 +29,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
@@ -73,6 +78,7 @@ import com.pixijoy.movie.Media3MovieEngine
 import com.pixijoy.ml.MediaPipeVision
 import com.pixijoy.photo.BitmapPhotoEngine
 import java.io.File
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -97,8 +103,36 @@ fun StudioApp() {
     var showCamera by remember { mutableStateOf(false) }
     var cameraRequest by remember { mutableStateOf<PendingPick?>(null) }
     val projects by repo.observeProjects().collectAsState(initial = emptyList())
+    val snackbarHostState = remember { SnackbarHostState() }
+    var pendingDeleteIds by remember { mutableStateOf(setOf<String>()) }
+    var deleteJob by remember { mutableStateOf<Job?>(null) }
+    val visibleProjects = remember(projects, pendingDeleteIds) {
+        projects.filterNot { it.id in pendingDeleteIds }
+    }
     val config = LocalConfiguration.current
     val twoPane = isStudioTwoPane(config.screenWidthDp, config.screenHeightDp)
+
+    fun requestDelete(project: Project) {
+        pendingDeleteIds = pendingDeleteIds + project.id
+        deleteJob?.cancel()
+        deleteJob = scope.launch {
+            val result = snackbarHostState.showSnackbar(
+                message = context.getString(R.string.studio_library_deleted),
+                actionLabel = context.getString(R.string.studio_undo),
+                duration = SnackbarDuration.Long,
+                withDismissAction = true
+            )
+            when (result) {
+                SnackbarResult.ActionPerformed -> {
+                    pendingDeleteIds = pendingDeleteIds - project.id
+                }
+                SnackbarResult.Dismissed -> {
+                    repo.delete(project.id)
+                    pendingDeleteIds = pendingDeleteIds - project.id
+                }
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         delay(1400)
@@ -108,6 +142,17 @@ fun StudioApp() {
 
     val pickMedia = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        val request = pending
+        pending = null
+        showPickSheet = false
+        showCreateSheet = false
+        if (uri != null && request != null) {
+            scope.launch { openImported(repo, prefs, uri, request) { session = it; tab = StudioTab.Studio } }
+        }
+    }
+    val pickFile = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
     ) { uri ->
         val request = pending
         pending = null
@@ -127,6 +172,20 @@ fun StudioApp() {
             ActivityResultContracts.PickVisualMedia.ImageOnly
         }
         pickMedia.launch(PickVisualMediaRequest(type))
+    }
+
+    fun launchOpenFile(request: PendingPick) {
+        pending = request
+        showPickSheet = false
+        showCreateSheet = false
+        pickFile.launch(
+            arrayOf(
+                "image/*",
+                "image/x-adobe-dng",
+                "image/dng",
+                "*/*"
+            )
+        )
     }
 
     fun launchCamera(request: PendingPick) {
@@ -213,7 +272,7 @@ fun StudioApp() {
                         tab = tab,
                         onTab = { tab = it },
                         twoPane = twoPane,
-                        projects = projects,
+                        projects = visibleProjects,
                         session = session,
                         onOpenStudio = { tab = StudioTab.Studio },
                         onCreate = { showCreateSheet = true },
@@ -233,7 +292,11 @@ fun StudioApp() {
                             showPickSheet = true
                         },
                         onCloseSession = { session = null },
-                        onDeleteProject = { project -> scope.launch { repo.delete(project.id) } },
+                        onRequestDelete = ::requestDelete,
+                        onRenameProject = { project, title ->
+                            scope.launch { repo.rename(project.id, title) }
+                        },
+                        snackbarHostState = snackbarHostState,
                         repo = repo,
                         engine = engine,
                         movieEngine = movieEngine
@@ -285,6 +348,15 @@ fun StudioApp() {
                     },
                     onSample = {
                         launchSample(
+                            PendingPick(
+                                "editor",
+                                MediaKind.PHOTO,
+                                context.getString(R.string.tool_editor)
+                            )
+                        )
+                    },
+                    onOpenFile = {
+                        launchOpenFile(
                             PendingPick(
                                 "editor",
                                 MediaKind.PHOTO,
@@ -409,7 +481,9 @@ private fun StudioShell(
     onOpenProject: (Project) -> Unit,
     onPickTool: (StudioTool) -> Unit,
     onCloseSession: () -> Unit,
-    onDeleteProject: (Project) -> Unit,
+    onRequestDelete: (Project) -> Unit,
+    onRenameProject: (Project, String) -> Unit,
+    snackbarHostState: SnackbarHostState,
     repo: ProjectRepository,
     engine: BitmapPhotoEngine,
     movieEngine: Media3MovieEngine
@@ -460,7 +534,25 @@ private fun StudioShell(
                         StudioPane(onPickTool = onPickTool)
                     }
                 }
-                StudioTab.Library -> LibraryPane(projects, onOpenProject, onDeleteProject)
+                StudioTab.Library -> LibraryPane(
+                    projects = projects,
+                    onOpenProject = onOpenProject,
+                    onRequestDelete = onRequestDelete,
+                    onRenameProject = onRenameProject,
+                    onCreate = onCreate
+                )
+            }
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp)
+                    .testTag("library_delete_snackbar")
+            ) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    actionOnNewLine = false
+                )
             }
         }
     }

@@ -85,22 +85,22 @@ Smart objects, vector paths, group folders, generative fill, RAW (parallel track
 
 ---
 
-## Looks / LUT exit: MET
+## Looks / LUT exit: MET (+ C1 import wire-up 2026-09-23)
 
-**Tip:** `3aa262e`
+**Tip:** `3aa262e` (bundled); C1 import in working tree.
 **Met:** `PhotoOp.Lut(assetKey)` / graph `U`; bundled Original/Clean/Warm/Cool/Film/Night (ColorMatrix); chip live preview; Apply bakes; Maestro looks-apply green on Pixel_7a.
-**Date noted:** 2026-09-18 ~12:48 IST.
-**Explicitly later:** file-picker LUT import; true 3D `.cube` LUTs.
+**C1 import:** `.cube` / `.3dl` parse (`CubeLutParser`); project `luts/` copy; graph keys `lut:<file>`; engine `lutDirectory`; Looks **Import LUT**; export parity; units green; system picker **yellow/manual** (`.maestro/YELLOW-lut-import.md`). Cap size 33 for imported 3D apply (nearest).
+**Explicitly later:** tetrahedral sampling; LUT size > 33 at full export res.
 
-## Selective HSL exit: MET
+## Selective HSL exit: MET (yellow/manual Maestro)
 
 **Tip:** commit `af7dc8f` (Maestro yaml) / `78b66b4` (stubs).
-**Met:** `PhotoOp.SelectiveHsl(range, h, s, l)` graph `A`; 9 unit tests green (encode/decode, soft-mask math, identity, all ranges); Maestro green on Pixel_7a (Create → Try a sample → Color/HSL chip → Apply → Export sheet confirm, all steps COMPLETED).
-**Date noted:** 2026-09-23 ~11:28 IST.
-**Explicitly later:** RAW/DNG develop (heavier `:core:media` work); global Hsl already op `Y`.
+**Met:** `PhotoOp.SelectiveHsl(range, h, s, l)` graph `A`; unit tests green; Maestro **yellow/manual** — cold-start `privacy_accept` flake. See `.maestro/YELLOW-selective-hsl-exit.md`.
+**Date noted:** 2026-09-23 IST.
 
 ## Next R3 depth (pick — no serial wait)
 
-**Next: LUT import** (`PhotoOp.Lut` user `.cube`/`.3dl`); or RAW/DNG preview develop track.
+**Next: RAW/DNG preview (C2)** then Fill polish (C3).
 
-See `TOTAL_REMAINING.txt` C1–C2 for sequencing.
+See `TOTAL_REMAINING.txt` and `REMAINING_MASTER_PLAN.md`.
+

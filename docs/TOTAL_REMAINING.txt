@@ -1,5 +1,5 @@
 ﻿PixiJoy — TOTAL remaining (all stages)
-Updated: 2026-09-23 ~11:28 AM IST
+Updated: 2026-09-23 ~1:30 PM IST
 Source: room status + docs/NORTH_STAR_ROADMAP.md + UX backlog
 Branch: origin/next (tip moving)
 
@@ -7,29 +7,27 @@ Branch: origin/next (tip moving)
 A. DONE / EXITED (do not re-open)
 ================================================================
 R2 Studio v1: Heal/Stamp, HD-FHD-4K export, collage, export %, rail, brush, sticky Export, movie Use sample, Ken Burns harden, export pending-URI + runBlocking hotfixes
-R3 photo depth so far: Layers first-slice, Curves, Looks (bundled Lut), glass scrim, Create sheet, Compare-hold (B2 MET: live peel + pre-bake snapshot, identity-gated, leak-free), Selective HSL (exited 2026-09-23: units 9/9 green, Maestro green on Pixel_7a)
-Docs: NORTH_STAR_ROADMAP, R3_LAYER_OP_SHAPES (first-slice MET, Looks MET)
+R3 photo depth so far: Layers first-slice, Curves, Looks (bundled Lut), glass scrim, Create sheet, Compare-hold (B2), Selective HSL (B1 Maestro green Pixel_7a 2026-09-23)
+R3.1 UX (B3): Library deferred delete+Undo, Export View/Share/Done + quality presets, Recommended/Best-for, privacy badge, movie glass + 48dp
+C1 LUT import wired (CubeLutParser + .3dl; picker yellow/manual; chip Maestro green)
+C2 RAW/DNG open + Exif + preview.jpg sidecar + RAW badge
+C3 Fill Clear strokes + Telea + LiteRtInpaintHook stub (further polish open under C)
+D1 MultiTrackTimeline encode/decode foundation (preview/export still single-track)
+Docs: NORTH_STAR_ROADMAP, R3_LAYER_OP_SHAPES, REMAINING_MASTER_PLAN, HANDS_OFF
+Wave B quality gates EXITED 2026-09-23 (Phase 0 land)
 
 ================================================================
-B. LIVE / NEAR-TERM (this week — quality first)
+B. LIVE / NEAR-TERM — CLOSED (moved to A)
 ================================================================
-B3. R3.1 UX quality
-    - Studio Best-for… + Recommended row
-    - Library overflow + delete Snackbar Undo + empty CTA Create
-    - Export sticky Confirm, Balanced/High/Maximum, strip location default, success View/Share/Done
-    - Movie controls under glass scrim
-    - Less privacy spam; on-device badge
-B4. Color/Looks live preview: downscale on drag, full bake on Apply (if jank)
-B5. Push docs/R3_REMAINING.txt + this file to origin/next
-B6. R2 yellow/manual: system Gallery Photo Picker (documented; music/Downloads OK)
+B1–B3, B5 MET. B4 measure-deferred. B6 Gallery picker remains yellow/manual (documented).
 
 ================================================================
-C. FINISH R3 PHOTO (after B)
+C. FINISH R3 PHOTO (live gate after B)
 ================================================================
-C1. LUT import (user .cube / .3dl) — bundled Looks already done
-C2. RAW/DNG preview, then develop track
-C3. Content-aware Fill polish + on-device generative fill pack (:ml-inpaint)
-C4. Sky / background replace
+C1. LUT import — MET (picker yellow/manual)
+C2. RAW/DNG preview path — MET (develop track later)
+C3. Content-aware Fill polish — partial MET (Clear + stub); further quality/mask polish open
+C4. Sky / background replace — NEXT
 C5. Perspective + liquify
 C6. Presets + batch export
 C7. Wide-gamut / better color management
@@ -38,7 +36,7 @@ C8. Portrait retouch packs (can slip to R5)
 ================================================================
 D. R4 MOVIE (cinema-class depth)
 ================================================================
-D1. Multi-track video + audio timeline
+D1. Multi-track video + audio timeline — foundation only; E2E preview+export NEXT
 D2. Ripple / roll trim; transitions; speed ramps
 D3. Keyframed transform / motion
 D4. Titles + captions
@@ -75,7 +73,7 @@ G. PLATFORM / UX CHROME (ongoing)
 G1. Tablet / foldable two-pane (preview | tools) — NavigationSuite already partial
 G2. ViewModel + Hilt for PhotoSessionScreen / MovieSessionScreen (~1100 lines each)
 G3. Consistent Hilt in StudioApp (repos/engines)
-G4. Accessibility: 48dp chips, announce selected state
+G4. Accessibility: 48dp chips, announce selected state — exited with B3
 G5. Haptics (crop snap, timeline, export done)
 G6. Skeleton loaders for Library thumbs
 G7. Friendly empty-state illustrations
@@ -85,12 +83,11 @@ G9. Gradle BuildConfig deprecation cleanup
 ================================================================
 H. SUGGESTED PATH (ASAP, no fake greens)
 ================================================================
-1. Close B1 HSL Maestro → HSL exit
-2. Ship B2–B3 R3.1 UX quality (Create already landed)
-3. C1–C2 LUT import + RAW preview
-4. Start D1 multi-track timeline (R4)
-5. Parallel G1–G3 structural chrome
-6. E packs when photo/movie depth is solid
-7. F only as on-demand modules
+1. C4 sky/background replace
+2. D1 multi-track timeline E2E (preview + export)
+3. C3 Fill further polish → C5 → C6/C7
+4. Parallel G1–G3 structural chrome
+5. E packs when photo/movie depth is solid
+6. F only as on-demand modules
 
 Hard rule stays: edit-graph or timeline op → engine → WorkManager export. Local-first. Quality > clock.

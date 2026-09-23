@@ -10,6 +10,7 @@ import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import androidx.heifwriter.HeifWriter
 import com.pixijoy.core.common.AppResult
+import com.pixijoy.core.media.RawPreview
 import java.io.File
 import java.io.FileInputStream
 import kotlin.math.max
@@ -17,6 +18,9 @@ import kotlin.math.max
 class BitmapPhotoEngine(
     private val vision: com.pixijoy.ml.VisionFacade = com.pixijoy.ml.UnavailableVision
 ) : PhotoEngine {
+    /** Project directory containing optional `luts/` for imported `.cube` / `.3dl`. */
+    var lutDirectory: File? = null
+
     override fun render(sources: List<String>, ops: List<PhotoOp>, maxEdge: Int): Bitmap =
         renderLayers(sources, ops.toLayers(), maxEdge)
 
@@ -200,6 +204,7 @@ class BitmapPhotoEngine(
     }
 
     private fun decode(path: String, maxEdge: Int): Bitmap {
+        RawPreview.decodeForEdit(path, maxEdge)?.let { return it }
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeFile(path, bounds)
         var sample = 1
@@ -248,7 +253,7 @@ class BitmapPhotoEngine(
             bitmaps.forEach { if (!it.isRecycled) it.recycle() }
             collage
         }
-        is PhotoOp.Lut -> applyLut(src, op.assetKey)
+        is PhotoOp.Lut -> applyLut(src, op.assetKey, lutDirectory)
         is PhotoOp.Curves -> applyCurves(src, op.y)
         is PhotoOp.Blur -> applyBlurPasses(src, op.radius)
         is PhotoOp.Sharpen -> applyUnsharp(src, op.amount)

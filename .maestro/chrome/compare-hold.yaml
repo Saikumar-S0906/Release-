@@ -1,6 +1,7 @@
 ﻿appId: com.pixijoy.ai
 ---
-# Press-hold session_compare (no sticky). Soft: canCompare only with live delta.
+# Press-hold session_compare (no sticky). It is disabled on a fresh sample,
+# enables for a live Look, and remains meaningful after that Look is baked.
 - runFlow: ../launch-to-home.yaml
 - tapOn:
     id: "home_create"
@@ -14,8 +15,31 @@
     timeout: 60000
 - assertVisible:
     id: "session_compare"
+- assertVisible: "Apply an edit to compare."
 - assertVisible:
     id: "session_save_status"
+- scrollUntilVisible:
+    element:
+      id: "session_looks"
+    direction: RIGHT
+    timeout: 20000
+    visibilityPercentage: 40
+- tapOn:
+    id: "session_looks"
+- extendedWaitUntil:
+    visible:
+      id: "look_warm"
+    timeout: 15000
+- tapOn:
+    id: "look_warm"
+- assertVisible: "Hold to compare."
+- longPressOn:
+    id: "session_compare"
+- tapOn:
+    id: "session_apply_look"
+- extendedWaitUntil:
+    visible: "Hold to compare."
+    timeout: 30000
 - longPressOn:
     id: "session_compare"
 - assertVisible:

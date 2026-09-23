@@ -14,6 +14,14 @@ data class MediaInfo(
 
 object MediaProbe {
     fun probe(file: File): MediaInfo {
+        if (RawPreview.looksLikeRaw(file.absolutePath)) {
+            val raw = RawPreview.open(file)
+            return MediaInfo(
+                mime = raw.mime,
+                width = raw.width.coerceAtLeast(0),
+                height = raw.height.coerceAtLeast(0)
+            )
+        }
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeFile(file.absolutePath, bounds)
         if (bounds.outWidth > 0 && bounds.outHeight > 0) {

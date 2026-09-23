@@ -1,19 +1,21 @@
 ﻿appId: com.pixijoy.ai
 ---
-# STUB R3.1 Best-for + Recommended (uncomment when hub_recommended_* / Best-for subtitles land)
+# R3.1 Best-for + Recommended on Studio hub
 - runFlow: ../launch-to-home.yaml
 - tapOn:
     id: "home_open_studio"
-# - assertVisible:
-#     id: "hub_recommended_edit_photo"
-# - assertVisible:
-#     id: "hub_recommended_remove_bg"
-# - assertVisible:
-#     id: "hub_recommended_create_video"
-# Soft Best-for copy on tiles when present:
-# - assertVisible: "remove unwanted objects"
-# - assertVisible: "extend edges"
-# - assertVisible: "remove background"
-# - assertVisible: "stack photos & text"
+- extendedWaitUntil:
+    visible:
+      id: "studio_recommended_label"
+    timeout: 15000
 - assertVisible:
-    id: "home_open_studio"
+    id: "studio_recommended_row"
+- assertVisible:
+    id: "recommended_create_hub_editor"
+- assertVisible:
+    id: "recommended_create_hub_remove_bg"
+- assertVisible: "Best for: everyday edits"
+- assertVisible: "Best for: remove the background"
+- assertVisible:
+    id: "create_hub_restore"
+- assertVisible: "Best for: remove unwanted objects"

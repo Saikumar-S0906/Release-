@@ -1,5 +1,6 @@
 package com.pixijoy.ai.ui.session
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.RuntimeShader
 import android.net.Uri
@@ -61,6 +62,10 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pixijoy.ai.R
@@ -69,9 +74,11 @@ import com.pixijoy.ai.export.PhotoExportWorker
 import com.pixijoy.core.common.AppResult
 import com.pixijoy.core.data.Project
 import com.pixijoy.core.data.ProjectRepository
+import com.pixijoy.core.media.RawPreview
 import com.pixijoy.designsystem.PixiAccent
 import com.pixijoy.designsystem.PixiBg
 import com.pixijoy.designsystem.PixiPrimaryButton
+import com.pixijoy.designsystem.PixiSecondaryButton
 import com.pixijoy.designsystem.PixiSuccess
 import com.pixijoy.designsystem.PixiSurface
 import com.pixijoy.designsystem.PixiSurface2
@@ -79,6 +86,10 @@ import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
 import com.pixijoy.photo.BitmapPhotoEngine
 import com.pixijoy.photo.BundledLooks
+import com.pixijoy.photo.CubeLutParser
+import com.pixijoy.photo.ImportedLuts
+import com.pixijoy.photo.LutParseResult
+import com.pixijoy.photo.applyLut
 import com.pixijoy.photo.BlendMode
 import com.pixijoy.photo.ExportFormat
 import com.pixijoy.photo.ExportFormatSupport
@@ -93,6 +104,7 @@ import com.pixijoy.photo.isIdentity
 import com.pixijoy.photo.Stamp
 import com.pixijoy.photo.decodeLayers
 import com.pixijoy.photo.histogramClip
+import com.pixijoy.photo.hasVisibleEffect
 import com.pixijoy.photo.lumaHistogram
 import com.pixijoy.photo.encodeLayers
 import com.pixijoy.photo.withBackgroundSeed
@@ -119,8 +131,22 @@ fun PhotoSessionScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val projectDir = remember(project.id) { repo.projectDir(project.id) }
+    LaunchedEffect(projectDir) {
+        engine.lutDirectory = projectDir
+    }
     val sources = remember(project.media, project.coverPath) {
-        project.media.map { it.path }.ifEmpty { listOf(project.coverPath) }
+        val raw = project.media.firstOrNull {
+            RawPreview.looksLikeRaw(it.path) || RawPreview.isRawMime(it.mime)
+        }
+        when {
+            raw != null && project.coverPath.endsWith("preview.jpg") ->
+                listOf(project.coverPath)
+            else -> project.media.map { it.path }.ifEmpty { listOf(project.coverPath) }
+        }
+    }
+    val isRawProject = remember(project.media) {
+        project.media.any { RawPreview.looksLikeRaw(it.path) || RawPreview.isRawMime(it.mime) }
     }
     var layers by remember(project.id) { mutableStateOf(project.graph.decodeLayers()) }
     var redo by remember(project.id) { mutableStateOf(listOf<LayeredOp>()) }
@@ -140,6 +166,8 @@ fun PhotoSessionScreen(
     var selectiveLivePreview by remember { mutableStateOf<Bitmap?>(null) }
     var curveYs by remember { mutableStateOf(floatArrayOf(0f, 0.25f, 0.5f, 0.75f, 1f)) }
     var lookKey by remember { mutableStateOf(BundledLooks.ORIGINAL) }
+    var importedLookLabel by remember { mutableStateOf<String?>(null) }
+    var lutLivePreview by remember { mutableStateOf<Bitmap?>(null) }
     val curvesShader = remember {
         if (Build.VERSION.SDK_INT >= 33) RuntimeShader(LiveGrade.CURVES_AGSL) else null
     }
@@ -166,6 +194,7 @@ fun PhotoSessionScreen(
     var quality by remember { mutableStateOf(92) }
     var keepExif by remember { mutableStateOf(false) }
     var showExport by remember { mutableStateOf(false) }
+    var exportSuccessUri by remember { mutableStateOf<String?>(null) }
     var status by remember { mutableStateOf<String?>(null) }
     var exporting by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
@@ -198,6 +227,48 @@ fun PhotoSessionScreen(
         }
     }
 
+    val pickLut = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val name = uri.lastPathSegment?.substringAfterLast(':')?.substringAfterLast('/')
+                ?: "import.cube"
+            when (val copied = repo.importLut(project.id, uri, name)) {
+                is AppResult.Err -> status = copied.message
+                is AppResult.Ok -> {
+                    when (val parsed = CubeLutParser.parseFile(copied.value, maxSize = 33)) {
+                        is LutParseResult.Err -> {
+                            copied.value.delete()
+                            status = parsed.message
+                        }
+                        is LutParseResult.Ok -> {
+                            val key = ImportedLuts.keyFor(copied.value.name)
+                            lookKey = key
+                            importedLookLabel = parsed.lut.title ?: copied.value.name
+                            status = context.getString(R.string.studio_lut_imported, importedLookLabel!!)
+                            mode = SessionMode.Looks
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(mode, lookKey, preview, projectDir) {
+        val src = preview
+        if (mode != SessionMode.Looks || src == null || src.isRecycled || !ImportedLuts.isImported(lookKey)) {
+            lutLivePreview?.let { if (!it.isRecycled) it.recycle() }
+            lutLivePreview = null
+            return@LaunchedEffect
+        }
+        val baked = withContext(Dispatchers.Default) {
+            applyLut(src, lookKey, projectDir)
+        }
+        lutLivePreview?.let { if (!it.isRecycled && it !== baked && it !== src) it.recycle() }
+        lutLivePreview = if (baked !== src) baked else null
+    }
+
 
     LaunchedEffect(mode, project.id) {
         if (mode != SessionMode.Layers) return@LaunchedEffect
@@ -227,14 +298,32 @@ fun PhotoSessionScreen(
 
 LaunchedEffect(sources, layers) {
         busy = true
+        val hasBakedDelta = layers.any { it.hasVisibleEffect() }
+        // Capture the canvas before an Apply-triggered render replaces it. The prior
+        // implementation copied `next`, which made Compare show the same baked image.
+        val beforeBake = when {
+            !hasBakedDelta -> null
+            preview != null -> preview?.copy(preview?.config ?: Bitmap.Config.ARGB_8888, false)
+            else -> {
+                val lastEffect = layers.indexOfLast { it.hasVisibleEffect() }
+                withContext(Dispatchers.Default) {
+                    engine.renderLayers(sources, layers.take(lastEffect), maxEdge = 1600)
+                }
+            }
+        }
+        if (beforeBake != null) {
+            compareSnapshot?.let { if (!it.isRecycled) it.recycle() }
+            compareSnapshot = beforeBake
+        } else if (!hasBakedDelta) {
+            compareSnapshot?.let { if (!it.isRecycled) it.recycle() }
+            compareSnapshot = null
+        }
         val next = withContext(Dispatchers.Default) {
             engine.renderLayers(sources, layers, maxEdge = 1600)
         }
         preview?.let { if (!it.isRecycled) it.recycle() }
         preview = next
         histogram = lumaHistogram(next)
-        compareSnapshot?.let { if (!it.isRecycled && it !== next) it.recycle() }
-        compareSnapshot = next.copy(next.config ?: Bitmap.Config.ARGB_8888, false)
         repo.saveGraph(project.id, layers.encodeLayers())
         busy = false
     }
@@ -242,6 +331,8 @@ LaunchedEffect(sources, layers) {
         onDispose {
             preview?.let { if (!it.isRecycled) it.recycle() }
             compareSnapshot?.let { if (!it.isRecycled) it.recycle() }
+            lutLivePreview?.let { if (!it.isRecycled) it.recycle() }
+            selectiveLivePreview?.let { if (!it.isRecycled) it.recycle() }
         }
     }
     val workManager = remember { WorkManager.getInstance(context) }
@@ -258,7 +349,8 @@ LaunchedEffect(sources, layers) {
             WorkInfo.State.SUCCEEDED -> {
                 if (exporting) {
                     exporting = false
-                    showExport = false
+                    exportSuccessUri = info.outputData.getString(PhotoExportWorker.KEY_URI)
+                    showExport = true
                     status = context.getString(R.string.studio_export_ok)
                 }
             }
@@ -272,6 +364,18 @@ LaunchedEffect(sources, layers) {
             else -> Unit
         }
     }
+    val hasLiveDelta = (mode == SessionMode.Adjust &&
+        (!LiveGrade.isAdjustIdentity(exposure, contrast, hue, saturation) ||
+            sharpen > 0.01f || vignette > 0.01f || blurRadius > 0.5f)) ||
+        (mode == SessionMode.Curves && !LiveGrade.curvesIdentity(curveYs)) ||
+        (mode == SessionMode.Looks && (
+            (!BundledLooks.isIdentity(lookKey) && !ImportedLuts.isImported(lookKey)) ||
+                lutLivePreview != null
+            )) ||
+        (mode == SessionMode.SelectiveHsl && selectiveLivePreview != null)
+    val hasBakedDelta = layers.any { it.hasVisibleEffect() }
+    val hasBakedSnapshot = compareSnapshot != null && !(compareSnapshot?.isRecycled ?: true)
+    val canCompare = hasLiveDelta || (hasBakedDelta && hasBakedSnapshot)
 
     Column(
         modifier = Modifier
@@ -289,6 +393,16 @@ LaunchedEffect(sources, layers) {
                 Text(stringResource(R.string.studio_back), color = PixiText)
             }
             Text(toolLabel, color = PixiText, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+            if (isRawProject) {
+                Text(
+                    stringResource(R.string.studio_raw_preview_badge),
+                    color = PixiAccent,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .testTag("session_raw_badge")
+                )
+            }
             TextButton(
                 onClick = {
                     if (layers.isNotEmpty()) {
@@ -309,7 +423,6 @@ LaunchedEffect(sources, layers) {
                 enabled = redo.isNotEmpty(),
                 modifier = Modifier.testTag("session_redo")
             ) { Text(stringResource(R.string.studio_redo), color = PixiTextMuted) }
-            val canCompare = compareSnapshot != null && !(compareSnapshot?.isRecycled ?: true)
             Text(
                 text = stringResource(
                     if (canCompare) R.string.session_compare_hint
@@ -357,10 +470,12 @@ LaunchedEffect(sources, layers) {
             contentAlignment = Alignment.Center
         ) {
             val snap = compareSnapshot
-            val bmp = if (comparing && snap != null && !snap.isRecycled) {
+            val bmp = if (comparing && hasLiveDelta) {
+                preview
+            } else if (comparing && snap != null && !snap.isRecycled) {
                 snap
             } else {
-                selectiveLivePreview ?: preview
+                selectiveLivePreview ?: lutLivePreview ?: preview
             }
             if (bmp != null && !bmp.isRecycled) {
                 BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -376,7 +491,9 @@ LaunchedEffect(sources, layers) {
                     val liveDetail = showLiveFilters && mode == SessionMode.Adjust &&
                         (sharpen > 0.01f || vignette > 0.01f || blurRadius > 0.5f)
                     val liveCurves = showLiveFilters && mode == SessionMode.Curves && !LiveGrade.curvesIdentity(curveYs)
-                    val liveLooks = showLiveFilters && mode == SessionMode.Looks && !BundledLooks.isIdentity(lookKey)
+                    val liveLooks = showLiveFilters && mode == SessionMode.Looks &&
+                        !ImportedLuts.isImported(lookKey) &&
+                        !BundledLooks.isIdentity(lookKey)
                     Image(
                         bitmap = bmp.asImageBitmap(),
                         contentDescription = project.title,
@@ -603,8 +720,13 @@ LaunchedEffect(sources, layers) {
             onBrush = { brush = it },
             onText = { text = it },
             onApplyGrade = {
-                push(PhotoOp.Grade(exposure, contrast))
-                push(PhotoOp.Hsl(hue, saturation))
+                // Only push non-identity ops so Compare is never gated by a no-op Apply.
+                if (!PhotoOp.Grade(exposure, contrast).isIdentity()) push(PhotoOp.Grade(exposure, contrast))
+                if (!PhotoOp.Hsl(hue, saturation).isIdentity()) push(PhotoOp.Hsl(hue, saturation))
+                exposure = 0f
+                contrast = 1f
+                hue = 0f
+                saturation = 1f
                 if (sharpen > 0.01f) push(PhotoOp.Sharpen(sharpen))
                 if (vignette > 0.01f) push(PhotoOp.Vignette(vignette))
                 if (blurRadius > 0.5f) push(PhotoOp.Blur(blurRadius.toInt().coerceIn(1, 8)))
@@ -622,11 +744,16 @@ LaunchedEffect(sources, layers) {
             onApplyExpand = { push(PhotoOp.Expand(expand)) },
             onApplyHeal = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Heal(pendingStamps)) },
             onApplyFill = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Fill(pendingStamps)); pendingStamps = emptyList() },
+            onClearFillStrokes = { pendingStamps = emptyList(); lastStamp = null },
             onApplyErase = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Erase(pendingStamps)) },
             onApplyText = { push(PhotoOp.TextLayer(text, placeX, placeY, 0.08f, 0xFFFFFFFF.toInt())) },
             onRestore = { push(PhotoOp.Restore) },
             onCutout = { push(PhotoOp.Subject); format = ExportFormat.PNG },
-            onApplyCurves = { push(PhotoOp.Curves(it.copyOf())) },
+            onApplyCurves = {
+                // Skip identity curves to keep layer stack clean and Compare meaningful.
+                if (!PhotoOp.Curves(it).isIdentity()) push(PhotoOp.Curves(it.copyOf()))
+                curveYs = floatArrayOf(0f, 0.25f, 0.5f, 0.75f, 1f)
+            },
             selectiveRange = selectiveRange,
             selectiveHue = selectiveHue,
             selectiveSat = selectiveSat,
@@ -648,7 +775,18 @@ LaunchedEffect(sources, layers) {
             onCurveYs = { curveYs = it },
             lookKey = lookKey,
             onLookKey = { lookKey = it },
-            onApplyLook = { key -> if (!BundledLooks.isIdentity(key)) push(PhotoOp.Lut(key)) },
+            onApplyLook = { key ->
+                val imported = ImportedLuts.isImported(key)
+                if (imported || !BundledLooks.isIdentity(key)) {
+                    push(PhotoOp.Lut(key))
+                    lookKey = BundledLooks.ORIGINAL
+                    importedLookLabel = null
+                }
+            },
+            onImportLut = {
+                pickLut.launch(arrayOf("*/*"))
+            },
+            importedLookLabel = importedLookLabel,
             onBlur = { push(PhotoOp.Blur(2)) },
             onSharpen = { push(PhotoOp.Sharpen(0.55f)) },
             onVignette = { push(PhotoOp.Vignette(0.4f)) },
@@ -745,11 +883,41 @@ LaunchedEffect(sources, layers) {
             showKeepExif = true,
             keepExif = keepExif,
             onKeepExif = { keepExif = it },
+            successUri = exportSuccessUri,
+            onView = {
+                exportSuccessUri?.let { uri ->
+                    runCatching {
+                        context.startActivity(
+                            Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(uri), "image/*")
+                                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        )
+                    }
+                }
+            },
+            onShare = {
+                exportSuccessUri?.let { uri ->
+                    runCatching {
+                        context.startActivity(
+                            Intent.createChooser(
+                                Intent(Intent.ACTION_SEND)
+                                    .setType("image/*")
+                                    .putExtra(Intent.EXTRA_STREAM, Uri.parse(uri))
+                                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
+                                context.getString(R.string.export_share)
+                            )
+                        )
+                    }
+                }
+            },
+            onDone = {
+                exportSuccessUri = null
+                showExport = false
+            },
             onExport = {
                 if (exporting) return@ExportSheet
+                exportSuccessUri = null
                 exporting = true
                 status = context.getString(R.string.studio_export_background)
-                showExport = false
                 scope.launch {
                     repo.saveGraph(project.id, layers.encodeLayers())
                     MovieExportWorker.ensureChannel(context)
@@ -771,7 +939,12 @@ LaunchedEffect(sources, layers) {
                     )
                 }
             },
-            onDismiss = { if (!exporting) showExport = false }
+            onDismiss = {
+                if (!exporting) {
+                    exportSuccessUri = null
+                    showExport = false
+                }
+            }
         )
     }
 }
@@ -850,6 +1023,7 @@ private fun ToolBody(
     onApplyExpand: () -> Unit,
     onApplyHeal: () -> Unit,
     onApplyFill: () -> Unit,
+    onClearFillStrokes: () -> Unit,
     onApplyErase: () -> Unit,
     onApplyText: () -> Unit,
     onRestore: () -> Unit,
@@ -872,6 +1046,8 @@ private fun ToolBody(
     lookKey: String,
     onLookKey: (String) -> Unit,
     onApplyLook: (String) -> Unit,
+    onImportLut: () -> Unit,
+    importedLookLabel: String?,
     onBlur: () -> Unit,
     onSharpen: () -> Unit,
     onVignette: () -> Unit,
@@ -1003,6 +1179,25 @@ private fun ToolBody(
                         ) { onLookKey(key) }
                     }
                 }
+                if (ImportedLuts.isImported(lookKey)) {
+                    Text(
+                        stringResource(
+                            R.string.studio_lut_selected,
+                            importedLookLabel ?: ImportedLuts.fileName(lookKey)
+                        ),
+                        color = PixiText,
+                        modifier = Modifier
+                            .padding(top = 4.dp)
+                            .testTag("session_lut_imported_name")
+                    )
+                }
+                PixiSecondaryButton(
+                    text = stringResource(R.string.studio_lut_import),
+                    onClick = onImportLut,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("session_lut_import")
+                )
                 PixiPrimaryButton(
                     stringResource(R.string.studio_apply),
                     { onApplyLook(lookKey) },
@@ -1050,6 +1245,12 @@ private fun ToolBody(
             SessionMode.Fill -> {
                 LabeledSlider(stringResource(R.string.studio_brush), brush, 0.02f..0.12f, "session_brush_size", onBrush)
                 Text(stringResource(R.string.studio_fill_hint), color = PixiTextMuted)
+                TextButton(
+                    onClick = onClearFillStrokes,
+                    modifier = Modifier.testTag("session_fill_clear")
+                ) {
+                    Text(stringResource(R.string.studio_fill_clear_strokes), color = PixiTextMuted)
+                }
                 PixiPrimaryButton(stringResource(R.string.studio_apply), onApplyFill, Modifier.testTag("session_apply_fill"))
             }
             SessionMode.Erase -> {
@@ -1166,11 +1367,16 @@ private fun FormatChip(label: String, selected: Boolean, tag: String, onClick: (
         color = PixiText,
         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
         modifier = Modifier
+            .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(999.dp))
             .background(if (selected) PixiAccent else PixiSurface2)
             .clickable(onClick = onClick)
             .testTag(tag)
-            .padding(horizontal = 14.dp, vertical = 8.dp)
+            .semantics {
+                role = Role.RadioButton
+                this.selected = selected
+            }
+            .padding(horizontal = 14.dp, vertical = 12.dp)
     )
 }
 
@@ -1307,4 +1513,3 @@ private fun HistogramStrip(bins: IntArray, modifier: Modifier = Modifier) {
         )
     }
 }
-

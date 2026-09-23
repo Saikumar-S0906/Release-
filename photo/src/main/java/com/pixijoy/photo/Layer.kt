@@ -56,6 +56,36 @@ fun PhotoOp.isGeometry(): Boolean =
     this is PhotoOp.Crop || this is PhotoOp.Rotate || this is PhotoOp.FlipH ||
         this is PhotoOp.Expand || this is PhotoOp.Collage
 
+/**
+ * True when an operation changes pixels on its own. This keeps UI affordances such as
+ * Compare disabled for the identity background layer and for no-op Apply taps.
+ */
+fun PhotoOp.isIdentity(): Boolean = when (this) {
+    is PhotoOp.Crop -> left <= 0f && top <= 0f && right >= 1f && bottom >= 1f
+    is PhotoOp.Rotate -> degrees % 360 == 0
+    is PhotoOp.FlipH -> false
+    is PhotoOp.Grade -> exposure == 0f && contrast == 1f
+    is PhotoOp.Hsl -> hue == 0f && saturation == 1f
+    is PhotoOp.SelectiveHsl -> hue == 0f && sat == 1f && light == 0f
+    is PhotoOp.Restore, is PhotoOp.Cutout, is PhotoOp.Subject -> false
+    is PhotoOp.Expand -> fraction <= 0f
+    is PhotoOp.Heal -> stamps.isEmpty()
+    is PhotoOp.Fill -> stamps.isEmpty()
+    is PhotoOp.Erase -> stamps.isEmpty()
+    is PhotoOp.TextLayer -> text.isBlank() || size <= 0f
+    is PhotoOp.Sticker -> glyph.isBlank() || scale <= 0f
+    is PhotoOp.Collage -> columns <= 1
+    is PhotoOp.Lut -> BundledLooks.isIdentity(assetKey) && !ImportedLuts.isImported(assetKey)
+    is PhotoOp.Curves -> LiveGrade.curvesIdentity(y)
+    is PhotoOp.Blur -> radius <= 0
+    is PhotoOp.Sharpen -> amount <= 0f
+    is PhotoOp.Vignette -> amount <= 0f
+}
+
+/** A visible layer with a non-identity operation is eligible for image comparison. */
+fun LayeredOp.hasVisibleEffect(): Boolean =
+    visible && !op.isIdentity() && (op.isGeometry() || opacity > 0f)
+
 fun List<PhotoOp>.toLayers(): List<LayeredOp> =
     mapIndexed { i, op ->
         LayeredOp(id = "L$i-${op.layerName()}", name = op.layerName(), op = op)

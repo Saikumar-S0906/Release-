@@ -1,10 +1,11 @@
 ﻿appId: com.pixijoy.ai
 ---
 # clearState -> Privacy ("Continue"). Emulator may show System UI ANR — dismiss Wait first.
+# Phase 0: longer ANR dismiss loop + longer privacy/home waits (no fake greens).
 - launchApp:
     clearState: true
 - repeat:
-    times: 5
+    times: 12
     commands:
       - runFlow:
           when:
@@ -15,20 +16,21 @@
 - extendedWaitUntil:
     visible:
       id: "privacy_accept"
-    timeout: 45000
+    timeout: 90000
 - tapOn:
     id: "privacy_accept"
 - repeat:
-    times: 3
+    times: 6
     commands:
       - runFlow:
           when:
             visible: "System UI isn't responding"
           commands:
             - tapOn: "Wait"
+            - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:
       id: "home_create"
-    timeout: 30000
+    timeout: 60000
 - assertVisible:
     id: "home_create"

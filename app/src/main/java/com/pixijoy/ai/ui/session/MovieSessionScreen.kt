@@ -26,12 +26,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -145,6 +148,7 @@ fun MovieSessionScreen(
     var progress by remember { mutableFloatStateOf(0f) }
     var status by remember { mutableStateOf<String?>(null) }
     var showExport by remember { mutableStateOf(false) }
+    var exportSuccessUri by remember { mutableStateOf<String?>(null) }
     var exportGif by remember { mutableStateOf(false) }
     val addClip = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
         if (uri != null) {
@@ -286,6 +290,8 @@ fun MovieSessionScreen(
             WorkInfo.State.SUCCEEDED -> {
                 if (exporting) {
                     exporting = false
+                    exportSuccessUri = info.outputData.getString(MovieExportWorker.KEY_URI)
+                    showExport = true
                     val gifOut = info.outputData.getBoolean(MovieExportWorker.KEY_GIF, false)
                     status = context.getString(
                         if (gifOut) R.string.studio_export_gif_ok else R.string.studio_export_movie_ok
@@ -325,7 +331,7 @@ fun MovieSessionScreen(
         exporting = true
         progress = 0f
         status = context.getString(R.string.studio_export_pct, 0)
-        showExport = false
+        exportSuccessUri = null
         scope.launch {
             repo.saveGraph(project.id, timeline.encode())
             MovieExportWorker.ensureChannel(context)
@@ -388,9 +394,18 @@ fun MovieSessionScreen(
                 )
             }
         }
+        val scrimMax = (LocalConfiguration.current.screenHeightDp * 0.42f).dp
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, fill = false)
+                .heightIn(max = scrimMax)
+                .background(Color.Black.copy(alpha = 0.50f))
+                .testTag("session_tool_scrim")
+        ) {
         Column(
             Modifier
-                .weight(1f, fill = false)
+                .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -909,6 +924,7 @@ fun MovieSessionScreen(
                 modifier = Modifier.testTag("movie_speed")
             )
         }
+        }
 
         Column(
             Modifier
@@ -988,7 +1004,39 @@ fun MovieSessionScreen(
             onDismiss = { if (!exporting) showExport = false },
             resolutions = MovieExportSize.heights.map { it to MovieExportSize.label(it) },
             selectedHeight = MovieExportSize.normalize(timeline.outputHeight),
-            onSelectHeight = { height -> timeline = timeline.copy(outputHeight = height) }
+            onSelectHeight = { height -> timeline = timeline.copy(outputHeight = height) },
+            showLeaveSafeHint = true,
+            successUri = exportSuccessUri,
+            onView = {
+                exportSuccessUri?.let { uri ->
+                    runCatching {
+                        context.startActivity(
+                            android.content.Intent(android.content.Intent.ACTION_VIEW)
+                                .setDataAndType(android.net.Uri.parse(uri), if (exportGif) "image/gif" else "video/*")
+                                .addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        )
+                    }
+                }
+            },
+            onShare = {
+                exportSuccessUri?.let { uri ->
+                    runCatching {
+                        context.startActivity(
+                            android.content.Intent.createChooser(
+                                android.content.Intent(android.content.Intent.ACTION_SEND)
+                                    .setType(if (exportGif) "image/gif" else "video/*")
+                                    .putExtra(android.content.Intent.EXTRA_STREAM, android.net.Uri.parse(uri))
+                                    .addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION),
+                                context.getString(R.string.export_share)
+                            )
+                        )
+                    }
+                }
+            },
+            onDone = {
+                exportSuccessUri = null
+                showExport = false
+            }
         )
     }
 }

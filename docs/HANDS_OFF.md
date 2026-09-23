@@ -57,21 +57,26 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - Soft nits do not block exits.
 - ViewModel / Hilt split and BuildConfig hygiene = **named follow-up epic**, not a gate on features.
 
-## Status snapshot (2026-09-23 ~11:30 AM IST)
+## Status snapshot (2026-09-23 IST)
 
-### Group pulse — Phase 0 HSL exit (2026-09-23)
+### Group pulse — Phase 0 land / Wave B exit (2026-09-23)
 
-**Flipped:** Selective HSL formally exited. Units 9/9 green (`SelectiveHslTest` + `PhotoOpTest` 21/21). Maestro confirmed green on Pixel_7a — Create → Try a sample → Color/HSL scroll → Apply → Export sheet confirm, all steps COMPLETED. No new HSL feature behavior. `_hsl_pkg/` stays untracked; probe YAMLs and logs not committed.
+**Flipped:** Wave **B exited**. Landed B2+B3+C1–C3 foundations + B5 docs on `next`.
 
-**In progress:** Phase 1 — Compare B2 contract (live peel + pre-bake snapshot, identity-gated, Maestro `compare-hold.yaml`).
+- **B1 Selective HSL** — Maestro **green** on Pixel_7a (upgraded from yellow/manual).
+- **B2 Compare** — live peel + pre-bake; `compare-hold.yaml` **green** Pixel_7a.
+- **B3 R3.1 UX** — Library deferred delete+Undo, Export View/Share/Done, Recommended/Best-for, Create sheet, movie glass; Maestro green (create / best-for / library-delete-undo / export sheet).
+- **B4** — measure-deferred (`PHASE3_LIVE_PREVIEW_MEASURE.md`); no downscale without jank evidence.
+- **C1 LUT import** — wired (`CubeLutParser`, `lut:` keys, Looks Import); picker yellow/manual; chip Maestro green.
+- **C2 RAW/DNG** — open + Exif + `preview.jpg` sidecar + RAW badge.
+- **C3 Fill** — Clear strokes + Telea + `LiteRtInpaintHook` stub for E1.
+- **D1** — `MultiTrackTimeline` encode/decode foundation only (preview/export still single-track).
 
-**Who:** test_automator ran units + Maestro; ProjectManager called exit.
+**In progress:** C4+ and D1 E2E next.
 
-**Blockers:** None.
+**Blockers:** None for Wave B.
 
 ---
-
-## Status snapshot (2026-09-18 afternoon IST)
 
 ### MET / exited
 
@@ -81,21 +86,19 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **Looks / Lut** — `PhotoOp.Lut` bundled Clean/Warm/Cool/Film/Night/Original; Maestro green
 - **Glass scrim** — `session_tool_scrim`
 - **Export hotfixes** — abandon pending MediaStore URIs; no `runBlocking` in movie progress
-- **Selective HSL** — product + units + review-clear (`PhotoOp.SelectiveHsl` graph `A`); Maestro green on Pixel_7a (Create → Try a sample → Color/HSL → Apply → Export; all steps COMPLETED)
-- **R3.1 Create** — `home_create` → `create_source_sheet`
-- **R3.1 Compare** — live peel (hold shows baked canvas while live adjustments on) + pre-bake snapshot peel; `canCompare` identity-gated (`hasVisibleEffect`); identity Grade/Curves/Look Apply does not push no-ops; bitmap recycle leak-free; Maestro `compare-hold.yaml` covers disabled/live/baked states (B2 MET 2026-09-23)
+- **Selective HSL** — product + units + Maestro **green** Pixel_7a (`PhotoOp.SelectiveHsl` graph `A`)
+- **R3.1 Create** — `home_create` → `create_source_sheet` (Maestro green)
+- **R3.1 Compare** — live peel + pre-bake; identity gating; Maestro `compare-hold` green
+- **R3.1 Library / Export / Recommended** — B3 MET
+- **Wave B** — quality gates + R3.1 UX **exited** 2026-09-23
 
 ### Live gate
 
-*None.* Selective HSL exited 2026-09-23 (units 9/9 green; Maestro green on Pixel_7a — all steps COMPLETED).
-
-### Parallel open (R3.1)
-
-Best-for hub subtitles / Recommended · Library overflow + delete Snackbar Undo · Export success View/Share/Done + human quality labels.
+**C4** Sky / background replace (after C3). Parallel: D1 multi-track E2E.
 
 ### Follow-up epic (not a feature gate)
 
-Split Photo/Movie session → ViewModels + tool panels · consistent Hilt in StudioApp · BuildConfig deprecation when Gradle is touched · downscaled live preview on Color drag if janky.
+Split Photo/Movie session → ViewModels + tool panels · consistent Hilt in StudioApp · BuildConfig deprecation when Gradle is touched · downscaled live preview on Color drag if janky (B4).
 
 ## Docs on `next`
 
@@ -103,6 +106,7 @@ Split Photo/Movie session → ViewModels + tool panels · consistent Hilt in Stu
 - `docs/R3_LAYER_OP_SHAPES.md`
 - `docs/R3_REMAINING.txt`
 - `docs/TOTAL_REMAINING.txt`
+- `docs/REMAINING_MASTER_PLAN.md`
 - `docs/HANDS_OFF.md` (this file)
 
 ## When Saikumar returns

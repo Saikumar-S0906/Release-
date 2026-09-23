@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -74,10 +75,12 @@ fun HomePane(
             modifier = Modifier.padding(top = 4.dp)
         )
         Text(
-            stringResource(R.string.studio_promise),
+            stringResource(R.string.studio_on_device_badge),
             style = MaterialTheme.typography.bodySmall,
             color = PixiTextMuted.copy(alpha = 0.8f),
-            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
+            modifier = Modifier
+                .padding(top = 4.dp, bottom = 16.dp)
+                .testTag("home_on_device_badge")
         )
         PixiPrimaryButton(
             text = stringResource(R.string.home_create),
@@ -88,9 +91,10 @@ fun HomePane(
             onClick = onOpenStudio,
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(min = 48.dp)
                 .testTag("home_open_studio")
         ) {
-            Text(stringResource(R.string.studio_open), color = PixiTextMuted)
+            Text(stringResource(R.string.studio_open_tools), color = PixiTextMuted)
         }
         Text(
             stringResource(R.string.studio_recents),
