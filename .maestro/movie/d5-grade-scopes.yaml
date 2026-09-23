@@ -1,0 +1,59 @@
+appId: com.pixijoy.ai
+---
+# D5 — grade look + scopes in movie session
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "home_open_studio"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_segment_movie"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_segment_movie"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_move"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_move"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "movie_session"
+    timeout: 90000
+- scrollUntilVisible:
+    element:
+      id: "movie_d5_hint"
+    direction: DOWN
+    timeout: 40000
+    visibilityPercentage: 40
+    speed: 40
+- assertVisible:
+    id: "movie_look_original"
+- assertVisible:
+    id: "movie_look_warm"
+- tapOn:
+    id: "movie_look_warm"
+- scrollUntilVisible:
+    element:
+      id: "movie_grade_exposure"
+    direction: DOWN
+    timeout: 20000
+    visibilityPercentage: 40
+    speed: 40
+- assertVisible:
+    id: "movie_grade_exposure"
+- scrollUntilVisible:
+    element:
+      id: "movie_scopes"
+    direction: DOWN
+    timeout: 20000
+    visibilityPercentage: 40
+    speed: 40
+- assertVisible:
+    id: "movie_scope_r"
+- assertVisible:
+    id: "movie_session"

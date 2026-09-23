@@ -74,7 +74,8 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **D2** — ripple/roll + Soft transition fades + speed ramps; Maestro `d2-transition-speed` **green** Pixel_7a.
 - **D3** — keyframed ClipMotion (zoom/pan/drift) via MatrixTransformation; Maestro `d3-keyframed-motion` **green** Pixel_7a.
 - **D4** — TimelineTitle layers + OverlayEffect; Maestro `d4-titles-captions` **green** Pixel_7a.
-**In progress:** D5 grade + LUT + scopes.
+- **D5** — TimelineGrade + bundled looks + scopes meters; Maestro `d5-grade-scopes` **green** Pixel_7a.
+**In progress:** D6 audio finish.
 
 **Blockers:** None.
 
@@ -99,10 +100,11 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **D2 ripple/roll + transitions + speed ramps** — `rollCut`, Soft fade pair, `MovieSpeed.expandRamp`; Maestro `d2-transition-speed` green Pixel_7a
 - **D3 keyframed transform / motion** — `ClipMotion` keyframes + Media3 `MatrixTransformation`; Maestro `d3-keyframed-motion` green Pixel_7a
 - **D4 titles + captions** — `TimelineTitle` layers + `OverlayEffect`; Maestro `d4-titles-captions` green Pixel_7a
+- **D5 grade + LUT + scopes** — `TimelineGrade` + `SingleColorLut` + scope meters; Maestro `d5-grade-scopes` green Pixel_7a
 
 ### Live gate
 
-**D5** grade + LUT + scopes.
+**D6** audio finish.
 
 ### Follow-up epic (not a feature gate)
 

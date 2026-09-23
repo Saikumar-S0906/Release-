@@ -123,6 +123,12 @@
     <string name="studio_titles_clear">Clear text</string>
     <string name="studio_title_chip">Title · %1$s</string>
     <string name="studio_caption_chip">Caption · %1$s</string>
+    <string name="studio_movie_d5_hint">Grade exposure, contrast, and a look. Scopes update with the grade. Same look in preview and export.</string>
+    <string name="studio_movie_look">Look</string>
+    <string name="studio_movie_exposure">Exposure %1$.1f EV</string>
+    <string name="studio_movie_contrast">Contrast ×%1$.2f</string>
+    <string name="studio_movie_saturation">Saturation ×%1$.2f</string>
+    <string name="studio_movie_scopes">Scopes</string>
     <string name="studio_add_clip">Add another clip</string>
     <string name="studio_clip_count">%1$d clips · joined on export</string>
     <string name="studio_export_gif">Export GIF</string>

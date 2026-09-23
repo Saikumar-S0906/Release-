@@ -130,7 +130,7 @@ class Media3MovieEngine : MovieEngine {
         val encoded = when {
             gif -> encodeGif(primary, cache, talking, rate, onProgress)
             still -> {
-                if (timeline.titles.isNotEmpty()) {
+                if (timeline.titles.isNotEmpty() || !timeline.grade.isNeutral()) {
                     encodeClips(context, paths, timeline, cache, onProgress)
                 } else {
                     val stillResult = encodeStill(primary, cache, talking, rate, flat.outputHeight, onProgress)
@@ -341,6 +341,7 @@ class Media3MovieEngine : MovieEngine {
         val videoEffects = ArrayList<Effect>()
         videoEffects += Presentation.createForHeight(height)
         TitleOverlays.effect(timeline.titles, total)?.let { videoEffects += it }
+        MovieGrade.effect(timeline.grade)?.let { videoEffects += it }
         val audioProcessors = ArrayList<AudioProcessor>()
         val fx = timeline.masterFx
         if (!fx.isNeutral()) {

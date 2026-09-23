@@ -117,7 +117,9 @@ data class Timeline(
     val extraStems: List<AudioStem> = emptyList(),
     val masterFx: AudioMasterFx = AudioMasterFx(),
     /** Timed title / caption layers (D4). */
-    val titles: List<TimelineTitle> = emptyList()
+    val titles: List<TimelineTitle> = emptyList(),
+    /** Timeline grade + look (D5). */
+    val grade: TimelineGrade = TimelineGrade.Neutral
 ) {
     fun totalMs(): Long = clips.sumOf { it.durationMs }
 
@@ -328,6 +330,10 @@ data class Timeline(
             if (isNotEmpty()) append('\n')
             append(title.encodeLine())
         }
+        if (!grade.isNeutral()) {
+            if (isNotEmpty()) append('\n')
+            append(grade.encodeLine())
+        }
     }
 
     companion object {
@@ -421,8 +427,11 @@ data class Timeline(
             val titles = raw.lineSequence().mapNotNull { line ->
                 TimelineTitle.decodeLine(line.trim().split(','))
             }.toList()
+            val grade = raw.lineSequence().mapNotNull { line ->
+                TimelineGrade.decodeLine(line.trim().split(','))
+            }.firstOrNull() ?: TimelineGrade.Neutral
             val clips = if (parsed.isEmpty()) fromMedia(count, durationMs).clips else parsed
-            return Timeline(clips, bed, voice, height, extraStems, masterFx, titles)
+            return Timeline(clips, bed, voice, height, extraStems, masterFx, titles, grade)
         }
     }
 }

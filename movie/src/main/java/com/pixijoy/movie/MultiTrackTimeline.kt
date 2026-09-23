@@ -24,7 +24,9 @@ data class MultiTrackTimeline(
     val masterFx: AudioMasterFx = AudioMasterFx.Neutral,
     val outputHeight: Int = 1080,
     /** Timed title / caption layers (D4). */
-    val titles: List<TimelineTitle> = emptyList()
+    val titles: List<TimelineTitle> = emptyList(),
+    /** Timeline grade + look (D5). */
+    val grade: TimelineGrade = TimelineGrade.Neutral
 ) {
     fun videoTracks(): List<TimelineTrack> = tracks.filter { it.kind == TrackKind.Video }
     fun audioTracks(): List<TimelineTrack> = tracks.filter { it.kind == TrackKind.Audio }
@@ -53,7 +55,8 @@ data class MultiTrackTimeline(
             outputHeight = outputHeight,
             extraStems = extraStems,
             masterFx = masterFx,
-            titles = titles
+            titles = titles,
+            grade = grade
         )
     }
 
@@ -71,7 +74,8 @@ data class MultiTrackTimeline(
             extraStems = flat.extraStems,
             masterFx = flat.masterFx,
             outputHeight = flat.outputHeight,
-            titles = flat.titles
+            titles = flat.titles,
+            grade = flat.grade
         )
     }
 
@@ -130,6 +134,7 @@ data class MultiTrackTimeline(
         }
         if (!masterFx.isNeutral()) appendLine(masterFx.encode())
         titles.filter { it.text.isNotBlank() }.forEach { appendLine(it.encodeLine()) }
+        if (!grade.isNeutral()) appendLine(grade.encodeLine())
     }
 
     companion object {
@@ -160,7 +165,8 @@ data class MultiTrackTimeline(
                 extraStems = timeline.extraStems,
                 masterFx = timeline.masterFx,
                 outputHeight = timeline.outputHeight,
-                titles = timeline.titles
+                titles = timeline.titles,
+                grade = timeline.grade
             )
         }
 
@@ -177,6 +183,7 @@ data class MultiTrackTimeline(
             val stems = ArrayList<AudioStem>()
             var fx = AudioMasterFx.Neutral
             val titles = ArrayList<TimelineTitle>()
+            var grade = TimelineGrade.Neutral
             raw.lineSequence().forEach { line ->
                 val parts = line.split(',')
                 when (parts.firstOrNull()) {
@@ -250,6 +257,7 @@ data class MultiTrackTimeline(
                     }
                     "X" -> AudioMasterFx.decode(parts)?.let { fx = it }
                     "TT" -> TimelineTitle.decodeLine(parts)?.let { titles += it }
+                    "G" -> TimelineGrade.decodeLine(parts)?.let { grade = it }
                 }
             }
             return MultiTrackTimeline(
@@ -260,7 +268,8 @@ data class MultiTrackTimeline(
                 extraStems = stems,
                 masterFx = fx,
                 outputHeight = height,
-                titles = titles
+                titles = titles,
+                grade = grade
             )
         }
     }

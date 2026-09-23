@@ -519,6 +519,10 @@ fun MovieSessionScreen(
                     selectedTitleId = null
                 }
             )
+            MovieGradePanel(
+                grade = multi.grade,
+                onGrade = { next -> commitMulti(multi.copy(grade = next)) }
+            )
             if (!still) {
                 Text(stringResource(R.string.studio_scrub), color = PixiTextMuted)
                 Slider(
