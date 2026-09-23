@@ -83,7 +83,7 @@ G9. Gradle BuildConfig deprecation cleanup
 ================================================================
 H. SUGGESTED PATH (ASAP, no fake greens)
 ================================================================
-1. D2 ripple/roll + transitions (on MT composition)
+1. D3 keyframed transform / motion
 2. Parallel G1–G3 structural chrome
 3. E packs when photo/movie depth is solid
 4. F only as on-demand modules
