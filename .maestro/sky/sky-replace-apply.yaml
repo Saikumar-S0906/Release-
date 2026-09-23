@@ -1,0 +1,39 @@
+appId: com.pixijoy.ai
+---
+# C4 Sky / background replace — rail + Apply
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "home_create"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "session_sky"
+    direction: RIGHT
+    timeout: 40000
+    visibilityPercentage: 30
+    speed: 60
+- tapOn:
+    id: "session_sky"
+- extendedWaitUntil:
+    visible:
+      id: "session_sky_hint"
+    timeout: 10000
+- assertVisible:
+    id: "sky_target_sky"
+- assertVisible:
+    id: "sky_preset_blue"
+- tapOn:
+    id: "sky_preset_deep"
+- tapOn:
+    id: "session_apply_sky"
+- assertVisible:
+    id: "session_export"
+- assertVisible:
+    id: "session_tool_scrim"

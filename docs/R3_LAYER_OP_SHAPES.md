@@ -92,15 +92,20 @@ Smart objects, vector paths, group folders, generative fill, RAW (parallel track
 **C1 import:** `.cube` / `.3dl` parse (`CubeLutParser`); project `luts/` copy; graph keys `lut:<file>`; engine `lutDirectory`; Looks **Import LUT**; export parity; units green; system picker **yellow/manual** (`.maestro/YELLOW-lut-import.md`). Cap size 33 for imported 3D apply (nearest).
 **Explicitly later:** tetrahedral sampling; LUT size > 33 at full export res.
 
-## Selective HSL exit: MET (yellow/manual Maestro)
+## Selective HSL exit: MET (green Pixel_7a)
 
-**Tip:** commit `af7dc8f` (Maestro yaml) / `78b66b4` (stubs).
-**Met:** `PhotoOp.SelectiveHsl(range, h, s, l)` graph `A`; unit tests green; Maestro **yellow/manual** — cold-start `privacy_accept` flake. See `.maestro/YELLOW-selective-hsl-exit.md`.
-**Date noted:** 2026-09-23 IST.
+**Tip:** Phase 0 land `b4169a1`.
+**Met:** `PhotoOp.SelectiveHsl` graph `A`; Maestro **green** on Pixel_7a. See `.maestro/GREEN-selective-hsl-exit.md`.
 
-## Next R3 depth (pick — no serial wait)
+## Sky / background replace (C4): MET
 
-**Next: RAW/DNG preview (C2)** then Fill polish (C3).
+**Tip:** land with this commit.
+**Met:** `PhotoOp.SkyReplace(target, color)` graph `H`; HSV + top-bias sky matte; background via subject mask or corner-key; solid presets; session rail under glass; Maestro `sky-replace-apply.yaml` **green** Pixel_7a.
+**Explicitly later:** image fill / LUT sky packs; MediaPipe sky segmenter as optional ML pack.
+
+## Next R3 depth
+
+**Next:** D1 multi-track E2E → C5 perspective/liquify.
 
 See `TOTAL_REMAINING.txt` and `REMAINING_MASTER_PLAN.md`.
 

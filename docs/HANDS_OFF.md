@@ -72,9 +72,9 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **C3 Fill** — Clear strokes + Telea + `LiteRtInpaintHook` stub for E1.
 - **D1** — `MultiTrackTimeline` encode/decode foundation only (preview/export still single-track).
 
-**In progress:** C4+ and D1 E2E next.
+**In progress:** D1 multi-track E2E · C5+.
 
-**Blockers:** None for Wave B.
+**Blockers:** None.
 
 ---
 
@@ -91,10 +91,11 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **R3.1 Compare** — live peel + pre-bake; identity gating; Maestro `compare-hold` green
 - **R3.1 Library / Export / Recommended** — B3 MET
 - **Wave B** — quality gates + R3.1 UX **exited** 2026-09-23
+- **C4 Sky / background replace** — `PhotoOp.SkyReplace` graph `H`; heuristic sky/backdrop matte; Maestro green
 
 ### Live gate
 
-**C4** Sky / background replace (after C3). Parallel: D1 multi-track E2E.
+**D1** multi-track timeline E2E. Parallel: **C5** perspective + liquify.
 
 ### Follow-up epic (not a feature gate)
 

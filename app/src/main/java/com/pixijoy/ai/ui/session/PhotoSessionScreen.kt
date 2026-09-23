@@ -99,6 +99,8 @@ import com.pixijoy.photo.MaskFill
 import com.pixijoy.photo.MaskStroke
 import com.pixijoy.photo.PhotoOp
 import com.pixijoy.photo.SelectiveHslRange
+import com.pixijoy.photo.SkyReplacePresets
+import com.pixijoy.photo.SkyReplaceTarget
 import com.pixijoy.photo.applySelectiveHsl
 import com.pixijoy.photo.isIdentity
 import com.pixijoy.photo.Stamp
@@ -118,7 +120,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private enum class SessionMode { Crop, Adjust, Heal, Fill, Erase, Text, Expand, Stickers, Collage, Curves, SelectiveHsl, Looks, Layers, Mask }
+private enum class SessionMode { Crop, Adjust, Heal, Fill, Erase, Text, Expand, Stickers, Collage, Curves, SelectiveHsl, Looks, Layers, Mask, Sky }
 
 @Composable
 fun PhotoSessionScreen(
@@ -742,6 +744,7 @@ LaunchedEffect(sources, layers) {
             onBlurAmount = { blurRadius = it },
             onApplyCrop = { push(crop); mode = defaultMode(toolKey) },
             onApplyExpand = { push(PhotoOp.Expand(expand)) },
+            onApplySkyReplace = { target, color -> push(PhotoOp.SkyReplace(target, color)) },
             onApplyHeal = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Heal(pendingStamps)) },
             onApplyFill = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Fill(pendingStamps)); pendingStamps = emptyList() },
             onClearFillStrokes = { pendingStamps = emptyList(); lastStamp = null },
@@ -985,7 +988,8 @@ private fun railsFor(toolKey: String): List<RailItem> = when (toolKey) {
         RailItem(R.string.studio_adjust, "session_adjust", SessionMode.Adjust),
         RailItem(R.string.studio_curves, "session_curves", SessionMode.Curves),
         RailItem(R.string.studio_selective_hsl, "session_selective_hsl", SessionMode.SelectiveHsl),
-                RailItem(R.string.studio_looks, "session_looks", SessionMode.Looks),
+        RailItem(R.string.studio_looks, "session_looks", SessionMode.Looks),
+        RailItem(R.string.studio_sky, "session_sky", SessionMode.Sky),
         RailItem(R.string.studio_heal, "session_heal", SessionMode.Heal),
         RailItem(R.string.studio_fill, "session_fill", SessionMode.Fill),
         RailItem(R.string.studio_text, "session_text", SessionMode.Text),
@@ -1021,6 +1025,7 @@ private fun ToolBody(
     onBlurAmount: (Float) -> Unit,
     onApplyCrop: () -> Unit,
     onApplyExpand: () -> Unit,
+    onApplySkyReplace: (SkyReplaceTarget, Int) -> Unit,
     onApplyHeal: () -> Unit,
     onApplyFill: () -> Unit,
     onClearFillStrokes: () -> Unit,
@@ -1208,6 +1213,7 @@ private fun ToolBody(
                 LabeledSlider(stringResource(R.string.studio_expand_tool), expand, 0.05f..0.35f, "session_expand_amount", onExpand)
                 PixiPrimaryButton(stringResource(R.string.studio_apply), onApplyExpand, Modifier.testTag("session_apply_expand"))
             }
+            SessionMode.Sky -> SkyToolPanel(onApply = onApplySkyReplace)
             SessionMode.Heal -> {
                 LabeledSlider(stringResource(R.string.studio_brush), brush, 0.02f..0.12f, "session_brush_size", onBrush)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1357,6 +1363,54 @@ private fun LabeledSlider(
         valueRange = range,
         colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
         modifier = Modifier.testTag(tag)
+    )
+}
+
+@Composable
+private fun SkyToolPanel(onApply: (SkyReplaceTarget, Int) -> Unit) {
+    var skyTarget by remember { mutableStateOf(SkyReplaceTarget.Sky) }
+    var skyColor by remember { mutableStateOf(SkyReplacePresets.BlueSky) }
+    Text(
+        stringResource(R.string.studio_sky_hint),
+        color = PixiTextMuted,
+        modifier = Modifier.testTag("session_sky_hint")
+    )
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FormatChip(
+            stringResource(R.string.studio_sky_target_sky),
+            skyTarget == SkyReplaceTarget.Sky,
+            "sky_target_sky"
+        ) { skyTarget = SkyReplaceTarget.Sky }
+        FormatChip(
+            stringResource(R.string.studio_sky_target_background),
+            skyTarget == SkyReplaceTarget.Background,
+            "sky_target_background"
+        ) { skyTarget = SkyReplaceTarget.Background }
+    }
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.horizontalScroll(rememberScrollState())
+    ) {
+        FormatChip("Blue", skyColor == SkyReplacePresets.BlueSky, "sky_preset_blue") {
+            skyColor = SkyReplacePresets.BlueSky
+        }
+        FormatChip("Deep", skyColor == SkyReplacePresets.DeepBlue, "sky_preset_deep") {
+            skyColor = SkyReplacePresets.DeepBlue
+        }
+        FormatChip("Sunset", skyColor == SkyReplacePresets.Sunset, "sky_preset_sunset") {
+            skyColor = SkyReplacePresets.Sunset
+        }
+        FormatChip("Gray", skyColor == SkyReplacePresets.Overcast, "sky_preset_overcast") {
+            skyColor = SkyReplacePresets.Overcast
+        }
+        FormatChip("Green", skyColor == SkyReplacePresets.StudioGreen, "sky_preset_green") {
+            skyColor = SkyReplacePresets.StudioGreen
+        }
+    }
+    PixiPrimaryButton(
+        stringResource(R.string.studio_apply),
+        { onApply(skyTarget, skyColor) },
+        Modifier.testTag("session_apply_sky")
     )
 }
 

@@ -50,6 +50,7 @@ fun PhotoOp.layerName(): String = when (this) {
     is PhotoOp.Sharpen -> "Sharpen"
     is PhotoOp.Vignette -> "Vignette"
     is PhotoOp.Subject -> "Subject"
+    is PhotoOp.SkyReplace -> if (target == SkyReplaceTarget.Sky) "Sky" else "Backdrop"
 }
 
 fun PhotoOp.isGeometry(): Boolean =
@@ -67,7 +68,7 @@ fun PhotoOp.isIdentity(): Boolean = when (this) {
     is PhotoOp.Grade -> exposure == 0f && contrast == 1f
     is PhotoOp.Hsl -> hue == 0f && saturation == 1f
     is PhotoOp.SelectiveHsl -> hue == 0f && sat == 1f && light == 0f
-    is PhotoOp.Restore, is PhotoOp.Cutout, is PhotoOp.Subject -> false
+    is PhotoOp.Restore, is PhotoOp.Cutout, is PhotoOp.Subject, is PhotoOp.SkyReplace -> false
     is PhotoOp.Expand -> fraction <= 0f
     is PhotoOp.Heal -> stamps.isEmpty()
     is PhotoOp.Fill -> stamps.isEmpty()

@@ -268,5 +268,15 @@ class BitmapPhotoEngine(
                 applyCutout(src)
             }
         }
+        is PhotoOp.SkyReplace -> {
+            val mask = if (op.target == SkyReplaceTarget.Background) {
+                vision.subjectMask(src)
+            } else {
+                null
+            }
+            val out = applySkyReplace(src, op.target, op.color, mask)
+            if (mask != null && !mask.isRecycled) mask.recycle()
+            out
+        }
     }
 }

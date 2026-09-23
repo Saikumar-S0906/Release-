@@ -115,6 +115,10 @@
     <string name="studio_fill">Fill</string>
     <string name="studio_fill_hint">Paint the area to remove. Fill rebuilds it from nearby pixels on this device. Undo clears the last stroke before Apply.</string>
     <string name="studio_fill_clear_strokes">Clear strokes</string>
+    <string name="studio_sky">Sky</string>
+    <string name="studio_sky_hint">Replace sky or a flat background with a solid color. Matte is computed on this device.</string>
+    <string name="studio_sky_target_sky">Sky</string>
+    <string name="studio_sky_target_background">Background</string>
     <string name="studio_raw_preview_badge">RAW preview</string>
     <string name="studio_open_file">Open file</string>
     <string name="create_source_files">Photo or RAW file</string>

@@ -27,8 +27,8 @@ C. FINISH R3 PHOTO (live gate after B)
 C1. LUT import — MET (picker yellow/manual)
 C2. RAW/DNG preview path — MET (develop track later)
 C3. Content-aware Fill polish — partial MET (Clear + stub); further quality/mask polish open
-C4. Sky / background replace — NEXT
-C5. Perspective + liquify
+C4. Sky / background replace — MET (PhotoOp.SkyReplace graph H; heuristic matte; Maestro green Pixel_7a)
+C5. Perspective + liquify — NEXT (with D1 E2E)
 C6. Presets + batch export
 C7. Wide-gamut / better color management
 C8. Portrait retouch packs (can slip to R5)
@@ -83,11 +83,10 @@ G9. Gradle BuildConfig deprecation cleanup
 ================================================================
 H. SUGGESTED PATH (ASAP, no fake greens)
 ================================================================
-1. C4 sky/background replace
-2. D1 multi-track timeline E2E (preview + export)
-3. C3 Fill further polish → C5 → C6/C7
-4. Parallel G1–G3 structural chrome
-5. E packs when photo/movie depth is solid
-6. F only as on-demand modules
+1. D1 multi-track timeline E2E (preview + export)
+2. C5 perspective/liquify → C6/C7
+3. Parallel G1–G3 structural chrome
+4. E packs when photo/movie depth is solid
+5. F only as on-demand modules
 
 Hard rule stays: edit-graph or timeline op → engine → WorkManager export. Local-first. Quality > clock.

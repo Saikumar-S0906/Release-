@@ -5,7 +5,7 @@
 **Branch:** land on `origin/next` after review-clear.  
 **Excluded:** Section A (done/exited) — do not reopen.
 
-**Snapshot (2026-09-23 Phase 0 land):** **Wave B EXITED** · B1 Maestro green Pixel_7a · B2/B3 landed · B4 measure-deferred · **C1–C3 foundations MET** · D1 encode/decode only. Live gate: **C4** + **D1 E2E**. C5–C8, D2–D11, E*, F*, most G still open.
+**Snapshot (2026-09-23):** **Wave B EXITED** · **C4 SkyReplace MET** · C1–C3 foundations MET · D1 encode/decode only. Live gate: **D1 E2E** · C5+.
 
 ```
 B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5 ML packs) ──▶ F (R6+ opt-in)
@@ -36,7 +36,7 @@ B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5
 | **B5** | Docs on `origin/next` | **EXITED** with Phase 0 land | Status docs in same commit |
 | **B6** | Gallery Photo Picker | Yellow/manual | Keep documented; no fake green |
 
-**Immediate next:** **C4** sky/background replace · **D1** multi-track E2E (preview + export).
+**Immediate next:** **D1** multi-track E2E (preview + export) · **C5** perspective/liquify.
 
 **G overlap with B:** **G4** exited with B3 (chips ≥48dp, announced selection).
 
@@ -51,7 +51,7 @@ Dependency order is fixed. Each op: graph letter → `:photo` engine → session
 | **C1** | LUT import | B3 stable | `.cube` + `.3dl`; project `luts/`; `lut:` keys; Looks Import; export; units; picker yellow/manual | **MET 2026-09-23** |
 | **C2** | RAW/DNG | C1 | Open/metadata/preview sidecar; edit on preview; develop track later | **MET path** (develop later) |
 | **C3** | Content-aware Fill polish | Layers/masks | Better mask UX, quality, undo; **edit-graph contract stable for E1** | Clear+Telea+stub MET; further polish open |
-| **C4** | Sky / background replace | C3 masks + Subject | Op + ML/heuristic sky matte; preview/export | |
+| **C4** | Sky / background replace | C3 masks + Subject | Op + ML/heuristic sky matte; preview/export | **MET 2026-09-23** (heuristic; Maestro green) |
 | **C5** | Perspective + liquify | Stable warp pipeline | Two ops; live preview budget; export | |
 | **C6** | Presets + batch export | C1–C5 ops serializable | Preset encode/decode; multi-project WorkManager batch | |
 | **C7** | Wide-gamut / color mgmt | Decode/export path | Display P3 awareness; export color intent | After LUT serialization story |
@@ -178,8 +178,8 @@ Never land F* as isolated effects without listed primitives.
 
 ## Next concrete slice (start here)
 
-1. **C4** sky / background replace (op + matte + preview/export)  
-2. **D1 E2E** — promote `MultiTrackTimeline` to preview composition + persistence + export parity  
+1. **D1 E2E** — promote `MultiTrackTimeline` to preview composition + persistence + export parity  
+2. **C5** perspective + liquify  
 3. **Kick G1** tablet two-pane refinement in parallel  
 
 When this plan drifts, update this file and `TOTAL_REMAINING.txt` in the same commit as the exit.

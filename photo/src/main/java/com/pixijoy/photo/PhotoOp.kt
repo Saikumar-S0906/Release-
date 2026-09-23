@@ -68,6 +68,8 @@ sealed interface PhotoOp {
     data class Sharpen(val amount: Float) : PhotoOp
     data class Vignette(val amount: Float) : PhotoOp
     data object Subject : PhotoOp
+    /** C4: replace sky or flat background with [color] (ARGB). Graph `H`. */
+    data class SkyReplace(val target: SkyReplaceTarget, val color: Int) : PhotoOp
 }
 
 data class PixelRect(val left: Int, val top: Int, val right: Int, val bottom: Int) {
@@ -133,6 +135,7 @@ fun List<PhotoOp>.encodeGraph(): String =
             is PhotoOp.Sharpen -> "X,${op.amount}"
             is PhotoOp.Vignette -> "V,${op.amount}"
             is PhotoOp.Subject -> "J"
+            is PhotoOp.SkyReplace -> "H,${op.target.name},${op.color}"
         }
     }
 
@@ -195,6 +198,11 @@ fun String.decodeGraph(): List<PhotoOp> {
                 "X" -> if (parts.size == 2) PhotoOp.Sharpen(parts[1].toFloat()) else null
                 "V" -> if (parts.size == 2) PhotoOp.Vignette(parts[1].toFloat()) else null
                 "J" -> PhotoOp.Subject
+                "H" -> if (parts.size == 3) {
+                    val target = runCatching { SkyReplaceTarget.valueOf(parts[1]) }.getOrNull()
+                    val color = parts[2].toIntOrNull()
+                    if (target != null && color != null) PhotoOp.SkyReplace(target, color) else null
+                } else null
                 else -> null
             }
         } catch (_: NumberFormatException) {
