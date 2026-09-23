@@ -23,3 +23,13 @@ local.properties
 *.jks
 google-services.json
 maestro/reports/
+
+# Session scratch — never land these
+*.log
+uidump*.xml
+u-step.xml
+_hsl_pkg/
+_patch_*.py
+.maestro/_probe*.yaml
+.maestro/**/_probe*.yaml
+

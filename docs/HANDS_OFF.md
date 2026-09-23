@@ -127,7 +127,6 @@ Split Photo/Movie session → ViewModels + tool panels · consistent Hilt in Stu
 
 - `docs/NORTH_STAR_ROADMAP.md`
 - `docs/R3_LAYER_OP_SHAPES.md`
-- `docs/R3_REMAINING.txt`
 - `docs/TOTAL_REMAINING.txt`
 - `docs/REMAINING_MASTER_PLAN.md`
 - `docs/HANDS_OFF.md` (this file)
