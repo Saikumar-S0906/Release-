@@ -79,6 +79,9 @@ fun ExportSheet(
     showColorIntent: Boolean = false,
     colorIntentKey: String = "srgb",
     onColorIntent: (String) -> Unit = {},
+    showHdrMode: Boolean = false,
+    hdrModeKey: String = "sdr",
+    onHdrMode: (String) -> Unit = {},
     successUri: String? = null,
     onView: () -> Unit = {},
     onShare: () -> Unit = {},
@@ -223,6 +226,40 @@ fun ExportSheet(
                                     .padding(horizontal = 14.dp, vertical = 12.dp)
                             )
                         }
+                    }
+                }
+                if (showHdrMode && selectedKey != "gif") {
+                    Text(stringResource(R.string.studio_export_hdr_label), color = PixiTextMuted)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(
+                            "sdr" to stringResource(R.string.studio_export_hdr_sdr),
+                            "keep" to stringResource(R.string.studio_export_hdr_keep)
+                        ).forEach { (key, label) ->
+                            val selected = hdrModeKey == key
+                            Text(
+                                label,
+                                color = PixiText,
+                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                                modifier = Modifier
+                                    .heightIn(min = 48.dp)
+                                    .clip(RoundedCornerShape(999.dp))
+                                    .background(if (selected) PixiAccent else PixiBg)
+                                    .clickable { onHdrMode(key) }
+                                    .testTag("export_hdr_$key")
+                                    .semantics {
+                                        role = Role.RadioButton
+                                        this.selected = selected
+                                    }
+                                    .padding(horizontal = 14.dp, vertical = 12.dp)
+                            )
+                        }
+                    }
+                    if (hdrModeKey == "keep") {
+                        Text(
+                            stringResource(R.string.studio_export_hdr_keep_hint),
+                            color = PixiTextMuted,
+                            modifier = Modifier.testTag("export_hdr_keep_hint")
+                        )
                     }
                 }
                 if (resolutions.isNotEmpty() && selectedKey != "gif") {

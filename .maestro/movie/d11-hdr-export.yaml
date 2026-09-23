@@ -1,0 +1,86 @@
+appId: com.pixijoy.ai
+---
+# D11 — HDR export intent in movie session + export sheet
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "home_open_studio"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_segment_movie"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_segment_movie"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_move"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_move"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "movie_session"
+    timeout: 90000
+- scrollUntilVisible:
+    element:
+      id: "movie_d11_hint"
+    direction: DOWN
+    timeout: 60000
+    visibilityPercentage: 30
+    speed: 50
+- scrollUntilVisible:
+    element:
+      id: "movie_hdr_presets"
+    direction: DOWN
+    timeout: 20000
+    visibilityPercentage: 30
+    speed: 40
+- scrollUntilVisible:
+    element:
+      id: "movie_hdr_keep"
+    direction: DOWN
+    timeout: 15000
+    visibilityPercentage: 40
+    speed: 40
+- assertVisible:
+    id: "movie_hdr_sdr"
+- assertVisible:
+    id: "movie_hdr_keep"
+- tapOn:
+    id: "movie_hdr_keep"
+- scrollUntilVisible:
+    element:
+      id: "session_export"
+    direction: DOWN
+    timeout: 60000
+    visibilityPercentage: 40
+    speed: 50
+- tapOn:
+    id: "session_export"
+- extendedWaitUntil:
+    visible:
+      id: "export_sheet"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "export_hdr_keep"
+    direction: DOWN
+    timeout: 15000
+    visibilityPercentage: 40
+    speed: 40
+- assertVisible:
+    id: "export_hdr_sdr"
+- assertVisible:
+    id: "export_hdr_keep"
+- assertVisible:
+    id: "export_hdr_keep_hint"
+- tapOn:
+    id: "export_hdr_sdr"
+- assertVisible:
+    id: "export_sheet"
+- tapOn: "Cancel"
+- assertVisible:
+    id: "movie_session"

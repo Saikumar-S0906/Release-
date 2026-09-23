@@ -80,7 +80,8 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **D8** — ClipFrame stabilize zoom-crop + reframe Crop; Maestro `d8-stabilize-reframe` **green** Pixel_7a.
 - **D9** — ClipChroma green/blue key + GlEffect; Maestro `d9-chroma-key` **green** Pixel_7a.
 - **D10** — ClipSlowMo + FrameInterp contract (heuristic now; ML for E4); Maestro `d10-slowmo-interp` **green** Pixel_7a.
-**In progress:** D11 HDR export.
+- **D11** — MovieHdrMode + Composition.setHdrMode (+ Ultra HDR gain-map retain API 34+); Maestro `d11-hdr-export` **green** Pixel_7a.
+**In progress:** Wave E (R5 ML packs).
 
 **Blockers:** None.
 
@@ -111,10 +112,12 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **D8 stabilize + reframe** — `ClipFrame` + Media3 `Crop`/zoom; Maestro `d8-stabilize-reframe` green Pixel_7a
 - **D9 chroma key** — `ClipChroma` + `ChromaKeyEffect` GlEffect; Maestro `d9-chroma-key` green Pixel_7a
 - **D10 slow-mo / frame-interp contract** — `ClipSlowMo` + `FrameInterp` (heuristic; ML→E4); Maestro `d10-slowmo-interp` green Pixel_7a
+- **D11 HDR export** — `MovieHdrMode` + `Composition.setHdrMode` / Ultra HDR retain; Maestro `d11-hdr-export` green Pixel_7a
+- **Wave D** — R4 cinema depth **exited** 2026-09-23 (D1–D11)
 
 ### Live gate
 
-**D11** HDR export.
+**E** R5 ML packs (foundation + E5 before E1–E4).
 
 ### Follow-up epic (not a feature gate)
 

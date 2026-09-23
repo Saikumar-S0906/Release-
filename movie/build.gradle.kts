@@ -13,7 +13,10 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
-        freeCompilerArgs += listOf("-opt-in=androidx.media3.common.util.UnstableApi")
+        freeCompilerArgs += listOf(
+            "-opt-in=androidx.media3.common.util.UnstableApi",
+            "-opt-in=androidx.media3.common.util.ExperimentalApi"
+        )
     }
 }
 

@@ -28,7 +28,9 @@ data class MultiTrackTimeline(
     /** Timeline grade + look (D5). */
     val grade: TimelineGrade = TimelineGrade.Neutral,
     /** Multi-video frame layout (D7). */
-    val layout: VideoLayout = VideoLayout.Single
+    val layout: VideoLayout = VideoLayout.Single,
+    /** HDR export intent (D11). */
+    val hdrMode: MovieHdrMode = MovieHdrMode.Sdr
 ) {
     fun videoTracks(): List<TimelineTrack> = tracks.filter { it.kind == TrackKind.Video }
     fun audioTracks(): List<TimelineTrack> = tracks.filter { it.kind == TrackKind.Audio }
@@ -59,7 +61,8 @@ data class MultiTrackTimeline(
             masterFx = masterFx,
             titles = titles,
             grade = grade,
-            layout = layout
+            layout = layout,
+            hdrMode = hdrMode
         )
     }
 
@@ -79,7 +82,8 @@ data class MultiTrackTimeline(
             outputHeight = flat.outputHeight,
             titles = flat.titles,
             grade = flat.grade,
-            layout = flat.layout
+            layout = flat.layout,
+            hdrMode = flat.hdrMode
         )
     }
 
@@ -141,6 +145,7 @@ data class MultiTrackTimeline(
         titles.filter { it.text.isNotBlank() }.forEach { appendLine(it.encodeLine()) }
         if (!grade.isNeutral()) appendLine(grade.encodeLine())
         if (layout != VideoLayout.Single) appendLine("L,${layout.encode()}")
+        if (!hdrMode.isDefault()) appendLine("HDR,${hdrMode.encode()}")
     }
 
     companion object {
@@ -173,7 +178,8 @@ data class MultiTrackTimeline(
                 outputHeight = timeline.outputHeight,
                 titles = timeline.titles,
                 grade = timeline.grade,
-                layout = timeline.layout
+                layout = timeline.layout,
+                hdrMode = timeline.hdrMode
             )
         }
 
@@ -192,6 +198,7 @@ data class MultiTrackTimeline(
             val titles = ArrayList<TimelineTitle>()
             var grade = TimelineGrade.Neutral
             var layout = VideoLayout.Single
+            var hdrMode = MovieHdrMode.Sdr
             raw.lineSequence().forEach { line ->
                 val parts = line.split(',')
                 when (parts.firstOrNull()) {
@@ -272,6 +279,7 @@ data class MultiTrackTimeline(
                     "TT" -> TimelineTitle.decodeLine(parts)?.let { titles += it }
                     "G" -> TimelineGrade.decodeLine(parts)?.let { grade = it }
                     "L" -> if (parts.size >= 2) layout = VideoLayout.parse(parts[1])
+                    "HDR" -> if (parts.size >= 2) hdrMode = MovieHdrMode.parse(parts[1])
                 }
             }
             return MultiTrackTimeline(
@@ -284,7 +292,8 @@ data class MultiTrackTimeline(
                 outputHeight = height,
                 titles = titles,
                 grade = grade,
-                layout = layout
+                layout = layout,
+                hdrMode = hdrMode
             )
         }
     }

@@ -135,7 +135,9 @@ data class Timeline(
     /** Timeline grade + look (D5). */
     val grade: TimelineGrade = TimelineGrade.Neutral,
     /** Multi-video frame layout (D7). */
-    val layout: VideoLayout = VideoLayout.Single
+    val layout: VideoLayout = VideoLayout.Single,
+    /** HDR export intent (D11). */
+    val hdrMode: MovieHdrMode = MovieHdrMode.Sdr
 ) {
     fun totalMs(): Long = clips.sumOf { it.durationMs }
 
@@ -354,6 +356,10 @@ data class Timeline(
             if (isNotEmpty()) append('\n')
             append("L,${layout.encode()}")
         }
+        if (!hdrMode.isDefault()) {
+            if (isNotEmpty()) append('\n')
+            append("HDR,${hdrMode.encode()}")
+        }
     }
 
     companion object {
@@ -461,8 +467,13 @@ data class Timeline(
                 if (p.getOrNull(0) != "L" || p.size < 2) return@mapNotNull null
                 VideoLayout.parse(p[1])
             }.firstOrNull() ?: VideoLayout.Single
+            val hdrMode = raw.lineSequence().mapNotNull { line ->
+                val p = line.trim().split(',')
+                if (p.getOrNull(0) != "HDR" || p.size < 2) return@mapNotNull null
+                MovieHdrMode.parse(p[1])
+            }.firstOrNull() ?: MovieHdrMode.Sdr
             val clips = if (parsed.isEmpty()) fromMedia(count, durationMs).clips else parsed
-            return Timeline(clips, bed, voice, height, extraStems, masterFx, titles, grade, layout)
+            return Timeline(clips, bed, voice, height, extraStems, masterFx, titles, grade, layout, hdrMode)
         }
     }
 }

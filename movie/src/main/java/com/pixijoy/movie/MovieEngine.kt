@@ -390,16 +390,29 @@ class Media3MovieEngine : MovieEngine {
         val compositionEffects = Effects(audioProcessors, videoEffects)
         val multiVideo = videoSequences.size > 1
         return if (sequences.size == 1 && !multiVideo) {
-            Composition.Builder(videoSequences.first()).setEffects(compositionEffects).build()
+            Composition.Builder(videoSequences.first())
+                .setEffects(compositionEffects)
+                .applyHdr(timeline.hdrMode)
+                .build()
         } else {
             val builder = Composition.Builder(sequences)
                 .experimentalSetForceAudioTrack(true)
                 .setEffects(compositionEffects)
+                .applyHdr(timeline.hdrMode)
             if (multiVideo) {
                 builder.setVideoCompositorSettings(compositor)
             }
             builder.build()
         }
+    }
+
+    /** D11 — HDR export intent on Composition (tone-map SDR vs Keep HDR + Ultra HDR gain map). */
+    private fun Composition.Builder.applyHdr(mode: MovieHdrMode): Composition.Builder {
+        setHdrMode(mode.toCompositionHdrMode())
+        if (mode.retainUltraHdrGainMap()) {
+            experimentalSetRetainHdrFromUltraHdrImage(true)
+        }
+        return this
     }
 
     /** Parallel video input for PiP / Split / Grid (D7). Duration locked to primary timeline. */

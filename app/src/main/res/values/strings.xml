@@ -166,6 +166,11 @@
     <string name="studio_chroma_wide">Wide</string>
     <string name="studio_chroma_softness">Edge soft %1$d%%</string>
     <string name="studio_movie_d10_hint">Slow-mo on the selected clip. Heuristic stretch now; ML interp plugs in when the pack is installed. Same rate in preview and export.</string>
+    <string name="studio_movie_d11_hint">HDR export intent. SDR tone-maps for sharing; Keep HDR preserves HDR when the device supports it (falls back safely).</string>
+    <string name="studio_export_hdr_label">HDR</string>
+    <string name="studio_export_hdr_sdr">SDR</string>
+    <string name="studio_export_hdr_keep">Keep HDR</string>
+    <string name="studio_export_hdr_keep_hint">Preserves HDR when supported · tone-maps if not</string>
     <string name="studio_slow_mo">Slow-mo</string>
     <string name="studio_slowmo_off">Off</string>
     <string name="studio_slowmo_half">½×</string>

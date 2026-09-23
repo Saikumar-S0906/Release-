@@ -5,7 +5,7 @@
 **Branch:** land on `origin/next` after review-clear.  
 **Excluded:** Section A (done/exited) — do not reopen.
 
-**Snapshot (2026-09-23):** **Wave B EXITED** · **Wave C EXITED** · **D1–D10 MET** · Live gate: **D11** HDR export.
+**Snapshot (2026-09-23):** **Wave B EXITED** · **Wave C EXITED** · **D1–D11 MET** · Wave D EXITED. Live gate: **E** (R5 ML packs).
 
 ```
 B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5 ML packs) ──▶ F (R6+ opt-in)
@@ -36,7 +36,7 @@ B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5
 | **B5** | Docs on `origin/next` | **EXITED** with Phase 0 land | Status docs in same commit |
 | **B6** | Gallery Photo Picker | Yellow/manual | Keep documented; no fake green |
 
-**Immediate next:** **D11** HDR export.
+**Immediate next:** **E** R5 ML packs (shared foundation + E5 size gate before E1–E4).
 
 **G overlap with B:** **G4** exited with B3 (chips ≥48dp, announced selection).
 
@@ -77,7 +77,7 @@ Dependency order is fixed. Each op: graph letter → `:photo` engine → session
 | **D8** | Stabilize + reframe | D1 | Op + export | **MET 2026-09-23** ClipFrame + Crop/zoom; Maestro `d8-stabilize-reframe` green Pixel_7a |
 | **D9** | Chroma key | D1, masks | Keyer op | **MET 2026-09-23** ClipChroma + ChromaKeyEffect; Maestro `d9-chroma-key` green Pixel_7a |
 | **D10** | Frame-interp slow-mo UX | D1, speed model | Timeline/export **contract** for slow-mo | **MET 2026-09-23** ClipSlowMo + FrameInterp; Maestro `d10-slowmo-interp` green Pixel_7a |
-| **D11** | HDR export | D1, C7 | Beyond HD/FHD/4K SDR |
+| **D11** | HDR export | D1, C7 | Beyond HD/FHD/4K SDR | **MET 2026-09-23** MovieHdrMode + Composition.setHdrMode; Maestro `d11-hdr-export` green Pixel_7a |
 
 **Intentional overlap:** D10 = movie slow-mo UX + timeline/export contract; **E4** = optional ML interpolation pack behind D10.
 
@@ -177,7 +177,7 @@ Never land F* as isolated effects without listed primitives.
 
 ## Next concrete slice (start here)
 
-1. **D11** HDR export  
+1. **E** R5 ML packs — shared foundation + E5 size gate before E1–E4  
 2. **Kick G1** tablet two-pane refinement in parallel  
 
 When this plan drifts, update this file and `TOTAL_REMAINING.txt` in the same commit as the exit.

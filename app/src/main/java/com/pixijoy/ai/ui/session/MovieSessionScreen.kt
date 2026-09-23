@@ -99,11 +99,12 @@ import com.pixijoy.movie.Filmstrip
 import com.pixijoy.movie.FilmstripFrame
 import com.pixijoy.movie.Media3MovieEngine
 import com.pixijoy.movie.MovieEngine
+import com.pixijoy.movie.MovieExportSize
 import com.pixijoy.movie.MovieFrame
+import com.pixijoy.movie.MovieHdrMode
 import com.pixijoy.movie.MovieMotion
 import com.pixijoy.movie.MovieSpeed
 import com.pixijoy.movie.MovieTrim
-import com.pixijoy.movie.MovieExportSize
 import com.pixijoy.movie.MultiTrackTimeline
 import com.pixijoy.movie.Timeline
 import com.pixijoy.movie.TimelineClip
@@ -530,6 +531,10 @@ fun MovieSessionScreen(
                     val id = selected?.id ?: return@MovieSlowMoPanel
                     commitTimeline(timeline.update(id) { it.copy(slowMo = slowMo) })
                 }
+            )
+            MovieHdrPanel(
+                hdrMode = multi.hdrMode,
+                onHdrMode = { next -> commitMulti(multi.copy(hdrMode = next)) }
             )
             MovieTitlesPanel(
                 titles = multi.titles,
@@ -1166,6 +1171,11 @@ fun MovieSessionScreen(
             resolutions = MovieExportSize.heights.map { it to MovieExportSize.label(it) },
             selectedHeight = MovieExportSize.normalize(timeline.outputHeight),
             onSelectHeight = { height -> commitTimeline(timeline.copy(outputHeight = height)) },
+            showHdrMode = true,
+            hdrModeKey = timeline.hdrMode.encode(),
+            onHdrMode = { key ->
+                commitTimeline(timeline.copy(hdrMode = MovieHdrMode.parse(key)))
+            },
             showLeaveSafeHint = true,
             successUri = exportSuccessUri,
             onView = {
