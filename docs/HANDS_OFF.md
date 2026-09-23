@@ -77,7 +77,8 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **D5** — TimelineGrade + bundled looks + scopes meters; Maestro `d5-grade-scopes` **green** Pixel_7a.
 - **D6** — duck Soft/Med/Hard + separate attack/release; Maestro `d6-audio-finish` **green** Pixel_7a.
 - **D7** — PiP / Split / Grid via `VideoLayout` + `VideoCompositorSettings`; Maestro `d7-pip-layout` **green** Pixel_7a.
-**In progress:** D8 Stabilize + reframe.
+- **D8** — ClipFrame stabilize zoom-crop + reframe Crop; Maestro `d8-stabilize-reframe` **green** Pixel_7a.
+**In progress:** D9 Chroma key.
 
 **Blockers:** None.
 
@@ -105,10 +106,11 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **D5 grade + LUT + scopes** — `TimelineGrade` + `SingleColorLut` + scope meters; Maestro `d5-grade-scopes` green Pixel_7a
 - **D6 audio finish** — duck Soft/Med/Hard + `releaseMs`; Maestro `d6-audio-finish` green Pixel_7a
 - **D7 PiP / multicam** — `VideoLayout` + parallel sequences + compositor; Maestro `d7-pip-layout` green Pixel_7a
+- **D8 stabilize + reframe** — `ClipFrame` + Media3 `Crop`/zoom; Maestro `d8-stabilize-reframe` green Pixel_7a
 
 ### Live gate
 
-**D8** Stabilize + reframe.
+**D9** Chroma key.
 
 ### Follow-up epic (not a feature gate)
 

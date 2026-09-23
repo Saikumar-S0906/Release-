@@ -510,6 +510,13 @@ fun MovieSessionScreen(
                     commitTimeline(timeline.update(id) { it.copy(motion = motion) })
                 }
             )
+            MovieFramePanel(
+                selected = selected,
+                onFrame = { frame ->
+                    val id = selected?.id ?: return@MovieFramePanel
+                    commitTimeline(timeline.update(id) { it.copy(frame = frame) })
+                }
+            )
             MovieTitlesPanel(
                 titles = multi.titles,
                 selectedId = selectedTitleId,

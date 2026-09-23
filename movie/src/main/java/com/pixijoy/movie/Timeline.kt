@@ -19,7 +19,9 @@ data class TimelineClip(
      */
     val speedEnd: Float = speed,
     /** Keyframed scale/pan/rotate (D3). */
-    val motion: ClipMotion = ClipMotion.None
+    val motion: ClipMotion = ClipMotion.None,
+    /** Stabilize + reframe crop (D8). */
+    val frame: ClipFrame = ClipFrame.None
 ) {
     val sourceDurationMs: Long get() = (outMs - inMs).coerceAtLeast(1)
     val durationMs: Long
@@ -33,6 +35,7 @@ data class TimelineClip(
     val hasTransition: Boolean
         get() = transition != ClipTransition.None && transitionMs > 0L
     val hasMotion: Boolean get() = !motion.isIdentity
+    val hasFrame: Boolean get() = !frame.isIdentity
 }
 
 data class AudioBed(
@@ -303,7 +306,7 @@ data class Timeline(
         append(clips.joinToString("\n") { c ->
             "C,${c.mediaIndex},${c.inMs},${c.outMs},${c.speed},${if (c.muted) 1 else 0},${c.id}," +
                 "${ClipMix.volume(c.volume)},${c.fadeInMs.coerceAtLeast(0)},${c.fadeOutMs.coerceAtLeast(0)}," +
-                "${c.transition.name},${c.transitionMs.coerceAtLeast(0)},${c.speedEnd},${c.motion.encode()}"
+                "${c.transition.name},${c.transitionMs.coerceAtLeast(0)},${c.speedEnd},${c.motion.encode()},${c.frame.encode()}"
         })
         val music = bed
         if (music != null) {
@@ -376,7 +379,8 @@ data class Timeline(
                         transition = ClipTransition.parse(p.getOrNull(10)),
                         transitionMs = p.getOrNull(11)?.toLongOrNull()?.coerceAtLeast(0) ?: 0L,
                         speedEnd = p.getOrNull(12)?.toFloatOrNull() ?: speed,
-                        motion = ClipMotion.decode(p.getOrNull(13))
+                        motion = ClipMotion.decode(p.getOrNull(13)),
+                        frame = ClipFrame.decode(p.getOrNull(14))
                     )
                 }.getOrNull()
             }.toList()

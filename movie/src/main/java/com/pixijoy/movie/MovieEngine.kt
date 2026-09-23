@@ -594,6 +594,9 @@ class Media3MovieEngine : MovieEngine {
             val durationUs = clip.durationMs.coerceAtLeast(1) * 1000L
             video += clip.motion.toMatrixTransformation(durationUs)
         }
+        if (clip.hasFrame) {
+            video += clip.frame.toEffects()
+        }
         if (!clip.muted) {
             val vol = ClipMix.volume(clip.volume)
             if (clip.fadeInMs > 0 || clip.fadeOutMs > 0) {
