@@ -94,6 +94,7 @@ import com.pixijoy.movie.AudioStem
 import com.pixijoy.movie.ClipMix
 import com.pixijoy.movie.ClipTransition
 import com.pixijoy.movie.CompositionPreview
+import com.pixijoy.movie.DuckPreset
 import com.pixijoy.movie.Filmstrip
 import com.pixijoy.movie.FilmstripFrame
 import com.pixijoy.movie.Media3MovieEngine
@@ -180,7 +181,10 @@ fun MovieSessionScreen(
             scope.launch {
                 when (val result = repo.importAudioFile(project.id, uri, "bed")) {
                     is AppResult.Ok -> {
-                        commitTimeline(timeline.copy(bed = AudioBed(fileName = File(result.value).name)))
+                        val bed = DuckPreset.Medium.apply(
+                            AudioBed(fileName = File(result.value).name)
+                        )
+                        commitTimeline(timeline.copy(bed = bed))
                     }
                     is AppResult.Err -> status = result.message
                 }
@@ -192,7 +196,15 @@ fun MovieSessionScreen(
             scope.launch {
                 when (val result = repo.importAudioFile(project.id, uri, "voice")) {
                     is AppResult.Ok -> {
-                        commitTimeline(timeline.copy(voice = AudioBed(fileName = File(result.value).name, volume = 1f, duck = 1f)))
+                        val voice = AudioBed(
+                            fileName = File(result.value).name,
+                            volume = 1f,
+                            duck = 1f,
+                            fadeInMs = 80,
+                            fadeOutMs = 120
+                        )
+                        val bed = timeline.bed?.let { DuckPreset.Medium.apply(it) }
+                        commitTimeline(timeline.copy(voice = voice, bed = bed))
                     }
                     is AppResult.Err -> status = result.message
                 }
@@ -522,6 +534,15 @@ fun MovieSessionScreen(
             MovieGradePanel(
                 grade = multi.grade,
                 onGrade = { next -> commitMulti(multi.copy(grade = next)) }
+            )
+            MovieAudioFinishPanel(
+                bed = timeline.bed,
+                hasVoice = timeline.voice != null,
+                onApplyPreset = { preset ->
+                    val bed = timeline.bed ?: return@MovieAudioFinishPanel
+                    commitTimeline(timeline.copy(bed = preset.apply(bed)))
+                },
+                onBedChange = { bed -> commitTimeline(timeline.copy(bed = bed)) }
             )
             if (!still) {
                 Text(stringResource(R.string.studio_scrub), color = PixiTextMuted)

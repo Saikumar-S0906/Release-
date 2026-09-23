@@ -124,8 +124,8 @@ data class MultiTrackTimeline(
                 )
             }
         }
-        bed?.let { appendLine("B,${it.fileName},${it.volume},${it.fadeInMs},${it.fadeOutMs},${if (it.muted) 1 else 0},${it.duck},${it.attackMs}") }
-        voice?.let { appendLine("V,${it.fileName},${it.volume},${it.fadeInMs},${it.fadeOutMs},${if (it.muted) 1 else 0},${it.duck},${it.attackMs}") }
+        bed?.let { appendLine("B,${it.fileName},${it.volume},${it.fadeInMs},${it.fadeOutMs},${if (it.muted) 1 else 0},${it.duck},${it.attackMs},${it.releaseMs}") }
+        voice?.let { appendLine("V,${it.fileName},${it.volume},${it.fadeInMs},${it.fadeOutMs},${if (it.muted) 1 else 0},${it.duck},${it.attackMs},${it.releaseMs}") }
         extraStems.forEach { stem ->
             appendLine(
                 "S,${stem.id},${stem.fileName},${stem.volume},${stem.fadeInMs},${stem.fadeOutMs}," +
@@ -230,7 +230,8 @@ data class MultiTrackTimeline(
                             fadeOutMs = parts[4].toLong(),
                             muted = parts[5] == "1",
                             duck = parts[6].toFloat(),
-                            attackMs = parts[7].toLong()
+                            attackMs = parts[7].toLong(),
+                            releaseMs = parts.getOrNull(8)?.toLongOrNull() ?: 250L
                         )
                     }
                     "V" -> if (parts.size >= 8) {
@@ -241,7 +242,8 @@ data class MultiTrackTimeline(
                             fadeOutMs = parts[4].toLong(),
                             muted = parts[5] == "1",
                             duck = parts[6].toFloat(),
-                            attackMs = parts[7].toLong()
+                            attackMs = parts[7].toLong(),
+                            releaseMs = parts.getOrNull(8)?.toLongOrNull() ?: 250L
                         )
                     }
                     "S" -> if (parts.size >= 8) {

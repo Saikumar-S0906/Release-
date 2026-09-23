@@ -13,7 +13,8 @@ internal class EnvelopeAudioProcessor(
     private val offsetMs: Long = 0,
     private val windows: List<ClipMix.Window> = emptyList(),
     private val duck: Float = 1f,
-    private val attackMs: Long = 120
+    private val attackMs: Long = 120,
+    private val releaseMs: Long = 250
 ) : BaseAudioProcessor() {
     private var framesRead = 0L
 
@@ -37,7 +38,7 @@ internal class EnvelopeAudioProcessor(
         repeat(frames) {
             val tMs = offsetMs + framesRead * 1000L / sampleRate
             val g = ClipMix.gain(tMs, durationMs, volume, fadeInMs, fadeOutMs) *
-                ClipMix.duck(tMs, windows, duck, attackMs)
+                ClipMix.duck(tMs, windows, duck, attackMs, releaseMs)
             repeat(channels) {
                 val sample = inputBuffer.short
                 val scaled = (sample * g).toInt().coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt())

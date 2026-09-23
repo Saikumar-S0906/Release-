@@ -41,8 +41,12 @@ data class AudioBed(
     val fadeInMs: Long = 400,
     val fadeOutMs: Long = 400,
     val muted: Boolean = false,
+    /** Music floor while dialogue / VO is active (0 = mute under, 1 = no duck). */
     val duck: Float = 0.25f,
-    val attackMs: Long = 120
+    /** Duck ramp into dialogue (ms). */
+    val attackMs: Long = 120,
+    /** Duck ramp out of dialogue (ms). D6 polish — was tied to attack. */
+    val releaseMs: Long = 250
 )
 
 data class AudioStem(
@@ -302,12 +306,12 @@ data class Timeline(
         val music = bed
         if (music != null) {
             if (isNotEmpty()) append('\n')
-            append("A,${music.fileName},${ClipMix.volume(music.volume)},${music.fadeInMs.coerceAtLeast(0)},${music.fadeOutMs.coerceAtLeast(0)},${if (music.muted) 1 else 0},${ClipMix.volume(music.duck)},${music.attackMs.coerceAtLeast(0)}")
+            append("A,${music.fileName},${ClipMix.volume(music.volume)},${music.fadeInMs.coerceAtLeast(0)},${music.fadeOutMs.coerceAtLeast(0)},${if (music.muted) 1 else 0},${ClipMix.volume(music.duck)},${music.attackMs.coerceAtLeast(0)},${music.releaseMs.coerceAtLeast(0)}")
         }
         val vo = voice
         if (vo != null) {
             if (isNotEmpty()) append('\n')
-            append("V,${vo.fileName},${ClipMix.volume(vo.volume)},${vo.fadeInMs.coerceAtLeast(0)},${vo.fadeOutMs.coerceAtLeast(0)},${if (vo.muted) 1 else 0}")
+            append("V,${vo.fileName},${ClipMix.volume(vo.volume)},${vo.fadeInMs.coerceAtLeast(0)},${vo.fadeOutMs.coerceAtLeast(0)},${if (vo.muted) 1 else 0},${ClipMix.volume(vo.duck)},${vo.attackMs.coerceAtLeast(0)},${vo.releaseMs.coerceAtLeast(0)}")
         }
         for (stem in extraStems) {
             if (isNotEmpty()) append('\n')
@@ -381,7 +385,8 @@ data class Timeline(
                         fadeOutMs = p[4].toLong().coerceAtLeast(0),
                         muted = p[5] == "1",
                         duck = p.getOrNull(6)?.toFloatOrNull()?.let(ClipMix::volume) ?: 0.25f,
-                        attackMs = p.getOrNull(7)?.toLongOrNull()?.coerceAtLeast(0) ?: 120L
+                        attackMs = p.getOrNull(7)?.toLongOrNull()?.coerceAtLeast(0) ?: 120L,
+                        releaseMs = p.getOrNull(8)?.toLongOrNull()?.coerceAtLeast(0) ?: 250L
                     )
                 }.getOrNull()
             }.firstOrNull()
@@ -395,7 +400,9 @@ data class Timeline(
                         fadeInMs = p[3].toLong().coerceAtLeast(0),
                         fadeOutMs = p[4].toLong().coerceAtLeast(0),
                         muted = p[5] == "1",
-                        duck = 1f
+                        duck = p.getOrNull(6)?.toFloatOrNull()?.let(ClipMix::volume) ?: 1f,
+                        attackMs = p.getOrNull(7)?.toLongOrNull()?.coerceAtLeast(0) ?: 120L,
+                        releaseMs = p.getOrNull(8)?.toLongOrNull()?.coerceAtLeast(0) ?: 250L
                     )
                 }.getOrNull()
             }.firstOrNull()

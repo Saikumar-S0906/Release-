@@ -309,7 +309,13 @@ class Media3MovieEngine : MovieEngine {
         sequences += extraAudioSequences
         val voice = resolveStem(paths, timeline.voice)
         val voiceEnd = voice?.let { minOf(durationMs(it.second.absolutePath), total) } ?: 0L
-        val windows = timeline.duckWindows(voiceEnd)
+        val rawWindows = timeline.duckWindows(voiceEnd)
+        val bedMeta = timeline.bed
+        val windows = if (bedMeta != null) {
+            AudioFinish.polishWindows(rawWindows, bedMeta.attackMs, bedMeta.releaseMs, total)
+        } else {
+            rawWindows
+        }
         resolveStem(paths, timeline.bed)?.let { (bed, file) ->
             sequences += bedSequence(file, bed, total, durationMs(file.absolutePath), windows)
         }
@@ -453,7 +459,8 @@ class Media3MovieEngine : MovieEngine {
                                 offsetMs = t,
                                 windows = windows,
                                 duck = duck,
-                                attackMs = bed.attackMs
+                                attackMs = bed.attackMs,
+                                releaseMs = bed.releaseMs
                             )
                         ),
                         emptyList()

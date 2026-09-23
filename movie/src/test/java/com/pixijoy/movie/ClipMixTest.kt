@@ -49,4 +49,13 @@ class ClipMixTest {
         assertEquals(1f, ClipMix.duck(4000, windows, 0.25f, 200), 0.001f)
         assertEquals(1f, ClipMix.duck(2000, emptyList(), 0.25f, 200), 0.001f)
     }
+
+    @Test
+    fun duckReleaseSlowerThanAttack() {
+        val windows = listOf(ClipMix.Window(1000, 2000))
+        // 100ms after end with 400ms release → halfway up from floor
+        val g = ClipMix.duck(2100, windows, 0.2f, attackMs = 50, releaseMs = 400)
+        assertEquals(0.4f, g, 0.05f)
+        assertEquals(1f, ClipMix.duck(2500, windows, 0.2f, 50, 400), 0.001f)
+    }
 }

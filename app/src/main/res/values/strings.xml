@@ -129,6 +129,14 @@
     <string name="studio_movie_contrast">Contrast ×%1$.2f</string>
     <string name="studio_movie_saturation">Saturation ×%1$.2f</string>
     <string name="studio_movie_scopes">Scopes</string>
+    <string name="studio_movie_d6_hint">Finish music under dialogue: soft, medium, or hard duck with separate attack and release.</string>
+    <string name="studio_movie_d6_vo_active">Voice-over is ducking the music bed.</string>
+    <string name="studio_duck_preset">Duck under VO</string>
+    <string name="studio_duck_soft">Soft</string>
+    <string name="studio_duck_medium">Medium</string>
+    <string name="studio_duck_hard">Hard</string>
+    <string name="studio_duck_attack">Duck attack %1$d ms</string>
+    <string name="studio_duck_release">Duck release %1$d ms</string>
     <string name="studio_add_clip">Add another clip</string>
     <string name="studio_clip_count">%1$d clips · joined on export</string>
     <string name="studio_export_gif">Export GIF</string>

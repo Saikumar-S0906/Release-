@@ -75,7 +75,8 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **D3** — keyframed ClipMotion (zoom/pan/drift) via MatrixTransformation; Maestro `d3-keyframed-motion` **green** Pixel_7a.
 - **D4** — TimelineTitle layers + OverlayEffect; Maestro `d4-titles-captions` **green** Pixel_7a.
 - **D5** — TimelineGrade + bundled looks + scopes meters; Maestro `d5-grade-scopes` **green** Pixel_7a.
-**In progress:** D6 audio finish.
+- **D6** — duck Soft/Med/Hard + separate attack/release; Maestro `d6-audio-finish` **green** Pixel_7a.
+**In progress:** D7 PiP / multicam.
 
 **Blockers:** None.
 
@@ -101,10 +102,11 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **D3 keyframed transform / motion** — `ClipMotion` keyframes + Media3 `MatrixTransformation`; Maestro `d3-keyframed-motion` green Pixel_7a
 - **D4 titles + captions** — `TimelineTitle` layers + `OverlayEffect`; Maestro `d4-titles-captions` green Pixel_7a
 - **D5 grade + LUT + scopes** — `TimelineGrade` + `SingleColorLut` + scope meters; Maestro `d5-grade-scopes` green Pixel_7a
+- **D6 audio finish** — duck Soft/Med/Hard + `releaseMs`; Maestro `d6-audio-finish` green Pixel_7a
 
 ### Live gate
 
-**D6** audio finish.
+**D7** PiP / multicam.
 
 ### Follow-up epic (not a feature gate)
 

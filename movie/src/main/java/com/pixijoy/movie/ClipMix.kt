@@ -11,23 +11,25 @@ object ClipMix {
         tMs: Long,
         windows: List<Window>,
         duck: Float,
-        attackMs: Long = 120
+        attackMs: Long = 120,
+        releaseMs: Long = attackMs
     ): Float {
         val floor = volume(duck)
         if (windows.isEmpty() || floor >= 0.999f) return 1f
         val attack = attackMs.coerceAtLeast(0)
+        val release = releaseMs.coerceAtLeast(0)
         var best = 1f
         for (w in windows) {
             val start = w.startMs
             val end = w.endMs.coerceAtLeast(start)
-            if (tMs < start - attack || tMs > end + attack) continue
+            if (tMs < start - attack || tMs > end + release) continue
             val g = when {
                 attack > 0 && tMs < start -> {
                     val u = (start - tMs).toFloat() / attack
                     floor + (1f - floor) * u.coerceIn(0f, 1f)
                 }
-                attack > 0 && tMs > end -> {
-                    val u = (tMs - end).toFloat() / attack
+                release > 0 && tMs > end -> {
+                    val u = (tMs - end).toFloat() / release
                     floor + (1f - floor) * u.coerceIn(0f, 1f)
                 }
                 else -> floor
