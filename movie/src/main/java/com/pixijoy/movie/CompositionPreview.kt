@@ -11,6 +11,10 @@ class CompositionPreview(
     val player: Player = CompositionPlayer.Builder(context.applicationContext).build()
 
     fun bind(paths: List<String>, timeline: Timeline, playWhenReady: Boolean) {
+        bind(paths, MultiTrackTimeline.fromFlatTimeline(timeline), playWhenReady)
+    }
+
+    fun bind(paths: List<String>, timeline: MultiTrackTimeline, playWhenReady: Boolean) {
         val compositionPlayer = player as CompositionPlayer
         val pos = compositionPlayer.currentPosition
         compositionPlayer.setComposition(engine.composition(paths, timeline))

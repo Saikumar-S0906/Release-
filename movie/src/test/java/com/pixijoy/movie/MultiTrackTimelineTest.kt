@@ -42,6 +42,88 @@ class MultiTrackTimelineTest {
     }
 
     @Test
+    fun composedVideoClips_skipsMutedTracks_andOrdersTracks() {
+        val mt = MultiTrackTimeline(
+            tracks = listOf(
+                TimelineTrack(
+                    id = "V1",
+                    kind = TrackKind.Video,
+                    name = "Video 1",
+                    clips = listOf(TimelineClip(id = "a", mediaIndex = 0, inMs = 0, outMs = 1000))
+                ),
+                TimelineTrack(
+                    id = "V2",
+                    kind = TrackKind.Video,
+                    name = "Video 2",
+                    muted = true,
+                    clips = listOf(TimelineClip(id = "b", mediaIndex = 1, inMs = 0, outMs = 500))
+                ),
+                TimelineTrack(
+                    id = "V3",
+                    kind = TrackKind.Video,
+                    name = "Video 3",
+                    clips = listOf(TimelineClip(id = "c", mediaIndex = 2, inMs = 0, outMs = 800))
+                ),
+                TimelineTrack(id = "A1", kind = TrackKind.Audio, name = "Audio 1")
+            )
+        )
+        assertEquals(listOf("a", "c"), mt.composedVideoClips().map { it.id })
+        assertEquals(1800L, mt.totalMs())
+    }
+
+    @Test
+    fun withPrimaryFlat_preservesExtraTracks() {
+        val base = MultiTrackTimeline(
+            tracks = listOf(
+                TimelineTrack(
+                    id = "V1",
+                    kind = TrackKind.Video,
+                    name = "Video 1",
+                    clips = listOf(TimelineClip(id = "old", mediaIndex = 0, inMs = 0, outMs = 1000))
+                ),
+                TimelineTrack(
+                    id = "V2",
+                    kind = TrackKind.Video,
+                    name = "B-roll",
+                    clips = listOf(TimelineClip(id = "broll", mediaIndex = 1, inMs = 0, outMs = 400))
+                ),
+                TimelineTrack(id = "A1", kind = TrackKind.Audio, name = "Audio 1")
+            )
+        )
+        val next = base.withPrimaryFlat(
+            Timeline(clips = listOf(TimelineClip(id = "new", mediaIndex = 0, inMs = 0, outMs = 2000)))
+        )
+        assertEquals("new", next.tracks.first { it.id == "V1" }.clips.single().id)
+        assertEquals("broll", next.tracks.first { it.id == "V2" }.clips.single().id)
+        assertEquals(2, next.videoTracks().size)
+    }
+
+    @Test
+    fun compositionSequencePlan_countsAudioTracksAndBeds() {
+        val mt = MultiTrackTimeline(
+            tracks = listOf(
+                TimelineTrack(
+                    id = "V1",
+                    kind = TrackKind.Video,
+                    name = "Video 1",
+                    clips = listOf(TimelineClip(id = "a", mediaIndex = 0, inMs = 0, outMs = 1000))
+                ),
+                TimelineTrack(
+                    id = "A1",
+                    kind = TrackKind.Audio,
+                    name = "Audio 1",
+                    clips = listOf(TimelineClip(id = "sfx", mediaIndex = 0, inMs = 0, outMs = 500))
+                )
+            ),
+            bed = AudioBed(fileName = "bed.m4a")
+        )
+        // video + audio track + bed
+        assertEquals(3, mt.compositionSequencePlan(hasBedFile = true, hasVoiceFile = false, stemCount = 0))
+        // muted audio track drops that sequence; bed remains → video + bed
+        assertEquals(2, mt.withTrackMuted("A1", true).compositionSequencePlan(true, false, 0))
+    }
+
+    @Test
     fun flatTimeline_bridge_preservesClipsBedsAndStems() {
         val flat = Timeline(
             clips = listOf(

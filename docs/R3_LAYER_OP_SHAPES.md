@@ -115,7 +115,7 @@ Smart objects, vector paths, group folders, generative fill, RAW (parallel track
 
 ## Next R3 / R4
 
-**Next:** D1 multi-track composition E2E (preview + export).
+**Next:** D2+ movie cinema (D1 composition E2E MET).
 
 See `TOTAL_REMAINING.txt` and `REMAINING_MASTER_PLAN.md`.
 

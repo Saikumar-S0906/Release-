@@ -39,10 +39,19 @@ interface MovieEngine {
     fun durationMs(path: String): Long
     fun fps(path: String): Float
     fun composition(paths: List<String>, timeline: Timeline): Composition
+    fun composition(paths: List<String>, timeline: MultiTrackTimeline): Composition
     suspend fun export(
         context: Context,
         paths: List<String>,
         timeline: Timeline,
+        talking: Boolean,
+        gif: Boolean,
+        onProgress: (Float) -> Unit
+    ): AppResult<String>
+    suspend fun export(
+        context: Context,
+        paths: List<String>,
+        timeline: MultiTrackTimeline,
         talking: Boolean,
         gif: Boolean,
         onProgress: (Float) -> Unit
@@ -62,13 +71,26 @@ class Media3MovieEngine : MovieEngine {
 
     override fun fps(path: String): Float = MovieFrame.fps(MediaProbe.probe(File(path)).fps)
 
-    override fun composition(paths: List<String>, timeline: Timeline): Composition {
-        val source = if (timeline.clips.isEmpty()) {
-            Timeline.fromMedia(paths.size) { durationMs(paths[it]) }
-        } else timeline
-        val items = source.clips.map { clip -> videoItem(paths, clip) }
-        val sequence = EditedMediaItemSequence.Builder(items).build()
-        return composeAudio(sequence, paths, source)
+    override fun composition(paths: List<String>, timeline: Timeline): Composition =
+        composition(paths, MultiTrackTimeline.fromFlatTimeline(timeline))
+
+    override fun composition(paths: List<String>, timeline: MultiTrackTimeline): Composition {
+        val mt = timeline.ensureDefaultTracks()
+        val clips = mt.composedVideoClips().ifEmpty {
+            Timeline.fromMedia(paths.size) { durationMs(paths[it]) }.clips
+        }
+        val items = clips.map { clip -> videoItem(paths, clip) }
+        val videoSeq = EditedMediaItemSequence.Builder(items).build()
+        val audioTrackSeqs = mt.unmutedAudioTracksWithClips().map { track ->
+            audioClipSequence(paths, track.clips)
+        }
+        return composeAudio(
+            videoSeq = videoSeq,
+            paths = paths,
+            timeline = mt.toFlatTimeline().copy(clips = clips),
+            durationOverrideMs = null,
+            extraAudioSequences = audioTrackSeqs
+        )
     }
 
     override suspend fun export(
@@ -78,23 +100,40 @@ class Media3MovieEngine : MovieEngine {
         talking: Boolean,
         gif: Boolean,
         onProgress: (Float) -> Unit
+    ): AppResult<String> = export(
+        context,
+        paths,
+        MultiTrackTimeline.fromFlatTimeline(timeline),
+        talking,
+        gif,
+        onProgress
+    )
+
+    override suspend fun export(
+        context: Context,
+        paths: List<String>,
+        timeline: MultiTrackTimeline,
+        talking: Boolean,
+        gif: Boolean,
+        onProgress: (Float) -> Unit
     ): AppResult<String> {
         val primary = paths.firstOrNull() ?: return AppResult.Err("No clip to export.")
         val still = isStill(primary)
-        val rate = timeline.clips.firstOrNull()?.speed ?: 1f
+        val flat = timeline.toFlatTimeline()
+        val rate = flat.clips.firstOrNull()?.speed ?: 1f
         val cacheName = if (gif) "pixijoy-export-${System.currentTimeMillis()}.gif"
         else "pixijoy-export-${System.currentTimeMillis()}.mp4"
         val cache = File(context.cacheDir, cacheName)
         val encoded = when {
             gif -> encodeGif(primary, cache, talking, rate, onProgress)
             still -> {
-                val stillResult = encodeStill(primary, cache, talking, rate, timeline.outputHeight, onProgress)
+                val stillResult = encodeStill(primary, cache, talking, rate, flat.outputHeight, onProgress)
                 if (stillResult is AppResult.Err) stillResult
                 else attachBed(
                     context,
                     cache,
                     paths,
-                    timeline,
+                    flat,
                     MovieSpeed.outputDurationMs(MovieTrim.stillDurationMs(talking), rate),
                     onProgress
                 )
@@ -164,7 +203,7 @@ class Media3MovieEngine : MovieEngine {
     private suspend fun encodeClips(
         context: Context,
         paths: List<String>,
-        timeline: Timeline,
+        timeline: MultiTrackTimeline,
         cache: File,
         onProgress: (Float) -> Unit
     ): AppResult<Unit> = withContext(Dispatchers.Main) {
@@ -189,6 +228,31 @@ class Media3MovieEngine : MovieEngine {
         val effects = clipEffects(clip)
         if (effects != null) edited.setEffects(effects)
         return edited.build()
+    }
+
+    /** Audio-only sequence from timeline clips on an audio track (D1 multi-track). */
+    private fun audioClipSequence(paths: List<String>, clips: List<TimelineClip>): EditedMediaItemSequence {
+        val items = clips.map { clip ->
+            val path = paths.getOrElse(clip.mediaIndex) { paths.first() }
+            val duration = durationMs(path)
+            val (start, end) = MovieTrim.normalize(clip.inMs, clip.outMs, duration)
+            val media = MediaItem.Builder()
+                .setUri(Uri.fromFile(File(path)))
+                .setClippingConfiguration(
+                    MediaItem.ClippingConfiguration.Builder()
+                        .setStartPositionMs(start)
+                        .setEndPositionMs(end)
+                        .build()
+                )
+                .build()
+            val edited = EditedMediaItem.Builder(media)
+                .setRemoveVideo(true)
+                .setDurationUs(clip.durationMs.coerceAtLeast(1) * 1000)
+            val effects = clipEffects(clip.copy(muted = false))
+            if (effects != null) edited.setEffects(effects)
+            edited.build()
+        }
+        return EditedMediaItemSequence.Builder(items).build()
     }
 
     private suspend fun attachBed(
@@ -229,11 +293,13 @@ class Media3MovieEngine : MovieEngine {
         videoSeq: EditedMediaItemSequence,
         paths: List<String>,
         timeline: Timeline,
-        durationOverrideMs: Long? = null
+        durationOverrideMs: Long? = null,
+        extraAudioSequences: List<EditedMediaItemSequence> = emptyList()
     ): Composition {
         val total = (durationOverrideMs ?: timeline.totalMs()).coerceAtLeast(250)
         val sequences = ArrayList<EditedMediaItemSequence>()
         sequences += videoSeq
+        sequences += extraAudioSequences
         val voice = resolveStem(paths, timeline.voice)
         val voiceEnd = voice?.let { minOf(durationMs(it.second.absolutePath), total) } ?: 0L
         val windows = timeline.duckWindows(voiceEnd)

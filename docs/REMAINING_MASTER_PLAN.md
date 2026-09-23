@@ -5,7 +5,7 @@
 **Branch:** land on `origin/next` after review-clear.  
 **Excluded:** Section A (done/exited) — do not reopen.
 
-**Snapshot (2026-09-23):** **Wave B EXITED** · **Wave C EXITED** (C3–C8) · **D1 persistence bridge landed** (MT graph save/load; preview/export still flatten V1) · Live gate: **D1 composition E2E**.
+**Snapshot (2026-09-23):** **Wave B EXITED** · **Wave C EXITED** · **D1 composition E2E MET** · Live gate: **D2** ripple/roll + transitions.
 
 ```
 B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5 ML packs) ──▶ F (R6+ opt-in)
@@ -36,7 +36,7 @@ B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5
 | **B5** | Docs on `origin/next` | **EXITED** with Phase 0 land | Status docs in same commit |
 | **B6** | Gallery Photo Picker | Yellow/manual | Keep documented; no fake green |
 
-**Immediate next:** **D1** multi-track composition E2E (preview + export).
+**Immediate next:** **D2** ripple/roll + transitions.
 
 **G overlap with B:** **G4** exited with B3 (chips ≥48dp, announced selection).
 
@@ -67,7 +67,7 @@ Dependency order is fixed. Each op: graph letter → `:photo` engine → session
 
 | ID | Slice | Depends on | Deliverables |
 |----|-------|------------|--------------|
-| **D1** | Multi-track V/A | B3 | Promote `MultiTrackTimeline` to source of truth; preview composition; persistence; export match | **Persistence MET** (MT encode save/load + flatten); composition still single-sequence |
+| **D1** | Multi-track V/A | B3 | Promote `MultiTrackTimeline` to source of truth; preview composition; persistence; export match | **MET 2026-09-23** composition E2E + track mute UI |
 | **D2** | Ripple/roll; transitions; speed ramps | D1 | Edit ops on tracks; Maestro trim/transition |
 | **D3** | Keyframed transform / motion | D1 | Keyframe model + preview + export |
 | **D4** | Titles + captions | D3 | Text layers on timeline |
@@ -144,7 +144,7 @@ Never land F* as isolated effects without listed primitives.
 | **P0** | **DONE** — Wave B exit + C1–C3 foundations + B1 green | G4 with B3 |
 | **P1** | **DONE** — C4 sky + Wave C foundations | G1 start; G8 rename |
 | **P2** | **DONE** — C5–C8 Wave C exit | G2/G3 gradual |
-| **P3** | D1 multi-track composition E2E | G5–G7 |
+| **P3** | **DONE** — D1 composition E2E | G5–G7 |
 | **P4** | D2–D6 cinema core | — |
 | **P5** | D7–D11 | — |
 | **P6** | ML-pack foundation + E5 size gate → E1 → E2/E3 → E4 | — |
@@ -177,7 +177,7 @@ Never land F* as isolated effects without listed primitives.
 
 ## Next concrete slice (start here)
 
-1. **D1 E2E** — promote MultiTrackTimeline to preview composition + export parity  
+1. **D2** ripple/roll + transitions on MT  
 2. **Kick G1** tablet two-pane refinement in parallel  
 
 When this plan drifts, update this file and `TOTAL_REMAINING.txt` in the same commit as the exit.

@@ -27,15 +27,23 @@ data class MultiTrackTimeline(
     fun videoTracks(): List<TimelineTrack> = tracks.filter { it.kind == TrackKind.Video }
     fun audioTracks(): List<TimelineTrack> = tracks.filter { it.kind == TrackKind.Audio }
 
+    /** Clips from unmuted video tracks, track order then clip order — composition source of truth. */
+    fun composedVideoClips(): List<TimelineClip> =
+        videoTracks().filter { !it.muted }.flatMap { it.clips }
+
+    fun unmutedAudioTracksWithClips(): List<TimelineTrack> =
+        audioTracks().filter { !it.muted && it.clips.isNotEmpty() }
+
     fun totalMs(): Long =
-        videoTracks()
-            .flatMap { it.clips }
+        composedVideoClips()
             .sumOf { it.durationMs }
             .coerceAtLeast(1)
 
-    /** Flatten primary video lane (+ beds/fx) for current Media3 single-sequence preview/export. */
+    /** Flatten primary video lane (+ beds/fx) for legacy single-list UI helpers. */
     fun toFlatTimeline(): Timeline {
-        val videoClips = videoTracks().firstOrNull()?.clips.orEmpty()
+        val videoClips = composedVideoClips().ifEmpty {
+            videoTracks().firstOrNull()?.clips.orEmpty()
+        }
         return Timeline(
             clips = videoClips,
             bed = bed,
@@ -44,6 +52,53 @@ data class MultiTrackTimeline(
             extraStems = extraStems,
             masterFx = masterFx
         )
+    }
+
+    /** Replace primary video clips + global audio beds from a flat [Timeline]; keep extra tracks. */
+    fun withPrimaryFlat(flat: Timeline): MultiTrackTimeline {
+        val ensured = ensureDefaultTracks()
+        val primaryId = ensured.videoTracks().first().id
+        val nextTracks = ensured.tracks.map { track ->
+            if (track.id == primaryId) track.copy(clips = flat.clips) else track
+        }
+        return ensured.copy(
+            tracks = nextTracks,
+            bed = flat.bed,
+            voice = flat.voice,
+            extraStems = flat.extraStems,
+            masterFx = flat.masterFx,
+            outputHeight = flat.outputHeight
+        )
+    }
+
+    fun ensureDefaultTracks(): MultiTrackTimeline {
+        val hasVideo = tracks.any { it.kind == TrackKind.Video }
+        val hasAudio = tracks.any { it.kind == TrackKind.Audio }
+        if (hasVideo && hasAudio) return this
+        val next = tracks.toMutableList()
+        if (!hasVideo) {
+            next.add(0, TimelineTrack(id = "V1", kind = TrackKind.Video, name = "Video 1"))
+        }
+        if (!hasAudio) {
+            next.add(TimelineTrack(id = "A1", kind = TrackKind.Audio, name = "Audio 1"))
+        }
+        return copy(tracks = next)
+    }
+
+    fun withTrackMuted(trackId: String, muted: Boolean): MultiTrackTimeline =
+        copy(tracks = tracks.map { if (it.id == trackId) it.copy(muted = muted) else it })
+
+    /**
+     * Plan for Media3 Composition sequences (testable without Transformer).
+     * Video = 1 sequence; each unmuted audio track with clips = 1 sequence; beds/stems separate.
+     */
+    fun compositionSequencePlan(hasBedFile: Boolean, hasVoiceFile: Boolean, stemCount: Int): Int {
+        var n = 1 // primary video sequence (may be empty placeholder)
+        n += unmutedAudioTracksWithClips().size
+        if (hasBedFile) n++
+        if (hasVoiceFile) n++
+        n += stemCount.coerceAtLeast(0)
+        return n
     }
 
     fun encode(): String = buildString {

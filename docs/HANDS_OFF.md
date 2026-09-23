@@ -70,8 +70,8 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **C1 LUT import** — wired (`CubeLutParser`, `lut:` keys, Looks Import); picker yellow/manual; chip Maestro green.
 - **C2 RAW/DNG** — open + Exif + `preview.jpg` sidecar + RAW badge.
 - **C3–C8 Wave C** — Fill undo · Warp · Presets/batch · ColorIntent · Soften (light). See exit note.
-- **D1** — `MultiTrackTimeline` encode/decode + persist; preview/export still flatten.
-**In progress:** D1 multi-track composition E2E (preview/export still flatten).
+- **D1** — `MultiTrackTimeline` composition E2E (preview+export from MT; track mute).
+**In progress:** D2+ cinema ops on MT composition.
 
 **Blockers:** None.
 
@@ -92,10 +92,11 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **Wave B** — quality gates + R3.1 UX **exited** 2026-09-23
 - **C4 Sky / background replace** — `PhotoOp.SkyReplace` graph `H`; heuristic sky/backdrop matte; Maestro green
 - **Wave C** — C3 Fill undo/clear · C5 Perspective/Liquify · C6 presets + batch export · C7 export color intent · C8 light Soften (model-heavy → R5)
+- **D1 multi-track composition** — MT preview/export parity; track mute; Maestro `multitrack-lanes`
 
 ### Live gate
 
-**D1** multi-track timeline composition E2E (preview + export match MT).
+**D2** ripple/roll + transitions (on landed MT composition).
 
 ### Follow-up epic (not a feature gate)
 

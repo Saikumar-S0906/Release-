@@ -10,6 +10,7 @@ import androidx.work.workDataOf
 import com.pixijoy.core.common.AppResult
 import com.pixijoy.core.data.ProjectRepository
 import com.pixijoy.movie.Media3MovieEngine
+import com.pixijoy.movie.MultiTrackTimeline
 import com.pixijoy.movie.Timeline
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,13 +33,16 @@ class MovieExportWorker(
             )
             val engine = Media3MovieEngine()
             val paths = project.media.map { it.path }.ifEmpty { listOf(project.coverPath) }
-            val timeline = Timeline.decode(project.graph, paths.size) { i ->
-                engine.durationMs(paths.getOrElse(i) { paths.first() })
-            }
+            val multi = MultiTrackTimeline.decode(project.graph)
+                ?: MultiTrackTimeline.fromFlatTimeline(
+                    Timeline.decode(project.graph, paths.size) { i ->
+                        engine.durationMs(paths.getOrElse(i) { paths.first() })
+                    }
+                )
             val result = engine.export(
                 context = applicationContext,
                 paths = paths,
-                timeline = timeline,
+                timeline = multi,
                 talking = talking,
                 gif = gif,
                 onProgress = { p ->

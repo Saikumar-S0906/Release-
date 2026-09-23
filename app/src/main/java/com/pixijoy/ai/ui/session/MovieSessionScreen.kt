@@ -132,13 +132,26 @@ fun MovieSessionScreen(
         if (still) MovieTrim.stillDurationMs(talking)
         else paths.sumOf { engine.durationMs(it) }.coerceAtLeast(1000)
     }
-    var timeline by remember {
+    var multi by remember {
         mutableStateOf(
-            MultiTrackTimeline.decode(project.graph)?.toFlatTimeline()
-                ?: Timeline.decode(project.graph, paths.size) { i ->
-                    engine.durationMs(paths.getOrElse(i) { path })
-                }
+            (
+                MultiTrackTimeline.decode(project.graph)
+                    ?: MultiTrackTimeline.fromFlatTimeline(
+                        Timeline.decode(project.graph, paths.size) { i ->
+                            engine.durationMs(paths.getOrElse(i) { path })
+                        }
+                    )
+                ).ensureDefaultTracks()
         )
+    }
+    var timeline by remember { mutableStateOf(multi.toFlatTimeline()) }
+    fun commitTimeline(next: Timeline) {
+        timeline = next
+        multi = multi.withPrimaryFlat(next)
+    }
+    fun commitMulti(next: MultiTrackTimeline) {
+        multi = next.ensureDefaultTracks()
+        timeline = multi.toFlatTimeline()
     }
     var selectedId by remember { mutableStateOf(timeline.clips.firstOrNull()?.id) }
     var startMs by remember { mutableLongStateOf(0L) }
@@ -164,7 +177,7 @@ fun MovieSessionScreen(
             scope.launch {
                 when (val result = repo.importAudioFile(project.id, uri, "bed")) {
                     is AppResult.Ok -> {
-                        timeline = timeline.copy(bed = AudioBed(fileName = File(result.value).name))
+                        commitTimeline(timeline.copy(bed = AudioBed(fileName = File(result.value).name)))
                     }
                     is AppResult.Err -> status = result.message
                 }
@@ -176,7 +189,7 @@ fun MovieSessionScreen(
             scope.launch {
                 when (val result = repo.importAudioFile(project.id, uri, "voice")) {
                     is AppResult.Ok -> {
-                        timeline = timeline.copy(voice = AudioBed(fileName = File(result.value).name, volume = 1f, duck = 1f))
+                        commitTimeline(timeline.copy(voice = AudioBed(fileName = File(result.value).name, volume = 1f, duck = 1f)))
                     }
                     is AppResult.Err -> status = result.message
                 }
@@ -190,14 +203,14 @@ fun MovieSessionScreen(
                     is AppResult.Ok -> {
                         val name = File(result.value).name
                         val id = "sfx${timeline.extraStems.size + 1}"
-                        timeline = timeline.copy(
+                        commitTimeline(timeline.copy(
                             extraStems = timeline.extraStems + AudioStem(
                                 id = id,
                                 fileName = name,
                                 volume = 1f,
                                 role = "sfx"
                             )
-                        )
+                        ))
                     }
                     is AppResult.Err -> status = result.message
                 }
@@ -256,13 +269,20 @@ fun MovieSessionScreen(
     }
     LaunchedEffect(paths.size) {
         if (!still && timeline.clips.size != paths.size) {
-            timeline = Timeline.fromMedia(paths.size) { engine.durationMs(paths[it]) }
-                .copy(bed = timeline.bed, voice = timeline.voice, extraStems = timeline.extraStems, masterFx = timeline.masterFx)
+            commitTimeline(
+                Timeline.fromMedia(paths.size) { engine.durationMs(paths[it]) }
+                    .copy(
+                        bed = timeline.bed,
+                        voice = timeline.voice,
+                        extraStems = timeline.extraStems,
+                        masterFx = timeline.masterFx
+                    )
+            )
             selectedId = timeline.clips.firstOrNull()?.id
         }
     }
-    LaunchedEffect(paths.joinToString(), timeline.encode(), compositionPreview) {
-        compositionPreview?.bind(paths, timeline, playing)
+    LaunchedEffect(paths.joinToString(), multi.encode(), compositionPreview) {
+        compositionPreview?.bind(paths, multi, playing)
     }
     LaunchedEffect(player) {
         val exo = player ?: return@LaunchedEffect
@@ -272,8 +292,8 @@ fun MovieSessionScreen(
             delay(50)
         }
     }
-    LaunchedEffect(timeline, speed) {
-        repo.saveGraph(project.id, MultiTrackTimeline.fromFlatTimeline(timeline).encode())
+    LaunchedEffect(multi, speed) {
+        repo.saveGraph(project.id, multi.encode())
     }
 
     val workManager = remember { WorkManager.getInstance(context) }
@@ -335,7 +355,7 @@ fun MovieSessionScreen(
         status = context.getString(R.string.studio_export_pct, 0)
         exportSuccessUri = null
         scope.launch {
-            repo.saveGraph(project.id, MultiTrackTimeline.fromFlatTimeline(timeline).encode())
+            repo.saveGraph(project.id, multi.encode())
             MovieExportWorker.ensureChannel(context)
             val request = OneTimeWorkRequestBuilder<MovieExportWorker>()
                 .setInputData(
@@ -412,6 +432,33 @@ fun MovieSessionScreen(
                 .padding(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .testTag("movie_tracks"),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                multi.tracks.forEach { track ->
+                    val label = if (track.muted) {
+                        stringResource(R.string.studio_track_muted, track.name)
+                    } else {
+                        track.name
+                    }
+                    Text(
+                        label,
+                        color = PixiText,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(999.dp))
+                            .background(if (track.muted) PixiBg else PixiAccent)
+                            .clickable {
+                                commitMulti(multi.withTrackMuted(track.id, !track.muted))
+                            }
+                            .testTag("movie_track_${track.id}")
+                            .padding(horizontal = 12.dp, vertical = 10.dp)
+                    )
+                }
+            }
             if (!still) {
                 Text(stringResource(R.string.studio_scrub), color = PixiTextMuted)
                 Slider(
@@ -445,7 +492,7 @@ fun MovieSessionScreen(
                         val id = selected?.id ?: return@Slider
                         val inn = (it * selectedSourceEnd).toLong()
                         startMs = inn
-                        timeline = timeline.rippleTrimIn(id, inn)
+                        commitTimeline(timeline.rippleTrimIn(id, inn))
                     },
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_trim_start")
@@ -457,7 +504,7 @@ fun MovieSessionScreen(
                         val id = selected?.id ?: return@Slider
                         val out = (it * selectedSourceEnd).toLong()
                         endMs = out
-                        timeline = timeline.rippleTrimOut(id, out, selectedSourceEnd)
+                        commitTimeline(timeline.rippleTrimOut(id, out, selectedSourceEnd))
                     },
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_trim_end")
@@ -493,7 +540,7 @@ fun MovieSessionScreen(
                 TextButton(
                     onClick = {
                         val ph = (playhead * timeline.totalMs()).toLong()
-                        timeline = timeline.split(ph)
+                        commitTimeline(timeline.split(ph))
                         selectedId = timeline.clips.firstOrNull()?.id
                     },
                     modifier = Modifier.testTag("movie_split")
@@ -503,7 +550,7 @@ fun MovieSessionScreen(
                 TextButton(
                     onClick = {
                         val id = selected?.id ?: return@TextButton
-                        timeline = timeline.update(id) { it.copy(muted = !it.muted) }
+                        commitTimeline(timeline.update(id) { it.copy(muted = !it.muted) })
                     },
                     modifier = Modifier.testTag("movie_mute")
                 ) {
@@ -521,7 +568,7 @@ fun MovieSessionScreen(
                     value = selected?.volume ?: 1f,
                     onValueChange = { v ->
                         val id = selected?.id ?: return@Slider
-                        timeline = timeline.update(id) { it.copy(volume = ClipMix.volume(v)) }
+                        commitTimeline(timeline.update(id) { it.copy(volume = ClipMix.volume(v)) })
                     },
                     valueRange = 0f..1f,
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
@@ -535,7 +582,7 @@ fun MovieSessionScreen(
                     value = (selected?.fadeInMs ?: 0L).toFloat(),
                     onValueChange = { v ->
                         val id = selected?.id ?: return@Slider
-                        timeline = timeline.update(id) { it.copy(fadeInMs = v.toLong().coerceAtLeast(0)) }
+                        commitTimeline(timeline.update(id) { it.copy(fadeInMs = v.toLong().coerceAtLeast(0)) })
                     },
                     valueRange = 0f..2000f,
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
@@ -549,7 +596,7 @@ fun MovieSessionScreen(
                     value = (selected?.fadeOutMs ?: 0L).toFloat(),
                     onValueChange = { v ->
                         val id = selected?.id ?: return@Slider
-                        timeline = timeline.update(id) { it.copy(fadeOutMs = v.toLong().coerceAtLeast(0)) }
+                        commitTimeline(timeline.update(id) { it.copy(fadeOutMs = v.toLong().coerceAtLeast(0)) })
                     },
                     valueRange = 0f..2000f,
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
@@ -574,15 +621,15 @@ fun MovieSessionScreen(
                             selected = clip.id == selected?.id,
                             sourceEndMs = sourceEnd,
                             onSelect = { selectedId = clip.id },
-                            onTrimIn = { timeline = timeline.rippleTrimIn(clip.id, it) },
-                            onTrimOut = { timeline = timeline.rippleTrimOut(clip.id, it, sourceEnd) }
+                            onTrimIn = { commitTimeline(timeline.rippleTrimIn(clip.id, it)) },
+                            onTrimOut = { commitTimeline(timeline.rippleTrimOut(clip.id, it, sourceEnd)) }
                         )
                     }
                 }
                 TextButton(
                     onClick = {
                         val id = selected?.id ?: return@TextButton
-                        timeline = timeline.remove(id)
+                        commitTimeline(timeline.remove(id))
                         selectedId = timeline.clips.firstOrNull()?.id
                     },
                     modifier = Modifier.testTag("movie_delete_clip")
@@ -647,7 +694,7 @@ fun MovieSessionScreen(
                 Slider(
                     value = bed.volume,
                     onValueChange = { v ->
-                        timeline = timeline.copy(bed = bed.copy(volume = ClipMix.volume(v)))
+                        commitTimeline(timeline.copy(bed = bed.copy(volume = ClipMix.volume(v))))
                     },
                     valueRange = 0f..1f,
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
@@ -659,7 +706,7 @@ fun MovieSessionScreen(
                 )
                 Slider(
                     value = bed.fadeInMs.toFloat(),
-                    onValueChange = { timeline = timeline.copy(bed = bed.copy(fadeInMs = it.toLong().coerceAtLeast(0))) },
+                    onValueChange = { commitTimeline(timeline.copy(bed = bed.copy(fadeInMs = it.toLong().coerceAtLeast(0)))) },
                     valueRange = 0f..2000f,
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_bed_fade_in")
@@ -670,7 +717,7 @@ fun MovieSessionScreen(
                 )
                 Slider(
                     value = bed.fadeOutMs.toFloat(),
-                    onValueChange = { timeline = timeline.copy(bed = bed.copy(fadeOutMs = it.toLong().coerceAtLeast(0))) },
+                    onValueChange = { commitTimeline(timeline.copy(bed = bed.copy(fadeOutMs = it.toLong().coerceAtLeast(0)))) },
                     valueRange = 0f..2000f,
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_bed_fade_out")
@@ -682,7 +729,7 @@ fun MovieSessionScreen(
                 Slider(
                     value = bed.duck,
                     onValueChange = { v ->
-                        timeline = timeline.copy(bed = bed.copy(duck = ClipMix.volume(v)))
+                        commitTimeline(timeline.copy(bed = bed.copy(duck = ClipMix.volume(v))))
                     },
                     valueRange = 0f..1f,
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
@@ -690,7 +737,7 @@ fun MovieSessionScreen(
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TextButton(
-                        onClick = { timeline = timeline.copy(bed = bed.copy(muted = !bed.muted)) },
+                        onClick = { commitTimeline(timeline.copy(bed = bed.copy(muted = !bed.muted))) },
                         modifier = Modifier.testTag("movie_bed_mute")
                     ) {
                         Text(
@@ -700,7 +747,7 @@ fun MovieSessionScreen(
                         )
                     }
                     TextButton(
-                        onClick = { timeline = timeline.copy(bed = null) },
+                        onClick = { commitTimeline(timeline.copy(bed = null)) },
                         modifier = Modifier.testTag("movie_bed_remove")
                     ) {
                         Text(stringResource(R.string.studio_remove_music), color = PixiText)
@@ -723,7 +770,7 @@ fun MovieSessionScreen(
                 Slider(
                     value = voice.volume,
                     onValueChange = { v ->
-                        timeline = timeline.copy(voice = voice.copy(volume = ClipMix.volume(v)))
+                        commitTimeline(timeline.copy(voice = voice.copy(volume = ClipMix.volume(v))))
                     },
                     valueRange = 0f..1f,
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
@@ -736,7 +783,7 @@ fun MovieSessionScreen(
                 Slider(
                     value = voice.fadeInMs.toFloat(),
                     onValueChange = {
-                        timeline = timeline.copy(voice = voice.copy(fadeInMs = it.toLong().coerceAtLeast(0)))
+                        commitTimeline(timeline.copy(voice = voice.copy(fadeInMs = it.toLong().coerceAtLeast(0))))
                     },
                     valueRange = 0f..2000f,
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
@@ -749,7 +796,7 @@ fun MovieSessionScreen(
                 Slider(
                     value = voice.fadeOutMs.toFloat(),
                     onValueChange = {
-                        timeline = timeline.copy(voice = voice.copy(fadeOutMs = it.toLong().coerceAtLeast(0)))
+                        commitTimeline(timeline.copy(voice = voice.copy(fadeOutMs = it.toLong().coerceAtLeast(0))))
                     },
                     valueRange = 0f..2000f,
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
@@ -757,7 +804,7 @@ fun MovieSessionScreen(
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TextButton(
-                        onClick = { timeline = timeline.copy(voice = voice.copy(muted = !voice.muted)) },
+                        onClick = { commitTimeline(timeline.copy(voice = voice.copy(muted = !voice.muted))) },
                         modifier = Modifier.testTag("movie_voice_mute")
                     ) {
                         Text(
@@ -767,7 +814,7 @@ fun MovieSessionScreen(
                         )
                     }
                     TextButton(
-                        onClick = { timeline = timeline.copy(voice = null) },
+                        onClick = { commitTimeline(timeline.copy(voice = null)) },
                         modifier = Modifier.testTag("movie_voice_remove")
                     ) {
                         Text(stringResource(R.string.studio_remove_voice), color = PixiText)
@@ -790,11 +837,11 @@ fun MovieSessionScreen(
                 Slider(
                     value = sfx.volume,
                     onValueChange = { v ->
-                        timeline = timeline.copy(
+                        commitTimeline(timeline.copy(
                             extraStems = timeline.extraStems.map {
                                 if (it.id == sfx.id) it.copy(volume = ClipMix.volume(v)) else it
                             }
-                        )
+                        ))
                     },
                     valueRange = 0f..1f,
                     colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
@@ -803,11 +850,11 @@ fun MovieSessionScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TextButton(
                         onClick = {
-                            timeline = timeline.copy(
+                            commitTimeline(timeline.copy(
                                 extraStems = timeline.extraStems.map {
                                     if (it.id == sfx.id) it.copy(muted = !it.muted) else it
                                 }
-                            )
+                            ))
                         },
                         modifier = Modifier.testTag("movie_sfx_mute")
                     ) {
@@ -819,9 +866,9 @@ fun MovieSessionScreen(
                     }
                     TextButton(
                         onClick = {
-                            timeline = timeline.copy(
+                            commitTimeline(timeline.copy(
                                 extraStems = timeline.extraStems.filterNot { it.id == sfx.id }
-                            )
+                            ))
                         },
                         modifier = Modifier.testTag("movie_sfx_remove")
                     ) {
@@ -837,7 +884,7 @@ fun MovieSessionScreen(
             )
             Slider(
                 value = fx.lowGainDb,
-                onValueChange = { timeline = timeline.copy(masterFx = fx.copy(lowGainDb = it)) },
+                onValueChange = { commitTimeline(timeline.copy(masterFx = fx.copy(lowGainDb = it))) },
                 valueRange = -12f..12f,
                 colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                 modifier = Modifier.testTag("movie_eq_low")
@@ -848,7 +895,7 @@ fun MovieSessionScreen(
             )
             Slider(
                 value = fx.midGainDb,
-                onValueChange = { timeline = timeline.copy(masterFx = fx.copy(midGainDb = it)) },
+                onValueChange = { commitTimeline(timeline.copy(masterFx = fx.copy(midGainDb = it))) },
                 valueRange = -12f..12f,
                 colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                 modifier = Modifier.testTag("movie_eq_mid")
@@ -859,7 +906,7 @@ fun MovieSessionScreen(
             )
             Slider(
                 value = fx.highGainDb,
-                onValueChange = { timeline = timeline.copy(masterFx = fx.copy(highGainDb = it)) },
+                onValueChange = { commitTimeline(timeline.copy(masterFx = fx.copy(highGainDb = it))) },
                 valueRange = -12f..12f,
                 colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                 modifier = Modifier.testTag("movie_eq_high")
@@ -871,7 +918,7 @@ fun MovieSessionScreen(
             )
             Slider(
                 value = fx.compThresholdDb,
-                onValueChange = { timeline = timeline.copy(masterFx = fx.copy(compThresholdDb = it)) },
+                onValueChange = { commitTimeline(timeline.copy(masterFx = fx.copy(compThresholdDb = it))) },
                 valueRange = -40f..0f,
                 colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                 modifier = Modifier.testTag("movie_comp_threshold")
@@ -882,7 +929,7 @@ fun MovieSessionScreen(
             )
             Slider(
                 value = fx.compRatio,
-                onValueChange = { timeline = timeline.copy(masterFx = fx.copy(compRatio = it.coerceAtLeast(1f))) },
+                onValueChange = { commitTimeline(timeline.copy(masterFx = fx.copy(compRatio = it.coerceAtLeast(1f)))) },
                 valueRange = 1f..8f,
                 colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                 modifier = Modifier.testTag("movie_comp_ratio")
@@ -890,9 +937,9 @@ fun MovieSessionScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(
                     onClick = {
-                        timeline = timeline.copy(
+                        commitTimeline(timeline.copy(
                             masterFx = fx.copy(limiterEnabled = !fx.limiterEnabled)
-                        )
+                        ))
                     },
                     modifier = Modifier.testTag("movie_limiter_toggle")
                 ) {
@@ -903,7 +950,7 @@ fun MovieSessionScreen(
                     )
                 }
                 TextButton(
-                    onClick = { timeline = timeline.copy(masterFx = AudioMasterFx()) },
+                    onClick = { commitTimeline(timeline.copy(masterFx = AudioMasterFx())) },
                     modifier = Modifier.testTag("movie_fx_reset")
                 ) {
                     Text(stringResource(R.string.studio_fx_reset), color = PixiText)
@@ -919,7 +966,7 @@ fun MovieSessionScreen(
                     val s = MovieSpeed.normalize(it)
                     speed = s
                     val id = selected?.id
-                    if (id != null) timeline = timeline.update(id) { clip -> clip.copy(speed = s) }
+                    if (id != null) commitTimeline(timeline.update(id) { clip -> clip.copy(speed = s) })
                 },
                 valueRange = 0.5f..2f,
                 colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
@@ -1006,7 +1053,7 @@ fun MovieSessionScreen(
             onDismiss = { if (!exporting) showExport = false },
             resolutions = MovieExportSize.heights.map { it to MovieExportSize.label(it) },
             selectedHeight = MovieExportSize.normalize(timeline.outputHeight),
-            onSelectHeight = { height -> timeline = timeline.copy(outputHeight = height) },
+            onSelectHeight = { height -> commitTimeline(timeline.copy(outputHeight = height)) },
             showLeaveSafeHint = true,
             successUri = exportSuccessUri,
             onView = {
