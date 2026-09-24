@@ -66,4 +66,11 @@ class LayerStackTest {
         val existing = listOf(LayeredOp("a", "Heal", op = PhotoOp.Heal(emptyList())))
         assertEquals(existing, existing.withBackgroundSeed())
     }
+
+    @Test
+    fun productTruth_layerLabelsDescribeActualOperations() {
+        assertEquals("Quick enhance", PhotoOp.Restore.layerName())
+        assertEquals("Mirror expand", PhotoOp.Expand(0.15f).layerName())
+        assertEquals("Basic cutout", PhotoOp.Subject.layerName())
+    }
 }

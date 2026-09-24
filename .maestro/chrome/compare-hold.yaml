@@ -1,7 +1,7 @@
 ﻿appId: com.pixijoy.ai
 ---
-# Press-hold session_compare (no sticky). It is disabled on a fresh sample,
-# enables for a live Look, and remains meaningful after that Look is baked.
+# Pointer press-hold is momentary; TalkBack exposes a toggle action. Compare is disabled on a
+# fresh sample, enables for a live Look, and remains meaningful after that Look is baked.
 - runFlow: ../launch-to-home.yaml
 - tapOn:
     id: "home_create"
@@ -17,13 +17,11 @@
     id: "session_compare"
 - assertVisible: "Apply an edit to compare."
 - assertVisible:
+    id: "session_viewport"
+- assertVisible:
     id: "session_save_status"
-- scrollUntilVisible:
-    element:
-      id: "session_looks"
-    direction: RIGHT
-    timeout: 20000
-    visibilityPercentage: 40
+- tapOn:
+    id: "studio_group_color"
 - tapOn:
     id: "session_looks"
 - extendedWaitUntil:
@@ -32,13 +30,17 @@
     timeout: 15000
 - tapOn:
     id: "look_warm"
-- assertVisible: "Hold to compare."
+- assertVisible: "After · hold for Before"
 - longPressOn:
     id: "session_compare"
+- longPressOn:
+    id: "session_viewport"
+- doubleTapOn:
+    id: "session_viewport"
 - tapOn:
     id: "session_apply_look"
 - extendedWaitUntil:
-    visible: "Hold to compare."
+    visible: "After · hold for Before"
     timeout: 30000
 - longPressOn:
     id: "session_compare"

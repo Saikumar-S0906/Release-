@@ -141,26 +141,27 @@ fun StudioPane(onPickTool: (StudioTool) -> Unit, modifier: Modifier = Modifier) 
                             .testTag("studio_recommended_row")
                     ) {
                         recommended.forEach { tool ->
-                            PixiToolTile(
-                                title = stringResource(tool.title),
-                                subtitle = stringResource(
-                                    when (tool.key) {
-                                        "editor" -> R.string.tool_best_for_editor
-                                        "cutout" -> R.string.tool_best_for_cutout
-                                        "move" -> R.string.tool_best_for_move
-                                        else -> tool.subtitle
-                                    }
-                                ),
-                                icon = painterResource(tool.icon),
-                                onClick = { onPickTool(tool) },
-                                modifier = Modifier
-                                    .testTag("recommended_${tool.tag}")
-                            )
+                            Box(Modifier.testTag("recommended_${tool.tag}")) {
+                                PixiToolTile(
+                                    title = stringResource(tool.title),
+                                    subtitle = stringResource(
+                                        when (tool.key) {
+                                            "editor" -> R.string.tool_best_for_editor
+                                            "cutout" -> R.string.tool_best_for_cutout
+                                            "move" -> R.string.tool_best_for_move
+                                            else -> tool.subtitle
+                                        }
+                                    ),
+                                    icon = painterResource(tool.icon),
+                                    onClick = { onPickTool(tool) },
+                                    modifier = Modifier.testTag(tool.tag)
+                                )
+                            }
                         }
                     }
                 }
             }
-            items(tools, key = { it.tag }) { tool ->
+            items(tools.filter { it.key !in recommendedKeys }, key = { it.tag }) { tool ->
                 PixiToolTile(
                     title = stringResource(tool.title),
                     subtitle = stringResource(tool.subtitle),

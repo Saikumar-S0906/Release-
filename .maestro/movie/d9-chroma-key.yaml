@@ -24,6 +24,10 @@ appId: com.pixijoy.ai
     visible:
       id: "movie_session"
     timeout: 90000
+- tapOn:
+    id: "studio_group_effects"
+- tapOn:
+    id: "movie_effect_chroma"
 - scrollUntilVisible:
     element:
       id: "movie_d9_hint"

@@ -21,6 +21,8 @@ class BitmapPhotoEngine(
     /** Project directory containing optional `luts/` for imported `.cube` / `.3dl`. */
     var lutDirectory: File? = null
 
+    val visionAvailable: Boolean get() = vision.available
+
     override fun render(sources: List<String>, ops: List<PhotoOp>, maxEdge: Int): Bitmap =
         renderLayers(sources, ops.toLayers(), maxEdge)
 
@@ -74,7 +76,7 @@ class BitmapPhotoEngine(
         stripGps: Boolean = ExportExifPolicy.DEFAULT_STRIP_GPS,
         colorIntent: ColorIntent = ColorIntent.Srgb
     ): AppResult<String> {
-        val rendered = renderLayers(sources, layers, maxEdge = 8192)
+        val rendered = renderLayers(sources, layers, maxEdge = PhotoPreviewPolicy.EXPORT_MAX_EDGE)
         val bitmap = rendered.withColorIntent(colorIntent)
         val requested = format
         val effective = ExportFormatSupport.resolve(requested)

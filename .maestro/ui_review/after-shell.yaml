@@ -1,0 +1,25 @@
+appId: com.pixijoy.ai
+---
+- runFlow: ../launch-to-home.yaml
+- takeScreenshot: shell_home
+- tapOn:
+    id: "nav_create"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_editor"
+    timeout: 20000
+- takeScreenshot: shell_create_photo
+- tapOn:
+    id: "create_hub_segment_movie"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_move"
+    timeout: 20000
+- takeScreenshot: shell_create_movie
+- tapOn:
+    id: "nav_my_stuff"
+- extendedWaitUntil:
+    visible:
+      id: "library_on_device_badge"
+    timeout: 20000
+- takeScreenshot: shell_library

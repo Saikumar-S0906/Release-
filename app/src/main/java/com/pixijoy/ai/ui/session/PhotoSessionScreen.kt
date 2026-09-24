@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.RuntimeShader
 import android.net.Uri
 import android.os.Build
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -12,7 +13,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -41,17 +41,19 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.asComposeRenderEffect
@@ -63,20 +65,28 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pixijoy.ai.R
 import com.pixijoy.ai.export.MovieExportWorker
 import com.pixijoy.ai.export.PhotoExportWorker
 import com.pixijoy.core.common.AppResult
 import com.pixijoy.core.data.Project
 import com.pixijoy.core.data.ProjectRepository
+import com.pixijoy.core.data.StudioPrefs
 import com.pixijoy.core.media.RawPreview
 import com.pixijoy.designsystem.PixiAccent
 import com.pixijoy.designsystem.PixiBg
+import com.pixijoy.designsystem.PixiError
 import com.pixijoy.designsystem.PixiPrimaryButton
 import com.pixijoy.designsystem.PixiSecondaryButton
 import com.pixijoy.designsystem.PixiSuccess
@@ -102,6 +112,8 @@ import com.pixijoy.photo.PhotoPreset
 import com.pixijoy.photo.SelectiveHslRange
 import com.pixijoy.photo.SkyReplacePresets
 import com.pixijoy.photo.SkyReplaceTarget
+import com.pixijoy.photo.PhotoPreviewPolicy
+import com.pixijoy.photo.applyCurves
 import com.pixijoy.photo.applySelectiveHsl
 import com.pixijoy.photo.isIdentity
 import com.pixijoy.photo.Stamp
@@ -118,6 +130,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -134,6 +147,32 @@ fun PhotoSessionScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val sessionViewModel: PhotoSessionViewModel = viewModel(
+        key = "photo-session-${project.id}",
+        factory = remember(project.id, repo) {
+            sessionViewModelFactory {
+                PhotoSessionViewModel(
+                    initialGraph = project.graph,
+                    persistence = GraphPersistence { graph -> repo.saveGraph(project.id, graph) }
+                )
+            }
+        }
+    )
+    val sessionState by sessionViewModel.state.collectAsState()
+    val layers = sessionState.layers
+    val redo = sessionState.redo
+    FlushSessionOnStop(sessionViewModel::flushInBackground)
+    PredictiveBackHandler {
+        it.collect { }
+        runCatching { sessionViewModel.flush() }
+        onBack()
+    }
+    fun leaveSession() {
+        scope.launch {
+            runCatching { sessionViewModel.flush() }
+            onBack()
+        }
+    }
     val projectDir = remember(project.id) { repo.projectDir(project.id) }
     LaunchedEffect(projectDir) {
         engine.lutDirectory = projectDir
@@ -151,12 +190,11 @@ fun PhotoSessionScreen(
     val isRawProject = remember(project.media) {
         project.media.any { RawPreview.looksLikeRaw(it.path) || RawPreview.isRawMime(it.mime) }
     }
-    var layers by remember(project.id) { mutableStateOf(project.graph.decodeLayers()) }
-    var redo by remember(project.id) { mutableStateOf(listOf<LayeredOp>()) }
     var selectedLayer by remember { mutableStateOf<String?>(null) }
     var preview by remember { mutableStateOf<Bitmap?>(null) }
     var histogram by remember { mutableStateOf<IntArray?>(null) }
     var mode by remember { mutableStateOf(defaultMode(toolKey)) }
+    var group by remember { mutableStateOf(groupForTool(toolKey)) }
     var crop by remember { mutableStateOf(PhotoOp.Crop(0.08f, 0.08f, 0.92f, 0.92f)) }
     var exposure by remember { mutableStateOf(0f) }
     var contrast by remember { mutableStateOf(1f) }
@@ -167,6 +205,9 @@ fun PhotoSessionScreen(
     var selectiveSat by remember { mutableStateOf(1f) }
     var selectiveLight by remember { mutableStateOf(0f) }
     var selectiveLivePreview by remember { mutableStateOf<Bitmap?>(null) }
+    var curvesLivePreview by remember { mutableStateOf<Bitmap?>(null) }
+    var lastMaskSnapshot by remember { mutableStateOf<Pair<List<MaskStroke>, MaskFill>?>(null) }
+    val visionAvailable = engine.visionAvailable
     var curveYs by remember { mutableStateOf(floatArrayOf(0f, 0.25f, 0.5f, 0.75f, 1f)) }
     var lookKey by remember { mutableStateOf(BundledLooks.ORIGINAL) }
     var importedLookLabel by remember { mutableStateOf<String?>(null) }
@@ -206,10 +247,21 @@ fun PhotoSessionScreen(
     var showExport by remember { mutableStateOf(false) }
     var exportSuccessUri by remember { mutableStateOf<String?>(null) }
     var status by remember { mutableStateOf<String?>(null) }
+    var statusIsError by remember { mutableStateOf(false) }
     var exporting by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var compareSnapshot by remember { mutableStateOf<Bitmap?>(null) }
-    var comparing by remember { mutableStateOf(false) }
+    var compareControlHeld by remember { mutableStateOf(false) }
+    var compareCanvasHeld by remember { mutableStateOf(false) }
+    var compareAccessible by remember { mutableStateOf(false) }
+    val comparing = compareControlHeld || compareCanvasHeld || compareAccessible
+    var viewportState by remember(project.id) { mutableStateOf(PhotoViewportState()) }
+    var viewportImageSize by remember(project.id) { mutableStateOf<Pair<Int, Int>?>(null) }
+
+    fun reportStatusError(message: String) {
+        status = message
+        statusIsError = true
+    }
 
     fun push(op: PhotoOp) {
         val layer = LayeredOp(
@@ -217,10 +269,10 @@ fun PhotoSessionScreen(
             name = op.layerName(),
             op = op
         )
-        layers = layers + layer
+        sessionViewModel.push(layer)
         selectedLayer = layer.id
-        redo = emptyList()
         status = null
+        statusIsError = false
         pendingStamps = emptyList()
         lastStamp = null
         pickingHealSource = false
@@ -229,9 +281,13 @@ fun PhotoSessionScreen(
     val addPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
         if (uri != null) {
             scope.launch {
-                repo.addUri(project.id, uri)
-                if (layers.none { it.op is PhotoOp.Collage }) {
-                    push(PhotoOp.Collage(2))
+                when (val result = repo.addUri(project.id, uri)) {
+                    is AppResult.Err -> reportStatusError(result.message)
+                    is AppResult.Ok -> {
+                        if (layers.none { it.op is PhotoOp.Collage }) {
+                            push(PhotoOp.Collage(2))
+                        }
+                    }
                 }
             }
         }
@@ -245,18 +301,19 @@ fun PhotoSessionScreen(
             val name = uri.lastPathSegment?.substringAfterLast(':')?.substringAfterLast('/')
                 ?: "import.cube"
             when (val copied = repo.importLut(project.id, uri, name)) {
-                is AppResult.Err -> status = copied.message
+                is AppResult.Err -> reportStatusError(copied.message)
                 is AppResult.Ok -> {
                     when (val parsed = CubeLutParser.parseFile(copied.value, maxSize = 33)) {
                         is LutParseResult.Err -> {
                             copied.value.delete()
-                            status = parsed.message
+                            reportStatusError(parsed.message)
                         }
                         is LutParseResult.Ok -> {
                             val key = ImportedLuts.keyFor(copied.value.name)
                             lookKey = key
                             importedLookLabel = parsed.lut.title ?: copied.value.name
                             status = context.getString(R.string.studio_lut_imported, importedLookLabel!!)
+                            statusIsError = false
                             mode = SessionMode.Looks
                         }
                     }
@@ -272,8 +329,17 @@ fun PhotoSessionScreen(
             lutLivePreview = null
             return@LaunchedEffect
         }
-        val baked = withContext(Dispatchers.Default) {
-            applyLut(src, lookKey, projectDir)
+        val baked = try {
+            withContext(Dispatchers.Default) {
+                applyLut(src, lookKey, projectDir)
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            lutLivePreview?.let { if (!it.isRecycled) it.recycle() }
+            lutLivePreview = null
+            reportStatusError(context.getString(R.string.studio_photo_render_failed))
+            return@LaunchedEffect
         }
         lutLivePreview?.let { if (!it.isRecycled && it !== baked && it !== src) it.recycle() }
         lutLivePreview = if (baked !== src) baked else null
@@ -284,7 +350,7 @@ fun PhotoSessionScreen(
         if (mode != SessionMode.Layers) return@LaunchedEffect
         if (layers.isNotEmpty()) return@LaunchedEffect
         val seeded = layers.withBackgroundSeed(id = "L-bg-${project.id}")
-        layers = seeded
+        sessionViewModel.replaceLayers(seeded)
         selectedLayer = seeded.first().id
     }
 
@@ -301,41 +367,93 @@ fun PhotoSessionScreen(
             selectiveLivePreview = null
             return@LaunchedEffect
         }
-        val baked = applySelectiveHsl(src, selectiveRange, selectiveHue, selectiveSat, selectiveLight)
+        val baked = try {
+            applySelectiveHsl(src, selectiveRange, selectiveHue, selectiveSat, selectiveLight)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            selectiveLivePreview?.let { if (!it.isRecycled) it.recycle() }
+            selectiveLivePreview = null
+            reportStatusError(context.getString(R.string.studio_photo_render_failed))
+            return@LaunchedEffect
+        }
         selectiveLivePreview?.let { if (!it.isRecycled && it !== baked) it.recycle() }
         selectiveLivePreview = if (baked !== src) baked else null
     }
 
-LaunchedEffect(sources, layers) {
+    LaunchedEffect(mode, curveYs, preview) {
+        val src = preview
+        val useCpuCurves = Build.VERSION.SDK_INT < 33
+        if (mode != SessionMode.Curves || !useCpuCurves || src == null || src.isRecycled ||
+            LiveGrade.curvesIdentity(curveYs)
+        ) {
+            curvesLivePreview?.let { if (!it.isRecycled) it.recycle() }
+            curvesLivePreview = null
+            return@LaunchedEffect
+        }
+        val baked = try {
+            withContext(Dispatchers.Default) { applyCurves(src, curveYs) }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            curvesLivePreview?.let { if (!it.isRecycled) it.recycle() }
+            curvesLivePreview = null
+            reportStatusError(context.getString(R.string.studio_photo_render_failed))
+            return@LaunchedEffect
+        }
+        curvesLivePreview?.let { if (!it.isRecycled && it !== baked) it.recycle() }
+        curvesLivePreview = if (baked !== src) baked else null
+    }
+
+    val inspectDetail = mode == SessionMode.Heal || mode == SessionMode.Mask || mode == SessionMode.Fill
+    val previewMaxEdge = PhotoPreviewPolicy.previewMaxEdge(viewportState.zoom, inspectDetail)
+    LaunchedEffect(sources, layers, previewMaxEdge) {
         busy = true
-        val hasBakedDelta = layers.any { it.hasVisibleEffect() }
-        // Capture the canvas before an Apply-triggered render replaces it. The prior
-        // implementation copied `next`, which made Compare show the same baked image.
-        val beforeBake = when {
-            !hasBakedDelta -> null
-            preview != null -> preview?.copy(preview?.config ?: Bitmap.Config.ARGB_8888, false)
-            else -> {
-                val lastEffect = layers.indexOfLast { it.hasVisibleEffect() }
-                withContext(Dispatchers.Default) {
-                    engine.renderLayers(sources, layers.take(lastEffect), maxEdge = 1600)
+        var beforeBake: Bitmap? = null
+        var snapshotCommitted = false
+        try {
+            val hasBakedDelta = layers.any { it.hasVisibleEffect() }
+            // Capture the canvas before an Apply-triggered render replaces it. The prior
+            // implementation copied `next`, which made Compare show the same baked image.
+            beforeBake = when {
+                !hasBakedDelta -> null
+                preview != null -> preview?.copy(
+                    preview?.config ?: Bitmap.Config.ARGB_8888,
+                    false
+                )
+                else -> {
+                    val lastEffect = layers.indexOfLast { it.hasVisibleEffect() }
+                    withContext(Dispatchers.Default) {
+                        engine.renderLayers(sources, layers.take(lastEffect), maxEdge = previewMaxEdge)
+                    }
                 }
             }
+            val next = withContext(Dispatchers.Default) {
+                engine.renderLayers(sources, layers, maxEdge = previewMaxEdge)
+            }
+
+            if (beforeBake != null) {
+                compareSnapshot?.let { if (!it.isRecycled) it.recycle() }
+                compareSnapshot = beforeBake
+                snapshotCommitted = true
+            } else if (!hasBakedDelta) {
+                compareSnapshot?.let { if (!it.isRecycled) it.recycle() }
+                compareSnapshot = null
+            }
+            val previous = preview
+            preview = next
+            if (previous !== next) previous?.let { if (!it.isRecycled) it.recycle() }
+            histogram = lumaHistogram(next)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Throwable) {
+            reportStatusError(context.getString(R.string.studio_photo_render_failed))
+        } finally {
+            if (!snapshotCommitted) {
+                beforeBake?.let { if (!it.isRecycled && it !== preview) it.recycle() }
+            }
+            busy = false
         }
-        if (beforeBake != null) {
-            compareSnapshot?.let { if (!it.isRecycled) it.recycle() }
-            compareSnapshot = beforeBake
-        } else if (!hasBakedDelta) {
-            compareSnapshot?.let { if (!it.isRecycled) it.recycle() }
-            compareSnapshot = null
-        }
-        val next = withContext(Dispatchers.Default) {
-            engine.renderLayers(sources, layers, maxEdge = 1600)
-        }
-        preview?.let { if (!it.isRecycled) it.recycle() }
-        preview = next
-        histogram = lumaHistogram(next)
-        repo.saveGraph(project.id, layers.encodeLayers())
-        busy = false
     }
     DisposableEffect(Unit) {
         onDispose {
@@ -343,6 +461,7 @@ LaunchedEffect(sources, layers) {
             compareSnapshot?.let { if (!it.isRecycled) it.recycle() }
             lutLivePreview?.let { if (!it.isRecycled) it.recycle() }
             selectiveLivePreview?.let { if (!it.isRecycled) it.recycle() }
+            curvesLivePreview?.let { if (!it.isRecycled) it.recycle() }
         }
     }
     val workManager = remember { WorkManager.getInstance(context) }
@@ -354,7 +473,10 @@ LaunchedEffect(sources, layers) {
         when (info.state) {
             WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING, WorkInfo.State.BLOCKED -> {
                 exporting = true
-                if (status == null) status = context.getString(R.string.studio_export_background)
+                if (status == null) {
+                    status = context.getString(R.string.studio_export_background)
+                    statusIsError = false
+                }
             }
             WorkInfo.State.SUCCEEDED -> {
                 if (exporting) {
@@ -362,13 +484,16 @@ LaunchedEffect(sources, layers) {
                     exportSuccessUri = info.outputData.getString(PhotoExportWorker.KEY_URI)
                     showExport = true
                     status = context.getString(R.string.studio_export_ok)
+                    statusIsError = false
                 }
             }
             WorkInfo.State.FAILED -> {
                 if (exporting) {
                     exporting = false
-                    status = info.outputData.getString(PhotoExportWorker.KEY_ERROR)
-                        ?: context.getString(R.string.studio_export_failed)
+                    reportStatusError(
+                        info.outputData.getString(PhotoExportWorker.KEY_ERROR)
+                            ?: context.getString(R.string.studio_export_failed)
+                    )
                 }
             }
             else -> Unit
@@ -382,10 +507,18 @@ LaunchedEffect(sources, layers) {
             (!BundledLooks.isIdentity(lookKey) && !ImportedLuts.isImported(lookKey)) ||
                 lutLivePreview != null
             )) ||
-        (mode == SessionMode.SelectiveHsl && selectiveLivePreview != null)
+        (mode == SessionMode.SelectiveHsl && selectiveLivePreview != null) ||
+        (mode == SessionMode.Curves && curvesLivePreview != null)
     val hasBakedDelta = layers.any { it.hasVisibleEffect() }
     val hasBakedSnapshot = compareSnapshot != null && !(compareSnapshot?.isRecycled ?: true)
     val canCompare = hasLiveDelta || (hasBakedDelta && hasBakedSnapshot)
+    LaunchedEffect(canCompare) {
+        if (!canCompare) {
+            compareControlHeld = false
+            compareCanvasHeld = false
+            compareAccessible = false
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -395,88 +528,131 @@ LaunchedEffect(sources, layers) {
             .navigationBarsPadding()
             .testTag("photo_session")
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TextButton(onClick = onBack, modifier = Modifier.testTag("session_back")) {
-                Text(stringResource(R.string.studio_back), color = PixiText)
-            }
-            Text(toolLabel, color = PixiText, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-            if (isRawProject) {
-                Text(
-                    stringResource(R.string.studio_raw_preview_badge),
-                    color = PixiAccent,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .padding(end = 8.dp)
-                        .testTag("session_raw_badge")
-                )
-            }
-            TextButton(
-                onClick = {
-                    if (layers.isNotEmpty()) {
-                        redo = redo + layers.last()
-                        layers = layers.dropLast(1)
-                    }
-                },
-                enabled = layers.isNotEmpty(),
-                modifier = Modifier.testTag("session_undo")
-            ) { Text(stringResource(R.string.studio_undo), color = PixiTextMuted) }
-            TextButton(
-                onClick = {
-                    if (redo.isNotEmpty()) {
-                        layers = layers + redo.last()
-                        redo = redo.dropLast(1)
-                    }
-                },
-                enabled = redo.isNotEmpty(),
-                modifier = Modifier.testTag("session_redo")
-            ) { Text(stringResource(R.string.studio_redo), color = PixiTextMuted) }
-            Text(
-                text = stringResource(
-                    if (canCompare) R.string.session_compare_hint
-                    else R.string.session_compare_disabled
-                ),
-                color = if (canCompare) PixiText else PixiTextMuted,
-                modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .testTag("session_compare")
-                    .then(
-                        if (canCompare) {
-                            Modifier.pointerInput(canCompare) {
-                                detectTapGestures(
-                                    onPress = {
-                                        comparing = true
-                                        try {
-                                            awaitRelease()
-                                        } finally {
-                                            comparing = false
-                                        }
-                                    }
-                                )
-                            }
-                        } else Modifier
-                    )
-            )
-            if (preview != null) {
-                Text(
-                    text = stringResource(
-                        if (busy) R.string.session_save_status_saving
-                        else R.string.session_save_status_saved
-                    ),
-                    color = PixiTextMuted,
-                    modifier = Modifier
-                        .padding(end = 8.dp)
-                        .testTag("session_save_status")
-                )
-            }
-        }
         Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .background(PixiSurface),
+        ) {
+        StudioTopChrome(Modifier.align(Alignment.TopCenter).zIndex(2f)) {
+            Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = ::leaveSession, modifier = Modifier.testTag("session_back")) {
+                    Text(stringResource(R.string.studio_back), color = PixiText)
+                }
+                Text(
+                    toolLabel,
+                    color = PixiText,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                if (isRawProject) {
+                    Text(
+                        stringResource(R.string.studio_raw_preview_badge),
+                        color = PixiAccent,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .padding(end = 4.dp)
+                            .testTag("session_raw_badge")
+                    )
+                }
+                TextButton(
+                    onClick = { showExport = true },
+                    enabled = !exporting && !busy,
+                    modifier = Modifier.testTag("session_export")
+                ) {
+                    Text(stringResource(R.string.studio_export), color = PixiText)
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(
+                    onClick = sessionViewModel::undo,
+                    enabled = layers.isNotEmpty(),
+                    modifier = Modifier.testTag("session_undo")
+                ) { Text(stringResource(R.string.studio_undo), color = PixiTextMuted) }
+                TextButton(
+                    onClick = sessionViewModel::redo,
+                    enabled = redo.isNotEmpty(),
+                    modifier = Modifier.testTag("session_redo")
+                ) { Text(stringResource(R.string.studio_redo), color = PixiTextMuted) }
+                val compareLabel = stringResource(
+                    when {
+                        !canCompare -> R.string.session_compare_disabled
+                        comparing -> R.string.session_compare_before
+                        else -> R.string.session_compare_after_hold
+                    }
+                )
+                val compareState = stringResource(
+                    if (comparing) R.string.session_compare_state_before
+                    else R.string.session_compare_state_after
+                )
+                val compareAction = stringResource(
+                    if (comparing) R.string.session_compare_action_after
+                    else R.string.session_compare_action_before
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 48.dp)
+                        .padding(horizontal = 4.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            if (comparing) PixiAccent.copy(alpha = 0.9f)
+                            else PixiSurface2.copy(alpha = if (canCompare) 0.85f else 0.45f)
+                        )
+                        .photoComparePress(canCompare) { compareControlHeld = it }
+                        .testTag("session_compare")
+                        .semantics {
+                            contentDescription = compareLabel
+                            role = Role.Button
+                            stateDescription = compareState
+                            if (canCompare) {
+                                onClick(label = compareAction) {
+                                    compareAccessible = !compareAccessible
+                                    true
+                                }
+                            } else {
+                                disabled()
+                            }
+                        }
+                        .padding(horizontal = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = compareLabel,
+                        color = if (canCompare) PixiText else PixiTextMuted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                if (preview != null) {
+                    Text(
+                        text = stringResource(
+                            if (busy) R.string.session_save_status_saving
+                            else R.string.session_save_status_saved
+                        ),
+                        color = PixiTextMuted,
+                        maxLines = 1,
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .testTag("session_save_status")
+                    )
+                }
+            }
+            }
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(PixiSurface)
+                .padding(bottom = if (mode == SessionMode.Crop) 156.dp else 0.dp),
             contentAlignment = Alignment.Center
         ) {
             val snap = compareSnapshot
@@ -485,16 +661,34 @@ LaunchedEffect(sources, layers) {
             } else if (comparing && snap != null && !snap.isRecycled) {
                 snap
             } else {
-                selectiveLivePreview ?: lutLivePreview ?: preview
+                selectiveLivePreview ?: lutLivePreview ?: curvesLivePreview ?: preview
             }
             if (bmp != null && !bmp.isRecycled) {
-                BoxWithConstraints(Modifier.fillMaxSize()) {
-                    val imageRect = fittedImageRect(
+                BoxWithConstraints(
+                    Modifier
+                        .fillMaxSize()
+                        .clipToBounds()
+                ) {
+                    val viewportSize = Size(
                         constraints.maxWidth.toFloat(),
-                        constraints.maxHeight.toFloat(),
+                        constraints.maxHeight.toFloat()
+                    )
+                    val imageRect = fittedImageRect(
+                        viewportSize.width,
+                        viewportSize.height,
                         bmp.width,
                         bmp.height
                     )
+                    val imageSize = bmp.width to bmp.height
+                    LaunchedEffect(imageSize, viewportSize) {
+                        val imageChanged = viewportImageSize != imageSize
+                        viewportImageSize = imageSize
+                        viewportState = if (imageChanged) {
+                            viewportState.reset()
+                        } else {
+                            viewportState.clamped(viewportSize, imageRect)
+                        }
+                    }
                     val showLiveFilters = !comparing
                     val liveAdjust = showLiveFilters && mode == SessionMode.Adjust &&
                         !LiveGrade.isAdjustIdentity(exposure, contrast, hue, saturation)
@@ -504,6 +698,47 @@ LaunchedEffect(sources, layers) {
                     val liveLooks = showLiveFilters && mode == SessionMode.Looks &&
                         !ImportedLuts.isImported(lookKey) &&
                         !BundledLooks.isIdentity(lookKey)
+                    val toolInputMode = modeUsesSingleFingerToolInput(mode)
+                    val viewportGestureKey = listOf(
+                        viewportSize.width,
+                        viewportSize.height,
+                        imageRect.width,
+                        imageRect.height
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .testTag("session_viewport")
+                            .photoViewportTransformGestures(
+                                toolInputMode = toolInputMode,
+                                gestureKey = viewportGestureKey
+                            ) { centroid, pan, zoom ->
+                                viewportState = viewportState.transform(
+                                    centroid = centroid,
+                                    panChange = pan,
+                                    zoomChange = zoom,
+                                    viewportSize = viewportSize,
+                                    fittedImageRect = imageRect
+                                )
+                            }
+                            .photoViewportPressGestures(
+                                toolInputMode = toolInputMode,
+                                compareEnabled = canCompare,
+                                gestureKey = viewportGestureKey,
+                                onCompareHeld = { compareCanvasHeld = it },
+                                onDoubleTap = { viewportState = viewportState.reset() }
+                            )
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer {
+                                    scaleX = viewportState.zoom
+                                    scaleY = viewportState.zoom
+                                    translationX = viewportState.pan.x
+                                    translationY = viewportState.pan.y
+                                }
+                        ) {
                     Image(
                         bitmap = bmp.asImageBitmap(),
                         contentDescription = project.title,
@@ -547,7 +782,13 @@ LaunchedEffect(sources, layers) {
                             )
                     )
                     when (mode) {
-                        SessionMode.Crop -> CropOverlay(crop, imageRect, { crop = it }, Modifier.fillMaxSize())
+                        SessionMode.Crop -> CropOverlay(
+                            crop = crop,
+                            imageRect = imageRect,
+                            onChange = { crop = it },
+                            modifier = Modifier.fillMaxSize(),
+                            viewportZoom = viewportState.zoom
+                        )
                         SessionMode.Mask -> BrushOverlay(
                             imageRect = imageRect,
                             radius = brush,
@@ -555,14 +796,16 @@ LaunchedEffect(sources, layers) {
                                 if (!stampSpacing(lastStamp, stamp)) return@BrushOverlay
                                 lastStamp = stamp
                                 val id = selectedLayer ?: layers.lastOrNull()?.id ?: return@BrushOverlay
-                                layers = layers.map { layer ->
-                                    if (layer.id != id) layer
-                                    else layer.copy(
-                                        mask = layer.mask + MaskStroke(
-                                            stamp.x, stamp.y, stamp.r, maskReveal
+                                sessionViewModel.replaceLayers(
+                                    layers.map { layer ->
+                                        if (layer.id != id) layer
+                                        else layer.copy(
+                                            mask = layer.mask + MaskStroke(
+                                                stamp.x, stamp.y, stamp.r, maskReveal
+                                            )
                                         )
-                                    )
-                                }
+                                    }
+                                )
                             },
                             modifier = Modifier.fillMaxSize()
                         )
@@ -679,14 +922,17 @@ LaunchedEffect(sources, layers) {
                             drawCircle(Color(0xFFFF5AA5), radius = 5.dp.toPx(), center = Offset(cx, cy))
                         }
                     }
+                        }
                     val bins = histogram
                     if (bins != null && (mode == SessionMode.Adjust || mode == SessionMode.Curves)) {
                         HistogramStrip(
                             bins = bins,
                             modifier = Modifier
-                                .align(Alignment.BottomCenter)
+                                .align(Alignment.TopCenter)
                                 .fillMaxWidth()
+                                .padding(top = 96.dp)
                         )
+                    }
                     }
                 }
             } else {
@@ -696,25 +942,38 @@ LaunchedEffect(sources, layers) {
         status?.let {
             Text(
                 it,
-                color = if (exporting) PixiTextMuted else PixiSuccess,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp).testTag("session_status")
+                color = when {
+                    statusIsError -> PixiError
+                    exporting -> PixiTextMuted
+                    else -> PixiSuccess
+                },
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(horizontal = 20.dp, vertical = 6.dp)
+                    .testTag("session_status")
             )
         }
-        val scrimMax = (LocalConfiguration.current.screenHeightDp * 0.42f).dp
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(max = scrimMax)
-                .background(Color.Black.copy(alpha = 0.50f))
-                .testTag("session_tool_scrim")
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-            ) {        ToolBody(
+        StudioChromeBar(
+            modifier = Modifier.align(Alignment.BottomCenter).zIndex(1f),
+            rail = {
+                StudioGroupRail(
+                    items = photoGroupItems(),
+                    selectedTag = group.tag,
+                    onSelect = { tag ->
+                        val next = PhotoGroup.entries.first { it.tag == tag }
+                        group = next
+                        if (!modeBelongs(next, mode)) mode = defaultModeFor(next, toolKey)
+                    }
+                )
+            },
+            panel = {
+            ToolBody(
             mode = mode,
+            group = group,
             toolKey = toolKey,
+            onMode = { mode = it },
+            onRotate = { push(PhotoOp.Rotate(90)) },
+            onFlip = { push(PhotoOp.FlipH) },
             exposure = exposure,
             contrast = contrast,
             hue = hue,
@@ -778,9 +1037,11 @@ LaunchedEffect(sources, layers) {
                     when (val r = repo.writePresetFile(id, preset.encode())) {
                         is AppResult.Ok -> {
                             presets = listOf(preset) + presets.filterNot { it.id == id }
+                            StudioPrefs(context.applicationContext).setLastLookPreset(id)
                             status = context.getString(R.string.studio_preset_save)
+                            statusIsError = false
                         }
-                        is AppResult.Err -> status = r.message
+                        is AppResult.Err -> reportStatusError(r.message)
                     }
                 }
             },
@@ -790,15 +1051,16 @@ LaunchedEffect(sources, layers) {
                         is AppResult.Ok -> {
                             val preset = PhotoPreset.decode(r.value)
                             if (preset == null) {
-                                status = "Preset unreadable."
+                                reportStatusError(context.getString(R.string.studio_preset_unreadable))
                             } else {
-                                repo.saveGraph(project.id, preset.layersEncoded)
-                                layers = preset.layersEncoded.decodeLayers()
-                                    .ifEmpty { layers }
+                                sessionViewModel.replaceLayers(
+                                    preset.layersEncoded.decodeLayers().ifEmpty { layers }
+                                )
                                 status = context.getString(R.string.studio_presets)
+                                statusIsError = false
                             }
                         }
-                        is AppResult.Err -> status = r.message
+                        is AppResult.Err -> reportStatusError(r.message)
                     }
                 }
             },
@@ -845,32 +1107,48 @@ LaunchedEffect(sources, layers) {
                 pickLut.launch(arrayOf("*/*"))
             },
             importedLookLabel = importedLookLabel,
-            onBlur = { push(PhotoOp.Blur(2)) },
-            onSharpen = { push(PhotoOp.Sharpen(0.55f)) },
-            onVignette = { push(PhotoOp.Vignette(0.4f)) },
             maskFill = (layers.firstOrNull { it.id == selectedLayer } ?: layers.lastOrNull())?.maskFill
                 ?: MaskFill.None,
             maskReveal = maskReveal,
             onMaskReveal = { maskReveal = it },
             onClearMask = {
                 val id = selectedLayer ?: layers.lastOrNull()?.id
-                if (id != null) {
-                    layers = layers.map {
-                        if (it.id == id) it.copy(mask = emptyList(), maskFill = MaskFill.None) else it
-                    }
+                val layer = layers.firstOrNull { it.id == id }
+                if (id != null && layer != null) {
+                    lastMaskSnapshot = layer.mask to layer.maskFill
+                    sessionViewModel.replaceLayers(
+                        layers.map {
+                            if (it.id == id) it.copy(mask = emptyList(), maskFill = MaskFill.None) else it
+                        }
+                    )
                 }
             },
+            onRestoreMask = {
+                val snapshot = lastMaskSnapshot ?: return@ToolBody
+                val id = selectedLayer ?: layers.lastOrNull()?.id ?: return@ToolBody
+                sessionViewModel.replaceLayers(
+                    layers.map {
+                        if (it.id == id) it.copy(mask = snapshot.first, maskFill = snapshot.second) else it
+                    }
+                )
+            },
+            canRestoreMask = lastMaskSnapshot != null,
+            visionAvailable = visionAvailable,
             onSubjectMask = {
                 val id = selectedLayer ?: layers.lastOrNull()?.id ?: return@ToolBody
-                layers = layers.map {
-                    if (it.id == id) it.copy(maskFill = MaskFill.Subject) else it
-                }
+                sessionViewModel.replaceLayers(
+                    layers.map {
+                        if (it.id == id) it.copy(maskFill = MaskFill.Subject) else it
+                    }
+                )
             },
             onBackgroundMask = {
                 val id = selectedLayer ?: layers.lastOrNull()?.id ?: return@ToolBody
-                layers = layers.map {
-                    if (it.id == id) it.copy(maskFill = MaskFill.Background) else it
-                }
+                sessionViewModel.replaceLayers(
+                    layers.map {
+                        if (it.id == id) it.copy(maskFill = MaskFill.Background) else it
+                    }
+                )
             },
             collageCols = collageCols,
             pickingHealSource = pickingHealSource,
@@ -884,48 +1162,23 @@ LaunchedEffect(sources, layers) {
                 status = context.getString(
                     if (cols >= 4) R.string.studio_collage_4_hint else R.string.studio_collage_2_hint
                 )
+                statusIsError = false
             },
             onAddPhoto = {
                 addPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
             }
         )
+            if (group == PhotoGroup.Compose && mode == SessionMode.Layers && layers.isNotEmpty()) {
+                LayerStack(
+                    layers = layers,
+                    selectedId = selectedLayer,
+                    onSelect = { selectedLayer = it },
+                    onChange = { sessionViewModel.replaceLayers(it) }
+                )
             }
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            railsFor(toolKey).forEach { item ->
-                RailAction(stringResource(item.label), item.tag, selected = mode == item.mode) { mode = item.mode }
             }
-            if (toolKey == "editor") {
-                RailAction(stringResource(R.string.studio_rotate), "session_rotate") {
-                    push(PhotoOp.Rotate(90))
-                }
-                RailAction(stringResource(R.string.studio_flip), "session_flip") {
-                    push(PhotoOp.FlipH)
-                }
-            }
-        }
-        if (layers.isNotEmpty()) {
-            LayerStack(
-                layers = layers,
-                selectedId = selectedLayer,
-                onSelect = { selectedLayer = it },
-                onChange = { layers = it }
-            )
-        }
-        PixiPrimaryButton(
-            text = stringResource(R.string.studio_export),
-            onClick = { showExport = true },
-            enabled = !exporting && !busy,
-            modifier = Modifier
-                .padding(horizontal = 20.dp, vertical = 10.dp)
-                .testTag("session_export")
         )
+        }
     }
     if (showExport) {
         ExportSheet(
@@ -987,8 +1240,9 @@ LaunchedEffect(sources, layers) {
                 exportSuccessUri = null
                 exporting = true
                 status = context.getString(R.string.studio_export_background)
+                statusIsError = false
                 scope.launch {
-                    repo.saveGraph(project.id, layers.encodeLayers())
+                    sessionViewModel.flush()
                     MovieExportWorker.ensureChannel(context)
                     val request = OneTimeWorkRequestBuilder<PhotoExportWorker>()
                         .setInputData(
@@ -1022,11 +1276,9 @@ LaunchedEffect(sources, layers) {
     }
 }
 
-private data class RailItem(val label: Int, val tag: String, val mode: SessionMode)
-
 private fun defaultMode(toolKey: String): SessionMode = when (toolKey) {
     "layers" -> SessionMode.Layers
-    "restore" -> SessionMode.Adjust
+    "restore" -> SessionMode.Heal
     "expand" -> SessionMode.Expand
     "cutout" -> SessionMode.Erase
     "stickers" -> SessionMode.Stickers
@@ -1034,47 +1286,154 @@ private fun defaultMode(toolKey: String): SessionMode = when (toolKey) {
     else -> SessionMode.Crop
 }
 
-private fun railsFor(toolKey: String): List<RailItem> = when (toolKey) {
-    "layers" -> listOf(
-        RailItem(R.string.studio_layers, "session_layers", SessionMode.Layers),
-        RailItem(R.string.studio_mask, "session_mask", SessionMode.Mask)
-    )
-    "restore" -> listOf(
-        RailItem(R.string.studio_adjust, "session_adjust", SessionMode.Adjust),
-        RailItem(R.string.studio_heal, "session_heal", SessionMode.Heal),
-        RailItem(R.string.studio_fill, "session_fill", SessionMode.Fill)
-    )
-    "expand" -> listOf(RailItem(R.string.studio_expand_tool, "session_expand", SessionMode.Expand))
-    "cutout" -> listOf(
-        RailItem(R.string.studio_erase, "session_erase", SessionMode.Erase)
-    )
-    "stickers" -> listOf(
-        RailItem(R.string.studio_stickers, "session_stickers", SessionMode.Stickers),
-        RailItem(R.string.studio_text, "session_text", SessionMode.Text)
-    )
-    "collage" -> listOf(RailItem(R.string.studio_collage, "session_collage", SessionMode.Collage))
-    else -> listOf(
-        RailItem(R.string.studio_crop, "session_crop", SessionMode.Crop),
-        RailItem(R.string.studio_adjust, "session_adjust", SessionMode.Adjust),
-        RailItem(R.string.studio_curves, "session_curves", SessionMode.Curves),
-        RailItem(R.string.studio_selective_hsl, "session_selective_hsl", SessionMode.SelectiveHsl),
-        RailItem(R.string.studio_looks, "session_looks", SessionMode.Looks),
-        RailItem(R.string.studio_sky, "session_sky", SessionMode.Sky),
-        RailItem(R.string.studio_warp, "session_warp", SessionMode.Warp),
-        RailItem(R.string.studio_soften, "session_soften", SessionMode.Soften),
-        RailItem(R.string.studio_presets, "session_presets", SessionMode.Presets),
-        RailItem(R.string.studio_heal, "session_heal", SessionMode.Heal),
-        RailItem(R.string.studio_fill, "session_fill", SessionMode.Fill),
-        RailItem(R.string.studio_text, "session_text", SessionMode.Text),
-        RailItem(R.string.studio_layers, "session_layers", SessionMode.Layers),
-        RailItem(R.string.studio_mask, "session_mask", SessionMode.Mask)
-    )
+private fun groupForTool(toolKey: String): PhotoGroup = when (toolKey) {
+    "restore", "cutout" -> PhotoGroup.Retouch
+    "stickers" -> PhotoGroup.Add
+    "collage", "layers" -> PhotoGroup.Compose
+    "expand" -> PhotoGroup.Crop
+    else -> PhotoGroup.Crop
+}
+
+private fun defaultModeFor(group: PhotoGroup, toolKey: String): SessionMode = when (group) {
+    PhotoGroup.Crop -> if (toolKey == "expand") SessionMode.Expand else SessionMode.Crop
+    PhotoGroup.Light -> SessionMode.Adjust
+    PhotoGroup.Color -> SessionMode.Adjust
+    PhotoGroup.Retouch -> when (toolKey) {
+        "cutout" -> SessionMode.Erase
+        else -> SessionMode.Heal
+    }
+    PhotoGroup.Compose -> when (toolKey) {
+        "collage" -> SessionMode.Collage
+        else -> SessionMode.Layers
+    }
+    PhotoGroup.Add -> if (toolKey == "stickers") SessionMode.Stickers else SessionMode.Text
+}
+
+private fun modeBelongs(group: PhotoGroup, mode: SessionMode): Boolean = when (group) {
+    PhotoGroup.Crop -> mode == SessionMode.Crop || mode == SessionMode.Expand
+    PhotoGroup.Light -> mode == SessionMode.Adjust
+    PhotoGroup.Color -> mode == SessionMode.Adjust || mode == SessionMode.Curves ||
+        mode == SessionMode.SelectiveHsl || mode == SessionMode.Looks || mode == SessionMode.Presets
+    PhotoGroup.Retouch -> mode == SessionMode.Heal || mode == SessionMode.Fill ||
+        mode == SessionMode.Erase || mode == SessionMode.Sky || mode == SessionMode.Soften
+    PhotoGroup.Compose -> mode == SessionMode.Layers || mode == SessionMode.Mask ||
+        mode == SessionMode.Warp || mode == SessionMode.Collage
+    PhotoGroup.Add -> mode == SessionMode.Text || mode == SessionMode.Stickers
+}
+
+private fun modeUsesSingleFingerToolInput(mode: SessionMode): Boolean = when (mode) {
+    SessionMode.Crop,
+    SessionMode.Heal,
+    SessionMode.Fill,
+    SessionMode.Erase,
+    SessionMode.Text,
+    SessionMode.Stickers,
+    SessionMode.Mask -> true
+    else -> false
+}
+
+@Composable
+private fun photoGroupItems(): List<StudioGroupItem> = listOf(
+    StudioGroupItem(PhotoGroup.Crop.tag, stringResource(R.string.studio_group_crop), R.drawable.pj_ic_crop),
+    StudioGroupItem(PhotoGroup.Light.tag, stringResource(R.string.studio_group_light), R.drawable.pj_ic_brightness),
+    StudioGroupItem(PhotoGroup.Color.tag, stringResource(R.string.studio_group_color), R.drawable.pj_ic_palette),
+    StudioGroupItem(PhotoGroup.Retouch.tag, stringResource(R.string.studio_group_retouch), R.drawable.pj_ic_heal),
+    StudioGroupItem(PhotoGroup.Compose.tag, stringResource(R.string.studio_group_compose), R.drawable.pj_ic_layers),
+    StudioGroupItem(PhotoGroup.Add.tag, stringResource(R.string.studio_group_add), R.drawable.pj_ic_add)
+)
+
+@Composable
+private fun PhotoGroupChips(
+    group: PhotoGroup,
+    mode: SessionMode,
+    toolKey: String,
+    onMode: (SessionMode) -> Unit,
+    onRotate: () -> Unit,
+    onFlip: () -> Unit
+) {
+    StudioHScrollRow {
+        when (group) {
+            PhotoGroup.Crop -> {
+                FormatChip(stringResource(R.string.studio_crop), mode == SessionMode.Crop, "session_crop") {
+                    onMode(SessionMode.Crop)
+                }
+                FormatChip(stringResource(R.string.studio_expand_tool), mode == SessionMode.Expand, "session_expand") {
+                    onMode(SessionMode.Expand)
+                }
+                FormatChip(stringResource(R.string.studio_rotate), false, "session_rotate", onRotate)
+                FormatChip(stringResource(R.string.studio_flip), false, "session_flip", onFlip)
+            }
+            PhotoGroup.Light -> Unit
+            PhotoGroup.Color -> {
+                FormatChip(stringResource(R.string.studio_color_tune), mode == SessionMode.Adjust, "session_color_tune") {
+                    onMode(SessionMode.Adjust)
+                }
+                FormatChip(stringResource(R.string.studio_curves), mode == SessionMode.Curves, "session_curves") {
+                    onMode(SessionMode.Curves)
+                }
+                FormatChip(stringResource(R.string.studio_selective_hsl), mode == SessionMode.SelectiveHsl, "session_selective_hsl") {
+                    onMode(SessionMode.SelectiveHsl)
+                }
+                FormatChip(stringResource(R.string.studio_looks), mode == SessionMode.Looks, "session_looks") {
+                    onMode(SessionMode.Looks)
+                }
+                FormatChip(stringResource(R.string.studio_presets), mode == SessionMode.Presets, "session_presets") {
+                    onMode(SessionMode.Presets)
+                }
+            }
+            PhotoGroup.Retouch -> {
+                FormatChip(stringResource(R.string.studio_heal), mode == SessionMode.Heal, "session_heal") {
+                    onMode(SessionMode.Heal)
+                }
+                FormatChip(stringResource(R.string.studio_fill), mode == SessionMode.Fill, "session_fill") {
+                    onMode(SessionMode.Fill)
+                }
+                FormatChip(stringResource(R.string.studio_soften), mode == SessionMode.Soften, "session_soften") {
+                    onMode(SessionMode.Soften)
+                }
+                FormatChip(stringResource(R.string.studio_sky), mode == SessionMode.Sky, "session_sky") {
+                    onMode(SessionMode.Sky)
+                }
+                if (toolKey == "cutout") {
+                    FormatChip(stringResource(R.string.studio_erase), mode == SessionMode.Erase, "session_erase") {
+                        onMode(SessionMode.Erase)
+                    }
+                }
+            }
+            PhotoGroup.Compose -> {
+                FormatChip(stringResource(R.string.studio_layers), mode == SessionMode.Layers, "session_layers") {
+                    onMode(SessionMode.Layers)
+                }
+                FormatChip(stringResource(R.string.studio_mask), mode == SessionMode.Mask, "session_mask") {
+                    onMode(SessionMode.Mask)
+                }
+                FormatChip(stringResource(R.string.studio_warp), mode == SessionMode.Warp, "session_warp") {
+                    onMode(SessionMode.Warp)
+                }
+                FormatChip(stringResource(R.string.studio_collage), mode == SessionMode.Collage, "session_collage") {
+                    onMode(SessionMode.Collage)
+                }
+            }
+            PhotoGroup.Add -> {
+                FormatChip(stringResource(R.string.studio_text), mode == SessionMode.Text, "session_text") {
+                    onMode(SessionMode.Text)
+                }
+                FormatChip(stringResource(R.string.studio_stickers), mode == SessionMode.Stickers, "session_stickers") {
+                    onMode(SessionMode.Stickers)
+                }
+            }
+        }
+    }
 }
 
 @Composable
 private fun ToolBody(
     mode: SessionMode,
+    group: PhotoGroup,
     toolKey: String,
+    onMode: (SessionMode) -> Unit,
+    onRotate: () -> Unit,
+    onFlip: () -> Unit,
     exposure: Float,
     contrast: Float,
     hue: Float,
@@ -1133,13 +1492,13 @@ private fun ToolBody(
     onApplyLook: (String) -> Unit,
     onImportLut: () -> Unit,
     importedLookLabel: String?,
-    onBlur: () -> Unit,
-    onSharpen: () -> Unit,
-    onVignette: () -> Unit,
     maskFill: MaskFill,
     maskReveal: Boolean,
     onMaskReveal: (Boolean) -> Unit,
     onClearMask: () -> Unit,
+    onRestoreMask: () -> Unit = {},
+    canRestoreMask: Boolean = false,
+    visionAvailable: Boolean = false,
     onSubjectMask: () -> Unit,
     onBackgroundMask: () -> Unit,
     collageCols: Int = 2,
@@ -1148,63 +1507,166 @@ private fun ToolBody(
     onPickHealSource: () -> Unit = {},
     onPaintHeal: () -> Unit = {}
 ) {
-    Column(Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (toolKey == "restore") {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        PhotoGroupChips(group, mode, toolKey, onMode, onRotate, onFlip)
+        if (toolKey == "restore" && group == PhotoGroup.Retouch) {
             PixiPrimaryButton(stringResource(R.string.studio_restore_now), onRestore, Modifier.testTag("session_restore"))
         }
-        if (toolKey == "cutout" || toolKey == "stickers") {
+        if ((toolKey == "cutout" || toolKey == "stickers") && (group == PhotoGroup.Retouch || group == PhotoGroup.Add)) {
+            StudioHint(
+                stringResource(
+                    if (visionAvailable) R.string.studio_cutout_subject_available
+                    else R.string.studio_cutout_corner_fallback
+                ),
+                "session_cutout_capability"
+            )
             PixiPrimaryButton(stringResource(R.string.studio_cutout_now), onCutout, Modifier.testTag("session_cutout"))
         }
         when (mode) {
-            SessionMode.Crop -> PixiPrimaryButton(
-                stringResource(R.string.studio_apply),
-                onApplyCrop,
-                Modifier.testTag("session_apply_crop")
-            )
+            SessionMode.Crop -> {
+                if (group == PhotoGroup.Crop) {
+                    StudioApplyButton(
+                        stringResource(R.string.studio_apply),
+                        onApplyCrop,
+                        tag = "session_apply_crop"
+                    )
+                }
+            }
             SessionMode.Adjust -> {
-                LabeledSlider(stringResource(R.string.studio_exposure), exposure, -1.5f..1.5f, "session_exposure", onExposure)
-                LabeledSlider(stringResource(R.string.studio_contrast), contrast, 0.4f..1.8f, "session_contrast", onContrast)
-                LabeledSlider(stringResource(R.string.studio_hue), hue, -180f..180f, "session_hue", onHue)
-                LabeledSlider(stringResource(R.string.studio_saturation), saturation, 0f..2f, "session_saturation", onSaturation)
-                LabeledSlider(stringResource(R.string.studio_blur), blurRadius, 0f..8f, "session_blur_amount", onBlurAmount)
-                LabeledSlider(stringResource(R.string.studio_sharpen), sharpen, 0f..1f, "session_sharpen_amount", onSharpenAmount)
-                LabeledSlider(stringResource(R.string.studio_vignette), vignette, 0f..1f, "session_vignette_amount", onVignetteAmount)
-                PixiPrimaryButton(stringResource(R.string.studio_apply), onApplyGrade)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FormatChip(stringResource(R.string.studio_blur), false, "session_blur", onBlur)
-                    FormatChip(stringResource(R.string.studio_sharpen), false, "session_sharpen", onSharpen)
-                    FormatChip(stringResource(R.string.studio_vignette), false, "session_vignette", onVignette)
+                if (group == PhotoGroup.Light) {
+                    var lightFocus by remember { mutableIntStateOf(0) }
+                    StudioHScrollRow {
+                        StudioChip(stringResource(R.string.studio_exposure), lightFocus == 0, "session_light_exposure") {
+                            lightFocus = 0
+                        }
+                        StudioChip(stringResource(R.string.studio_contrast), lightFocus == 1, "session_light_contrast") {
+                            lightFocus = 1
+                        }
+                        StudioChip(stringResource(R.string.studio_sharpen), lightFocus == 2, "session_light_sharpen") {
+                            lightFocus = 2
+                        }
+                        StudioChip(stringResource(R.string.studio_vignette), lightFocus == 3, "session_light_vignette") {
+                            lightFocus = 3
+                        }
+                        StudioChip(stringResource(R.string.studio_blur), lightFocus == 4, "session_light_blur") {
+                            lightFocus = 4
+                        }
+                    }
+                    when (lightFocus) {
+                        0 -> StudioValueSlider(
+                            stringResource(R.string.studio_exposure), exposure, -1.5f..1.5f,
+                            "session_exposure", 0f, "%.2f".format(exposure), onExposure,
+                            showLabel = false
+                        )
+                        1 -> StudioValueSlider(
+                            stringResource(R.string.studio_contrast), contrast, 0.4f..1.8f,
+                            "session_contrast", 1f, "%.2f".format(contrast), onContrast,
+                            showLabel = false
+                        )
+                        2 -> StudioValueSlider(
+                            stringResource(R.string.studio_sharpen), sharpen, 0f..1f,
+                            "session_sharpen", 0f, "%.2f".format(sharpen), onSharpenAmount,
+                            showLabel = false
+                        )
+                        3 -> StudioValueSlider(
+                            stringResource(R.string.studio_vignette), vignette, 0f..1f,
+                            "session_vignette", 0f, "%.2f".format(vignette), onVignetteAmount,
+                            showLabel = false
+                        )
+                        else -> StudioValueSlider(
+                            stringResource(R.string.studio_blur), blurRadius, 0f..8f,
+                            "session_blur", 0f, "%.1f".format(blurRadius), onBlurAmount,
+                            showLabel = false
+                        )
+                    }
+                    StudioApplyButton(stringResource(R.string.studio_apply), onApplyGrade)
+                } else if (group == PhotoGroup.Color) {
+                    var colorFocus by remember { mutableIntStateOf(0) }
+                    StudioHScrollRow {
+                        StudioChip(
+                            stringResource(R.string.studio_hue),
+                            colorFocus == 0,
+                            "session_color_hue"
+                        ) {
+                            colorFocus = 0
+                        }
+                        StudioChip(
+                            stringResource(R.string.studio_saturation),
+                            colorFocus == 1,
+                            "session_color_saturation"
+                        ) {
+                            colorFocus = 1
+                        }
+                    }
+                    if (colorFocus == 0) {
+                        StudioValueSlider(
+                            stringResource(R.string.studio_hue),
+                            hue,
+                            -180f..180f,
+                            "session_hue",
+                            0f,
+                            "%.0f".format(hue),
+                            onHue,
+                            showLabel = false
+                        )
+                    } else {
+                        StudioValueSlider(
+                            stringResource(R.string.studio_saturation),
+                            saturation,
+                            0f..2f,
+                            "session_saturation",
+                            1f,
+                            "%.2f".format(saturation),
+                            onSaturation,
+                            showLabel = false
+                        )
+                    }
+                    StudioApplyButton(stringResource(R.string.studio_apply), onApplyGrade)
                 }
             }
             SessionMode.Curves -> {
-                Text(
-                    stringResource(R.string.studio_curves_hint),
-                    color = PixiTextMuted,
-                    modifier = Modifier.testTag("session_curves_hint")
-                )
+                var curveFocus by remember { mutableIntStateOf(2) }
+                StudioHint(stringResource(R.string.studio_curves_hint), "session_curves_hint")
+                StudioHScrollRow {
+                    listOf(
+                        0 to R.string.studio_curve_black,
+                        1 to R.string.studio_curve_shadow,
+                        2 to R.string.studio_curve_mid,
+                        3 to R.string.studio_curve_light,
+                        4 to R.string.studio_curve_white
+                    ).forEach { (i, label) ->
+                        StudioChip(stringResource(label), curveFocus == i, "curve_$i") { curveFocus = i }
+                    }
+                }
                 fun set(i: Int, v: Float) {
                     val next = curveYs.copyOf()
                     next[i] = v
                     onCurveYs(next)
                 }
-                LabeledSlider(stringResource(R.string.studio_curve_black), curveYs[0], 0f..1f, "curve_0") { set(0, it) }
-                LabeledSlider(stringResource(R.string.studio_curve_shadow), curveYs[1], 0f..1f, "curve_1") { set(1, it) }
-                LabeledSlider(stringResource(R.string.studio_curve_mid), curveYs[2], 0f..1f, "curve_2") { set(2, it) }
-                LabeledSlider(stringResource(R.string.studio_curve_light), curveYs[3], 0f..1f, "curve_3") { set(3, it) }
-                LabeledSlider(stringResource(R.string.studio_curve_white), curveYs[4], 0f..1f, "curve_4") { set(4, it) }
-                PixiPrimaryButton(
+                val i = curveFocus.coerceIn(0, 4)
+                LabeledSlider(
+                    stringResource(
+                        when (i) {
+                            0 -> R.string.studio_curve_black
+                            1 -> R.string.studio_curve_shadow
+                            3 -> R.string.studio_curve_light
+                            4 -> R.string.studio_curve_white
+                            else -> R.string.studio_curve_mid
+                        }
+                    ),
+                    curveYs[i],
+                    0f..1f,
+                    "curve_slider"
+                ) { set(i, it) }
+                StudioApplyButton(
                     stringResource(R.string.studio_apply),
                     { onApplyCurves(curveYs.copyOf()) },
-                    Modifier.testTag("session_apply_curves")
+                    tag = "session_apply_curves"
                 )
             }
 
             SessionMode.SelectiveHsl -> {
-                Text(
-                    stringResource(R.string.studio_selective_hsl_hint),
-                    color = PixiTextMuted,
-                    modifier = Modifier.testTag("session_selective_hsl_hint")
-                )
+                StudioHint(stringResource(R.string.studio_selective_hsl_hint), "session_selective_hsl_hint")
                 Row(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -1240,11 +1702,7 @@ private fun ToolBody(
 
 
             SessionMode.Looks -> {
-                Text(
-                    stringResource(R.string.studio_looks_hint),
-                    color = PixiTextMuted,
-                    modifier = Modifier.testTag("session_looks_hint")
-                )
+                StudioHint(stringResource(R.string.studio_looks_hint), "session_looks_hint")
                 Row(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -1302,22 +1760,32 @@ private fun ToolBody(
                         color = PixiText,
                         fontWeight = if (pickingHealSource) FontWeight.SemiBold else FontWeight.Medium,
                         modifier = Modifier
+                            .heightIn(min = 48.dp)
                             .clip(RoundedCornerShape(999.dp))
                             .background(if (pickingHealSource) PixiAccent else PixiBg)
                             .clickable(onClick = onPickHealSource)
                             .testTag("session_heal_set_source")
-                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                            .semantics {
+                                role = Role.RadioButton
+                                selected = pickingHealSource
+                            }
+                            .padding(horizontal = 14.dp, vertical = 12.dp)
                     )
                     Text(
                         stringResource(R.string.studio_heal_paint),
                         color = PixiText,
                         fontWeight = if (!pickingHealSource) FontWeight.SemiBold else FontWeight.Medium,
                         modifier = Modifier
+                            .heightIn(min = 48.dp)
                             .clip(RoundedCornerShape(999.dp))
                             .background(if (!pickingHealSource) PixiAccent else PixiBg)
                             .clickable(onClick = onPaintHeal)
                             .testTag("session_heal_paint")
-                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                            .semantics {
+                                role = Role.RadioButton
+                                selected = !pickingHealSource
+                            }
+                            .padding(horizontal = 14.dp, vertical = 12.dp)
                     )
                 }
                 Text(
@@ -1372,19 +1840,28 @@ private fun ToolBody(
             }
             SessionMode.Mask -> {
                 LabeledSlider(stringResource(R.string.studio_brush), brush, 0.02f..0.12f, "session_brush_size", onBrush)
+                StudioHint(
+                    stringResource(
+                        if (visionAvailable) R.string.studio_mask_hint
+                        else R.string.studio_mask_subject_unavailable
+                    ),
+                    "session_mask_capability"
+                )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FormatChip(
                         stringResource(R.string.studio_mask_subject),
                         maskFill == MaskFill.Subject,
-                        "mask_subject",
-                        onSubjectMask
-                    )
+                        "mask_subject"
+                    ) {
+                        if (visionAvailable) onSubjectMask()
+                    }
                     FormatChip(
                         stringResource(R.string.studio_mask_background),
                         maskFill == MaskFill.Background,
-                        "mask_background",
-                        onBackgroundMask
-                    )
+                        "mask_background"
+                    ) {
+                        if (visionAvailable) onBackgroundMask()
+                    }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FormatChip(stringResource(R.string.studio_mask_protect), maskReveal, "mask_protect") {
@@ -1400,16 +1877,23 @@ private fun ToolBody(
                         onMaskReveal(true)
                     }
                 }
-                Text(stringResource(R.string.studio_mask_hint), color = PixiTextMuted)
-                PixiPrimaryButton(stringResource(R.string.studio_mask_clear), onClearMask, Modifier.testTag("mask_clear"))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PixiPrimaryButton(
+                        stringResource(R.string.studio_mask_clear),
+                        onClearMask,
+                        Modifier.weight(1f).testTag("mask_clear")
+                    )
+                    if (canRestoreMask) {
+                        PixiSecondaryButton(
+                            stringResource(R.string.studio_mask_restore),
+                            onRestoreMask,
+                            Modifier.weight(1f).testTag("mask_restore")
+                        )
+                    }
+                }
             }
             SessionMode.Layers -> {
-                Text(stringResource(R.string.studio_layers_hint), color = PixiTextMuted)
-                Text(
-                    stringResource(R.string.studio_mask_hint),
-                    color = PixiTextMuted,
-                    modifier = Modifier.testTag("layers_panel_hint")
-                )
+                StudioHint(stringResource(R.string.studio_layers_hint), "layers_panel_hint")
             }
             SessionMode.Collage -> {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1448,7 +1932,9 @@ private fun LabeledSlider(
         onValueChange = onChange,
         valueRange = range,
         colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
-        modifier = Modifier.testTag(tag)
+        modifier = Modifier
+            .heightIn(min = 48.dp)
+            .testTag(tag)
     )
 }
 
@@ -1539,11 +2025,16 @@ private fun LayerStack(
                     color = PixiText,
                     fontWeight = if (layer.id == selected?.id) FontWeight.SemiBold else FontWeight.Medium,
                     modifier = Modifier
+                        .heightIn(min = 48.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .background(if (layer.id == selected?.id) PixiAccent else PixiSurface2)
                         .clickable { onSelect(layer.id) }
                         .testTag("layer_row_${layer.id}")
-                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                        .semantics {
+                            role = Role.RadioButton
+                            this.selected = layer.id == selected?.id
+                        }
+                        .padding(horizontal = 10.dp, vertical = 12.dp)
                 )
             }
         }
@@ -1600,34 +2091,21 @@ private fun blendUiLabel(mode: BlendMode): String = when (mode) {
     BlendMode.Screen -> "Lighten"
     BlendMode.Overlay -> "Contrast"
 }
-@Composable
-private fun RailAction(
-    label: String,
-    tag: String,
-    selected: Boolean = false,
-    onClick: () -> Unit
-) {
-    Text(
-        label,
-        color = PixiText,
-        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-        modifier = Modifier
-            .clip(RoundedCornerShape(999.dp))
-            .background(if (selected) PixiAccent else PixiBg)
-            .clickable(onClick = onClick)
-            .testTag(tag)
-            .padding(horizontal = 14.dp, vertical = 8.dp)
-    )
-}
 
 @Composable
 private fun HistogramStrip(bins: IntArray, modifier: Modifier = Modifier) {
     val clip = remember(bins) { histogramClip(bins) }
-    Column(modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+    Column(
+        modifier
+            .padding(horizontal = 20.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(PixiBg.copy(alpha = 0.45f))
+            .padding(horizontal = 10.dp, vertical = 6.dp)
+    ) {
         Canvas(
             Modifier
                 .fillMaxWidth()
-                .height(44.dp)
+                .height(28.dp)
                 .testTag("photo_histogram")
         ) {
             val peak = bins.maxOrNull()?.coerceAtLeast(1) ?: 1

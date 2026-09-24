@@ -49,6 +49,14 @@ class ClipSlowMoTest {
     }
 
     @Test
+    fun frameInterp_baseBuildIsUnavailable() {
+        FrameInterp.mlAvailableOverride = null
+        assertFalse(FrameInterp.mlAvailable())
+        assertEquals(SlowMoEngine.Heuristic, FrameInterp.resolve(SlowMoEngine.Ml))
+        assertEquals("heuristic", FrameInterp.engineLabelKey(SlowMoEngine.Ml))
+    }
+
+    @Test
     fun expandRamp_defersWhenSlowMo() {
         val clip = TimelineClip(
             id = "c0",

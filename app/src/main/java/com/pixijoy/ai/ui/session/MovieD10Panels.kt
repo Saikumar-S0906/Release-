@@ -85,8 +85,7 @@ fun MovieSlowMoPanel(
             ) {
                 SlowChip(
                     label = stringResource(R.string.studio_slowmo_heuristic),
-                    selected = resolved == SlowMoEngine.Heuristic &&
-                        slowMo.engine != SlowMoEngine.Ml,
+                    selected = resolved == SlowMoEngine.Heuristic,
                     tag = "movie_slowmo_heuristic"
                 ) { onSlowMo(slowMo.withEngine(SlowMoEngine.Heuristic)) }
                 SlowChip(
@@ -95,8 +94,9 @@ fun MovieSlowMoPanel(
                     } else {
                         stringResource(R.string.studio_slowmo_ml_locked)
                     },
-                    selected = slowMo.engine == SlowMoEngine.Ml,
-                    tag = "movie_slowmo_ml"
+                    selected = resolved == SlowMoEngine.Ml,
+                    tag = "movie_slowmo_ml",
+                    enabled = FrameInterp.mlAvailable()
                 ) { onSlowMo(slowMo.withEngine(SlowMoEngine.Ml)) }
             }
             Text(
@@ -119,17 +119,18 @@ private fun SlowChip(
     label: String,
     selected: Boolean,
     tag: String,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     Text(
         label,
-        color = PixiText,
+        color = if (enabled) PixiText else PixiTextMuted,
         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
         modifier = Modifier
             .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(999.dp))
             .background(if (selected) PixiAccent else PixiBg)
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
             .testTag(tag)
             .semantics {
                 role = Role.RadioButton

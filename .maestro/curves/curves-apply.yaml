@@ -11,19 +11,15 @@
 - tapOn:
     id: "create_hub_editor"
 - extendedWaitUntil:
-    visible: "Use sample"
+    visible: "Try a sample"
     timeout: 25000
-- tapOn: "Use sample"
+- tapOn: "Try a sample"
 - extendedWaitUntil:
     visible:
       id: "photo_session"
     timeout: 60000
-- scrollUntilVisible:
-    element:
-      id: "session_curves"
-    direction: RIGHT
-    timeout: 20000
-    visibilityPercentage: 40
+- tapOn:
+    id: "studio_group_color"
 - tapOn:
     id: "session_curves"
 - extendedWaitUntil:
@@ -38,6 +34,12 @@
     id: "curve_2"
 - assertVisible:
     id: "curve_3"
+- scrollUntilVisible:
+    element:
+      id: "curve_4"
+    direction: RIGHT
+    timeout: 15000
+    visibilityPercentage: 40
 - assertVisible:
     id: "curve_4"
 - assertVisible:

@@ -1,0 +1,11 @@
+appId: com.pixijoy.ai
+---
+- scrollUntilVisible:
+    element:
+      id: ${RAIL_ID}
+    direction: RIGHT
+    timeout: 25000
+    visibilityPercentage: 40
+- tapOn:
+    id: ${RAIL_ID}
+- takeScreenshot: ${SHOT}

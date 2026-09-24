@@ -44,7 +44,8 @@ import com.pixijoy.movie.TimelineGrade
 @Composable
 fun MovieGradePanel(
     grade: TimelineGrade,
-    onGrade: (TimelineGrade) -> Unit
+    onGrade: (TimelineGrade) -> Unit,
+    onSettled: () -> Unit = {}
 ) {
     val g = grade.normalized()
     val meters = MovieGrade.scopeMeters(g)
@@ -71,7 +72,7 @@ fun MovieGradePanel(
                         .heightIn(min = 48.dp)
                         .clip(RoundedCornerShape(999.dp))
                         .background(if (selected) PixiAccent else PixiBg)
-                        .clickable { onGrade(g.copy(lookKey = key)) }
+                        .clickable { onGrade(g.copy(lookKey = key)); onSettled() }
                         .testTag("movie_look_$key")
                         .semantics {
                             role = Role.RadioButton
@@ -88,6 +89,7 @@ fun MovieGradePanel(
         Slider(
             value = g.exposure,
             onValueChange = { onGrade(g.copy(exposure = it)) },
+            onValueChangeFinished = onSettled,
             valueRange = -2f..2f,
             colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
             modifier = Modifier.testTag("movie_grade_exposure")
@@ -99,7 +101,8 @@ fun MovieGradePanel(
         Slider(
             value = g.contrast,
             onValueChange = { onGrade(g.copy(contrast = it)) },
-            valueRange = 0.5f..1.8f,
+            onValueChangeFinished = onSettled,
+                valueRange = 0.5f..1.8f,
             colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
             modifier = Modifier.testTag("movie_grade_contrast")
         )
@@ -110,6 +113,7 @@ fun MovieGradePanel(
         Slider(
             value = g.saturation,
             onValueChange = { onGrade(g.copy(saturation = it)) },
+            onValueChangeFinished = onSettled,
             valueRange = 0f..2f,
             colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
             modifier = Modifier.testTag("movie_grade_saturation")

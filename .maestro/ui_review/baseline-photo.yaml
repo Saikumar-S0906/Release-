@@ -1,0 +1,93 @@
+appId: com.pixijoy.ai
+---
+# R4 UI baseline — editor rail modes on the sample photo.
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "nav_create"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_editor"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_editor"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 25000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+- takeScreenshot: photo_crop
+- runFlow:
+    file: rail-shot.yaml
+    env:
+      RAIL_ID: "session_adjust"
+      SHOT: "photo_adjust"
+- runFlow:
+    file: rail-shot.yaml
+    env:
+      RAIL_ID: "session_curves"
+      SHOT: "photo_curves"
+- runFlow:
+    file: rail-shot.yaml
+    env:
+      RAIL_ID: "session_selective_hsl"
+      SHOT: "photo_selective_hsl"
+- runFlow:
+    file: rail-shot.yaml
+    env:
+      RAIL_ID: "session_looks"
+      SHOT: "photo_looks"
+- runFlow:
+    file: rail-shot.yaml
+    env:
+      RAIL_ID: "session_sky"
+      SHOT: "photo_sky"
+- runFlow:
+    file: rail-shot.yaml
+    env:
+      RAIL_ID: "session_warp"
+      SHOT: "photo_warp"
+- runFlow:
+    file: rail-shot.yaml
+    env:
+      RAIL_ID: "session_soften"
+      SHOT: "photo_soften"
+- runFlow:
+    file: rail-shot.yaml
+    env:
+      RAIL_ID: "session_presets"
+      SHOT: "photo_presets"
+- runFlow:
+    file: rail-shot.yaml
+    env:
+      RAIL_ID: "session_heal"
+      SHOT: "photo_heal"
+- runFlow:
+    file: rail-shot.yaml
+    env:
+      RAIL_ID: "session_fill"
+      SHOT: "photo_fill"
+- runFlow:
+    file: rail-shot.yaml
+    env:
+      RAIL_ID: "session_text"
+      SHOT: "photo_text"
+- runFlow:
+    file: rail-shot.yaml
+    env:
+      RAIL_ID: "session_layers"
+      SHOT: "photo_layers"
+- runFlow:
+    file: rail-shot.yaml
+    env:
+      RAIL_ID: "session_mask"
+      SHOT: "photo_mask"
+- scrollUntilVisible:
+    element:
+      id: "session_flip"
+    direction: RIGHT
+    timeout: 20000
+    visibilityPercentage: 40
+- takeScreenshot: photo_rotate_flip

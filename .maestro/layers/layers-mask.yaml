@@ -11,9 +11,9 @@
 - tapOn:
     id: "create_hub_layers"
 - extendedWaitUntil:
-    visible: "Use sample"
+    visible: "Try a sample"
     timeout: 25000
-- tapOn: "Use sample"
+- tapOn: "Try a sample"
 - extendedWaitUntil:
     visible:
       id: "photo_session"

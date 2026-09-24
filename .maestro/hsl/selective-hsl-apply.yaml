@@ -13,12 +13,8 @@
     visible:
       id: "photo_session"
     timeout: 60000
-- scrollUntilVisible:
-    element:
-      id: "session_selective_hsl"
-    direction: RIGHT
-    timeout: 25000
-    visibilityPercentage: 40
+- tapOn:
+    id: "studio_group_color"
 - tapOn:
     id: "session_selective_hsl"
 - extendedWaitUntil:

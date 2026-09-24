@@ -2,8 +2,8 @@ package com.pixijoy.photo
 
 /**
  * Platform capability + chip labels for photo export formats.
- * HEIC uses androidx.heifwriter when present; AVIF has no stock encoder on
- * minSdk 31 devices, so selection falls back to JPEG with a visible chip label.
+ * HEIC uses androidx.heifwriter when present. AVIF has no encoder in this build,
+ * so it is not selectable; legacy AVIF requests still resolve safely to JPEG.
  */
 object ExportFormatSupport {
     fun canEncodeHeic(): Boolean =
@@ -16,8 +16,7 @@ object ExportFormatSupport {
         "jpeg" to "JPEG",
         "png" to "PNG",
         "webp" to "WebP",
-        "heic" to if (canEncodeHeic()) "HEIC" else "HEIC→JPEG",
-        "avif" to if (canEncodeAvif()) "AVIF" else "AVIF→JPEG"
+        "heic" to if (canEncodeHeic()) "HEIC" else "HEIC→JPEG"
     )
 
     fun parseKey(key: String): ExportFormat = when (key.lowercase()) {

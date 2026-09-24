@@ -38,7 +38,8 @@ fun MovieAudioFinishPanel(
     bed: AudioBed?,
     hasVoice: Boolean,
     onApplyPreset: (DuckPreset) -> Unit,
-    onBedChange: (AudioBed) -> Unit
+    onBedChange: (AudioBed) -> Unit,
+    onSettled: () -> Unit = {}
 ) {
     val matched = DuckPreset.matching(bed)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -85,6 +86,7 @@ fun MovieAudioFinishPanel(
             Slider(
                 value = bed.attackMs.toFloat(),
                 onValueChange = { onBedChange(bed.copy(attackMs = it.toLong().coerceAtLeast(0))) },
+                onValueChangeFinished = onSettled,
                 valueRange = 0f..600f,
                 colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                 modifier = Modifier.testTag("movie_bed_duck_attack")
@@ -96,6 +98,7 @@ fun MovieAudioFinishPanel(
             Slider(
                 value = bed.releaseMs.toFloat(),
                 onValueChange = { onBedChange(bed.copy(releaseMs = it.toLong().coerceAtLeast(0))) },
+                onValueChangeFinished = onSettled,
                 valueRange = 0f..800f,
                 colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                 modifier = Modifier.testTag("movie_bed_duck_release")

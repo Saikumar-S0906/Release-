@@ -38,7 +38,8 @@ import com.pixijoy.movie.TimelineClip
 @Composable
 fun MovieChromaPanel(
     selected: TimelineClip?,
-    onChroma: (ClipChroma) -> Unit
+    onChroma: (ClipChroma) -> Unit,
+    onSettled: () -> Unit = {}
 ) {
     val chroma = selected?.chroma ?: ClipChroma.None
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -58,17 +59,17 @@ fun MovieChromaPanel(
                 label = stringResource(R.string.studio_chroma_off),
                 selected = chroma.key == ChromaKey.Off,
                 tag = "movie_chroma_off"
-            ) { onChroma(ClipChroma.None) }
+            ) { onChroma(ClipChroma.None); onSettled() }
             ChromaChip(
                 label = stringResource(R.string.studio_chroma_green),
                 selected = chroma.key == ChromaKey.Green,
                 tag = "movie_chroma_green"
-            ) { onChroma(chroma.withKey(ChromaKey.Green)) }
+            ) { onChroma(chroma.withKey(ChromaKey.Green)); onSettled() }
             ChromaChip(
                 label = stringResource(R.string.studio_chroma_blue),
                 selected = chroma.key == ChromaKey.Blue,
                 tag = "movie_chroma_blue"
-            ) { onChroma(chroma.withKey(ChromaKey.Blue)) }
+            ) { onChroma(chroma.withKey(ChromaKey.Blue)); onSettled() }
         }
         if (chroma.key != ChromaKey.Off) {
             Text(stringResource(R.string.studio_chroma_similarity_preset), color = PixiTextMuted)
@@ -82,17 +83,17 @@ fun MovieChromaPanel(
                     label = stringResource(R.string.studio_chroma_tight),
                     selected = ChromaSimilarityPreset.matching(chroma) == ChromaSimilarityPreset.Tight,
                     tag = "movie_chroma_tight"
-                ) { onChroma(chroma.withSimilarity(ChromaSimilarityPreset.Tight.value)) }
+                ) { onChroma(chroma.withSimilarity(ChromaSimilarityPreset.Tight.value)); onSettled() }
                 ChromaChip(
                     label = stringResource(R.string.studio_chroma_medium),
                     selected = ChromaSimilarityPreset.matching(chroma) == ChromaSimilarityPreset.Medium,
                     tag = "movie_chroma_medium"
-                ) { onChroma(chroma.withSimilarity(ChromaSimilarityPreset.Medium.value)) }
+                ) { onChroma(chroma.withSimilarity(ChromaSimilarityPreset.Medium.value)); onSettled() }
                 ChromaChip(
                     label = stringResource(R.string.studio_chroma_wide),
                     selected = ChromaSimilarityPreset.matching(chroma) == ChromaSimilarityPreset.Wide,
                     tag = "movie_chroma_wide"
-                ) { onChroma(chroma.withSimilarity(ChromaSimilarityPreset.Wide.value)) }
+                ) { onChroma(chroma.withSimilarity(ChromaSimilarityPreset.Wide.value)); onSettled() }
             }
             Text(
                 stringResource(R.string.studio_chroma_softness, (chroma.softness * 100).toInt()),
@@ -101,6 +102,7 @@ fun MovieChromaPanel(
             Slider(
                 value = chroma.softness,
                 onValueChange = { onChroma(chroma.withSoftness(it)) },
+                onValueChangeFinished = onSettled,
                 valueRange = 0f..0.4f,
                 colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                 modifier = Modifier.testTag("movie_chroma_softness")

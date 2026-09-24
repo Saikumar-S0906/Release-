@@ -54,6 +54,7 @@ import coil3.compose.AsyncImage
 import com.pixijoy.ai.R
 import com.pixijoy.core.data.Project
 import com.pixijoy.core.media.MediaKind
+import com.pixijoy.photo.PhotoPreset
 import com.pixijoy.designsystem.PixiAccent
 import com.pixijoy.designsystem.PixiBg
 import com.pixijoy.designsystem.PixiCardShape
@@ -73,10 +74,14 @@ fun LibraryPane(
     onRequestDelete: (Project) -> Unit,
     onRenameProject: (Project, String) -> Unit,
     onCreate: () -> Unit,
-    onExportAllPhotos: (() -> Unit)? = null
+    onExportAllPhotos: (() -> Unit)? = null,
+    presets: List<PhotoPreset> = emptyList(),
+    lastLookPresetId: String? = null,
+    onExportPhotosWithLook: ((String) -> Unit)? = null
 ) {
     var filter by rememberSaveable { mutableStateOf(LibraryFilter.ALL) }
     var renameTarget by remember { mutableStateOf<Project?>(null) }
+    var showLookPicker by remember { mutableStateOf(false) }
     val visible = projects.filterBy(filter)
     val photoCount = projects.count { it.kind == MediaKind.PHOTO }
     Column(
@@ -114,11 +119,22 @@ fun LibraryPane(
             TextButton(
                 onClick = onExportAllPhotos,
                 modifier = Modifier
-                    .padding(bottom = 12.dp)
+                    .padding(bottom = 8.dp)
                     .heightIn(min = 48.dp)
                     .testTag("library_export_photos")
             ) {
                 Text(stringResource(R.string.studio_library_export_photos), color = PixiAccent)
+            }
+            if (onExportPhotosWithLook != null && presets.isNotEmpty()) {
+                TextButton(
+                    onClick = { showLookPicker = true },
+                    modifier = Modifier
+                        .padding(bottom = 12.dp)
+                        .heightIn(min = 48.dp)
+                        .testTag("library_export_with_look")
+                ) {
+                    Text(stringResource(R.string.studio_library_export_with_look), color = PixiAccent)
+                }
             }
         }
         if (projects.isEmpty()) {
@@ -155,6 +171,43 @@ fun LibraryPane(
                 }
             }
         }
+    }
+    if (showLookPicker && onExportPhotosWithLook != null) {
+        AlertDialog(
+            onDismissRequest = { showLookPicker = false },
+            title = { Text(stringResource(R.string.studio_library_pick_look)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    presets.forEach { preset ->
+                        val selected = preset.id == lastLookPresetId
+                        TextButton(
+                            onClick = {
+                                onExportPhotosWithLook(preset.id)
+                                showLookPicker = false
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 48.dp)
+                                .testTag("library_look_${preset.id}")
+                        ) {
+                            Text(
+                                if (selected) {
+                                    stringResource(R.string.studio_library_look_recent, preset.name)
+                                } else {
+                                    preset.name
+                                },
+                                color = PixiText
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showLookPicker = false }) {
+                    Text(stringResource(R.string.studio_cancel), color = PixiTextMuted)
+                }
+            }
+        )
     }
     renameTarget?.let { target ->
         RenameProjectDialog(

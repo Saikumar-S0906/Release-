@@ -58,7 +58,7 @@ class PhotoOpFillTest {
     }
 
     @Test
-    fun liteRtHook_isStub() {
-        assertTrue(LiteRtInpaintHook.toString().contains("LiteRtInpaintHook"))
+    fun neuralInpaint_isUnavailableInBaseApk() {
+        assertFalse(LiteRtInpaintHook.isAvailable())
     }
 }

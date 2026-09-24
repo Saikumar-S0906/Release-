@@ -1,0 +1,39 @@
+appId: com.pixijoy.ai
+---
+# After chrome — one screenshot per photo group.
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "nav_create"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_editor"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_editor"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 25000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+- takeScreenshot: photo_crop
+- tapOn:
+    id: "studio_group_light"
+- takeScreenshot: photo_light
+- tapOn:
+    id: "studio_group_color"
+- takeScreenshot: photo_color
+- tapOn:
+    id: "session_curves"
+- takeScreenshot: photo_curves
+- tapOn:
+    id: "studio_group_retouch"
+- takeScreenshot: photo_retouch
+- tapOn:
+    id: "studio_group_compose"
+- takeScreenshot: photo_compose
+- tapOn:
+    id: "studio_group_add"
+- takeScreenshot: photo_add

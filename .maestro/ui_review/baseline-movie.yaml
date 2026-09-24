@@ -1,0 +1,43 @@
+appId: com.pixijoy.ai
+---
+# R4 UI baseline — movie sheet top, grade, and timeline.
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "nav_create"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_segment_movie"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_segment_movie"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_move"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_move"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 25000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "movie_session"
+    timeout: 90000
+- takeScreenshot: movie_sheet_top
+- scrollUntilVisible:
+    element:
+      id: "movie_d5_hint"
+    direction: DOWN
+    timeout: 40000
+    visibilityPercentage: 40
+    speed: 40
+- takeScreenshot: movie_sheet_grade
+- scrollUntilVisible:
+    element:
+      id: "movie_timeline"
+    direction: DOWN
+    timeout: 40000
+    visibilityPercentage: 40
+    speed: 40
+- takeScreenshot: movie_sheet_timeline

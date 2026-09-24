@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
     inputs:
       suite:
-        description: "local suite name (unit only in CI by default)"
-        default: "unit"
+        description: "QA suite label (all gates run)"
+        default: "all"
 
 jobs:
   static-and-unit:
@@ -27,14 +27,16 @@ jobs:
         run: chmod +x gradlew
 
       - name: Detekt
-        run: ./gradlew detekt --console=plain
-        continue-on-error: true
+        run: ./gradlew :app:detekt --console=plain
 
       - name: Android Lint
         run: ./gradlew :app:lintDebug --console=plain
 
       - name: Unit tests
         run: ./gradlew testDebugUnitTest --console=plain
+
+      - name: Assemble release
+        run: ./gradlew :app:assembleRelease --console=plain
 
       - name: Upload reports
         if: always()
@@ -44,6 +46,52 @@ jobs:
           path: |
             app/build/reports/**
             **/build/reports/detekt/**
+
+  instrumented-smoke:
+    needs: static-and-unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Grant gradlew
+        run: chmod +x gradlew
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run instrumented smoke tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: >-
+            ./gradlew :app:connectedDebugAndroidTest
+            -Pandroid.testInstrumentationRunnerArguments.class=com.pixijoy.ai.StudioAppSmokeTest
+            --console=plain
+
+      - name: Upload instrumented results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: instrumented-smoke-results
+          path: |
+            app/build/outputs/androidTest-results/**
+            app/build/reports/androidTests/**
 
   # Optional: enable when FIREBASE_SERVICE_ACCOUNT + gcloud secrets are configured
   # firebase-robo:

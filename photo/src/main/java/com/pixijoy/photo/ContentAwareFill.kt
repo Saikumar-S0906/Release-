@@ -40,6 +40,9 @@ fun applyFill(src: Bitmap, stamps: List<Stamp>): Bitmap {
  * Must never hit the network. Returns null → classical Telea path.
  */
 object LiteRtInpaintHook {
+    /** Base APK capability gate: no neural inpaint model is shipped. */
+    fun isAvailable(): Boolean = false
+
     fun tryInpaint(src: Bitmap, mask: BooleanArray): Bitmap? = null
 }
 

@@ -7,8 +7,8 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [ProjectEntity::class, MediaRefEntity::class],
-    version = 1,
-    exportSchema = false
+    version = StudioMigrations.CURRENT_VERSION,
+    exportSchema = true
 )
 abstract class StudioDatabase : RoomDatabase() {
     abstract fun projects(): ProjectDao
@@ -23,7 +23,7 @@ abstract class StudioDatabase : RoomDatabase() {
                     context.applicationContext,
                     StudioDatabase::class.java,
                     "pixijoy_studio.db"
-                ).build().also { instance = it }
+                ).addMigrations(*StudioMigrations.all).build().also { instance = it }
             }
         }
     }

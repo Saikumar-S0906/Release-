@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.pixijoy.movie"
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig { minSdk = 31 }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

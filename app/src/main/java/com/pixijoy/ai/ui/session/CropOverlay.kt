@@ -17,32 +17,38 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.pixijoy.photo.PhotoOp
-import kotlin.math.hypot
 
-private enum class CropHandle { TL, TR, BL, BR }
+internal enum class CropHandle { TL, TR, BL, BR }
 
 @Composable
 fun CropOverlay(
     crop: PhotoOp.Crop,
     imageRect: Rect,
     onChange: (PhotoOp.Crop) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewportZoom: Float = 1f
 ) {
     var handle by remember { mutableStateOf<CropHandle?>(null) }
+    val safeZoom = viewportZoom.coerceAtLeast(1f)
     Canvas(
         modifier = modifier
             .testTag("session_crop_overlay")
-            .pointerInput(crop, imageRect) {
+            .pointerInput(crop, imageRect, safeZoom) {
                 detectDragGestures(
                     onDragStart = { start ->
-                        handle = nearestHandle(start, imageRect, crop)
+                        handle = hitTestCropHandle(
+                            start = start,
+                            imageRect = imageRect,
+                            crop = crop,
+                            hitRadiusPx = 26.dp.toPx() / safeZoom
+                        )
                     },
                     onDragEnd = { handle = null },
                     onDragCancel = { handle = null },
                     onDrag = { change, amount ->
-                        change.consume()
                         val active = handle ?: return@detectDragGestures
                         if (imageRect.width <= 0f || imageRect.height <= 0f) return@detectDragGestures
+                        change.consume()
                         onChange(
                             crop.drag(
                                 active,
@@ -82,9 +88,11 @@ fun CropOverlay(
             color = Color.White,
             topLeft = Offset(l, t),
             size = Size(r - l, b - t),
-            style = Stroke(width = 2.dp.toPx())
+            style = Stroke(width = 2.dp.toPx() / safeZoom)
         )
-        val radius = 10.dp.toPx()
+        // The common viewport layer scales positions; compensate radii so handles remain
+        // 10dp visually and retain a separate 26dp touch radius at every zoom.
+        val radius = 10.dp.toPx() / safeZoom
         listOf(Offset(l, t), Offset(r, t), Offset(l, b), Offset(r, b)).forEach { center ->
             drawCircle(Color.White, radius, center)
         }
@@ -108,7 +116,13 @@ internal fun fittedImageRect(viewW: Float, viewH: Float, imgW: Int, imgH: Int): 
     }
 }
 
-private fun nearestHandle(start: Offset, imageRect: Rect, crop: PhotoOp.Crop): CropHandle {
+internal fun hitTestCropHandle(
+    start: Offset,
+    imageRect: Rect,
+    crop: PhotoOp.Crop,
+    hitRadiusPx: Float
+): CropHandle? {
+    if (imageRect.width <= 0f || imageRect.height <= 0f || hitRadiusPx <= 0f) return null
     val points = mapOf(
         CropHandle.TL to Offset(
             imageRect.left + crop.left * imageRect.width,
@@ -127,7 +141,16 @@ private fun nearestHandle(start: Offset, imageRect: Rect, crop: PhotoOp.Crop): C
             imageRect.top + crop.bottom * imageRect.height
         )
     )
-    return points.minBy { hypot((it.value.x - start.x).toDouble(), (it.value.y - start.y).toDouble()) }.key
+    val radiusSquared = hitRadiusPx * hitRadiusPx
+    return points
+        .asSequence()
+        .map { (handle, point) ->
+            val delta = point - start
+            handle to delta.getDistanceSquared()
+        }
+        .filter { (_, distanceSquared) -> distanceSquared <= radiusSquared }
+        .minByOrNull { (_, distanceSquared) -> distanceSquared }
+        ?.first
 }
 
 private fun PhotoOp.Crop.drag(handle: CropHandle, dx: Float, dy: Float): PhotoOp.Crop {

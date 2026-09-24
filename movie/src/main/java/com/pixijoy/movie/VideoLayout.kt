@@ -1,8 +1,9 @@
 package com.pixijoy.movie
 
 import androidx.media3.common.util.Size
-import androidx.media3.effect.OverlaySettings
-import androidx.media3.effect.VideoCompositorSettings
+import androidx.media3.common.OverlaySettings
+import androidx.media3.common.VideoCompositorSettings
+import androidx.media3.effect.StaticOverlaySettings
 
 /**
  * Multi-video frame layouts (D7). [Single] keeps the existing sequential composition.
@@ -45,11 +46,11 @@ private object PipCompositor : VideoCompositorSettings {
 
     override fun getOverlaySettings(inputId: Int, presentationTimeUs: Long): OverlaySettings =
         when (inputId) {
-            0 -> OverlaySettings.Builder()
+            0 -> StaticOverlaySettings.Builder()
                 .setScale(0.34f, 0.34f)
                 .setBackgroundFrameAnchor(0.62f, 0.62f)
                 .build()
-            else -> OverlaySettings.Builder().build()
+            else -> StaticOverlaySettings.Builder().build()
         }
 }
 
@@ -60,15 +61,15 @@ private object SplitCompositor : VideoCompositorSettings {
 
     override fun getOverlaySettings(inputId: Int, presentationTimeUs: Long): OverlaySettings =
         when (inputId) {
-            0 -> OverlaySettings.Builder()
+            0 -> StaticOverlaySettings.Builder()
                 .setScale(0.5f, 1f)
                 .setBackgroundFrameAnchor(-0.5f, 0f)
                 .build()
-            1 -> OverlaySettings.Builder()
+            1 -> StaticOverlaySettings.Builder()
                 .setScale(0.5f, 1f)
                 .setBackgroundFrameAnchor(0.5f, 0f)
                 .build()
-            else -> OverlaySettings.Builder().build()
+            else -> StaticOverlaySettings.Builder().build()
         }
 }
 
@@ -79,23 +80,23 @@ private object GridCompositor : VideoCompositorSettings {
 
     override fun getOverlaySettings(inputId: Int, presentationTimeUs: Long): OverlaySettings =
         when (inputId) {
-            0 -> OverlaySettings.Builder()
+            0 -> StaticOverlaySettings.Builder()
                 .setScale(0.5f, 0.5f)
                 .setBackgroundFrameAnchor(-0.5f, 0.5f)
                 .build()
-            1 -> OverlaySettings.Builder()
+            1 -> StaticOverlaySettings.Builder()
                 .setScale(0.5f, 0.5f)
                 .setBackgroundFrameAnchor(0.5f, 0.5f)
                 .build()
-            2 -> OverlaySettings.Builder()
+            2 -> StaticOverlaySettings.Builder()
                 .setScale(0.5f, 0.5f)
                 .setBackgroundFrameAnchor(-0.5f, -0.5f)
                 .build()
-            3 -> OverlaySettings.Builder()
+            3 -> StaticOverlaySettings.Builder()
                 .setScale(0.5f, 0.5f)
                 .setBackgroundFrameAnchor(0.5f, -0.5f)
                 .build()
-            else -> OverlaySettings.Builder().build()
+            else -> StaticOverlaySettings.Builder().build()
         }
 }
 

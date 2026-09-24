@@ -43,8 +43,9 @@ class ExportExifPolicyTest {
     }
 
     @Test
-    fun chipFormats_includeHeicAndAvif() {
+    fun chipFormats_excludeUnavailableAvif() {
         val keys = ExportFormatSupport.chipFormats().map { it.first }
-        assertTrue(keys.containsAll(listOf("jpeg", "png", "webp", "heic", "avif")))
+        assertEquals(listOf("jpeg", "png", "webp", "heic"), keys)
+        assertFalse("AVIF must not be selectable without an encoder", "avif" in keys)
     }
 }

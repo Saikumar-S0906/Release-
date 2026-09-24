@@ -1,5 +1,6 @@
 package com.pixijoy.ai.ui
 
+import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.PredictiveBackHandler
@@ -13,6 +14,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -62,7 +64,6 @@ import androidx.compose.ui.unit.dp
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import androidx.work.workDataOf
 import com.pixijoy.ai.R
 import com.pixijoy.ai.export.BatchPhotoExportWorker
 import com.pixijoy.ai.ui.camera.CameraCaptureScreen
@@ -82,6 +83,7 @@ import com.pixijoy.designsystem.pixiMotionMs
 import com.pixijoy.movie.Media3MovieEngine
 import com.pixijoy.ml.MediaPipeVision
 import com.pixijoy.photo.BitmapPhotoEngine
+import com.pixijoy.photo.PhotoPreset
 import java.io.File
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -89,6 +91,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 private enum class Gate { Splash, Privacy, Shell }
+
+private const val SAMPLE_MOVIE_ASSET = "sample_movie.mp4"
 
 @Composable
 fun StudioApp() {
@@ -101,13 +105,19 @@ fun StudioApp() {
     val scope = rememberCoroutineScope()
     var gate by remember { mutableStateOf(Gate.Splash) }
     var tab by rememberSaveable { mutableStateOf(StudioTab.Home) }
-    var session by remember { mutableStateOf<OpenSession?>(null) }
+    var session by rememberSaveable(stateSaver = OpenSession.Saver) {
+        mutableStateOf<OpenSession?>(null)
+    }
     var pending by remember { mutableStateOf<PendingPick?>(null) }
     var showPickSheet by remember { mutableStateOf(false) }
     var showCreateSheet by remember { mutableStateOf(false) }
     var showCamera by remember { mutableStateOf(false) }
     var cameraRequest by remember { mutableStateOf<PendingPick?>(null) }
-    val projects by repo.observeProjects().collectAsState(initial = emptyList())
+    val observedProjects by repo.observeProjects().collectAsState(initial = null)
+    val projects = observedProjects.orEmpty()
+    val lastProjectId by prefs.lastProjectId.collectAsState(initial = null)
+    val lastLookPresetId by prefs.lastLookPresetId.collectAsState(initial = null)
+    var libraryPresets by remember { mutableStateOf(emptyList<PhotoPreset>()) }
     val snackbarHostState = remember { SnackbarHostState() }
     var pendingDeleteIds by remember { mutableStateOf(setOf<String>()) }
     var deleteJob by remember { mutableStateOf<Job?>(null) }
@@ -116,6 +126,14 @@ fun StudioApp() {
     }
     val config = LocalConfiguration.current
     val twoPane = isStudioTwoPane(config.screenWidthDp, config.screenHeightDp)
+
+    fun reportImportFailure(detail: String) {
+        scope.launch {
+            snackbarHostState.showSnackbar(
+                context.getString(R.string.studio_import_failed, detail)
+            )
+        }
+    }
 
     fun requestDelete(project: Project) {
         pendingDeleteIds = pendingDeleteIds + project.id
@@ -144,6 +162,13 @@ fun StudioApp() {
         val accepted = prefs.privacyAccepted.first()
         gate = if (accepted) Gate.Shell else Gate.Privacy
     }
+    LaunchedEffect(tab, gate) {
+        if (gate == Gate.Shell && tab == StudioTab.Library) {
+            libraryPresets = repo.listPresetFiles().mapNotNull { file ->
+                runCatching { PhotoPreset.decode(file.readText()) }.getOrNull()
+            }
+        }
+    }
 
     val pickMedia = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
@@ -153,7 +178,16 @@ fun StudioApp() {
         showPickSheet = false
         showCreateSheet = false
         if (uri != null && request != null) {
-            scope.launch { openImported(repo, prefs, uri, request) { session = it; tab = StudioTab.Studio } }
+            scope.launch {
+                openImported(
+                    repo = repo,
+                    prefs = prefs,
+                    uri = uri,
+                    request = request,
+                    onOpen = { session = it; tab = StudioTab.Studio },
+                    onError = { reportImportFailure(it) }
+                )
+            }
         }
     }
     val pickFile = rememberLauncherForActivityResult(
@@ -164,7 +198,16 @@ fun StudioApp() {
         showPickSheet = false
         showCreateSheet = false
         if (uri != null && request != null) {
-            scope.launch { openImported(repo, prefs, uri, request) { session = it; tab = StudioTab.Studio } }
+            scope.launch {
+                openImported(
+                    repo = repo,
+                    prefs = prefs,
+                    uri = uri,
+                    request = request,
+                    onOpen = { session = it; tab = StudioTab.Studio },
+                    onError = { reportImportFailure(it) }
+                )
+            }
         }
     }
     fun launchGallery(request: PendingPick) {
@@ -176,21 +219,31 @@ fun StudioApp() {
         } else {
             ActivityResultContracts.PickVisualMedia.ImageOnly
         }
-        pickMedia.launch(PickVisualMediaRequest(type))
+        runCatching {
+            pickMedia.launch(PickVisualMediaRequest(type))
+        }.onFailure {
+            pending = null
+            reportImportFailure(it.localizedMessage ?: context.getString(R.string.studio_import_unknown))
+        }
     }
 
     fun launchOpenFile(request: PendingPick) {
         pending = request
         showPickSheet = false
         showCreateSheet = false
-        pickFile.launch(
-            arrayOf(
-                "image/*",
-                "image/x-adobe-dng",
-                "image/dng",
-                "*/*"
+        runCatching {
+            pickFile.launch(
+                arrayOf(
+                    "image/*",
+                    "image/x-adobe-dng",
+                    "image/dng",
+                    "*/*"
+                )
             )
-        )
+        }.onFailure {
+            pending = null
+            reportImportFailure(it.localizedMessage ?: context.getString(R.string.studio_import_unknown))
+        }
     }
 
     fun launchCamera(request: PendingPick) {
@@ -206,23 +259,36 @@ fun StudioApp() {
         showPickSheet = false
         showCreateSheet = false
         scope.launch {
-            val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.board_c00_hero)
-                ?: BitmapFactory.decodeResource(context.resources, R.drawable.board_logo_pixijoy)
-            if (bitmap == null) return@launch
-            when (
-                val result = repo.importBitmap(
-                    bitmap,
-                    context.getString(R.string.studio_sample_title),
-                    kind = request.kind
-                )
-            ) {
-                is AppResult.Ok -> {
+            val title = context.getString(R.string.studio_sample_title)
+            val result = if (request.kind == MediaKind.MOVIE) {
+                importMovieSample(context, repo, title)
+            } else {
+                val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.board_c00_hero)
+                    ?: BitmapFactory.decodeResource(context.resources, R.drawable.board_logo_pixijoy)
+                if (bitmap == null) {
+                    snackbarHostState.showSnackbar(
+                        context.getString(
+                            R.string.studio_import_failed,
+                            context.getString(R.string.studio_sample_unavailable)
+                        )
+                    )
+                    return@launch
+                }
+                try {
+                    repo.importBitmap(bitmap, title, kind = request.kind)
+                } finally {
                     if (!bitmap.isRecycled) bitmap.recycle()
+                }
+            }
+            when (result) {
+                is AppResult.Ok -> {
                     prefs.setLastProject(result.value.id)
-                    session = OpenSession(result.value, request.tool)
+                    session = OpenSession.fromProject(result.value, request.tool)
                     tab = StudioTab.Studio
                 }
-                is AppResult.Err -> if (!bitmap.isRecycled) bitmap.recycle()
+                is AppResult.Err -> snackbarHostState.showSnackbar(
+                    context.getString(R.string.studio_import_failed, result.message)
+                )
             }
         }
     }
@@ -239,7 +305,7 @@ fun StudioApp() {
         )
         Gate.Shell -> {
             val compactSession = session != null && !twoPane
-            val backEnabled = showCamera || showPickSheet || showCreateSheet || session != null
+            val backEnabled = showCamera || showPickSheet || showCreateSheet
             val motion = pixiMotionMs(emphasized = true)
             PredictiveBackHandler(enabled = backEnabled) { progress ->
                 progress.collect { }
@@ -253,7 +319,6 @@ fun StudioApp() {
                         pending = null
                     }
                     showCreateSheet -> showCreateSheet = false
-                    session != null -> session = null
                 }
             }
             AnimatedContent(
@@ -267,6 +332,7 @@ fun StudioApp() {
                     SessionHost(
                         session = session!!,
                         projects = projects,
+                        projectsLoaded = observedProjects != null,
                         repo = repo,
                         engine = engine,
                         movieEngine = movieEngine,
@@ -278,15 +344,18 @@ fun StudioApp() {
                         onTab = { tab = it },
                         twoPane = twoPane,
                         projects = visibleProjects,
+                        projectsLoaded = observedProjects != null,
+                        continueProject = findContinueProject(visibleProjects, lastProjectId),
                         session = session,
                         onOpenStudio = { tab = StudioTab.Studio },
                         onCreate = { showCreateSheet = true },
                         onOpenProject = { project ->
-                            session = OpenSession(
+                            session = OpenSession.fromProject(
                                 project,
                                 if (project.kind == MediaKind.MOVIE) "move" else "editor"
                             )
                             tab = StudioTab.Studio
+                            scope.launch { prefs.setLastProject(project.id) }
                         },
                         onPickTool = { tool ->
                             pending = PendingPick(
@@ -304,7 +373,9 @@ fun StudioApp() {
                         snackbarHostState = snackbarHostState,
                         repo = repo,
                         engine = engine,
-                        movieEngine = movieEngine
+                        movieEngine = movieEngine,
+                        libraryPresets = libraryPresets,
+                        lastLookPresetId = lastLookPresetId
                     )
                 }
             }
@@ -384,10 +455,18 @@ fun StudioApp() {
                         )
                         cameraRequest = null
                         scope.launch {
-                            openCaptured(repo, prefs, file, MediaKind.PHOTO, request) {
-                                session = it
-                                tab = StudioTab.Studio
-                            }
+                            openCaptured(
+                                repo = repo,
+                                prefs = prefs,
+                                file = file,
+                                kind = MediaKind.PHOTO,
+                                request = request,
+                                onOpen = {
+                                    session = it
+                                    tab = StudioTab.Studio
+                                },
+                                onError = { reportImportFailure(it) }
+                            )
                         }
                     },
                     onVideo = { file ->
@@ -403,10 +482,18 @@ fun StudioApp() {
                             tool = if (request.kind == MediaKind.MOVIE) request.tool else "move"
                         )
                         scope.launch {
-                            openCaptured(repo, prefs, file, MediaKind.MOVIE, movieRequest) {
-                                session = it
-                                tab = StudioTab.Studio
-                            }
+                            openCaptured(
+                                repo = repo,
+                                prefs = prefs,
+                                file = file,
+                                kind = MediaKind.MOVIE,
+                                request = movieRequest,
+                                onOpen = {
+                                    session = it
+                                    tab = StudioTab.Studio
+                                },
+                                onError = { reportImportFailure(it) }
+                            )
                         }
                     },
                     onClose = {
@@ -419,21 +506,70 @@ fun StudioApp() {
     }
 }
 
+private fun enqueuePhotoBatch(
+    context: Context,
+    projects: List<Project>,
+    presetBody: String? = null
+) {
+    val ids = projects.filter { it.kind == MediaKind.PHOTO }.map { it.id }
+    if (ids.isEmpty()) return
+    val data = androidx.work.Data.Builder()
+        .putStringArray(BatchPhotoExportWorker.KEY_PROJECTS, ids.toTypedArray())
+        .putString(BatchPhotoExportWorker.KEY_FORMAT, "jpeg")
+        .putInt(BatchPhotoExportWorker.KEY_QUALITY, 92)
+        .putBoolean(BatchPhotoExportWorker.KEY_KEEP_EXIF, false)
+        .putBoolean(BatchPhotoExportWorker.KEY_STRIP_GPS, true)
+        .putString(BatchPhotoExportWorker.KEY_COLOR_INTENT, "srgb")
+    if (presetBody != null) {
+        data.putString(BatchPhotoExportWorker.KEY_PRESET, presetBody)
+    }
+    val request = OneTimeWorkRequestBuilder<BatchPhotoExportWorker>()
+        .setInputData(data.build())
+        .build()
+    WorkManager.getInstance(context).enqueueUniqueWork(
+        BatchPhotoExportWorker.uniqueName(),
+        ExistingWorkPolicy.REPLACE,
+        request
+    )
+}
+
+private suspend fun importMovieSample(
+    context: Context,
+    repo: ProjectRepository,
+    title: String
+): AppResult<Project> = runCatching {
+    val sampleFile = File.createTempFile("pixijoy-sample-", ".mp4", context.cacheDir)
+    try {
+        context.assets.open(SAMPLE_MOVIE_ASSET).use { input ->
+            sampleFile.outputStream().use { output -> input.copyTo(output) }
+        }
+        repo.importFile(sampleFile, MediaKind.MOVIE, title)
+    } finally {
+        sampleFile.delete()
+    }
+}.getOrElse { error ->
+    AppResult.Err(error.localizedMessage ?: error.javaClass.simpleName, error)
+}
+
 private suspend fun openCaptured(
     repo: ProjectRepository,
     prefs: StudioPrefs,
     file: File,
     kind: MediaKind,
     request: PendingPick,
-    onOpen: (OpenSession) -> Unit
+    onOpen: (OpenSession) -> Unit,
+    onError: (String) -> Unit
 ) {
     when (val result = repo.importFile(file, kind, request.title)) {
         is AppResult.Ok -> {
             prefs.setLastProject(result.value.id)
-            onOpen(OpenSession(result.value, request.tool))
+            onOpen(OpenSession.fromProject(result.value, request.tool))
             file.delete()
         }
-        is AppResult.Err -> Unit
+        is AppResult.Err -> {
+            file.delete()
+            onError(result.message)
+        }
     }
 }
 
@@ -442,14 +578,15 @@ private suspend fun openImported(
     prefs: StudioPrefs,
     uri: Uri,
     request: PendingPick,
-    onOpen: (OpenSession) -> Unit
+    onOpen: (OpenSession) -> Unit,
+    onError: (String) -> Unit
 ) {
     when (val result = repo.importUri(uri, request.kind, request.title)) {
         is AppResult.Ok -> {
             prefs.setLastProject(result.value.id)
-            onOpen(OpenSession(result.value, request.tool))
+            onOpen(OpenSession.fromProject(result.value, request.tool))
         }
-        is AppResult.Err -> Unit
+        is AppResult.Err -> onError(result.message)
     }
 }
 
@@ -457,12 +594,33 @@ private suspend fun openImported(
 private fun SessionHost(
     session: OpenSession,
     projects: List<Project>,
+    projectsLoaded: Boolean,
     repo: ProjectRepository,
     engine: BitmapPhotoEngine,
     movieEngine: Media3MovieEngine,
     onBack: () -> Unit
 ) {
-    val project = projects.firstOrNull { it.id == session.project.id } ?: session.project
+    val project = when (
+        val state = resolveSessionProject(session, if (projectsLoaded) projects else null)
+    ) {
+        SessionProjectState.Loading -> {
+            SessionProjectStatus(
+                message = stringResource(R.string.studio_loading),
+                tag = "session_loading",
+                onBack = onBack
+            )
+            return
+        }
+        SessionProjectState.Missing -> {
+            SessionProjectStatus(
+                message = stringResource(R.string.session_project_missing),
+                tag = "session_missing",
+                onBack = onBack
+            )
+            return
+        }
+        is SessionProjectState.Ready -> state.project
+    }
     val label = PhotoTools.plus(MovieTools).firstOrNull { it.key == session.tool }?.title
         ?.let { stringResource(it) }
         ?: stringResource(R.string.tool_editor)
@@ -473,6 +631,63 @@ private fun SessionHost(
     }
 }
 
+internal sealed interface SessionProjectState {
+    data object Loading : SessionProjectState
+    data object Missing : SessionProjectState
+    data class Ready(val project: Project) : SessionProjectState
+}
+
+internal fun resolveSessionProject(
+    session: OpenSession,
+    projects: List<Project>?
+): SessionProjectState {
+    if (projects == null) return SessionProjectState.Loading
+    val project = projects.firstOrNull { it.id == session.projectId }
+        ?: return SessionProjectState.Missing
+    return if (project.kind == session.kind) {
+        SessionProjectState.Ready(project)
+    } else {
+        SessionProjectState.Missing
+    }
+}
+
+internal fun findContinueProject(
+    projects: List<Project>,
+    lastProjectId: String?
+): Project? = lastProjectId?.let { id -> projects.firstOrNull { it.id == id } }
+
+@Composable
+private fun SessionProjectStatus(
+    message: String,
+    tag: String,
+    onBack: () -> Unit
+) {
+    PredictiveBackHandler {
+        it.collect { }
+        onBack()
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(PixiBg)
+            .padding(24.dp)
+            .testTag(tag),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(message, color = PixiText, textAlign = TextAlign.Center)
+        Text(
+            text = stringResource(R.string.studio_back),
+            color = PixiAccent,
+            modifier = Modifier
+                .padding(top = 16.dp)
+                .clickable(onClick = onBack)
+                .testTag("session_back")
+                .padding(12.dp)
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 private fun StudioShell(
@@ -480,6 +695,8 @@ private fun StudioShell(
     onTab: (StudioTab) -> Unit,
     twoPane: Boolean,
     projects: List<Project>,
+    projectsLoaded: Boolean,
+    continueProject: Project?,
     session: OpenSession?,
     onOpenStudio: () -> Unit,
     onCreate: () -> Unit,
@@ -491,7 +708,9 @@ private fun StudioShell(
     snackbarHostState: SnackbarHostState,
     repo: ProjectRepository,
     engine: BitmapPhotoEngine,
-    movieEngine: Media3MovieEngine
+    movieEngine: Media3MovieEngine,
+    libraryPresets: List<PhotoPreset> = emptyList(),
+    lastLookPresetId: String? = null
 ) {
     val context = LocalContext.current
     NavigationSuiteScaffold(
@@ -516,8 +735,10 @@ private fun StudioShell(
             when (tab) {
                 StudioTab.Home -> HomePane(
                     projects = projects,
+                    continueProject = continueProject,
                     onOpenStudio = onOpenStudio,
                     onCreate = onCreate,
+                    onContinue = onOpenProject,
                     onOpenProject = onOpenProject
                 )
                 StudioTab.Studio -> {
@@ -527,6 +748,7 @@ private fun StudioShell(
                                 SessionHost(
                                     session,
                                     projects,
+                                    projectsLoaded,
                                     repo,
                                     engine,
                                     movieEngine,
@@ -546,27 +768,14 @@ private fun StudioShell(
                     onRequestDelete = onRequestDelete,
                     onRenameProject = onRenameProject,
                     onCreate = onCreate,
+                    presets = libraryPresets,
+                    lastLookPresetId = lastLookPresetId,
                     onExportAllPhotos = {
-                        val ids = projects.filter { it.kind == MediaKind.PHOTO }.map { it.id }
-                        if (ids.isEmpty()) return@LibraryPane
-                        val request = OneTimeWorkRequestBuilder<BatchPhotoExportWorker>()
-                            .setInputData(
-                                workDataOf(
-                                    BatchPhotoExportWorker.KEY_PROJECTS to ids.toTypedArray(),
-                                    BatchPhotoExportWorker.KEY_FORMAT to "jpeg",
-                                    BatchPhotoExportWorker.KEY_QUALITY to 92,
-                                    BatchPhotoExportWorker.KEY_KEEP_EXIF to false,
-                                    BatchPhotoExportWorker.KEY_STRIP_GPS to true,
-                                    BatchPhotoExportWorker.KEY_COLOR_INTENT to "srgb"
-                                )
-                            )
-                            .build()
-                        WorkManager.getInstance(context)
-                            .enqueueUniqueWork(
-                                BatchPhotoExportWorker.uniqueName(),
-                                ExistingWorkPolicy.REPLACE,
-                                request
-                            )
+                        enqueuePhotoBatch(context, projects)
+                    },
+                    onExportPhotosWithLook = { presetId ->
+                        val body = libraryPresets.firstOrNull { it.id == presetId }?.encode()
+                        enqueuePhotoBatch(context, projects, body)
                     }
                 )
             }

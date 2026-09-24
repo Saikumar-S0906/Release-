@@ -12,25 +12,8 @@ appId: com.pixijoy.ai
     visible:
       id: "photo_session"
     timeout: 60000
-- scrollUntilVisible:
-    element:
-      id: "session_sky"
-    direction: RIGHT
-    timeout: 40000
-    visibilityPercentage: 30
-    speed: 40
-- swipe:
-    start: 85%, 87%
-    end: 20%, 87%
-    duration: 500
-- swipe:
-    start: 85%, 87%
-    end: 20%, 87%
-    duration: 500
-- extendedWaitUntil:
-    visible:
-      id: "session_warp"
-    timeout: 10000
+- tapOn:
+    id: "studio_group_compose"
 - tapOn:
     id: "session_warp"
 - extendedWaitUntil:

@@ -10,11 +10,12 @@ import androidx.work.workDataOf
 import com.pixijoy.core.common.AppResult
 import com.pixijoy.core.data.ProjectRepository
 import com.pixijoy.ml.MediaPipeVision
+import com.pixijoy.photo.BatchPresetApply
 import com.pixijoy.photo.BitmapPhotoEngine
 import com.pixijoy.photo.ColorIntent
 import com.pixijoy.photo.ExportExifPolicy
 import com.pixijoy.photo.ExportFormatSupport
-import com.pixijoy.photo.decodeLayers
+import com.pixijoy.photo.PhotoPreset
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -39,6 +40,7 @@ class BatchPhotoExportWorker(
             "display_p3" -> ColorIntent.DisplayP3
             else -> ColorIntent.Srgb
         }
+        val preset = inputData.getString(KEY_PRESET)?.let(PhotoPreset::decode)
         setForeground(foreground(0))
         return withContext(Dispatchers.IO) {
             val repo = ProjectRepository(applicationContext)
@@ -49,7 +51,10 @@ class BatchPhotoExportWorker(
                 if (project.kind != com.pixijoy.core.media.MediaKind.PHOTO) return@forEachIndexed
                 engine.lutDirectory = File(applicationContext.filesDir, "projects/$projectId")
                 val sources = project.media.map { it.path }.ifEmpty { listOf(project.coverPath) }
-                val layers = project.graph.decodeLayers()
+                val layers = BatchPresetApply.layersForExport(project.graph, preset)
+                if (preset != null) {
+                    repo.saveGraph(projectId, BatchPresetApply.appliedGraph(project.graph, preset))
+                }
                 val display = "PixiJoy_${project.title}_${System.currentTimeMillis()}.${format.extension}"
                 val progress = ((index + 1f) / ids.size).coerceIn(0f, 1f)
                 setProgressAsync(workDataOf(KEY_PROGRESS to progress))
@@ -91,6 +96,7 @@ class BatchPhotoExportWorker(
         const val KEY_KEEP_EXIF = "keepExif"
         const val KEY_STRIP_GPS = "stripGps"
         const val KEY_COLOR_INTENT = "colorIntent"
+        const val KEY_PRESET = "preset"
         const val KEY_PROGRESS = "progress"
         const val KEY_COUNT = "count"
         const val KEY_ERROR = "error"

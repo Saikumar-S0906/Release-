@@ -35,13 +35,7 @@ fun MovieLayoutPanel(
     layout: VideoLayout,
     onLayout: (VideoLayout) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            stringResource(R.string.studio_movie_d7_hint),
-            color = PixiTextMuted,
-            modifier = Modifier.testTag("movie_d7_hint")
-        )
-        Text(stringResource(R.string.studio_movie_layout), color = PixiTextMuted)
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier

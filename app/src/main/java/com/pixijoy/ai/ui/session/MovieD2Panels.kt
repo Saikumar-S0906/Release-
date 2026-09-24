@@ -2,19 +2,21 @@ package com.pixijoy.ai.ui.session
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
@@ -34,6 +36,8 @@ import com.pixijoy.movie.ClipTransition
 import com.pixijoy.movie.MovieSpeed
 import com.pixijoy.movie.TimelineClip
 
+private enum class MovieD2Mode { Roll, Transition, Speed }
+
 /**
  * D2 controls kept outside [MovieSessionScreen] to limit method size.
  */
@@ -43,82 +47,128 @@ fun MovieEditOpsPanel(
     canRoll: Boolean,
     onRoll: (Long) -> Unit,
     onTransition: (ClipTransition, Long) -> Unit,
-    onSpeedRamp: (Float, Float) -> Unit
+    onSpeedRamp: (Float, Float) -> Unit,
+    onSettled: () -> Unit = {}
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            stringResource(R.string.studio_movie_d2_hint),
-            color = PixiTextMuted,
-            modifier = Modifier.testTag("movie_d2_hint")
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(
-                onClick = { onRoll(-250L) },
-                enabled = canRoll && selected != null,
-                modifier = Modifier.testTag("movie_roll_left")
+    var focusedMode by remember { mutableStateOf(MovieD2Mode.Transition) }
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        StudioHint(stringResource(R.string.studio_movie_d2_hint), "movie_d2_hint")
+        StudioHScrollRow {
+            StudioChip(
+                stringResource(R.string.studio_roll),
+                focusedMode == MovieD2Mode.Roll,
+                "movie_d2_roll"
             ) {
-                Text(stringResource(R.string.studio_roll_left), color = PixiText)
+                focusedMode = MovieD2Mode.Roll
             }
-            TextButton(
-                onClick = { onRoll(250L) },
-                enabled = canRoll && selected != null,
-                modifier = Modifier.testTag("movie_roll_right")
+            StudioChip(
+                stringResource(R.string.studio_transition),
+                focusedMode == MovieD2Mode.Transition,
+                "movie_d2_transition"
             ) {
-                Text(stringResource(R.string.studio_roll_right), color = PixiText)
+                focusedMode = MovieD2Mode.Transition
             }
-        }
-        Text(stringResource(R.string.studio_transition), color = PixiTextMuted)
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.horizontalScroll(rememberScrollState())
-        ) {
-            TransitionChip(
-                label = stringResource(R.string.studio_transition_none),
-                selected = selected?.transition == ClipTransition.None || selected == null,
-                tag = "movie_transition_none"
-            ) { onTransition(ClipTransition.None, 0L) }
-            TransitionChip(
-                label = stringResource(R.string.studio_transition_soft),
-                selected = selected?.transition == ClipTransition.Soft,
-                tag = "movie_transition_soft"
+            StudioChip(
+                stringResource(R.string.studio_speed_ramp),
+                focusedMode == MovieD2Mode.Speed,
+                "movie_d2_speed"
             ) {
-                onTransition(ClipTransition.Soft, (selected?.transitionMs ?: 400L).coerceAtLeast(200L))
+                focusedMode = MovieD2Mode.Speed
             }
         }
-        if (selected?.transition == ClipTransition.Soft) {
-            Text(
-                stringResource(R.string.studio_transition_ms, selected.transitionMs.toInt()),
-                color = PixiTextMuted
-            )
-            Slider(
-                value = selected.transitionMs.toFloat().coerceIn(80f, 1200f),
-                onValueChange = { onTransition(ClipTransition.Soft, it.toLong()) },
-                valueRange = 80f..1200f,
-                colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
-                modifier = Modifier.testTag("movie_transition_ms")
-            )
+        when (focusedMode) {
+            MovieD2Mode.Roll -> {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(
+                        onClick = { onRoll(-250L) },
+                        enabled = canRoll && selected != null,
+                        modifier = Modifier.testTag("movie_roll_left")
+                    ) {
+                        Text(stringResource(R.string.studio_roll_left), color = PixiText)
+                    }
+                    TextButton(
+                        onClick = { onRoll(250L) },
+                        enabled = canRoll && selected != null,
+                        modifier = Modifier.testTag("movie_roll_right")
+                    ) {
+                        Text(stringResource(R.string.studio_roll_right), color = PixiText)
+                    }
+                }
+            }
+            MovieD2Mode.Transition -> {
+                StudioHScrollRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TransitionChip(
+                        label = stringResource(R.string.studio_transition_none),
+                        selected = selected?.transition == ClipTransition.None || selected == null,
+                        tag = "movie_transition_none"
+                    ) { onTransition(ClipTransition.None, 0L); onSettled() }
+                    TransitionChip(
+                        label = stringResource(R.string.studio_transition_soft),
+                        selected = selected?.transition == ClipTransition.Soft,
+                        tag = "movie_transition_soft"
+                    ) {
+                        onTransition(
+                            ClipTransition.Soft,
+                            (selected?.transitionMs ?: 400L).coerceAtLeast(200L)
+                        )
+                        onSettled()
+                    }
+                }
+                if (selected?.transition == ClipTransition.Soft) {
+                    Text(
+                        stringResource(R.string.studio_transition_ms, selected.transitionMs.toInt()),
+                        color = PixiTextMuted
+                    )
+                    Slider(
+                        value = selected.transitionMs.toFloat().coerceIn(80f, 1200f),
+                        onValueChange = { onTransition(ClipTransition.Soft, it.toLong()) },
+                        onValueChangeFinished = onSettled,
+                        valueRange = 80f..1200f,
+                        colors = SliderDefaults.colors(
+                            thumbColor = PixiAccent,
+                            activeTrackColor = PixiAccent
+                        ),
+                        modifier = Modifier
+                            .heightIn(min = 48.dp)
+                            .testTag("movie_transition_ms")
+                    )
+                }
+            }
+            MovieD2Mode.Speed -> {
+                val start = MovieSpeed.normalize(selected?.speed ?: 1f)
+                val end = MovieSpeed.normalize(selected?.speedEnd ?: start)
+                Text(
+                    stringResource(R.string.studio_speed_ramp_values, start, end),
+                    color = PixiTextMuted
+                )
+                Slider(
+                    value = start,
+                    onValueChange = { onSpeedRamp(MovieSpeed.normalize(it), end) },
+                    onValueChangeFinished = onSettled,
+                    valueRange = 0.5f..2f,
+                    colors = SliderDefaults.colors(
+                        thumbColor = PixiAccent,
+                        activeTrackColor = PixiAccent
+                    ),
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .testTag("movie_speed_start")
+                )
+                Slider(
+                    value = end,
+                    onValueChange = { onSpeedRamp(start, MovieSpeed.normalize(it)) },
+                    onValueChangeFinished = onSettled,
+                    valueRange = 0.5f..2f,
+                    colors = SliderDefaults.colors(
+                        thumbColor = PixiAccent,
+                        activeTrackColor = PixiAccent
+                    ),
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .testTag("movie_speed_end")
+                )
+            }
         }
-        Text(stringResource(R.string.studio_speed_ramp), color = PixiTextMuted)
-        val start = MovieSpeed.normalize(selected?.speed ?: 1f)
-        val end = MovieSpeed.normalize(selected?.speedEnd ?: start)
-        Text(
-            stringResource(R.string.studio_speed_ramp_values, start, end),
-            color = PixiTextMuted
-        )
-        Slider(
-            value = start,
-            onValueChange = { onSpeedRamp(MovieSpeed.normalize(it), end) },
-            valueRange = 0.5f..2f,
-            colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
-            modifier = Modifier.testTag("movie_speed_start")
-        )
-        Slider(
-            value = end,
-            onValueChange = { onSpeedRamp(start, MovieSpeed.normalize(it)) },
-            valueRange = 0.5f..2f,
-            colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
-            modifier = Modifier.testTag("movie_speed_end")
-        )
     }
 }
 

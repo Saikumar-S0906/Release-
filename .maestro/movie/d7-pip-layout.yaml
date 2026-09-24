@@ -24,19 +24,14 @@ appId: com.pixijoy.ai
     visible:
       id: "movie_session"
     timeout: 90000
-- scrollUntilVisible:
-    element:
-      id: "movie_d7_hint"
-    direction: DOWN
-    timeout: 40000
-    visibilityPercentage: 40
-    speed: 40
+- tapOn:
+    id: "studio_group_layout"
 - scrollUntilVisible:
     element:
       id: "movie_layout_presets"
     direction: DOWN
-    timeout: 20000
-    visibilityPercentage: 30
+    timeout: 40000
+    visibilityPercentage: 40
     speed: 40
 - assertVisible:
     id: "movie_layout_single"
@@ -48,9 +43,16 @@ appId: com.pixijoy.ai
     id: "movie_layout_grid"
 - tapOn:
     id: "movie_layout_pip"
-- assertVisible:
-    id: "movie_layout_presets"
+- extendedWaitUntil:
+    visible: "Live WYSIWYG layout preview.*|Live layout preview is not supported.*"
+    timeout: 20000
 - tapOn:
     id: "movie_layout_split"
-- assertVisible:
-    id: "movie_session"
+- extendedWaitUntil:
+    visible: "Live WYSIWYG layout preview.*|Live layout preview is not supported.*"
+    timeout: 20000
+- tapOn:
+    id: "movie_layout_grid"
+- extendedWaitUntil:
+    visible: "Live WYSIWYG layout preview.*|Live layout preview is not supported.*"
+    timeout: 20000

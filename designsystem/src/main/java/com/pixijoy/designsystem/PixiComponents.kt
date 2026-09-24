@@ -23,6 +23,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -89,7 +90,7 @@ fun PixiToolTile(
         Column {
             Text(title, color = PixiText, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(2.dp))
-            Text(subtitle, color = PixiTextMuted)
+            Text(subtitle, color = PixiTextMuted, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
     }
 }

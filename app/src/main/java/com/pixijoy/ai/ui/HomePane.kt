@@ -37,6 +37,7 @@ import com.pixijoy.core.data.Project
 import com.pixijoy.designsystem.PixiBg
 import com.pixijoy.designsystem.PixiCardShape
 import com.pixijoy.designsystem.PixiPrimaryButton
+import com.pixijoy.designsystem.PixiSecondaryButton
 import com.pixijoy.designsystem.PixiSurface
 import com.pixijoy.designsystem.PixiSurface2
 import com.pixijoy.designsystem.PixiText
@@ -46,8 +47,10 @@ import java.io.File
 @Composable
 fun HomePane(
     projects: List<Project>,
+    continueProject: Project?,
     onOpenStudio: () -> Unit,
     onCreate: () -> Unit,
+    onContinue: (Project) -> Unit,
     onOpenProject: (Project) -> Unit
 ) {
     Column(
@@ -87,6 +90,16 @@ fun HomePane(
             onClick = onCreate,
             modifier = Modifier.testTag("home_create")
         )
+        if (continueProject != null) {
+            Spacer(Modifier.height(8.dp))
+            PixiSecondaryButton(
+                text = stringResource(R.string.home_continue, continueProject.title),
+                onClick = { onContinue(continueProject) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("home_continue")
+            )
+        }
         TextButton(
             onClick = onOpenStudio,
             modifier = Modifier

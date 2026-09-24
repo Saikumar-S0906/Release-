@@ -1,0 +1,32 @@
+appId: com.pixijoy.ai
+---
+# Focused photo controls keep one slider visible at a time.
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "home_create"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+- tapOn:
+    id: "studio_group_color"
+- tapOn:
+    id: "session_color_tune"
+- assertVisible:
+    id: "session_color_hue"
+- assertVisible:
+    id: "session_color_saturation"
+- assertVisible:
+    id: "session_hue"
+- tapOn:
+    id: "session_color_saturation"
+- assertVisible:
+    id: "session_saturation"
+- assertNotVisible:
+    id: "session_hue"
+- doubleTapOn:
+    id: "session_viewport"

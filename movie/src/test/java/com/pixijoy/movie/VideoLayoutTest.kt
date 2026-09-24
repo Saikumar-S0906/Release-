@@ -64,4 +64,34 @@ class VideoLayoutTest {
         assertEquals(VideoLayout.Single, VideoLayout.parse("nope"))
         assertEquals(VideoLayout.Split, VideoLayout.parse("split"))
     }
+
+    @Test
+    fun previewPolicy_usesMultipleInputFactoryForParallelLayouts() {
+        assertEquals(
+            CompositionPreviewGraphMode.SingleInput,
+            CompositionPreviewPolicy.graphMode(VideoLayout.Single)
+        )
+        assertEquals(
+            CompositionPreviewGraphMode.MultipleInput,
+            CompositionPreviewPolicy.graphMode(VideoLayout.Pip)
+        )
+        assertEquals(
+            CompositionPreviewGraphMode.MultipleInput,
+            CompositionPreviewPolicy.graphMode(VideoLayout.Split)
+        )
+        assertEquals(
+            CompositionPreviewGraphMode.MultipleInput,
+            CompositionPreviewPolicy.graphMode(VideoLayout.Grid)
+        )
+    }
+
+    @Test
+    fun previewPolicy_guardsKnownMultiSequenceSeekingLimit() {
+        assertTrue(
+            CompositionPreviewPolicy.supportsSeeking(CompositionPreviewGraphMode.SingleInput)
+        )
+        assertFalse(
+            CompositionPreviewPolicy.supportsSeeking(CompositionPreviewGraphMode.MultipleInput)
+        )
+    }
 }

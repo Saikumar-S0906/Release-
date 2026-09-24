@@ -24,6 +24,8 @@ appId: com.pixijoy.ai
     visible:
       id: "movie_session"
     timeout: 90000
+- tapOn:
+    id: "studio_group_audio"
 - scrollUntilVisible:
     element:
       id: "movie_d6_hint"

@@ -9,13 +9,13 @@ import android.provider.MediaStore
 import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.VideoCompositorSettings
 import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.common.audio.ChannelMixingAudioProcessor
 import androidx.media3.common.audio.ChannelMixingMatrix
 import androidx.media3.common.audio.SonicAudioProcessor
 import androidx.media3.effect.Presentation
 import androidx.media3.effect.SpeedChangeEffect
-import androidx.media3.effect.VideoCompositorSettings
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.EditedMediaItem
 import androidx.media3.transformer.EditedMediaItemSequence
@@ -626,7 +626,10 @@ class Media3MovieEngine : MovieEngine {
     private fun volumeMixer(volume: Float): ChannelMixingAudioProcessor {
         val processor = ChannelMixingAudioProcessor()
         for (ch in 1..8) {
-            processor.putChannelMixingMatrix(ChannelMixingMatrix.create(ch, ch).scaleBy(volume))
+            val coefficients = FloatArray(ch * ch) { index ->
+                if (index % (ch + 1) == 0) volume else 0f
+            }
+            processor.putChannelMixingMatrix(ChannelMixingMatrix(ch, ch, coefficients))
         }
         return processor
     }
