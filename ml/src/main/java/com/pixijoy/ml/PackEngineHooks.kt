@@ -8,6 +8,7 @@ import com.pixijoy.ml.pack.PackId
 import com.pixijoy.ml.pack.PackInstallManager
 import com.pixijoy.ml.pack.PackInstallState
 import com.pixijoy.ml.pack.PackRuntime
+import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -75,6 +76,26 @@ fun interpreterBindAllowed(
         return false
     }
     return true
+}
+
+/**
+ * Bind-time file gate: Ready, bytes match the recorded SHA-256, and any
+ * catalog [expectedSha256] matches that record. HTTPS download pins are
+ * checked before the pack becomes Ready; this does not treat Ready alone
+ * as permission to register an interpreter.
+ */
+fun modelFileVerified(
+    state: PackInstallState,
+    file: File,
+    expectedSha256: String?
+): Boolean {
+    val ready = state as? PackInstallState.Ready ?: return false
+    if (ready.sha256.isBlank()) return false
+    return interpreterBindAllowed(
+        state,
+        PackChecksum.matches(file, ready.sha256),
+        expectedSha256
+    )
 }
 
 class StorePackReadiness(

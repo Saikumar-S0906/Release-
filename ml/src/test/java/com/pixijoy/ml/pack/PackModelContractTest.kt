@@ -12,6 +12,8 @@ class PackModelContractTest {
     fun superRes_accepts4xRgb() {
         assertEquals(4, PackModelContract.superResScale(intArrayOf(1, 50, 50, 3), intArrayOf(1, 200, 200, 3)))
         assertEquals(2, PackModelContract.superResScale(intArrayOf(1, 64, 64, 3), intArrayOf(1, 128, 128, 3)))
+        // Pinned compressed_esrgan.tflite: 180×320 NHWC → 720×1280 (4×).
+        assertEquals(4, PackModelContract.superResScale(intArrayOf(1, 180, 320, 3), intArrayOf(1, 720, 1280, 3)))
     }
 
     @Test
@@ -50,6 +52,8 @@ class PackModelContractTest {
         assertTrue(PackModelContract.isDenoiseSameRgb(intArrayOf(1, 256, 256, 3), intArrayOf(1, 256, 256, 3)))
         assertTrue(PackModelContract.isDenoiseSameRgb(intArrayOf(1, 3, 256, 256), intArrayOf(1, 3, 256, 256)))
         assertFalse(PackModelContract.isDenoiseSameRgb(intArrayOf(1, 50, 50, 3), intArrayOf(1, 200, 200, 3)))
+        assertFalse(PackModelContract.isDenoiseSameRgb(intArrayOf(1, 180, 320, 3), intArrayOf(1, 720, 1280, 3)))
+        assertNull(PackModelContract.superResScale(intArrayOf(1, 256, 256, 3), intArrayOf(1, 256, 256, 3)))
     }
 }
 

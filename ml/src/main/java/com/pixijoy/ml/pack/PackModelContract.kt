@@ -2,8 +2,18 @@ package com.pixijoy.ml.pack
 
 /**
  * Tensor-shape gates so a random `.tflite` cannot register as a neural pack engine.
+ *
+ * Pinned graphs (dtype is checked at bind, not here):
+ * - Super-res `compressed_esrgan.tflite`: FLOAT32 NHWC `1×180×320×3` → `1×720×1280×3` (4×).
+ * - Denoise `unet_rgb_fast.tflite`: FLOAT32 NHWC `1×256×256×3` → `1×256×256×3`.
+ *
+ * Frame-interp and track have no shape gate until a real artifact exists.
  */
 object PackModelContract {
+    /**
+     * NHWC RGB, batch 1, uniform 2× or 4×. Returns the scale, or null when the
+     * graph is not that super-res contract (including same-size denoise).
+     */
     fun superResScale(input: IntArray, output: IntArray): Int? {
         if (input.size != 4 || output.size != 4) return null
         if (input[0] != 1 || output[0] != 1) return null
@@ -42,8 +52,8 @@ object PackModelContract {
     }
 
     /**
-     * Same-size RGB restore. Rejects 2×/4× super-res graphs so an ESRGAN file
-     * cannot register as denoise.
+     * Same-size RGB restore, NHWC or NCHW. Rejects 2×/4× super-res graphs so an
+     * ESRGAN file cannot register as denoise. Bind also requires FLOAT32.
      */
     fun isDenoiseSameRgb(input: IntArray, output: IntArray): Boolean {
         if (superResScale(input, output) != null) return false

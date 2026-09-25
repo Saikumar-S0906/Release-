@@ -6,6 +6,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
 import com.google.android.gms.tflite.java.TfLite
+import com.pixijoy.ml.pack.PackCatalog
 import com.pixijoy.ml.pack.PackId
 import com.pixijoy.ml.pack.PackModelContract
 import com.pixijoy.ml.pack.PackRuntime
@@ -17,9 +18,10 @@ import org.tensorflow.lite.DataType
 import org.tensorflow.lite.InterpreterApi
 
 /**
- * Builds a real Play-services interpreter when a pack file matches [PackModelContract].
- * Does not register by itself. [PackFeatureEntry] registers the engine after SplitCompat.
- * Missing GMS or a mismatched graph produces no engine.
+ * Builds a real Play-services interpreter when a pack file is Ready, the SHA-256
+ * matches, and [PackModelContract] accepts the graph. Does not register by itself.
+ * [PackFeatureEntry] registers the engine after SplitCompat. A miss releases the
+ * capability. Frame-interp and track are not bound. Missing GMS produces no engine.
  */
 object PackLiteRt {
     private const val MAX_WORK_EDGE = 256
@@ -89,9 +91,13 @@ object PackLiteRt {
 
     private fun bindSync(id: PackId, file: File) {
         try {
-            if (!file.isFile) return
-            val ready = synchronized(lock) { tfliteReady }
-            if (!ready) return
+            if (!synchronized(lock) { tfliteReady }) return
+            // E4 / F1: no artifact, pin, or contract. Leave the Unit no-op.
+            if (id == PackId.FrameInterp || id == PackId.Track) return
+            if (!file.isFile || !verifiedModel(id, file)) {
+                releaseEngine(id)
+                return
+            }
             when (id) {
                 PackId.SuperRes -> bindSuperRes(file)
                 PackId.Inpaint -> bindInpaint(file)
@@ -104,21 +110,52 @@ object PackLiteRt {
         }
     }
 
+    /** Ready + recorded SHA-256 (+ catalog expected pin). Download pins are applied before Ready. */
+    private fun verifiedModel(id: PackId, file: File): Boolean {
+        val manager = PackRuntime.manager() ?: return false
+        return modelFileVerified(
+            manager.state(id),
+            file,
+            PackCatalog.spec(id).expectedSha256
+        )
+    }
+
+    /** Contract or checksum miss: drop any previous interpreter and tell the registrar to release. */
+    private fun releaseEngine(id: PackId, opened: InterpreterApi? = null) {
+        val notify = synchronized(lock) {
+            val previous = engines.remove(id)
+            if (previous != null && previous !== opened) {
+                runCatching { previous.close() }
+            }
+            opened?.let { runCatching { it.close() } }
+            sink
+        }
+        notify?.invoke(id, null)
+    }
+
+    private fun floatIo(interpreter: InterpreterApi): Boolean =
+        interpreter.getInputTensor(0).dataType() == DataType.FLOAT32 &&
+            interpreter.getOutputTensor(0).dataType() == DataType.FLOAT32
+
     private fun bindSuperRes(file: File) {
-        val interpreter = openInterpreter(file) ?: return
-        val inShape = interpreter.getInputTensor(0).shape()
-        if ((inShape.getOrNull(1) ?: 0) <= 0 || (inShape.getOrNull(2) ?: 0) <= 0) {
-            runCatching {
+        val interpreter = openInterpreter(file) ?: run {
+            releaseEngine(PackId.SuperRes)
+            return
+        }
+        val accepted = runCatching {
+            val inShape = interpreter.getInputTensor(0).shape()
+            if ((inShape.getOrNull(1) ?: 0) <= 0 || (inShape.getOrNull(2) ?: 0) <= 0) {
                 interpreter.resizeInput(0, intArrayOf(1, 50, 50, 3))
                 interpreter.allocateTensors()
             }
-        }
-        val scale = PackModelContract.superResScale(
-            interpreter.getInputTensor(0).shape(),
-            interpreter.getOutputTensor(0).shape()
-        )
-        if (scale == null) {
-            interpreter.close()
+            floatIo(interpreter) &&
+                PackModelContract.superResScale(
+                    interpreter.getInputTensor(0).shape(),
+                    interpreter.getOutputTensor(0).shape()
+                ) != null
+        }.getOrDefault(false)
+        if (!accepted) {
+            releaseEngine(PackId.SuperRes, interpreter)
             return
         }
         val engine = NeuralEngine.SuperRes { bitmap, requested ->
@@ -133,15 +170,16 @@ object PackLiteRt {
     }
 
     private fun bindInpaint(file: File) {
-        val interpreter = openInterpreter(file) ?: return
+        val interpreter = openInterpreter(file) ?: run {
+            releaseEngine(PackId.Inpaint)
+            return
+        }
         val accepted = runCatching {
             prepareInpaintShapes(interpreter)
-            interpreter.getInputTensor(0).dataType() == DataType.FLOAT32 &&
-                inpaintContractMatches(interpreter)
+            floatIo(interpreter) && inpaintContractMatches(interpreter)
         }.getOrDefault(false)
         if (!accepted) {
-            interpreter.close()
-            synchronized(lock) { sink }?.invoke(PackId.Inpaint, null)
+            releaseEngine(PackId.Inpaint, interpreter)
             return
         }
         val engine = NeuralEngine.Inpaint { bitmap, mask ->
@@ -156,18 +194,20 @@ object PackLiteRt {
     }
 
     private fun bindDenoise(file: File) {
-        val interpreter = openInterpreter(file) ?: return
+        val interpreter = openInterpreter(file) ?: run {
+            releaseEngine(PackId.Denoise)
+            return
+        }
         val accepted = runCatching {
             prepareDenoiseShape(interpreter)
-            interpreter.getInputTensor(0).dataType() == DataType.FLOAT32 &&
+            floatIo(interpreter) &&
                 PackModelContract.isDenoiseSameRgb(
                     interpreter.getInputTensor(0).shape(),
                     interpreter.getOutputTensor(0).shape()
                 )
         }.getOrDefault(false)
         if (!accepted) {
-            interpreter.close()
-            synchronized(lock) { sink }?.invoke(PackId.Denoise, null)
+            releaseEngine(PackId.Denoise, interpreter)
             return
         }
         val engine = NeuralEngine.Denoise { bitmap, amount ->

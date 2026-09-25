@@ -65,6 +65,7 @@ object PackCatalog {
             downloadUrl = DENOISE_DOWNLOAD_URL,
             downloadSha256 = DENOISE_DOWNLOAD_SHA256
         )
+        // HOLD: no download URL or SHA until Architect publishes a real artifact.
         PackId.FrameInterp -> PackSpec(id, VERSION, "interp.tflite", "ml_interp")
         PackId.Track -> PackSpec(id, VERSION, "track.tflite", "ml_track")
     }

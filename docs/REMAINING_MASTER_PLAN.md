@@ -5,7 +5,7 @@
 **Branch:** land on `origin/next` after review-clear.  
 **Excluded:** Section A (done/exited) — do not reopen.
 
-**Snapshot (2026-09-25):** **Wave B EXITED** · **Wave C EXITED** · **D1–D11 MET** · Wave D EXITED. Live: **E pack runtime + Super-res/Denoise HTTPS LiteRT + inpaint sideload bind**. Interp/track runners stay unbound. G2 slider/preview extract complete.
+**Snapshot (2026-09-25):** **Wave B EXITED** · **Wave C EXITED** · **D1–D11 MET** · Wave D EXITED. Live: **E pack runtime + Super-res/Denoise HTTPS LiteRT + inpaint sideload bind**. E4/F1 runners stay unbound pending Architect artifact + SHA. G2 slider/preview extract complete.
 
 ```
 B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5 ML packs) ──▶ F (R6+ opt-in)
@@ -102,7 +102,7 @@ Then:
 | **E1** | Inpaint / generative fill | C3 + pack foundation | Fill pack CTA; LiteRT binds RGB+mask sideload after SplitCompat + SHA; Telea until then. No HTTPS pin |
 | **E2** | Super-resolution | Pack runtime | Graph `SR`; HTTPS ESRGAN + LiteRT 2×/4× RGB |
 | **E3** | Denoise | Same runtime | Graph `N`; HTTPS Raspberry Pi UNet + LiteRT same-size RGB |
-| **E4** | Frame interpolation | D10 + pack runtime | `FrameInterp.mlAvailable` ← pack engine; D10 CTA. Runner not bound (no fake frames) |
+| **E4** | Frame interpolation | D10 + pack runtime | `FrameInterp.mlAvailable` ← pack engine; D10 CTA. **HOLD** — runner not bound; no artifact, URL, or SHA yet |
 
 ---
 
@@ -110,7 +110,7 @@ Then:
 
 | ID | Feature | Depends on |
 |----|---------|------------|
-| **F1** | Tracking / roto-lite | D1, D3, masks. **Contract MET 2026-09-25** (`ClipTrack` + pack CTA; engine unbound) |
+| **F1** | Tracking / roto-lite | D1, D3, masks. **Contract MET 2026-09-25** (`ClipTrack` + pack CTA; engine unbound). **HOLD** — no artifact, URL, or SHA yet |
 | **F2** | VFX / particles | F1 + compositor/layers |
 | **F3** | 3D / Filament titles | D4 + keyframe/transform |
 | **F4** | ARCore previz | F1 + 3D primitives + device gates |
@@ -177,7 +177,7 @@ Never land F* as isolated effects without listed primitives.
 
 ## Next concrete slice (start here)
 
-1. Interp / track engines only with real movie inference (do not bind on file alone). `PackFeatureEntry.registerEngines` after SplitCompat, Ready + SHA-256, and `PackModelContract`. Do not register from `Application.onCreate`. Do not register Telea / bicubic / frame-hold
+1. Interp / track engines only after Architect publishes a real artifact plus catalog `downloadUrl` / SHA and a `PackModelContract` gate. Until then leave the `Unit` no-op. `PackFeatureEntry.registerEngines` after SplitCompat, Ready + SHA-256, and `PackModelContract`. Do not register from `Application.onCreate`. Do not register Telea / bicubic / frame-hold
 2. R5 device gate (Maestro + TalkBack + five-user) on a mid-range phone
 
 When this plan drifts, update this file and `TOTAL_REMAINING.txt` in the same commit as the exit.

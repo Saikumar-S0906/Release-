@@ -5,6 +5,8 @@ import com.pixijoy.ml.PackEngineHooks
 import com.pixijoy.ml.PackFeatureEntry
 import com.pixijoy.ml.PackReadiness
 import com.pixijoy.ml.interpreterBindAllowed
+import com.pixijoy.ml.modelFileVerified
+import java.io.File
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -73,5 +75,33 @@ class PackEngineHooksTest {
         assertFalse(interpreterBindAllowed(ready, true, expectedSha256 = "def"))
         assertTrue(interpreterBindAllowed(ready, true, expectedSha256 = null))
         assertTrue(interpreterBindAllowed(ready, true, expectedSha256 = "ABC"))
+    }
+
+    @Test
+    fun engineChip_requiresBoundEngineNotReadyAlone() {
+        assertFalse(PackRuntime.isEngineReady(packReady = true, engineBound = false))
+        assertFalse(PackRuntime.isEngineReady(packReady = false, engineBound = true))
+        assertFalse(PackRuntime.isEngineReady(packReady = false, engineBound = false))
+        assertTrue(PackRuntime.isEngineReady(packReady = true, engineBound = true))
+    }
+
+    @Test
+    fun modelFile_mustMatchRecordedShaBeforeBind() {
+        val file = File.createTempFile("pack-gate", ".bin")
+        try {
+            file.writeBytes(ByteArray(64) { 3 })
+            val sha = PackChecksum.sha256(file)
+            val ready = PackInstallState.Ready(sha256 = sha, version = "1")
+            assertTrue(modelFileVerified(ready, file, expectedSha256 = null))
+            assertTrue(modelFileVerified(ready, file, expectedSha256 = sha.uppercase()))
+            assertFalse(modelFileVerified(ready, file, expectedSha256 = "ab".repeat(32)))
+            assertFalse(modelFileVerified(PackInstallState.Ready(sha256 = "nope", version = "1"), file, null))
+            assertFalse(modelFileVerified(PackInstallState.Missing, file, null))
+            assertFalse(modelFileVerified(PackInstallState.Ready(sha256 = "", version = "1"), file, null))
+            file.writeBytes(ByteArray(64) { 9 })
+            assertFalse(modelFileVerified(ready, file, null))
+        } finally {
+            file.delete()
+        }
     }
 }

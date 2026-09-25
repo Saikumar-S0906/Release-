@@ -54,7 +54,14 @@ object PackRuntime {
     fun isPackReady(id: PackId): Boolean = state(id).isReady
 
     fun engineReady(id: PackId): Boolean =
-        isPackReady(id) && PackEngineHooks.hasEngine(id)
+        isEngineReady(isPackReady(id), PackEngineHooks.hasEngine(id))
+
+    /**
+     * Neural chip gate. A Ready pack with no bound interpreter is not an engine.
+     * Telea, bicubic, and frame-hold never pass [engineBound].
+     */
+    internal fun isEngineReady(packReady: Boolean, engineBound: Boolean): Boolean =
+        packReady && engineBound
 
     fun incomingDir(): File? {
         val ctx = appContext ?: return null
