@@ -52,7 +52,7 @@ Movie preview used to call `setComposition` + `prepare()` on every timeline enco
 
 ## Deferred
 
-- Typing a slider number landed on the shared live-value slider (photo Light and Color). Short-tap types, long-press resets. Curves still uses the plain slider.
+- Typing a slider number is on the shared live-value slider for photo Light, Color, and Curves. Short-tap types, long-press resets.
 - Library cover skeletons landed (G6). Empty library and pack download use the same glass plate (G7).
 - Rename after export (G8) — landed: tappable project title, and Name this project on export success.
 - Live PiP preview when `CompositionPlayer` can take more than one input.
