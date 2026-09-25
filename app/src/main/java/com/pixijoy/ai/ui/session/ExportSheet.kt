@@ -24,6 +24,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -107,8 +109,12 @@ fun ExportSheet(
                     modifier = Modifier.testTag("export_success_title")
                 )
                 Text(destination, color = PixiTextMuted)
+                val viewLabel = stringResource(R.string.export_view)
+                val shareLabel = stringResource(R.string.export_share)
+                val renameLabel = stringResource(R.string.export_name_project)
+                val doneLabel = stringResource(R.string.export_done)
                 PixiPrimaryButton(
-                    text = stringResource(R.string.export_view),
+                    text = viewLabel,
                     onClick = onView,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -120,8 +126,9 @@ fun ExportSheet(
                         .fillMaxWidth()
                         .heightIn(min = 48.dp)
                         .testTag("export_share")
+                        .semantics { contentDescription = shareLabel }
                 ) {
-                    Text(stringResource(R.string.export_share), color = PixiAccent)
+                    Text(shareLabel, color = PixiAccent, modifier = Modifier.clearAndSetSemantics { })
                 }
                 if (onRenameProject != null) {
                     TextButton(
@@ -130,8 +137,9 @@ fun ExportSheet(
                             .fillMaxWidth()
                             .heightIn(min = 48.dp)
                             .testTag("export_rename")
+                            .semantics { contentDescription = renameLabel }
                     ) {
-                        Text(stringResource(R.string.export_name_project), color = PixiText)
+                        Text(renameLabel, color = PixiText, modifier = Modifier.clearAndSetSemantics { })
                     }
                 }
                 TextButton(
@@ -140,8 +148,9 @@ fun ExportSheet(
                         .fillMaxWidth()
                         .heightIn(min = 48.dp)
                         .testTag("export_done")
+                        .semantics { contentDescription = doneLabel }
                 ) {
-                    Text(stringResource(R.string.export_done), color = PixiTextMuted)
+                    Text(doneLabel, color = PixiTextMuted, modifier = Modifier.clearAndSetSemantics { })
                 }
                 return@Column
             }
@@ -348,9 +357,13 @@ fun ExportSheet(
                 }
                 if (exporting) {
                     val pct = (progress * 100f).toInt().coerceIn(0, 100)
+                    val progressLabel = if (pct > 0) {
+                        stringResource(R.string.studio_export_pct, pct)
+                    } else {
+                        stringResource(R.string.studio_exporting)
+                    }
                     Text(
-                        if (pct > 0) stringResource(R.string.studio_export_pct, pct)
-                        else stringResource(R.string.studio_exporting),
+                        progressLabel,
                         color = PixiTextMuted,
                         modifier = Modifier.testTag("export_sheet_progress_label")
                     )
@@ -358,7 +371,8 @@ fun ExportSheet(
                         progress = { progress.coerceIn(0f, 1f) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .testTag("export_sheet_progress"),
+                            .testTag("export_sheet_progress")
+                            .semantics { contentDescription = progressLabel },
                         color = PixiAccent
                     )
                 }

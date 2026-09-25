@@ -418,4 +418,16 @@
     <string name="session_save_status_saving">Saving…</string>
     <string name="session_save_status_unsaved">Not saved</string>
     <string name="session_rename_project">Rename project</string>
+    <string name="a11y_selected">%1$s, selected</string>
+    <string name="a11y_downloaded">Downloaded</string>
+    <string name="a11y_ready_to_apply">Ready to apply</string>
+    <string name="a11y_crop_edge_left">Crop edge, left</string>
+    <string name="a11y_crop_edge_right">Crop edge, right</string>
+    <string name="a11y_crop_edge_top">Crop edge, top</string>
+    <string name="a11y_crop_edge_bottom">Crop edge, bottom</string>
+    <string name="a11y_trim_in">Trim start</string>
+    <string name="a11y_trim_out">Trim end</string>
+    <string name="a11y_slider_value">%1$s, %2$s</string>
+    <string name="a11y_reset_value">Reset</string>
+    <string name="a11y_place">Place</string>
 </resources>

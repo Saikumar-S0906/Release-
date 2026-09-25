@@ -1,0 +1,37 @@
+appId: com.pixijoy.ai
+---
+# YELLOW / device-dependent. Do not treat this flow as a green TalkBack gate.
+# Maestro can see accessibility text on tags when the node is in the tree.
+# A real TalkBack pass is the checklist in ../YELLOW-talkback-studio.md.
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "home_create"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+- assertVisible: "Crop"
+- assertVisible:
+    id: "session_undo"
+- assertVisible:
+    id: "session_crop_overlay"
+- assertVisible: "Crop edge, left"
+- assertVisible: "Crop edge, right"
+- assertVisible: "Crop edge, top"
+- assertVisible: "Crop edge, bottom"
+- tapOn:
+    id: "session_export"
+- extendedWaitUntil:
+    visible:
+      id: "export_sheet"
+    timeout: 20000
+- assertVisible:
+    id: "export_sheet_confirm"
+# Success View / Share / Done exist only after a finished export.
+# - assertVisible: "View"
+# - assertVisible: "Share"
+# - assertVisible: "Done"

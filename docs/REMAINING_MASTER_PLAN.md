@@ -38,7 +38,7 @@ B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5
 
 **Immediate next:** interp / track engines only with real movie inference; device Maestro/TalkBack/five-user remains the R5 quality gate.
 
-**G overlap with B:** **G4** exited with B3 (chips ≥48dp, announced selection).
+**G overlap with B:** **G4** exited with B3 (chips ≥48dp, announced selection). Studio TalkBack chrome descriptions are in; the device TalkBack pass stays yellow.
 
 ---
 
@@ -125,7 +125,7 @@ Never land F* as isolated effects without listed primitives.
 
 | ID | Work | When |
 |----|------|------|
-| **G4** | Accessibility | **With B3** (must-exit) |
+| **G4** | Accessibility | **With B3** (must-exit). Studio TalkBack names: short verbs, "Looks, selected", "Crop edge, {side}", export View/Share/Done, "Downloaded" vs "Ready to apply". Landed 2026-09-25. Device TalkBack stays yellow (`.maestro/YELLOW-talkback-studio.md`) |
 | **G1** | Tablet/foldable two-pane | **MET** catalog\|session + session preview\|tools 2026-09-25 |
 | **G2** | Photo/Movie ViewModels | **Slider/preview extract complete** 2026-09-25 — Hilt session VMs own graph, tool chrome, and slider/preview baking. Screens observe that state. Movie players stay on the screen. Tool chrome soft-resets on entry, rotation, and tool switch; the edit graph stays. |
 | **G3** | Hilt in StudioApp | **MET** 2026-09-25 — one `StudioGraphModule`; shell navigates and observes injected engines; composition preview and export workers no longer construct engines |

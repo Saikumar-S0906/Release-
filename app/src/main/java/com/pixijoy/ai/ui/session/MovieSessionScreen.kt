@@ -71,6 +71,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -1236,8 +1238,14 @@ fun MovieSessionScreen(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = ::leaveSession, modifier = Modifier.testTag("session_back")) {
-                    Text(stringResource(R.string.studio_back), color = PixiText)
+                val backLabel = stringResource(R.string.studio_back)
+                TextButton(
+                    onClick = ::leaveSession,
+                    modifier = Modifier
+                        .testTag("session_back")
+                        .semantics { contentDescription = backLabel }
+                ) {
+                    Text(backLabel, color = PixiText, modifier = Modifier.clearAndSetSemantics { })
                 }
                 SessionProjectTitle(
                     title = project.title,
@@ -1245,24 +1253,30 @@ fun MovieSessionScreen(
                     onRename = { renaming = true },
                     modifier = Modifier.weight(1f)
                 )
+                val exportLabel = stringResource(R.string.studio_export)
+                val gifLabel = stringResource(R.string.studio_export_gif)
                 TextButton(
                     onClick = {
                         exportGif = false
                         showExport = true
                     },
                     enabled = !exporting,
-                    modifier = Modifier.testTag("session_export")
+                    modifier = Modifier
+                        .testTag("session_export")
+                        .semantics { contentDescription = exportLabel }
                 ) {
-                    Text(stringResource(R.string.studio_export), color = PixiText)
+                    Text(exportLabel, color = PixiText, modifier = Modifier.clearAndSetSemantics { })
                 }
                 if (still) {
                     TextButton(
                         onClick = {
                             if (!exporting) runExport(gif = true)
                         },
-                        modifier = Modifier.testTag("session_export_gif")
+                        modifier = Modifier
+                            .testTag("session_export_gif")
+                            .semantics { contentDescription = gifLabel }
                     ) {
-                        Text(stringResource(R.string.studio_export_gif), color = PixiText)
+                        Text(gifLabel, color = PixiText, modifier = Modifier.clearAndSetSemantics { })
                     }
                 }
             }
@@ -1270,19 +1284,25 @@ fun MovieSessionScreen(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                val undoLabel = stringResource(R.string.studio_undo)
+                val redoLabel = stringResource(R.string.studio_redo)
                 TextButton(
                     onClick = sessionViewModel::undo,
                     enabled = sessionState.canUndo,
-                    modifier = Modifier.testTag("movie_undo")
+                    modifier = Modifier
+                        .testTag("movie_undo")
+                        .semantics { contentDescription = undoLabel }
                 ) {
-                    Text(stringResource(R.string.studio_undo), color = PixiTextMuted)
+                    Text(undoLabel, color = PixiTextMuted, modifier = Modifier.clearAndSetSemantics { })
                 }
                 TextButton(
                     onClick = sessionViewModel::redo,
                     enabled = sessionState.canRedo,
-                    modifier = Modifier.testTag("movie_redo")
+                    modifier = Modifier
+                        .testTag("movie_redo")
+                        .semantics { contentDescription = redoLabel }
                 ) {
-                    Text(stringResource(R.string.studio_redo), color = PixiTextMuted)
+                    Text(redoLabel, color = PixiTextMuted, modifier = Modifier.clearAndSetSemantics { })
                 }
                 Spacer(Modifier.weight(1f))
                 SessionAutosaveChip(
@@ -1301,7 +1321,12 @@ fun MovieSessionScreen(
                 .testTag("movie_preview")
         ) {
             if (still) {
-                KenBurnsPreview(path = path, talking = talking, durationMs = duration.toInt())
+                KenBurnsPreview(
+                    path = path,
+                    talking = talking,
+                    durationMs = duration.toInt(),
+                    contentDescription = project.title
+                )
             } else if (player != null) {
                 AndroidView(
                     factory = { ctx ->
@@ -1525,6 +1550,7 @@ private fun MovieTimelineDock(
                 )
             }
         }
+        val scrubLabel = stringResource(R.string.studio_scrub)
         Slider(
             value = playhead.coerceIn(0f, 1f),
             onValueChange = {
@@ -1537,34 +1563,45 @@ private fun MovieTimelineDock(
                 .fillMaxWidth()
                 .heightIn(min = 28.dp)
                 .testTag("movie_scrub")
+                .semantics { contentDescription = scrubLabel }
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
+            val prevLabel = stringResource(R.string.studio_frame_prev)
+            val playLabel = if (playing) {
+                stringResource(R.string.studio_pause)
+            } else {
+                stringResource(R.string.studio_play)
+            }
+            val nextLabel = stringResource(R.string.studio_frame_next)
             TextButton(
                 onClick = { onStep(-1) },
                 enabled = seekEnabled,
-                modifier = Modifier.testTag("movie_frame_prev")
+                modifier = Modifier
+                    .testTag("movie_frame_prev")
+                    .semantics { contentDescription = prevLabel }
             ) {
-                Text(stringResource(R.string.studio_frame_prev), color = PixiText)
+                Text(prevLabel, color = PixiText, modifier = Modifier.clearAndSetSemantics { })
             }
             TextButton(
                 onClick = onTogglePlay,
                 enabled = playEnabled,
-                modifier = Modifier.testTag("movie_play")
+                modifier = Modifier
+                    .testTag("movie_play")
+                    .semantics { contentDescription = playLabel }
             ) {
-                Text(
-                    if (playing) stringResource(R.string.studio_pause) else stringResource(R.string.studio_play),
-                    color = PixiText
-                )
+                Text(playLabel, color = PixiText, modifier = Modifier.clearAndSetSemantics { })
             }
             TextButton(
                 onClick = { onStep(1) },
                 enabled = seekEnabled,
-                modifier = Modifier.testTag("movie_frame_next")
+                modifier = Modifier
+                    .testTag("movie_frame_next")
+                    .semantics { contentDescription = nextLabel }
             ) {
-                Text(stringResource(R.string.studio_frame_next), color = PixiText)
+                Text(nextLabel, color = PixiText, modifier = Modifier.clearAndSetSemantics { })
             }
         }
     }
@@ -1583,6 +1620,8 @@ private fun TimelineClipBlock(
     onTrimOut: (Long) -> Unit,
     onTrimSettled: () -> Unit
 ) {
+    val trimInLabel = stringResource(R.string.a11y_trim_in)
+    val trimOutLabel = stringResource(R.string.a11y_trim_out)
     val density = LocalDensity.current
     val widthDp = MovieTimelineDisplay.clipWidthDp(clip.durationMs)
     val latestClip = rememberUpdatedState(clip)
@@ -1668,6 +1707,7 @@ private fun TimelineClipBlock(
                     )
                 }
                 .testTag("timeline_trim_handle_in")
+                .semantics { contentDescription = trimInLabel }
         )
         Box(
             modifier = Modifier
@@ -1699,6 +1739,7 @@ private fun TimelineClipBlock(
                     )
                 }
                 .testTag("timeline_trim_handle_out")
+                .semantics { contentDescription = trimOutLabel }
         )
     }
 }
@@ -1764,7 +1805,12 @@ private fun List<FilmstripFrame>.recycleFilmstripFrames() {
 }
 
 @Composable
-private fun KenBurnsPreview(path: String, talking: Boolean, durationMs: Int) {
+private fun KenBurnsPreview(
+    path: String,
+    talking: Boolean,
+    durationMs: Int,
+    contentDescription: String
+) {
     val transition = rememberInfiniteTransition(label = "kenburns")
     val t by transition.animateFloat(
         initialValue = 0f,
@@ -1779,7 +1825,7 @@ private fun KenBurnsPreview(path: String, talking: Boolean, durationMs: Int) {
     val pan = MovieMotion.pan(t, talking, 640f)
     AsyncImage(
         model = File(path),
-        contentDescription = null,
+        contentDescription = contentDescription,
         contentScale = ContentScale.Crop,
         modifier = Modifier
             .fillMaxSize()

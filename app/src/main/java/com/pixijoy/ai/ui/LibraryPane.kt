@@ -319,15 +319,19 @@ private fun LibraryProjectCard(
                     .testTag("library_edited_ago")
             )
             Box(modifier = Modifier.align(Alignment.TopEnd)) {
+                val moreLabel = stringResource(R.string.studio_library_more)
                 IconButton(
                     onClick = { menuOpen = true },
                     modifier = Modifier
                         .testTag("library_project_overflow")
-                        .semantics { role = Role.Button }
+                        .semantics {
+                            role = Role.Button
+                            contentDescription = moreLabel
+                        }
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.pj_ic_more),
-                        contentDescription = stringResource(R.string.studio_library_more),
+                        contentDescription = null,
                         tint = PixiText
                     )
                 }
@@ -463,6 +467,7 @@ private fun FilterChip(label: String, selected: Boolean, tag: String, onClick: (
             .clickable(onClick = onClick)
             .testTag(tag)
             .semantics {
+                contentDescription = label
                 role = Role.Tab
                 this.selected = selected
             }

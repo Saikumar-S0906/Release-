@@ -83,7 +83,7 @@ G. PLATFORM / UX CHROME (ongoing)
 G1. Tablet / foldable two-pane — catalog|session MET earlier; session preview|tools (`studio_session_side_tools`) MET 2026-09-25 (`isStudioTwoPane` 840×520)
 G2. ViewModel + Hilt for PhotoSessionScreen / MovieSessionScreen — slider/preview extract COMPLETE 2026-09-25 (graph, tool chrome, and preview baking in Hilt VMs; screens observe; movie players stay on the screen; tool chrome soft-resets on entry, rotation, and tool switch; the edit graph stays)
 G3. Consistent Hilt in StudioApp — MET 2026-09-25 (one `StudioGraphModule`; shell navigates and observes injected engines; composition preview and export workers no longer construct engines)
-G4. Accessibility: 48dp chips, announce selected state — exited with B3
+G4. Accessibility: 48dp chips, announce selected state — exited with B3. Studio TalkBack chrome (short verbs, "Looks, selected", crop edges, View/Share/Done, Downloaded vs Ready to apply) semantics MET 2026-09-25; device TalkBack stays yellow (`.maestro/YELLOW-talkback-studio.md`)
 G5. Haptics — crop Apply + movie split MET 2026-09-25; crop-handle edge snap + haptic MET 2026-09-25 (unit-tested; device drag not run — `.maestro/YELLOW-crop-snap.md`)
 G6. Skeleton loaders for Library thumbs — MET 2026-09-25 (PixiSurface sheen while the cover decodes; static surface on failure; no device recapture)
 G7. Friendly empty-state illustrations — MET 2026-09-25 (one glass wash: empty_library “No projects yet” + Create; empty_packs “Download to unlock” + Download; prior pack status tags kept)

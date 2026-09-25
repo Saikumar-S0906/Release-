@@ -14,6 +14,10 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.pixijoy.ai.R
 import com.pixijoy.photo.Stamp
 import kotlin.math.hypot
 
@@ -35,9 +39,11 @@ fun BrushOverlay(
         return Stamp(x, y, radius)
     }
 
+    val brushLabel = stringResource(R.string.studio_brush)
     Canvas(
         modifier = modifier
             .testTag("session_brush")
+            .semantics { contentDescription = brushLabel }
             .pointerInput(imageRect, radius) {
                 detectDragGestures(
                     onDragStart = { start ->
@@ -74,9 +80,11 @@ fun TapPlaceOverlay(
     onPlace: (Float, Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val placeLabel = stringResource(R.string.a11y_place)
     Canvas(
         modifier = modifier
             .testTag("session_place")
+            .semantics { contentDescription = placeLabel }
             .pointerInput(imageRect) {
                 detectTapGestures { offset ->
                     if (imageRect.width <= 0f) return@detectTapGestures

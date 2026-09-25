@@ -2,6 +2,10 @@ package com.pixijoy.ai.ui.session
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,9 +22,15 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.pixijoy.ai.R
 import com.pixijoy.designsystem.PixiAccent
 import com.pixijoy.photo.PhotoOp
+import kotlin.math.roundToInt
 
 internal enum class CropHandle { TL, TR, BL, BR }
 
@@ -44,9 +54,14 @@ fun CropOverlay(
     val latestCrop by rememberUpdatedState(crop)
     val haptics = LocalHapticFeedback.current
     val safeZoom = viewportZoom.coerceAtLeast(1f)
+    val edgeLeft = stringResource(R.string.a11y_crop_edge_left)
+    val edgeRight = stringResource(R.string.a11y_crop_edge_right)
+    val edgeTop = stringResource(R.string.a11y_crop_edge_top)
+    val edgeBottom = stringResource(R.string.a11y_crop_edge_bottom)
+    Box(modifier.testTag("session_crop_overlay")) {
     Canvas(
-        modifier = modifier
-            .testTag("session_crop_overlay")
+        modifier = Modifier
+            .fillMaxSize()
             .pointerInput(imageRect, safeZoom) {
                 detectDragGestures(
                     onDragStart = { start ->
@@ -132,6 +147,63 @@ fun CropOverlay(
             drawCircle(Color.White, radius, center)
         }
     }
+        CropEdgeSemantics(CropBound.Left, edgeLeft, imageRect, crop)
+        CropEdgeSemantics(CropBound.Right, edgeRight, imageRect, crop)
+        CropEdgeSemantics(CropBound.Top, edgeTop, imageRect, crop)
+        CropEdgeSemantics(CropBound.Bottom, edgeBottom, imageRect, crop)
+    }
+}
+
+/** One name per edge: "Crop edge, left". No second frame or corner tree. */
+@Composable
+private fun CropEdgeSemantics(
+    edge: CropBound,
+    label: String,
+    imageRect: Rect,
+    crop: PhotoOp.Crop
+) {
+    val point = cropEdgeOffset(imageRect, crop, edge)
+    Box(
+        Modifier
+            .offset {
+                val half = 24.dp.roundToPx()
+                IntOffset(
+                    (point.x - half).roundToInt(),
+                    (point.y - half).roundToInt()
+                )
+            }
+            .size(48.dp)
+            .semantics { contentDescription = label }
+            .testTag(cropEdgeTag(edge))
+    )
+}
+
+internal fun cropEdgeOffset(imageRect: Rect, crop: PhotoOp.Crop, edge: CropBound): Offset {
+    val left = imageRect.left + crop.left * imageRect.width
+    val top = imageRect.top + crop.top * imageRect.height
+    val right = imageRect.left + crop.right * imageRect.width
+    val bottom = imageRect.top + crop.bottom * imageRect.height
+    return when (edge) {
+        CropBound.Left -> Offset(left, (top + bottom) / 2f)
+        CropBound.Right -> Offset(right, (top + bottom) / 2f)
+        CropBound.Top -> Offset((left + right) / 2f, top)
+        CropBound.Bottom -> Offset((left + right) / 2f, bottom)
+    }
+}
+
+internal fun cropHandleOffset(imageRect: Rect, crop: PhotoOp.Crop, handle: CropHandle): Offset {
+    val xFraction = when (handle) {
+        CropHandle.TL, CropHandle.BL -> crop.left
+        CropHandle.TR, CropHandle.BR -> crop.right
+    }
+    val yFraction = when (handle) {
+        CropHandle.TL, CropHandle.TR -> crop.top
+        CropHandle.BL, CropHandle.BR -> crop.bottom
+    }
+    return Offset(
+        imageRect.left + xFraction * imageRect.width,
+        imageRect.top + yFraction * imageRect.height
+    )
 }
 
 internal fun fittedImageRect(viewW: Float, viewH: Float, imgW: Int, imgH: Int): Rect {
@@ -158,24 +230,9 @@ internal fun hitTestCropHandle(
     hitRadiusPx: Float
 ): CropHandle? {
     if (imageRect.width <= 0f || imageRect.height <= 0f || hitRadiusPx <= 0f) return null
-    val points = mapOf(
-        CropHandle.TL to Offset(
-            imageRect.left + crop.left * imageRect.width,
-            imageRect.top + crop.top * imageRect.height
-        ),
-        CropHandle.TR to Offset(
-            imageRect.left + crop.right * imageRect.width,
-            imageRect.top + crop.top * imageRect.height
-        ),
-        CropHandle.BL to Offset(
-            imageRect.left + crop.left * imageRect.width,
-            imageRect.top + crop.bottom * imageRect.height
-        ),
-        CropHandle.BR to Offset(
-            imageRect.left + crop.right * imageRect.width,
-            imageRect.top + crop.bottom * imageRect.height
-        )
-    )
+    val points = CropHandle.entries.associateWith { corner ->
+        cropHandleOffset(imageRect, crop, corner)
+    }
     val radiusSquared = hitRadiusPx * hitRadiusPx
     return points
         .asSequence()

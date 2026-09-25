@@ -19,6 +19,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.pixijoy.ai.R
 import com.pixijoy.designsystem.PixiAccent
@@ -46,7 +49,9 @@ private fun SessionLabeledSlider(
         onValueChange = onChange,
         valueRange = range,
         colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
-        modifier = Modifier.testTag(tag)
+        modifier = Modifier
+            .testTag(tag)
+            .semantics { contentDescription = label }
     )
 }
 
@@ -128,7 +133,7 @@ fun SoftenToolPanel(onApply: (Float) -> Unit) {
 @Composable
 fun SuperResToolPanel(onApply: (Int) -> Unit) {
     var scale by remember { mutableIntStateOf(2) }
-    val ready = rememberPackEngineReady(PackId.SuperRes)
+    val engineReady = rememberPackEngineReady(PackId.SuperRes)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             stringResource(R.string.studio_super_res_hint),
@@ -141,18 +146,39 @@ fun SuperResToolPanel(onApply: (Int) -> Unit) {
             downloadTag = "session_super_res_pack_download"
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(onClick = { scale = 2 }, modifier = Modifier.testTag("session_super_res_2x")) {
-                Text(stringResource(R.string.studio_super_res_2x), color = PixiText)
+            val selectedFormat = stringResource(R.string.a11y_selected)
+            val twoX = stringResource(R.string.studio_super_res_2x)
+            val fourX = stringResource(R.string.studio_super_res_4x)
+            val twoSpoken = talkBackName(twoX, scale == 2, selectedFormat)
+            val fourSpoken = talkBackName(fourX, scale == 4, selectedFormat)
+            TextButton(
+                onClick = { scale = 2 },
+                modifier = Modifier
+                    .testTag("session_super_res_2x")
+                    .semantics { contentDescription = twoSpoken }
+            ) {
+                Text(twoX, color = PixiText, modifier = Modifier.clearAndSetSemantics { })
             }
-            TextButton(onClick = { scale = 4 }, modifier = Modifier.testTag("session_super_res_4x")) {
-                Text(stringResource(R.string.studio_super_res_4x), color = PixiText)
+            TextButton(
+                onClick = { scale = 4 },
+                modifier = Modifier
+                    .testTag("session_super_res_4x")
+                    .semantics { contentDescription = fourSpoken }
+            ) {
+                Text(fourX, color = PixiText, modifier = Modifier.clearAndSetSemantics { })
             }
+        }
+        val applySpoken = if (engineReady) {
+            stringResource(R.string.a11y_ready_to_apply)
+        } else {
+            stringResource(R.string.studio_apply)
         }
         PixiPrimaryButton(
             stringResource(R.string.studio_apply),
             { onApply(scale) },
             Modifier.testTag("session_apply_super_res"),
-            enabled = ready
+            enabled = engineReady,
+            contentDescription = applySpoken
         )
     }
 }
@@ -160,7 +186,7 @@ fun SuperResToolPanel(onApply: (Int) -> Unit) {
 @Composable
 fun DenoiseToolPanel(onApply: (Float) -> Unit) {
     var amount by remember { mutableFloatStateOf(0.4f) }
-    val ready = rememberPackEngineReady(PackId.Denoise)
+    val engineReady = rememberPackEngineReady(PackId.Denoise)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             stringResource(R.string.studio_denoise_hint),
@@ -178,11 +204,17 @@ fun DenoiseToolPanel(onApply: (Float) -> Unit) {
             0f..1f,
             "denoise_amount"
         ) { amount = it }
+        val applySpoken = if (engineReady) {
+            stringResource(R.string.a11y_ready_to_apply)
+        } else {
+            stringResource(R.string.studio_apply)
+        }
         PixiPrimaryButton(
             stringResource(R.string.studio_apply),
             { onApply(amount) },
             Modifier.testTag("session_apply_denoise"),
-            enabled = ready
+            enabled = engineReady,
+            contentDescription = applySpoken
         )
     }
 }
@@ -261,11 +293,17 @@ fun FillToolPanel(
             { onApply(false) },
             Modifier.testTag("session_apply_fill")
         )
+        val neuralSpoken = if (neuralReady) {
+            stringResource(R.string.a11y_ready_to_apply)
+        } else {
+            stringResource(R.string.studio_apply)
+        }
         PixiPrimaryButton(
             stringResource(R.string.studio_fill_apply_neural),
             { onApply(true) },
             Modifier.testTag("session_apply_fill_neural"),
-            enabled = neuralReady
+            enabled = neuralReady,
+            contentDescription = neuralSpoken
         )
     }
 }

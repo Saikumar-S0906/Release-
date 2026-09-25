@@ -37,7 +37,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -189,6 +193,10 @@ fun SessionAutosaveChip(
             .background(PixiBg.copy(alpha = 0.55f))
             .padding(horizontal = 8.dp, vertical = 4.dp)
             .testTag("session_save_status")
+            .semantics {
+                contentDescription = label
+                liveRegion = LiveRegionMode.Polite
+            }
     )
 }
 
@@ -244,6 +252,7 @@ fun StudioFrostedPanel(
             content = content
         )
         if (moreBelow) {
+            val more = stringResource(R.string.studio_scroll_more)
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -255,15 +264,18 @@ fun StudioFrostedPanel(
                             1f to Color.Black.copy(alpha = 0.72f)
                         )
                     )
-                    .testTag("studio_scroll_more"),
+                    .testTag("studio_scroll_more")
+                    .semantics { contentDescription = more },
                 contentAlignment = Alignment.BottomCenter
             ) {
                 Text(
-                    stringResource(R.string.studio_scroll_more),
+                    more,
                     color = PixiText.copy(alpha = 0.9f),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(bottom = 4.dp)
+                    modifier = Modifier
+                        .padding(bottom = 4.dp)
+                        .clearAndSetSemantics { }
                 )
             }
         }
@@ -303,6 +315,7 @@ fun StudioHScrollRow(
             )
         }
         if (moreEnd) {
+            val more = stringResource(R.string.studio_scroll_more)
             Box(
                 Modifier
                     .align(Alignment.CenterEnd)
@@ -315,6 +328,7 @@ fun StudioHScrollRow(
                         )
                     )
                     .testTag("studio_hscroll_more")
+                    .semantics { contentDescription = more }
             )
         }
     }
@@ -335,24 +349,23 @@ fun StudioGroupRail(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
+        val selectedFormat = stringResource(R.string.a11y_selected)
         items.forEach { item ->
             val selected = item.tag == selectedTag
+            val spoken = talkBackName(item.label, selected, selectedFormat)
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .heightIn(min = 48.dp)
                     .clickable { onSelect(item.tag) }
                     .testTag(item.tag)
-                    .semantics {
-                        role = Role.Tab
-                        this.selected = selected
-                    }
+                    .semantics { contentDescription = spoken }
                     .padding(vertical = 2.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
                     painter = painterResource(item.iconRes),
-                    contentDescription = item.label,
+                    contentDescription = null,
                     tint = if (selected) PixiAccent else PixiText.copy(alpha = 0.78f),
                     modifier = Modifier.size(24.dp)
                 )
@@ -362,7 +375,8 @@ fun StudioGroupRail(
                     fontSize = 12.sp,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.clearAndSetSemantics { }
                 )
                 Spacer(Modifier.height(3.dp))
                 Box(
@@ -379,6 +393,7 @@ fun StudioGroupRail(
 
 @Composable
 fun StudioChip(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
+    val spoken = talkBackName(label, selected, stringResource(R.string.a11y_selected))
     Text(
         label,
         color = if (selected) PixiText else PixiText.copy(alpha = 0.85f),
@@ -395,10 +410,7 @@ fun StudioChip(label: String, selected: Boolean, tag: String, onClick: () -> Uni
             )
             .clickable(onClick = onClick)
             .testTag(tag)
-            .semantics {
-                role = Role.RadioButton
-                this.selected = selected
-            }
+            .semantics { contentDescription = spoken }
             .padding(horizontal = 14.dp, vertical = 12.dp)
     )
 }
@@ -432,12 +444,18 @@ fun StudioApplyButton(
         modifier = modifier
             .fillMaxWidth()
             .height(48.dp)
-            .then(if (tag != null) Modifier.testTag(tag) else Modifier),
+            .then(if (tag != null) Modifier.testTag(tag) else Modifier)
+            .semantics { contentDescription = text },
         colors = ButtonDefaults.buttonColors(containerColor = PixiAccent),
         shape = RoundedCornerShape(12.dp),
         contentPadding = ButtonDefaults.ContentPadding
     ) {
-        Text(text, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+        Text(
+            text,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 14.sp,
+            modifier = Modifier.clearAndSetSemantics { }
+        )
     }
 }
 
@@ -457,6 +475,8 @@ fun StudioValueSlider(
     onSettled: () -> Unit = {},
     showLabel: Boolean = true
 ) {
+    val spokenValue = stringResource(R.string.a11y_slider_value, label, valueText)
+    val resetLabel = stringResource(R.string.a11y_reset_value)
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -468,11 +488,14 @@ fun StudioValueSlider(
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
                 .heightIn(min = 48.dp)
-                .clickable(role = Role.Button) {
+                .clickable(onClickLabel = resetLabel) {
                     onChange(defaultValue)
                     onSettled()
                 }
                 .testTag("${tag}_label")
+                .semantics {
+                    contentDescription = spokenValue
+                }
                 .padding(horizontal = 12.dp, vertical = 8.dp)
         )
         if (showLabel) {
@@ -492,6 +515,7 @@ fun StudioValueSlider(
                 .fillMaxWidth()
                 .heightIn(min = 48.dp)
                 .testTag(tag)
+                .semantics { contentDescription = label }
         )
     }
 }

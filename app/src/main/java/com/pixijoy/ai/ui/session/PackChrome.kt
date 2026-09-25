@@ -20,6 +20,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import com.pixijoy.ai.R
 import com.pixijoy.designsystem.PixiEmptyState
@@ -82,11 +85,21 @@ fun PackStatusRow(
         }
     }
     if (state is PackInstallState.Ready) {
+        val phrase = checkNotNull(
+            packTalkBackPhrase(
+                packTalkBackKind(fileReady = true, engineReady = engineReady),
+                downloaded = stringResource(R.string.a11y_downloaded),
+                readyToApply = stringResource(R.string.a11y_ready_to_apply)
+            )
+        )
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
                 packStatusCopy(packId, state, engineReady),
                 color = PixiTextMuted,
-                modifier = Modifier.testTag(statusTag)
+                modifier = Modifier.clearAndSetSemantics {
+                    contentDescription = phrase
+                    this[SemanticsProperties.TestTag] = statusTag
+                }
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(
@@ -284,3 +297,4 @@ private fun inpaintReadyCopy(engineReady: Boolean): String =
         InpaintStatus.NotReady ->
             stringResource(R.string.studio_pack_inpaint_ready)
     }
+

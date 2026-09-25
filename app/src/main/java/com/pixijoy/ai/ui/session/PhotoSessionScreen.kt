@@ -65,6 +65,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.onClick
@@ -500,8 +501,14 @@ fun PhotoSessionScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = ::leaveSession, modifier = Modifier.testTag("session_back")) {
-                    Text(stringResource(R.string.studio_back), color = PixiText)
+                val backLabel = stringResource(R.string.studio_back)
+                TextButton(
+                    onClick = ::leaveSession,
+                    modifier = Modifier
+                        .testTag("session_back")
+                        .semantics { contentDescription = backLabel }
+                ) {
+                    Text(backLabel, color = PixiText, modifier = Modifier.clearAndSetSemantics { })
                 }
                 SessionProjectTitle(
                     title = project.title,
@@ -519,28 +526,41 @@ fun PhotoSessionScreen(
                             .testTag("session_raw_badge")
                     )
                 }
+                val exportLabel = stringResource(R.string.studio_export)
                 TextButton(
                     onClick = { showExport = true },
                     enabled = !exporting && !busy,
-                    modifier = Modifier.testTag("session_export")
+                    modifier = Modifier
+                        .testTag("session_export")
+                        .semantics { contentDescription = exportLabel }
                 ) {
-                    Text(stringResource(R.string.studio_export), color = PixiText)
+                    Text(exportLabel, color = PixiText, modifier = Modifier.clearAndSetSemantics { })
                 }
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                val undoLabel = stringResource(R.string.studio_undo)
+                val redoLabel = stringResource(R.string.studio_redo)
                 TextButton(
                     onClick = sessionViewModel::undo,
                     enabled = layers.isNotEmpty(),
-                    modifier = Modifier.testTag("session_undo")
-                ) { Text(stringResource(R.string.studio_undo), color = PixiTextMuted) }
+                    modifier = Modifier
+                        .testTag("session_undo")
+                        .semantics { contentDescription = undoLabel }
+                ) {
+                    Text(undoLabel, color = PixiTextMuted, modifier = Modifier.clearAndSetSemantics { })
+                }
                 TextButton(
                     onClick = sessionViewModel::redo,
                     enabled = redo.isNotEmpty(),
-                    modifier = Modifier.testTag("session_redo")
-                ) { Text(stringResource(R.string.studio_redo), color = PixiTextMuted) }
+                    modifier = Modifier
+                        .testTag("session_redo")
+                        .semantics { contentDescription = redoLabel }
+                ) {
+                    Text(redoLabel, color = PixiTextMuted, modifier = Modifier.clearAndSetSemantics { })
+                }
                 val compareLabel = stringResource(
                     when {
                         !canCompare -> R.string.session_compare_disabled
@@ -588,7 +608,8 @@ fun PhotoSessionScreen(
                         text = compareLabel,
                         color = if (canCompare) PixiText else PixiTextMuted,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.clearAndSetSemantics { }
                     )
                 }
                 SessionAutosaveChip(
@@ -1643,6 +1664,7 @@ private fun LabeledSlider(
         modifier = Modifier
             .heightIn(min = 48.dp)
             .testTag(tag)
+            .semantics { contentDescription = label }
     )
 }
 
@@ -1710,6 +1732,7 @@ private fun FormatChip(label: String, selected: Boolean, tag: String, onClick: (
             .clickable(onClick = onClick)
             .testTag(tag)
             .semantics {
+                contentDescription = label
                 role = Role.RadioButton
                 this.selected = selected
             }
@@ -1742,6 +1765,7 @@ private fun LayerStack(
                         .clickable { onSelect(layer.id) }
                         .testTag("layer_row_${layer.id}")
                         .semantics {
+                            contentDescription = layer.name
                             role = Role.RadioButton
                             this.selected = layer.id == selected?.id
                         }
@@ -1773,19 +1797,22 @@ private fun LayerStack(
                 }
             }
             Row {
+                val visibilityLabel = if (selected.visible) {
+                    stringResource(R.string.studio_hide)
+                } else {
+                    stringResource(R.string.studio_show)
+                }
                 TextButton(
                     onClick = {
                         onChange(layers.map {
                             if (it.id == selected.id) it.copy(visible = !it.visible) else it
                         })
                     },
-                    modifier = Modifier.testTag("layer_visibility")
+                    modifier = Modifier
+                        .testTag("layer_visibility")
+                        .semantics { contentDescription = visibilityLabel }
                 ) {
-                    Text(
-                        if (selected.visible) stringResource(R.string.studio_hide)
-                        else stringResource(R.string.studio_show),
-                        color = PixiText
-                    )
+                    Text(visibilityLabel, color = PixiText, modifier = Modifier.clearAndSetSemantics { })
                 }
                 TextButton(onClick = {
                     onChange(layers.filterNot { it.id == selected.id })
