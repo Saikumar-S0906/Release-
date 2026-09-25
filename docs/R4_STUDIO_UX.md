@@ -52,7 +52,7 @@ Movie preview used to call `setComposition` + `prepare()` on every timeline enco
 
 ## Deferred
 
-- Typing a slider number (Lightroom).
+- Typing a slider number landed on the shared live-value slider (photo Light and Color). Short-tap types, long-press resets. Curves still uses the plain slider.
 - Library cover skeletons landed (G6). Empty library and pack download use the same glass plate (G7).
 - Rename after export (G8) — landed: tappable project title, and Name this project on export success.
 - Live PiP preview when `CompositionPlayer` can take more than one input.
@@ -79,7 +79,7 @@ Honest remaining gaps vs Lightroom / CapCut: true backdrop blur (Compose cannot 
 
 ## Premium pass
 
-Top and bottom chrome both fade over the picture (`StudioTopChrome` + `StudioChromeBar`, drawn above the canvas). The group rail uses an accent icon and underline instead of a solid purple tile. Light shows a large live value (tap to reset) and a short Apply. Layout keeps one export hint.
+Top and bottom chrome both fade over the picture (`StudioTopChrome` + `StudioChromeBar`, drawn above the canvas). The group rail uses an accent icon and underline instead of a solid purple tile. Light shows a large live value (tap to type, long-press to reset) and a short Apply. Layout keeps one export hint.
 
 Glass panel max height is 220 dp so common groups fit. When content still overflows, a bottom fade with “More ⌄” appears (`studio_scroll_more`). Horizontal chip rows fade at the trailing edge when more chips sit off-screen.
 

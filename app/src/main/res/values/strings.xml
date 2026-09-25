@@ -427,6 +427,8 @@
     <string name="a11y_trim_in">Trim start</string>
     <string name="a11y_trim_out">Trim end</string>
     <string name="a11y_slider_value">%1$s, %2$s</string>
+    <string name="a11y_edit_slider_value">Edit value</string>
+    <string name="a11y_slider_sign">Change sign</string>
     <string name="a11y_reset_value">Reset</string>
     <string name="a11y_place">Place</string>
 </resources>

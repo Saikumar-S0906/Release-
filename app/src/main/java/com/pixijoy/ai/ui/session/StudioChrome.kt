@@ -1,8 +1,10 @@
 package com.pixijoy.ai.ui.session
 
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,12 +30,16 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -460,9 +466,12 @@ fun StudioApplyButton(
 }
 
 /**
- * Lightroom-style: large live value, tap value to reset, thin slider.
+ * Lightroom-style: large live value, thin slider.
+ * Short-tap the value to type a number (clamped to [range] on IME Done or focus clear).
+ * Long-press resets to [defaultValue]. A value that does not parse is left unchanged.
  * When [showLabel] is false the chip row already names the control.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun StudioValueSlider(
     label: String,
@@ -477,27 +486,51 @@ fun StudioValueSlider(
 ) {
     val spokenValue = stringResource(R.string.a11y_slider_value, label, valueText)
     val resetLabel = stringResource(R.string.a11y_reset_value)
+    val editLabel = stringResource(R.string.a11y_edit_slider_value)
+    var editing by remember(tag) { mutableStateOf(false) }
+    val keyboard = LocalSoftwareKeyboardController.current
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            valueText,
-            color = PixiText,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier
-                .heightIn(min = 48.dp)
-                .clickable(onClickLabel = resetLabel) {
-                    onChange(defaultValue)
-                    onSettled()
+        if (editing) {
+            SliderValueField(
+                initialText = valueText,
+                allowNegative = range.start < 0f,
+                onCommit = { raw ->
+                    if (editing) {
+                        editing = false
+                        keyboard?.hide()
+                        val parsed = parseSliderTypedValue(raw, range)
+                        if (parsed != null) {
+                            onChange(parsed)
+                            onSettled()
+                        }
+                    }
                 }
-                .testTag("${tag}_label")
-                .semantics {
-                    contentDescription = spokenValue
-                }
-                .padding(horizontal = 12.dp, vertical = 8.dp)
-        )
+            )
+        } else {
+            Text(
+                valueText,
+                color = PixiText,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .combinedClickable(
+                        onClickLabel = editLabel,
+                        onLongClickLabel = resetLabel,
+                        onLongClick = {
+                            onChange(defaultValue)
+                            onSettled()
+                        },
+                        onClick = { editing = true }
+                    )
+                    .testTag("session_slider_value")
+                    .semantics { contentDescription = spokenValue }
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            )
+        }
         if (showLabel) {
             Text(label, color = PixiTextMuted, fontSize = 12.sp)
         }
