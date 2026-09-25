@@ -158,11 +158,30 @@ data class PhotoSessionState(
     val redo: List<LayeredOp> = emptyList()
 )
 
+/**
+ * Layers hub opens on one real Background layer when the stored graph has none.
+ * That layer is an identity grade composited on the decoded source bitmap
+ * (sample or import). It is not a UI stub. Other tools stay empty until Layers mode.
+ */
+internal fun initialSessionLayers(
+    initialGraph: String,
+    toolKey: String,
+    projectId: String
+): List<LayeredOp> {
+    val decoded = initialGraph.decodeLayers()
+    if (decoded.isNotEmpty() || defaultMode(toolKey) != SessionMode.Layers) return decoded
+    return decoded.withBackgroundSeed(id = backgroundLayerId(projectId))
+}
+
+internal fun backgroundLayerId(projectId: String): String =
+    if (projectId.isBlank()) "L-bg" else "L-bg-$projectId"
+
 open class PhotoSessionViewModel(
     initialGraph: String,
     persistence: GraphPersistence,
     scheduler: GraphSaveScheduler? = null,
-    toolKey: String = ""
+    toolKey: String = "",
+    projectId: String = ""
 ) : ViewModel() {
     internal val toolModeState = mutableStateOf(defaultMode(toolKey))
     internal var toolMode by toolModeState
@@ -225,7 +244,7 @@ open class PhotoSessionViewModel(
     val saveStatus: StateFlow<GraphSaveStatus> = saver.status
 
     private val _state = MutableStateFlow(
-        PhotoSessionState(layers = initialGraph.decodeLayers())
+        PhotoSessionState(layers = initialSessionLayers(initialGraph, toolKey, projectId))
     )
     val state: StateFlow<PhotoSessionState> = _state
 
@@ -248,11 +267,16 @@ open class PhotoSessionViewModel(
         controls.pickingHealSource = false
     }
 
+    /**
+     * Switching into Layers with an empty stack gets the same Background layer
+     * the hub already has from [initialSessionLayers]. A non-empty stack is left alone
+     * so deleting the base layer stays deleted until the mode changes.
+     */
     internal fun seedLayers(projectId: String) {
         if (toolMode != SessionMode.Layers) return
         val layers = _state.value.layers
         if (layers.isNotEmpty()) return
-        val seeded = layers.withBackgroundSeed(id = "L-bg-$projectId")
+        val seeded = layers.withBackgroundSeed(id = backgroundLayerId(projectId))
         replaceLayers(seeded)
         selectedLayerId = seeded.first().id
     }

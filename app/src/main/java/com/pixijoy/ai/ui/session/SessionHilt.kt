@@ -20,7 +20,8 @@ class HiltPhotoSessionViewModel @AssistedInject constructor(
 ) : PhotoSessionViewModel(
     initialGraph = initialGraph,
     persistence = GraphPersistence { graph -> repository.saveGraph(projectId, graph) },
-    toolKey = toolKey
+    toolKey = toolKey,
+    projectId = projectId
 ) {
     @AssistedFactory
     interface Factory {

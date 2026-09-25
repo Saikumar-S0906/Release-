@@ -322,6 +322,7 @@ internal fun PhotoPreviewEffects(
         viewModel.preview.refreshLut(mode, projectDir, renderFailed)
     }
     LaunchedEffect(mode, projectId) {
+        // Hub opens are already seeded. This covers a later switch into Layers.
         viewModel.seedLayers(projectId)
     }
     LaunchedEffect(mode, selectiveRange, selectiveHue, selectiveSat, selectiveLight, preview) {

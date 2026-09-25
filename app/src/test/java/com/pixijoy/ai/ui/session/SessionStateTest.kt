@@ -6,6 +6,9 @@ import com.pixijoy.photo.ExportFormat
 import com.pixijoy.photo.LayeredOp
 import com.pixijoy.photo.PhotoOp
 import com.pixijoy.photo.Stamp
+import com.pixijoy.photo.decodeLayers
+import com.pixijoy.photo.encodeLayers
+import com.pixijoy.photo.isIdentity
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -108,6 +111,71 @@ class SessionStateTest {
         viewModel.redo()
         assertEquals(0.4f, viewModel.state.value.timeline.clips.single().volume)
         assertEquals(3, viewModel.state.value.previewEpoch)
+    }
+
+    @Test
+    fun layersHub_emptyGraph_seedsBackgroundOnDecodedBitmap() = runBlocking {
+        val scheduler = ManualGraphSaveScheduler()
+        val writes = mutableListOf<String>()
+        val viewModel = PhotoSessionViewModel(
+            initialGraph = "",
+            persistence = GraphPersistence { writes += it },
+            scheduler = scheduler,
+            toolKey = "layers",
+            projectId = "sample"
+        )
+
+        assertTrue("".decodeLayers().isEmpty())
+        val layer = viewModel.state.value.layers.single()
+        assertEquals("L-bg-sample", layer.id)
+        assertEquals("Background", layer.name)
+        assertTrue(layer.visible)
+        assertEquals(1f, layer.opacity, 0.001f)
+        assertTrue(layer.op.isIdentity())
+        assertEquals(SessionMode.Layers, viewModel.toolMode)
+        assertEquals(GraphSaveStatus.Saved, viewModel.saveStatus.value)
+
+        scheduler.runPending()
+        assertEquals(GraphSaveStatus.Saved, viewModel.saveStatus.value)
+        assertEquals(listOf(layer), writes.single().decodeLayers())
+    }
+
+    @Test
+    fun layersHub_existingGraph_doesNotAddBackground() {
+        val existing = LayeredOp("L1", "Blur", op = PhotoOp.Blur(2))
+        val viewModel = PhotoSessionViewModel(
+            initialGraph = listOf(existing).encodeLayers(),
+            persistence = GraphPersistence { },
+            scheduler = ManualGraphSaveScheduler(),
+            toolKey = "layers",
+            projectId = "sample"
+        )
+        assertEquals(listOf(existing), viewModel.state.value.layers)
+    }
+
+    @Test
+    fun editor_emptyGraph_staysEmptyUntilLayersMode() {
+        val viewModel = PhotoSessionViewModel(
+            initialGraph = "",
+            persistence = GraphPersistence { },
+            scheduler = ManualGraphSaveScheduler(),
+            toolKey = "editor",
+            projectId = "sample"
+        )
+        assertTrue(viewModel.state.value.layers.isEmpty())
+        viewModel.seedLayers("sample")
+        assertTrue(viewModel.state.value.layers.isEmpty())
+
+        viewModel.selectGroup(PhotoGroup.Compose, "editor")
+        assertEquals(SessionMode.Layers, viewModel.toolMode)
+        viewModel.seedLayers("sample")
+        val layer = viewModel.state.value.layers.single()
+        assertEquals("L-bg-sample", layer.id)
+        assertEquals("Background", layer.name)
+        assertTrue(layer.op.isIdentity())
+
+        viewModel.replaceLayers(emptyList())
+        assertTrue(viewModel.state.value.layers.isEmpty())
     }
 
     @Test
