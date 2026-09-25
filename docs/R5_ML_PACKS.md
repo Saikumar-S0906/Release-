@@ -10,15 +10,16 @@
 - SHA-256 sidecar on sideload; optional pinned hash in `PackCatalog`
 - Play Feature Delivery module names: `ml_inpaint`, `ml_superres`, `ml_denoise`, `ml_interp`, `ml_track`
 - Sideload: **Install from file** (`GetContent`) copies into cache then checksum-installs; fallback folder `filesDir/ml_incoming/{fileName}` (also app external files)
+- HTTPS fallback (user-tapped Download only): Super-res fetches distilled ESRGAN (`PackCatalog.SUPERRES_DOWNLOAD_URL`) with a pinned SHA-256. Photos are not uploaded.
 - `SplitCompat.install` in `PixiJoyApp.attachBaseContext`
-- `PackEngineHooks` stay null until a real interpreter registers
+- `PackLiteRt` binds Play-services `InterpreterApi` only when tensor shapes match `PackModelContract` (2×/4× RGB). Inpaint / denoise / interp / track stay unbound without matching models.
 
 ## Photo
 
 | ID | Graph | Engine |
 |----|-------|--------|
 | E1 Fill | `I` | Telea now; `LiteRtInpaintHook` only if inpaint pack **and** hook bound |
-| E2 Super-res | `SR,2` / `SR,4` | Identity until super-res hook; Apply gated |
+| E2 Super-res | `SR,2` / `SR,4` | Distilled ESRGAN via Download or sideload; LiteRT bind on 2×/4× RGB contract |
 | E3 Denoise | `N,{amount}` | Identity until denoise hook; Apply gated; same op on preview + WorkManager export |
 
 ## Movie

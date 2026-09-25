@@ -62,8 +62,8 @@ E. R5 ML PACKS (on-demand, base APK lean)
 ================================================================
 Pack runtime MET 2026-09-25 (`:ml:pack` checksum, Play+sideload, SplitCompat, unavailable UI)
 E1. Inpaint pack CTA + LiteRtInpaintHook wiring — runtime MET; interpreter unbound (Telea fallback)
-E2. Super-resolution graph SR — contract MET; Apply gated; engine unbound
-E3. Denoise graph N — contract MET; preview+export path; engine unbound
+E2. Super-resolution graph SR — distilled ESRGAN HTTPS fallback + LiteRT contract bind (2026-09-25)
+E3. Denoise graph N — contract MET; Apply gated; engine unbound
 E4. Frame interp pack → FrameInterp.mlAvailable — wiring MET; engine unbound
 E5. Size scaffolding MET (`reportApkSize`); selfie_segmenter ~244 KB stays in base. Measured minified unsigned APK **131.11 MB** (Media3/MediaPipe JNI). ~40 MB remains an aspiration; pack **models** stay out of the base APK
 
@@ -93,7 +93,7 @@ G9. Gradle BuildConfig deprecation cleanup — MET 2026-09-25 (removed `android.
 ================================================================
 H. SUGGESTED PATH (ASAP, no fake greens)
 ================================================================
-1. Bind LiteRT interpreters into PackEngineHooks when models exist
+1. Inpaint / denoise / interp / track engines when matching models exist
 2. Device Maestro / TalkBack / five-user (R5 entry gate)
 3. F2+ only as on-demand modules after F1 engine
 

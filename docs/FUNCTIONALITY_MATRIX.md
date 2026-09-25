@@ -35,7 +35,7 @@ Evidence: `HomePane.kt`, `StudioPane.kt`, `LibraryPane.kt`, and `StudioApp.kt`.
 | Basic cutout | **FALLBACK** | Uses the bundled subject mask when available; otherwise removes colors matching sampled corners. |
 | Heal | **BAKED** | Clone/ring-based local repair. |
 | Fill | **BAKED** | Nearby-pixel Telea-like fill. Neural inpaint stays unavailable until the inpaint pack **and** a bound interpreter exist. |
-| Super-res | **UNAVAILABLE** | Graph `SR` round-trips; Apply is gated on the super-res pack engine. |
+| Super-res | **PACK** | Distilled ESRGAN (~33 KB) downloads when the user taps Download. Apply is gated until LiteRT binds a 2×/4× RGB graph. |
 | Denoise | **UNAVAILABLE** | Graph `N` round-trips; Apply is gated on the denoise pack engine. |
 | Text, stickers, collage | **BAKED** | Rasterized into the rendered photo. |
 | Layers, blend, opacity, masks | **BAKED** | Evaluated by the local layer renderer. |
@@ -77,7 +77,8 @@ Evidence: `movie/ClipFrame.kt`, `ClipSlowMo.kt`, `ClipTrack.kt`, `MovieEngine.kt
 
 | Capability | Status | Gate |
 |---|---|---|
-| Neural inpaint | **UNAVAILABLE** | Pack runtime can sideload/checksum a model; no interpreter is bound. Fill still uses nearby-pixel reconstruction. |
+| Neural inpaint | **UNAVAILABLE** | Pack runtime can sideload/checksum a model; no inpaint interpreter is bound. Fill still uses nearby-pixel reconstruction. |
+| Neural super-res | **PACK** | Distilled ESRGAN HTTPS fallback + Play-services LiteRT when tensor contract matches. |
 | Neural frame interpolation | **UNAVAILABLE** | Disabled chip plus pack download CTA; slow motion uses frame hold. |
 | Point track / roto-lite | **UNAVAILABLE** | `ClipTrack` persists; engine is unbound. |
 | True motion stabilization | **UNAVAILABLE** | No gyro/optical-flow tracking; the available control is named Steady crop. |

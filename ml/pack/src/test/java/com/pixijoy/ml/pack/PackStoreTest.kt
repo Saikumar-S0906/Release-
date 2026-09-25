@@ -71,5 +71,9 @@ class PackStoreTest {
         assertEquals(5, PackCatalog.all().size)
         assertEquals("ml_inpaint", PackCatalog.spec(PackId.Inpaint).playModule)
         assertEquals("ml_track", PackCatalog.spec(PackId.Track).playModule)
+        val sr = PackCatalog.spec(PackId.SuperRes)
+        assertTrue(sr.downloadUrl!!.startsWith("https://"))
+        assertEquals(64, sr.downloadSha256!!.length)
+        assertEquals(null, PackCatalog.spec(PackId.Inpaint).downloadUrl)
     }
 }

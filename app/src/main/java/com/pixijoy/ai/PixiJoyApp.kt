@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import com.google.android.play.core.splitcompat.SplitCompat
 import com.pixijoy.ai.export.ExportNotifications
+import com.pixijoy.ml.PackLiteRt
 import com.pixijoy.ml.pack.PackRuntime
 
 class PixiJoyApp : Application() {
@@ -15,6 +16,7 @@ class PixiJoyApp : Application() {
     override fun onCreate() {
         super.onCreate()
         PackRuntime.bind(this)
+        PackLiteRt.start(this)
         ExportNotifications.ensureChannel(this)
     }
 }

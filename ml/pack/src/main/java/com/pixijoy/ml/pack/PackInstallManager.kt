@@ -30,7 +30,7 @@ class PackInstallManager internal constructor(
         mutex.withLock {
             val spec = PackCatalog.spec(id)
             if (store.isReady(spec)) {
-                emit(id, store.readyState(spec))
+                emitReady(id, store.readyState(spec))
                 return
             }
             emit(id, PackInstallState.Installing(0f))
@@ -39,20 +39,52 @@ class PackInstallManager internal constructor(
             }
             if (playResult?.isSuccess == true) {
                 incomingFile(spec)?.let { file ->
-                    emit(id, store.installFrom(spec, file))
+                    emitReady(id, store.installFrom(spec, file))
                     if (state(id).isReady) return
                 }
             }
             val local = incomingFile(spec)
             if (local != null) {
-                emit(id, store.installFrom(spec, local))
+                emitReady(id, store.installFrom(spec, local))
                 return
+            }
+            val url = spec.downloadUrl
+            val pin = spec.downloadSha256
+            if (!url.isNullOrBlank() && !pin.isNullOrBlank()) {
+                val tmp = File.createTempFile("pixijoy-pack-${id.name}", ".tflite")
+                try {
+                    val downloaded = PackDownloader.download(url, tmp) { progress ->
+                        emit(id, PackInstallState.Installing(progress.coerceIn(0f, 1f)))
+                    }
+                    if (downloaded.isFailure) {
+                        emit(
+                            id,
+                            PackInstallState.Failed(
+                                downloaded.exceptionOrNull()?.message ?: "Pack download failed."
+                            )
+                        )
+                        return
+                    }
+                    if (!PackChecksum.matches(tmp, pin)) {
+                        emit(id, PackInstallState.Failed("Downloaded pack checksum did not match."))
+                        return
+                    }
+                    if (!PackChecksum.looksLikeTflite(tmp)) {
+                        emit(id, PackInstallState.Failed("Downloaded file is not a TFLite pack."))
+                        return
+                    }
+                    emitReady(id, store.installFrom(spec.copy(expectedSha256 = pin), tmp))
+                    return
+                } finally {
+                    tmp.delete()
+                }
             }
             val playError = playResult?.exceptionOrNull()?.message
             emit(
                 id,
                 PackInstallState.Failed(
-                    playError ?: "Pack is not on this phone yet. Copy ${spec.fileName} into the incoming folder."
+                    playError
+                        ?: "Pack is not on this phone yet. Copy ${spec.fileName} into the incoming folder."
                 )
             )
         }
@@ -61,7 +93,7 @@ class PackInstallManager internal constructor(
     suspend fun sideload(id: PackId, source: File) {
         mutex.withLock {
             emit(id, PackInstallState.Installing(0.5f))
-            emit(id, store.installFrom(PackCatalog.spec(id), source))
+            emitReady(id, store.installFrom(PackCatalog.spec(id), source))
         }
     }
 
@@ -69,6 +101,7 @@ class PackInstallManager internal constructor(
         mutex.withLock {
             store.uninstall(PackCatalog.spec(id))
             emit(id, PackInstallState.Missing)
+            runCatching { PackRuntime.onPackRemoved?.invoke(id) }
         }
     }
 
@@ -77,6 +110,15 @@ class PackInstallManager internal constructor(
 
     private fun emit(id: PackId, state: PackInstallState) {
         flows.getValue(id).value = state
+    }
+
+    private fun emitReady(id: PackId, state: PackInstallState) {
+        emit(id, state)
+        if (state is PackInstallState.Ready) {
+            runCatching {
+                PackRuntime.onPackReady?.invoke(id, store.modelFile(PackCatalog.spec(id)))
+            }
+        }
     }
 
     companion object {

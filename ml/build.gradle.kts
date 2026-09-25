@@ -16,5 +16,7 @@ android {
 
 dependencies {
     implementation(project(":core:common"))
+    implementation(project(":ml:pack"))
     implementation(libs.mediapipe.tasks.vision)
+    implementation(libs.play.services.tflite.java)
 }

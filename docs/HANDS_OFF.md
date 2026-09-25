@@ -81,12 +81,12 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **D9** — ClipChroma green/blue key + GlEffect; Maestro `d9-chroma-key` **green** Pixel_7a.
 - **D10** — ClipSlowMo + FrameInterp contract (heuristic now; ML for E4); Maestro `d10-slowmo-interp` **green** Pixel_7a.
 - **D11** — MovieHdrMode + Composition.setHdrMode (+ Ultra HDR gain-map retain API 34+); Maestro `d11-hdr-export` **green** Pixel_7a.
-- **E pack runtime** — `:ml:pack` checksum/store/Play+file-picker sideload; Fill/SR/Denoise/Slow-mo/Track CTAs; engines unbound. Minified unsigned APK **131.11 MB** (models still out). See `docs/R5_ML_PACKS.md`.
+- **E pack runtime** — `:ml:pack` checksum/store/Play+HTTPS/file-picker; Super-res Download fetches distilled ESRGAN; Fill/Denoise/Slow-mo/Track still unbound engines. Unused board PNGs removed. See `docs/R5_ML_PACKS.md`.
 - **F1** — `ClipTrack` timeline contract + pack CTA (engine unbound).
 - **G1** — session preview\|tools on `isStudioTwoPane` (`studio_session_side_tools`); phone remains single-pane.
 - **G5** — haptic on crop Apply and movie split.
 - **G9** — removed deprecated global BuildConfig default.
-**In progress:** bind LiteRT interpreters; R5 device gate (Maestro/TalkBack/five-user).
+**In progress:** R5 device gate (Maestro/TalkBack/five-user).
 
 **Blockers:** None.
 

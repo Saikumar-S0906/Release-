@@ -38,7 +38,11 @@
 -dontwarn javax.lang.model.type.TypeVisitor
 -dontwarn javax.lang.model.util.SimpleTypeVisitor8
 
-# Play Feature Delivery
+# Play services LiteRT (InterpreterApi)
+-keep class org.tensorflow.lite.** { *; }
+-keep class com.google.android.gms.tflite.** { *; }
+-dontwarn org.tensorflow.lite.**
+-dontwarn com.google.android.gms.tflite.**
 -keep class com.google.android.play.core.** { *; }
 -dontwarn com.google.android.play.core.**
 

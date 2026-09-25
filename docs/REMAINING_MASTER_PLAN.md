@@ -36,7 +36,7 @@ B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5
 | **B5** | Docs on `origin/next` | **EXITED** with Phase 0 land | Status docs in same commit |
 | **B6** | Gallery Photo Picker | Yellow/manual | Keep documented; no fake green |
 
-**Immediate next:** bind real LiteRT interpreters into `PackEngineHooks` once models exist; device Maestro/TalkBack/five-user remains the R5 quality gate.
+**Immediate next:** inpaint / denoise / interp / track engines when matching models exist; device Maestro/TalkBack/five-user remains the R5 quality gate.
 
 **G overlap with B:** **G4** exited with B3 (chips ≥48dp, announced selection).
 
@@ -177,7 +177,7 @@ Never land F* as isolated effects without listed primitives.
 
 ## Next concrete slice (start here)
 
-1. Bind LiteRT interpreters to `PackEngineHooks` when models exist (E1–E4 engines)  
+1. Inpaint / denoise / interp / track engines when matching models exist  
 2. R5 device gate (Maestro + TalkBack + five-user) on a mid-range phone 
 
 When this plan drifts, update this file and `TOTAL_REMAINING.txt` in the same commit as the exit.

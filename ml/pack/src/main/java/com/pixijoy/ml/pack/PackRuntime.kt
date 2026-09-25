@@ -11,6 +11,13 @@ object PackRuntime {
     @Volatile
     private var appContext: Context? = null
 
+    /** App registers a LiteRT binder. Pack install never fakes an engine. */
+    @Volatile
+    var onPackReady: ((PackId, File) -> Unit)? = null
+
+    @Volatile
+    var onPackRemoved: ((PackId) -> Unit)? = null
+
     fun bind(context: Context) {
         appContext = context.applicationContext
     }
