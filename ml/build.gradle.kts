@@ -16,7 +16,10 @@ android {
 
 dependencies {
     implementation(project(":core:common"))
-    implementation(project(":ml:pack"))
     implementation(libs.mediapipe.tasks.vision)
     implementation(libs.play.services.tflite.java)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.play.feature.delivery.ktx)
+    implementation(libs.hilt.android)
+    testImplementation(libs.junit)
 }

@@ -106,7 +106,7 @@ Smart objects, vector paths, group folders, generative fill, RAW (parallel track
 ## Wave C depth (C3/C5–C8): MET
 
 **Met:**
-- **C3** Fill undo stroke + clear; Telea; E1 `LiteRtInpaintHook` now consults `:ml:pack` (engine unbound).
+- **C3** Fill undo stroke + clear; Telea; E1 `LiteRtInpaintHook` consults `:ml` `PackEngineHooks` (engine unbound).
 - **C5** `PhotoOp.Perspective` (`D`) + `Liquify` (`M`); `WarpOps`; session Warp rail.
 - **C6** `PhotoPreset` local files; Library **Export all photos** via `BatchPhotoExportWorker`.
 - **C7** `ColorIntent` sRGB / Display P3 on export path (best-effort device support).

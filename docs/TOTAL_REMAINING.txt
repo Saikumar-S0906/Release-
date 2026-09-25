@@ -60,7 +60,7 @@ D11. HDR export — MET (2026-09-23 MovieHdrMode + Composition.setHdrMode; Maest
 ================================================================
 E. R5 ML PACKS (on-demand, base APK lean)
 ================================================================
-Pack runtime MET 2026-09-25 (`:ml:pack` checksum, Play+sideload, SplitCompat, unavailable UI)
+Pack runtime MET 2026-09-25 (`:ml` checksum, Play+sideload, SplitCompat, unavailable UI). Hooks: `PackFeatureEntry.registerEngines` after SplitCompat binds only when Ready + SHA-256; base Application registers nothing
 E1. Inpaint pack CTA + LiteRtInpaintHook wiring — runtime MET; interpreter unbound (Telea fallback)
 E2. Super-resolution graph SR — distilled ESRGAN HTTPS fallback + LiteRT contract bind (2026-09-25)
 E3. Denoise graph N — contract MET; Apply gated; engine unbound
@@ -81,8 +81,8 @@ F6. Smart-object analog; advanced type; print/PDF
 G. PLATFORM / UX CHROME (ongoing)
 ================================================================
 G1. Tablet / foldable two-pane — catalog|session MET earlier; session preview|tools (`studio_session_side_tools`) MET 2026-09-25 (`isStudioTwoPane` 840×520)
-G2. ViewModel + Hilt for PhotoSessionScreen / MovieSessionScreen (~1100 lines each)
-G3. Consistent Hilt in StudioApp (repos/engines)
+G2. ViewModel + Hilt for PhotoSessionScreen / MovieSessionScreen — slider/preview extract COMPLETE 2026-09-25 (graph, tool chrome, and preview baking in Hilt VMs; screens observe; movie players stay on the screen; tool chrome resets on entry/rotation)
+G3. Consistent Hilt in StudioApp — STARTED with G2 (`@HiltAndroidApp`, shell VM injects repo/prefs/engines)
 G4. Accessibility: 48dp chips, announce selected state — exited with B3
 G5. Haptics — crop Apply + movie split MET 2026-09-25 (no crop-handle snap yet)
 G6. Skeleton loaders for Library thumbs

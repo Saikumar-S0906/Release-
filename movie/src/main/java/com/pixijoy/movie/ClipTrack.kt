@@ -1,7 +1,8 @@
 package com.pixijoy.movie
 
+import android.graphics.Bitmap
+import com.pixijoy.ml.PackEngineHooks
 import com.pixijoy.ml.pack.PackId
-import com.pixijoy.ml.pack.PackRuntime
 
 /**
  * F1 tracking / roto-lite contract. No optical-flow or mask follow ships in the base
@@ -64,7 +65,16 @@ object TrackFacade {
     @Volatile
     var mlAvailableOverride: Boolean? = null
 
-    fun mlAvailable(): Boolean = mlAvailableOverride ?: PackRuntime.engineReady(PackId.Track)
+    fun mlAvailable(): Boolean = mlAvailableOverride ?: PackEngineHooks.hasEngine(PackId.Track)
+
+    /**
+     * Neural follow only. Returns null when the track pack is unbound or the
+     * interpreter declines. Does not invent a motion path.
+     */
+    fun follow(frame: Bitmap, x: Float, y: Float): Pair<Float, Float>? {
+        if (!mlAvailable()) return null
+        return PackEngineHooks.tryTrack(frame, x, y)
+    }
 
     fun resolve(requested: TrackEngine): TrackEngine = when (requested) {
         TrackEngine.Off -> TrackEngine.Off

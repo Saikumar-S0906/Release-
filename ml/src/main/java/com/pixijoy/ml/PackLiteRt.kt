@@ -6,7 +6,6 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
 import com.google.android.gms.tflite.java.TfLite
-import com.pixijoy.ml.pack.PackEngineHooks
 import com.pixijoy.ml.pack.PackId
 import com.pixijoy.ml.pack.PackModelContract
 import com.pixijoy.ml.pack.PackRuntime
@@ -17,8 +16,9 @@ import kotlin.math.min
 import org.tensorflow.lite.InterpreterApi
 
 /**
- * Binds Play-services LiteRT interpreters to [PackEngineHooks] when a pack file
- * matches a known tensor contract. Missing GMS or a mismatched graph leaves hooks null.
+ * Builds a real Play-services interpreter when a pack file matches [PackModelContract].
+ * Does not register by itself. [PackFeatureEntry] registers the engine after SplitCompat.
+ * Missing GMS or a mismatched graph produces no engine.
  */
 object PackLiteRt {
     private const val MAX_WORK_EDGE = 256
@@ -26,14 +26,29 @@ object PackLiteRt {
     private val exec = Executors.newSingleThreadExecutor()
     private var app: Context? = null
     private var tfliteReady = false
+    private var sink: ((PackId, NeuralEngine?) -> Unit)? = null
     private val engines = mutableMapOf<PackId, InterpreterApi>()
 
-    fun start(context: Context) {
+    /**
+     * After [PackSplits.install]. Listens for verified pack files. [sink] receives
+     * an engine only when the tensor contract matches, or null when the pack is removed.
+     */
+    fun watch(context: Context, sink: (PackId, NeuralEngine?) -> Unit) {
         val appCtx = context.applicationContext
-        synchronized(lock) {
-            app = appCtx
-            PackRuntime.onPackReady = { id, file -> scheduleBind(id, file) }
-            PackRuntime.onPackRemoved = { id -> scheduleUnbind(id) }
+        val startInit = synchronized(lock) {
+            this.sink = sink
+            if (app != null) {
+                false
+            } else {
+                app = appCtx
+                PackRuntime.onPackReady = { id, file -> scheduleBind(id, file) }
+                PackRuntime.onPackRemoved = { id -> scheduleUnbind(id) }
+                true
+            }
+        }
+        if (!startInit) {
+            if (synchronized(lock) { tfliteReady }) bindInstalled()
+            return
         }
         TfLite.initialize(appCtx)
             .addOnSuccessListener {
@@ -47,16 +62,11 @@ object PackLiteRt {
 
     private fun scheduleUnbind(id: PackId) {
         exec.execute {
-            synchronized(lock) {
+            val notify = synchronized(lock) {
                 engines.remove(id)?.close()
-                when (id) {
-                    PackId.SuperRes -> PackEngineHooks.superRes = null
-                    PackId.Inpaint -> PackEngineHooks.inpaint = null
-                    PackId.Denoise -> PackEngineHooks.denoise = null
-                    PackId.FrameInterp -> PackEngineHooks.frameInterpBound = false
-                    PackId.Track -> PackEngineHooks.trackBound = false
-                }
+                sink
             }
+            notify?.invoke(id, null)
         }
     }
 
@@ -101,13 +111,15 @@ object PackLiteRt {
             interpreter.close()
             return
         }
-        synchronized(lock) {
+        val engine = NeuralEngine.SuperRes { bitmap, requested ->
+            runCatching { superRes(bitmap, requested) }.getOrNull()
+        }
+        val notify = synchronized(lock) {
             engines.remove(PackId.SuperRes)?.close()
             engines[PackId.SuperRes] = interpreter
-            PackEngineHooks.superRes = { bitmap, requested ->
-                runCatching { superRes(bitmap, requested) }.getOrNull()
-            }
+            sink
         }
+        notify?.invoke(PackId.SuperRes, engine)
     }
 
     private fun openInterpreter(file: File): InterpreterApi? {

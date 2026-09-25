@@ -4,15 +4,19 @@
 **Pairs with:** `docs/REMAINING_MASTER_PLAN.md` Wave E / F1, `docs/FUNCTIONALITY_MATRIX.md`.
 **Hard rule:** pack file + checksum ≠ neural engine. Telea / bicubic / frame-hold are never labeled neural.
 
-## Runtime (`:ml:pack`)
+## Runtime (`:ml`)
+
+`:ml` owns install state, `PackSplits` (SplitCompat), and the Hilt singleton `PackEngineHooks`. Play feature modules (`ml_inpaint`, `ml_superres`, `ml_denoise`, `ml_interp`, `ml_track`) own model files only. `:photo` and `:movie` call the facade and do not depend on a pack module or LiteRT. Session UI observes install state and download CTAs; it does not call `register`.
 
 - Install state: missing / installing / ready / failed / storage error
 - SHA-256 sidecar on sideload; optional pinned hash in `PackCatalog`
-- Play Feature Delivery module names: `ml_inpaint`, `ml_superres`, `ml_denoise`, `ml_interp`, `ml_track`
 - Sideload: **Install from file** (`GetContent`) copies into cache then checksum-installs; fallback folder `filesDir/ml_incoming/{fileName}` (also app external files)
 - HTTPS fallback (user-tapped Download only): Super-res fetches distilled ESRGAN (`PackCatalog.SUPERRES_DOWNLOAD_URL`) with a pinned SHA-256. Photos are not uploaded.
-- `SplitCompat.install` in `PixiJoyApp.attachBaseContext`
-- `PackLiteRt` binds Play-services `InterpreterApi` only when tensor shapes match `PackModelContract` (2×/4× RGB). Inpaint / denoise / interp / track stay unbound without matching models.
+- `PixiJoyApp.attachBaseContext` calls `PackSplits.install`. `onCreate` binds install state only and registers nothing
+- After SplitCompat, the studio shell calls `PackFeatureEntry.watchVerifiedModels`. That registers an interpreter only when the pack is Ready, the SHA-256 matches, and `PackModelContract` accepts the graph
+- `PackLiteRt` builds that Super-res interpreter only for a verified 2×/4× RGB file. Inpaint / denoise / interp / track stay unbound
+- Engines call `PackEnhance` and `TrackFacade.follow` / `FrameInterp.interpolatedFrames`
+- A null try result leaves Telea / bicubic / frame-hold in place, unlabeled as neural
 
 ## Photo
 

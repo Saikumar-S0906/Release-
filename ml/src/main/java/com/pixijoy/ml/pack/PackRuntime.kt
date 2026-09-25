@@ -1,11 +1,13 @@
 package com.pixijoy.ml.pack
 
 import android.content.Context
+import com.pixijoy.ml.PackEngineHooks
 import java.io.File
 
 /**
- * App-wide pack facade. [bind] from [android.app.Application]. Unbound, every
- * query reports missing / not-ready so JVM tests stay hermetic.
+ * App-wide pack install queries. [bind] runs when the hooks singleton is created
+ * for a later feature-module [com.pixijoy.ml.PackFeatureEntry] call, not from
+ * Application.onCreate. Unbound, every query reports missing / not-ready.
  */
 object PackRuntime {
     @Volatile

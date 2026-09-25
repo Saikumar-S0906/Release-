@@ -1,7 +1,8 @@
 package com.pixijoy.movie
 
+import android.graphics.Bitmap
+import com.pixijoy.ml.PackEngineHooks
 import com.pixijoy.ml.pack.PackId
-import com.pixijoy.ml.pack.PackRuntime
 import kotlin.math.abs
 
 /**
@@ -104,7 +105,16 @@ object FrameInterp {
     @Volatile
     var mlAvailableOverride: Boolean? = null
 
-    fun mlAvailable(): Boolean = mlAvailableOverride ?: PackRuntime.engineReady(PackId.FrameInterp)
+    fun mlAvailable(): Boolean = mlAvailableOverride ?: PackEngineHooks.hasEngine(PackId.FrameInterp)
+
+    /**
+     * Neural frames only. Returns null when the E4 pack is unbound or the
+     * interpreter declines. Callers keep the heuristic / frame-hold path.
+     */
+    fun interpolatedFrames(before: Bitmap, after: Bitmap, steps: Int): List<Bitmap>? {
+        if (!mlAvailable() || steps <= 0) return null
+        return PackEngineHooks.tryFrameInterp(before, after, steps)
+    }
 
     fun resolve(requested: SlowMoEngine): SlowMoEngine = when (requested) {
         SlowMoEngine.None -> SlowMoEngine.None

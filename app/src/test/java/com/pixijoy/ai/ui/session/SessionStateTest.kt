@@ -2,6 +2,7 @@ package com.pixijoy.ai.ui.session
 
 import com.pixijoy.movie.MultiTrackTimeline
 import com.pixijoy.movie.TimelineClip
+import com.pixijoy.photo.ExportFormat
 import com.pixijoy.photo.LayeredOp
 import com.pixijoy.photo.PhotoOp
 import kotlinx.coroutines.runBlocking
@@ -106,6 +107,90 @@ class SessionStateTest {
         viewModel.redo()
         assertEquals(0.4f, viewModel.state.value.timeline.clips.single().volume)
         assertEquals(3, viewModel.state.value.previewEpoch)
+    }
+
+    @Test
+    fun photoToolSelection_startsFromToolKey() {
+        val viewModel = PhotoSessionViewModel(
+            initialGraph = "",
+            persistence = GraphPersistence { },
+            scheduler = ManualGraphSaveScheduler(),
+            toolKey = "layers"
+        )
+        assertEquals(SessionMode.Layers, viewModel.toolMode)
+        assertEquals(PhotoGroup.Compose, viewModel.toolGroup)
+        viewModel.toolMode = SessionMode.Mask
+        viewModel.selectedLayerId = "L1"
+        assertEquals(SessionMode.Mask, viewModel.toolMode)
+        assertEquals("L1", viewModel.selectedLayerId)
+        viewModel.bindTool("restore")
+        assertEquals(SessionMode.Heal, viewModel.toolMode)
+        assertEquals(PhotoGroup.Retouch, viewModel.toolGroup)
+        assertEquals(null, viewModel.selectedLayerId)
+        viewModel.controls.exposure = 0.8f
+        viewModel.controls.format = ExportFormat.PNG
+        viewModel.bindTool("layers")
+        assertEquals(0f, viewModel.controls.exposure)
+        assertEquals(ExportFormat.JPEG, viewModel.controls.format)
+        viewModel.bindTool("cutout")
+        assertEquals(ExportFormat.PNG, viewModel.controls.format)
+        viewModel.controls.exposure = 0.4f
+        viewModel.controls.contrast = 1.2f
+        viewModel.controls.sharpen = 0.5f
+        val pushed = mutableListOf<PhotoOp>()
+        viewModel.preview.applyGrade { pushed += it }
+        assertEquals(0f, viewModel.controls.exposure)
+        assertEquals(1f, viewModel.controls.contrast)
+        assertEquals(0f, viewModel.controls.sharpen)
+        assertTrue(pushed.any { it is PhotoOp.Grade })
+        assertTrue(pushed.any { it is PhotoOp.Sharpen })
+        viewModel.controls.exposure = 0f
+        viewModel.controls.contrast = 1f
+        viewModel.controls.hue = 0f
+        viewModel.controls.saturation = 1f
+        val identity = mutableListOf<PhotoOp>()
+        viewModel.preview.applyGrade { identity += it }
+        assertTrue(identity.isEmpty())
+        assertFalse(viewModel.preview.canCompare(SessionMode.Adjust, emptyList()))
+    }
+
+    @Test
+    fun movieToolSelection_startsOnFirstClip() {
+        val viewModel = MovieSessionViewModel(
+            initialTimeline = timeline(volume = 1f),
+            persistence = GraphPersistence { },
+            scheduler = ManualGraphSaveScheduler()
+        )
+        assertEquals("c1", viewModel.selectedClipId)
+        assertEquals(MovieGroup.Edit, viewModel.movieGroup)
+        viewModel.movieGroup = MovieGroup.Audio
+        viewModel.effectSub = MovieEffectSub.SlowMo
+        viewModel.controls.playhead = 0.4f
+        viewModel.controls.playing = false
+        viewModel.resetToolChrome()
+        assertEquals(MovieGroup.Edit, viewModel.movieGroup)
+        assertEquals(MovieEffectSub.Motion, viewModel.effectSub)
+        assertEquals(0f, viewModel.controls.playhead)
+        assertTrue(viewModel.controls.playing)
+        viewModel.controls.bindEndMs(5_000L)
+        assertEquals(5_000L, viewModel.controls.endMs)
+        viewModel.controls.bindEndMs(9_000L)
+        assertEquals(5_000L, viewModel.controls.endMs)
+        viewModel.resetToolChrome()
+        viewModel.controls.bindEndMs(9_000L)
+        assertEquals(9_000L, viewModel.controls.endMs)
+        viewModel.notePlaybackPosition(250, 1_000)
+        assertEquals(0.25f, viewModel.controls.playhead)
+        viewModel.controls.playing = true
+        val seek = viewModel.stepPlayhead(1, 30f, 1_000)
+        assertFalse(viewModel.controls.playing)
+        viewModel.confirmSteppedPlayhead(seek, 1_000)
+        viewModel.beginExport("export")
+        assertTrue(viewModel.controls.exporting)
+        viewModel.onExportSucceeded("content://movie", "ok")
+        assertFalse(viewModel.controls.exporting)
+        assertEquals("content://movie", viewModel.controls.exportSuccessUri)
+        assertTrue(viewModel.controls.showExport)
     }
 
     @Test

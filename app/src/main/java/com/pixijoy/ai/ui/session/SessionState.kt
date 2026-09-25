@@ -1,13 +1,18 @@
 package com.pixijoy.ai.ui.session
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.pixijoy.movie.MultiTrackTimeline
 import com.pixijoy.movie.Timeline
 import com.pixijoy.photo.LayeredOp
+import com.pixijoy.photo.PhotoOp
 import com.pixijoy.photo.decodeLayers
 import com.pixijoy.photo.encodeLayers
+import com.pixijoy.photo.layerName
+import com.pixijoy.photo.withBackgroundSeed
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -125,11 +130,35 @@ data class PhotoSessionState(
     val redo: List<LayeredOp> = emptyList()
 )
 
-class PhotoSessionViewModel(
+open class PhotoSessionViewModel(
     initialGraph: String,
     persistence: GraphPersistence,
-    scheduler: GraphSaveScheduler? = null
+    scheduler: GraphSaveScheduler? = null,
+    toolKey: String = ""
 ) : ViewModel() {
+    internal val toolModeState = mutableStateOf(defaultMode(toolKey))
+    internal var toolMode by toolModeState
+    internal val toolGroupState = mutableStateOf(groupForTool(toolKey))
+    internal var toolGroup by toolGroupState
+    internal val selectedLayerState = mutableStateOf<String?>(null)
+    internal var selectedLayerId by selectedLayerState
+    internal var toolEntryId: Any? = null
+    internal val controls = PhotoSessionControls(toolKey)
+    internal val preview = PhotoSessionPreview(controls)
+
+    /** Fresh screen entry (including rotation) picks the tool and slider defaults again. */
+    internal fun bindTool(nextToolKey: String) {
+        toolMode = defaultMode(nextToolKey)
+        toolGroup = groupForTool(nextToolKey)
+        selectedLayerId = null
+        controls.reset(nextToolKey)
+    }
+
+    override fun onCleared() {
+        controls.releaseBitmaps()
+        super.onCleared()
+    }
+
     private val saver = DebouncedGraphSaver(
         persistence = persistence,
         scheduler = scheduler ?: CoroutineGraphSaveScheduler(viewModelScope)
@@ -143,6 +172,38 @@ class PhotoSessionViewModel(
     init {
         saver.submit(_state.value.layers.encodeLayers())
     }
+
+    internal fun pushOp(op: PhotoOp) {
+        val layer = LayeredOp(
+            id = "L${System.currentTimeMillis()}",
+            name = op.layerName(),
+            op = op
+        )
+        push(layer)
+        selectedLayerId = layer.id
+        controls.status = null
+        controls.statusIsError = false
+        controls.pendingStamps = emptyList()
+        controls.lastStamp = null
+        controls.pickingHealSource = false
+    }
+
+    internal fun seedLayers(projectId: String) {
+        if (toolMode != SessionMode.Layers) return
+        val layers = _state.value.layers
+        if (layers.isNotEmpty()) return
+        val seeded = layers.withBackgroundSeed(id = "L-bg-$projectId")
+        replaceLayers(seeded)
+        selectedLayerId = seeded.first().id
+    }
+
+    internal fun applyGrade() = preview.applyGrade(::pushOp)
+
+    internal fun applyCurves(ys: FloatArray) = preview.applyCurves(ys, ::pushOp)
+
+    internal fun applySelective() = preview.applySelective(::pushOp)
+
+    internal fun applyLook(key: String) = preview.applyLook(key, ::pushOp)
 
     fun push(layer: LayeredOp) {
         val current = _state.value
@@ -240,12 +301,34 @@ data class MovieSessionState(
     val canRedo: Boolean get() = redoCount > 0
 }
 
-class MovieSessionViewModel(
+open class MovieSessionViewModel(
     initialTimeline: MultiTrackTimeline,
     persistence: GraphPersistence,
     scheduler: GraphSaveScheduler? = null,
     historyLimit: Int = MOVIE_HISTORY_LIMIT
 ) : ViewModel() {
+    private val seededTimeline = initialTimeline.ensureDefaultTracks()
+    internal val movieGroupState = mutableStateOf(MovieGroup.Edit)
+    internal var movieGroup by movieGroupState
+    internal val effectSubState = mutableStateOf(MovieEffectSub.Motion)
+    internal var effectSub by effectSubState
+    internal val selectedClipState = mutableStateOf(
+        seededTimeline.toFlatTimeline().clips.firstOrNull()?.id
+    )
+    internal var selectedClipId by selectedClipState
+    internal val selectedTitleState = mutableStateOf<String?>(null)
+    internal var selectedTitleId by selectedTitleState
+    internal var toolEntryId: Any? = null
+    internal val controls = MovieSessionControls()
+
+    /** Fresh screen entry returns to Edit / first clip and slider defaults. */
+    internal fun resetToolChrome() {
+        movieGroup = MovieGroup.Edit
+        effectSub = MovieEffectSub.Motion
+        selectedTitleId = null
+        selectedClipId = _state.value.timeline.clips.firstOrNull()?.id
+        controls.reset()
+    }
     private val saver = DebouncedGraphSaver(
         persistence = persistence,
         scheduler = scheduler ?: CoroutineGraphSaveScheduler(viewModelScope)
@@ -253,7 +336,7 @@ class MovieSessionViewModel(
     private val history = BoundedUndoHistory<MultiTrackTimeline>(historyLimit)
     private var gestureStart: MultiTrackTimeline? = null
     private val _state = kotlinx.coroutines.flow.MutableStateFlow(
-        MovieSessionState(multi = initialTimeline.ensureDefaultTracks())
+        MovieSessionState(multi = seededTimeline)
     )
     val state: kotlinx.coroutines.flow.StateFlow<MovieSessionState> = _state
 
@@ -325,6 +408,72 @@ class MovieSessionViewModel(
         viewModelScope.launch { flush() }
     }
 
+    internal fun notePlaybackPosition(positionMs: Long, totalMs: Long) {
+        val total = totalMs.coerceAtLeast(1)
+        controls.playhead = (positionMs / total.toFloat()).coerceIn(0f, 1f)
+    }
+
+    /** Pauses transport and returns the frame the player should seek to. */
+    internal fun stepPlayhead(delta: Int, fps: Float, totalMs: Long): Long {
+        controls.playing = false
+        val total = totalMs.coerceAtLeast(1)
+        val now = (controls.playhead * total).toLong()
+        return com.pixijoy.movie.MovieFrame.step(now, delta, fps, total)
+    }
+
+    internal fun confirmSteppedPlayhead(nextMs: Long, totalMs: Long) {
+        val total = totalMs.coerceAtLeast(1)
+        controls.playhead = (nextMs / total.toFloat()).coerceIn(0f, 1f)
+    }
+
+    internal fun togglePlaying(): Boolean {
+        controls.playing = !controls.playing
+        return controls.playing
+    }
+
+    internal fun setPlayhead(fraction: Float) {
+        controls.playhead = fraction
+    }
+
+    internal fun setTrimStart(ms: Long) {
+        controls.startMs = ms
+    }
+
+    internal fun setTrimEnd(ms: Long) {
+        controls.endMs = ms
+    }
+
+    internal fun setSpeed(value: Float) {
+        controls.speed = value
+    }
+
+    internal fun beginExport(message: String) {
+        controls.exporting = true
+        controls.progress = 0f
+        controls.status = message
+        controls.exportSuccessUri = null
+    }
+
+    internal fun onExportRunning(progress: Float, message: String) {
+        controls.exporting = true
+        controls.progress = progress
+        controls.status = message
+    }
+
+    internal fun onExportSucceeded(uri: String?, message: String) {
+        if (!controls.exporting) return
+        controls.exporting = false
+        controls.exportSuccessUri = uri
+        controls.showExport = true
+        controls.status = message
+    }
+
+    internal fun onExportFailed(message: String) {
+        if (!controls.exporting) return
+        controls.exporting = false
+        controls.status = message
+    }
+
     private fun finishInterruptedGesture() {
         val current = _state.value
         gestureStart?.let { start ->
@@ -348,9 +497,3 @@ class MovieSessionViewModel(
     }
 }
 
-internal fun <T : ViewModel> sessionViewModelFactory(
-    create: () -> T
-): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
-    @Suppress("UNCHECKED_CAST")
-    override fun <VM : ViewModel> create(modelClass: Class<VM>): VM = create() as VM
-}

@@ -54,8 +54,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -80,7 +78,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.pixijoy.ai.ui.StudioShellViewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -96,7 +95,6 @@ import com.pixijoy.ai.ui.isStudioTwoPane
 import com.pixijoy.ai.export.MovieExportWorker
 import com.pixijoy.core.common.AppResult
 import com.pixijoy.core.data.Project
-import com.pixijoy.core.data.ProjectRepository
 import com.pixijoy.designsystem.PixiAccent
 import com.pixijoy.designsystem.PixiBg
 import com.pixijoy.designsystem.PixiPrimaryButton
@@ -117,10 +115,7 @@ import com.pixijoy.movie.CompositionPreview
 import com.pixijoy.movie.DuckPreset
 import com.pixijoy.movie.Filmstrip
 import com.pixijoy.movie.FilmstripFrame
-import com.pixijoy.movie.Media3MovieEngine
-import com.pixijoy.movie.MovieEngine
 import com.pixijoy.movie.MovieExportSize
-import com.pixijoy.movie.MovieFrame
 import com.pixijoy.movie.MovieHdrMode
 import com.pixijoy.movie.MovieMotion
 import com.pixijoy.movie.MovieSpeed
@@ -142,12 +137,13 @@ fun MovieSessionScreen(
     project: Project,
     toolLabel: String,
     toolKey: String,
-    repo: ProjectRepository,
-    engine: MovieEngine = remember { Media3MovieEngine() },
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val shell = hiltViewModel<StudioShellViewModel>()
+    val repo = shell.repository
+    val engine = shell.movieEngine
     val paths = remember(project.media, project.coverPath) {
         project.media.map { it.path }.ifEmpty { listOf(project.coverPath) }
     }
@@ -171,17 +167,24 @@ fun MovieSessionScreen(
                 )
             ).ensureDefaultTracks()
     }
-    val sessionViewModel: MovieSessionViewModel = viewModel(
-        key = "movie-session-${project.id}",
-        factory = remember(project.id, repo) {
-            sessionViewModelFactory {
-                MovieSessionViewModel(
+    val sessionViewModel: MovieSessionViewModel =
+        hiltViewModel<HiltMovieSessionViewModel, HiltMovieSessionViewModel.Factory>(
+            key = "movie-session-${project.id}",
+            creationCallback = { factory ->
+                factory.create(
                     initialTimeline = initialTimeline,
-                    persistence = GraphPersistence { graph -> repo.saveGraph(project.id, graph) }
+                    projectId = project.id
                 )
             }
-        }
-    )
+        )
+    val toolEntry = remember(project.id, toolKey) { Any() }
+    if (sessionViewModel.toolEntryId !== toolEntry) {
+        sessionViewModel.toolEntryId = toolEntry
+        sessionViewModel.resetToolChrome()
+        sessionViewModel.controls.bindEndMs(
+            if (still) duration else engine.durationMs(path).coerceAtLeast(1000)
+        )
+    }
     val sessionState by sessionViewModel.state.collectAsState()
     val multi = sessionState.multi
     val timeline = sessionState.timeline
@@ -207,21 +210,12 @@ fun MovieSessionScreen(
     fun commitMulti(next: MultiTrackTimeline, live: Boolean = false) {
         sessionViewModel.setMulti(next, live)
     }
-    var movieGroup by remember { mutableStateOf(MovieGroup.Edit) }
-    var effectSub by remember { mutableStateOf(MovieEffectSub.Motion) }
-    var selectedId by remember { mutableStateOf(timeline.clips.firstOrNull()?.id) }
-    var selectedTitleId by remember { mutableStateOf<String?>(null) }
-    var startMs by remember { mutableLongStateOf(0L) }
-    var endMs by remember { mutableLongStateOf(if (still) duration else engine.durationMs(path).coerceAtLeast(1000)) }
-    var speed by remember { mutableFloatStateOf(1f) }
-    var playhead by remember { mutableFloatStateOf(0f) }
-    var playing by remember { mutableStateOf(true) }
-    var exporting by remember { mutableStateOf(false) }
-    var progress by remember { mutableFloatStateOf(0f) }
-    var status by remember { mutableStateOf<String?>(null) }
-    var showExport by remember { mutableStateOf(false) }
-    var exportSuccessUri by remember { mutableStateOf<String?>(null) }
-    var exportGif by remember { mutableStateOf(false) }
+    var movieGroup by sessionViewModel.movieGroupState
+    var effectSub by sessionViewModel.effectSubState
+    var selectedId by sessionViewModel.selectedClipState
+    var selectedTitleId by sessionViewModel.selectedTitleState
+    val sessionControls = sessionViewModel.controls
+    with(sessionControls) {
     val addClip = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
         if (uri != null) {
             scope.launch {
@@ -360,8 +354,7 @@ fun MovieSessionScreen(
     LaunchedEffect(player) {
         val exo = player ?: return@LaunchedEffect
         while (true) {
-            val total = timeline.totalMs().coerceAtLeast(1)
-            playhead = (exo.currentPosition / total.toFloat()).coerceIn(0f, 1f)
+            sessionViewModel.notePlaybackPosition(exo.currentPosition, timeline.totalMs())
             delay(50)
         }
     }
@@ -373,29 +366,26 @@ fun MovieSessionScreen(
         val info = exportInfos.firstOrNull() ?: return@LaunchedEffect
         when (info.state) {
             WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING, WorkInfo.State.BLOCKED -> {
-                exporting = true
-                progress = info.progress.getFloat(MovieExportWorker.KEY_PROGRESS, progress)
-                val pct = (progress * 100f).toInt().coerceIn(0, 100)
-                status = context.getString(R.string.studio_export_pct, pct)
+                val fraction = info.progress.getFloat(MovieExportWorker.KEY_PROGRESS, sessionControls.progress)
+                val pct = (fraction * 100f).toInt().coerceIn(0, 100)
+                sessionViewModel.onExportRunning(
+                    fraction,
+                    context.getString(R.string.studio_export_pct, pct)
+                )
             }
             WorkInfo.State.SUCCEEDED -> {
-                if (exporting) {
-                    exporting = false
-                    exportSuccessUri = info.outputData.getString(MovieExportWorker.KEY_URI)
-                    showExport = true
-                    val gifOut = info.outputData.getBoolean(MovieExportWorker.KEY_GIF, false)
-                    status = context.getString(
+                val gifOut = info.outputData.getBoolean(MovieExportWorker.KEY_GIF, false)
+                sessionViewModel.onExportSucceeded(
+                    info.outputData.getString(MovieExportWorker.KEY_URI),
+                    context.getString(
                         if (gifOut) R.string.studio_export_gif_ok else R.string.studio_export_movie_ok
                     )
-                }
+                )
             }
-            WorkInfo.State.FAILED -> {
-                if (exporting) {
-                    exporting = false
-                    status = info.outputData.getString(MovieExportWorker.KEY_ERROR)
-                        ?: context.getString(R.string.studio_export_failed)
-                }
-            }
+            WorkInfo.State.FAILED -> sessionViewModel.onExportFailed(
+                info.outputData.getString(MovieExportWorker.KEY_ERROR)
+                    ?: context.getString(R.string.studio_export_failed)
+            )
             else -> Unit
         }
     }
@@ -421,13 +411,11 @@ fun MovieSessionScreen(
         }
 
     fun stepFrame(delta: Int) {
-        playing = false
         player?.playWhenReady = false
-        val total = timeline.totalMs().coerceAtLeast(1)
-        val now = (playhead * total).toLong()
-        val next = MovieFrame.step(now, delta, clipFps(), total)
+        val total = timeline.totalMs()
+        val next = sessionViewModel.stepPlayhead(delta, clipFps(), total)
         if (seekComposition(next)) {
-            playhead = (next / total.toFloat()).coerceIn(0f, 1f)
+            sessionViewModel.confirmSteppedPlayhead(next, total)
         }
     }
 
@@ -435,10 +423,7 @@ fun MovieSessionScreen(
         player?.playWhenReady = false
         bedPlayer?.playWhenReady = false
         voicePlayer?.playWhenReady = false
-        exporting = true
-        progress = 0f
-        status = context.getString(R.string.studio_export_pct, 0)
-        exportSuccessUri = null
+        sessionViewModel.beginExport(context.getString(R.string.studio_export_pct, 0))
         scope.launch {
             sessionViewModel.flush()
             MovieExportWorker.ensureChannel(context)
@@ -476,7 +461,7 @@ fun MovieSessionScreen(
                 CompositionPreviewCapability.LiveSingle,
             playEnabled = previewState.result.capability !=
                 CompositionPreviewCapability.ExportOnly,
-            onPlayhead = { playhead = it },
+            onPlayhead = sessionViewModel::setPlayhead,
             onSeek = { ms ->
                 if (seekComposition(ms)) {
                     val bedDur = bedPlayer?.duration ?: 0L
@@ -489,10 +474,10 @@ fun MovieSessionScreen(
                 }
             },
             onTogglePlay = {
-                playing = !playing
-                player?.playWhenReady = playing
-                bedPlayer?.playWhenReady = playing
-                voicePlayer?.playWhenReady = playing
+                val nextPlaying = sessionViewModel.togglePlaying()
+                player?.playWhenReady = nextPlaying
+                bedPlayer?.playWhenReady = nextPlaying
+                voicePlayer?.playWhenReady = nextPlaying
             },
             onStep = { stepFrame(it) },
             onSelectClip = { selectedId = it },
@@ -603,7 +588,7 @@ fun MovieSessionScreen(
                 },
                 onSpeedRamp = { start, end ->
                     val id = selected?.id ?: return@MovieEditOpsPanel
-                    speed = start
+                    sessionViewModel.setSpeed(start)
                     commitTimeline(
                         timeline.update(id) { it.copy(speed = start, speedEnd = end) },
                         live = true
@@ -739,7 +724,7 @@ fun MovieSessionScreen(
                     onValueChange = {
                         val id = selected?.id ?: return@Slider
                         val inn = (it * selectedSourceEnd).toLong()
-                        startMs = inn
+                        sessionViewModel.setTrimStart(inn)
                         commitTimeline(timeline.rippleTrimIn(id, inn), live = true)
                     },
                     onValueChangeFinished = { settlePreview() },
@@ -752,7 +737,7 @@ fun MovieSessionScreen(
                     onValueChange = {
                         val id = selected?.id ?: return@Slider
                         val out = (it * selectedSourceEnd).toLong()
-                        endMs = out
+                        sessionViewModel.setTrimEnd(out)
                         commitTimeline(timeline.rippleTrimOut(id, out, selectedSourceEnd), live = true)
                     },
                     onValueChangeFinished = { settlePreview() },
@@ -1206,7 +1191,7 @@ fun MovieSessionScreen(
                 value = MovieSpeed.normalize(selected?.speed ?: speed),
                 onValueChange = {
                     val s = MovieSpeed.normalize(it)
-                    speed = s
+                    sessionViewModel.setSpeed(s)
                     val id = selected?.id
                     if (id != null) {
                         commitTimeline(timeline.update(id) { clip -> clip.copy(speed = s, speedEnd = s) }, live = true)
@@ -1448,6 +1433,7 @@ fun MovieSessionScreen(
                 showExport = false
             }
         )
+    }
     }
 }
 

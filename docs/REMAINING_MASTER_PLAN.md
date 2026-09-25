@@ -98,7 +98,7 @@ Then:
 
 | ID | Pack | Prerequisite | Delivery |
 |----|------|--------------|----------|
-| **E5** | Base APK ≤ ~40 MB | With pack foundation | `:ml:pack` + `reportApkSize`; selfie_segmenter (~244 KB) stays in base. Scaffolding **MET 2026-09-25**. Measured minified unsigned APK **131.11 MB** (Media3/MediaPipe JNI). Pack models stay out |
+| **E5** | Base APK ≤ ~40 MB | With pack foundation | `:ml` pack runtime + `reportApkSize`; selfie_segmenter (~244 KB) stays in base. Scaffolding **MET 2026-09-25**. Measured minified unsigned APK **131.11 MB** (Media3/MediaPipe JNI). Pack models stay out |
 | **E1** | Inpaint / generative fill | C3 + pack foundation | Fill pack CTA; `LiteRtInpaintHook` consults pack+hook; Telea fallback. Engine unbound |
 | **E2** | Super-resolution | Pack runtime | Graph `SR`; Apply gated; WorkManager export path. Engine unbound |
 | **E3** | Denoise | Same runtime | Graph `N`; preview + export same op. Engine unbound |
@@ -127,8 +127,8 @@ Never land F* as isolated effects without listed primitives.
 |----|------|------|
 | **G4** | Accessibility | **With B3** (must-exit) |
 | **G1** | Tablet/foldable two-pane | **MET** catalog\|session + session preview\|tools 2026-09-25 |
-| **G2** | Photo/Movie ViewModels | After B3 stable; gradual extract |
-| **G3** | Hilt in StudioApp | With G2 |
+| **G2** | Photo/Movie ViewModels | **Slider/preview extract complete** 2026-09-25 — Hilt session VMs own graph, tool chrome, and slider/preview baking. Screens observe that state. Movie players stay on the screen. Tool chrome still resets on entry/rotation. |
+| **G3** | Hilt in StudioApp | **Started** with G2 — `StudioShellViewModel` injects repo, prefs, photo/movie engines |
 | **G5** | Haptics | **MET** crop Apply + movie split 2026-09-25 |
 | **G6** | Skeleton Library thumbs | With Library polish |
 | **G7** | Empty-state illustrations | With empty CTA polish |
@@ -177,7 +177,7 @@ Never land F* as isolated effects without listed primitives.
 
 ## Next concrete slice (start here)
 
-1. Inpaint / denoise / interp / track engines when matching models exist  
-2. R5 device gate (Maestro + TalkBack + five-user) on a mid-range phone 
+1. When a real model exists, `PackFeatureEntry.registerEngines` after SplitCompat, Ready + SHA-256, and `PackModelContract`. Do not register from `Application.onCreate`. Do not register Telea / bicubic / frame-hold
+2. R5 device gate (Maestro + TalkBack + five-user) on a mid-range phone
 
 When this plan drifts, update this file and `TOTAL_REMAINING.txt` in the same commit as the exit.

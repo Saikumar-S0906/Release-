@@ -46,6 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -80,9 +81,6 @@ import com.pixijoy.designsystem.PixiPink
 import com.pixijoy.designsystem.PixiPrimaryButton
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.pixiMotionMs
-import com.pixijoy.movie.Media3MovieEngine
-import com.pixijoy.ml.MediaPipeVision
-import com.pixijoy.photo.BitmapPhotoEngine
 import com.pixijoy.photo.PhotoPreset
 import java.io.File
 import kotlinx.coroutines.Job
@@ -97,11 +95,9 @@ private const val SAMPLE_MOVIE_ASSET = "sample_movie.mp4"
 @Composable
 fun StudioApp() {
     val context = LocalContext.current
-    val prefs = remember { StudioPrefs(context.applicationContext) }
-    val repo = remember { ProjectRepository(context.applicationContext) }
-    val vision = remember { MediaPipeVision(context.applicationContext) }
-    val engine = remember { BitmapPhotoEngine(vision) }
-    val movieEngine = remember { Media3MovieEngine() }
+    val shell = hiltViewModel<StudioShellViewModel>()
+    val prefs = shell.prefs
+    val repo = shell.repository
     val scope = rememberCoroutineScope()
     var gate by remember { mutableStateOf(Gate.Splash) }
     var tab by rememberSaveable { mutableStateOf(StudioTab.Home) }
@@ -333,9 +329,6 @@ fun StudioApp() {
                         session = session!!,
                         projects = projects,
                         projectsLoaded = observedProjects != null,
-                        repo = repo,
-                        engine = engine,
-                        movieEngine = movieEngine,
                         onBack = { session = null }
                     )
                 } else {
@@ -371,9 +364,6 @@ fun StudioApp() {
                             scope.launch { repo.rename(project.id, title) }
                         },
                         snackbarHostState = snackbarHostState,
-                        repo = repo,
-                        engine = engine,
-                        movieEngine = movieEngine,
                         libraryPresets = libraryPresets,
                         lastLookPresetId = lastLookPresetId
                     )
@@ -595,9 +585,6 @@ private fun SessionHost(
     session: OpenSession,
     projects: List<Project>,
     projectsLoaded: Boolean,
-    repo: ProjectRepository,
-    engine: BitmapPhotoEngine,
-    movieEngine: Media3MovieEngine,
     onBack: () -> Unit
 ) {
     val project = when (
@@ -625,9 +612,9 @@ private fun SessionHost(
         ?.let { stringResource(it) }
         ?: stringResource(R.string.tool_editor)
     if (session.kind == MediaKind.MOVIE) {
-        MovieSessionScreen(project, label, session.tool, repo, movieEngine, onBack)
+        MovieSessionScreen(project, label, session.tool, onBack)
     } else {
-        PhotoSessionScreen(project, label, session.tool, repo, engine, onBack)
+        PhotoSessionScreen(project, label, session.tool, onBack)
     }
 }
 
@@ -706,9 +693,6 @@ private fun StudioShell(
     onRequestDelete: (Project) -> Unit,
     onRenameProject: (Project, String) -> Unit,
     snackbarHostState: SnackbarHostState,
-    repo: ProjectRepository,
-    engine: BitmapPhotoEngine,
-    movieEngine: Media3MovieEngine,
     libraryPresets: List<PhotoPreset> = emptyList(),
     lastLookPresetId: String? = null
 ) {
@@ -749,9 +733,6 @@ private fun StudioShell(
                                     session,
                                     projects,
                                     projectsLoaded,
-                                    repo,
-                                    engine,
-                                    movieEngine,
                                     onCloseSession
                                 )
                             } else {
