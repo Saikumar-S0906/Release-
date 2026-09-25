@@ -53,7 +53,7 @@ Movie preview used to call `setComposition` + `prepare()` on every timeline enco
 ## Deferred
 
 - Typing a slider number (Lightroom).
-- Skeleton thumbs and empty illustrations (G6, G7).
+- Empty illustrations (G7). Library cover skeletons landed (G6).
 - Rename after export (G8).
 - Live PiP preview when `CompositionPlayer` can take more than one input.
 - Selective HSL on the GPU after a Pixel_7a frame-time measurement (B4).

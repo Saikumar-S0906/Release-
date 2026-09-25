@@ -85,6 +85,7 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **F1** — `ClipTrack` timeline contract + pack CTA (engine unbound).
 - **G1** — session preview\|tools on `isStudioTwoPane` (`studio_session_side_tools`); phone remains single-pane.
 - **G5** — haptic on crop Apply and movie split.
+- **G6** — Library cover thumbs sheen while Coil decodes; a missing file stays a static surface.
 - **G9** — removed deprecated global BuildConfig default.
 **In progress:** R5 device gate (Maestro/TalkBack/five-user).
 

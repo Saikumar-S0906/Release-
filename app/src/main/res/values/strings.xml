@@ -17,6 +17,8 @@
     <string name="studio_photo_caption">On this device · never uploaded</string>
     <string name="studio_movie_caption">Trim, motion, talking stills — encoded here.</string>
     <string name="studio_recents_empty">Your recents will show up here.</string>
+    <string name="studio_library_thumb_loading">Loading preview</string>
+    <string name="studio_library_thumb_unavailable">Preview unavailable</string>
     <string name="studio_library_empty">Your projects will live here.</string>
     <string name="studio_library_create_cta">Create your first project</string>
     <string name="studio_library_more">Project actions</string>

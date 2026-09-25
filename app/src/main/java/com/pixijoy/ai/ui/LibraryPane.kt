@@ -1,5 +1,7 @@
 package com.pixijoy.ai.ui
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +46,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -50,7 +54,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
+import coil3.compose.SubcomposeAsyncImage
+import coil3.compose.SubcomposeAsyncImageContent
 import com.pixijoy.ai.R
 import com.pixijoy.core.data.Project
 import com.pixijoy.core.media.MediaKind
@@ -60,10 +66,12 @@ import com.pixijoy.designsystem.PixiBg
 import com.pixijoy.designsystem.PixiCardShape
 import com.pixijoy.designsystem.PixiError
 import com.pixijoy.designsystem.PixiPrimaryButton
+import com.pixijoy.designsystem.PixiSkeleton
 import com.pixijoy.designsystem.PixiSurface
 import com.pixijoy.designsystem.PixiSurface2
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
+import com.pixijoy.designsystem.pixiMotionMs
 import java.io.File
 import java.util.concurrent.TimeUnit
 
@@ -281,15 +289,7 @@ private fun LibraryProjectCard(
             .semantics { role = Role.Button }
     ) {
         Box {
-            AsyncImage(
-                model = File(project.coverPath),
-                contentDescription = project.title,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .background(PixiSurface2)
-            )
+            LibraryCover(project)
             Text(
                 text = stringResource(
                     if (project.kind == MediaKind.MOVIE) R.string.studio_movie else R.string.studio_photo
@@ -365,6 +365,57 @@ private fun LibraryProjectCard(
                     .padding(start = 10.dp, end = 10.dp, bottom = 8.dp)
                     .testTag("library_duration")
             )
+        }
+    }
+}
+
+private enum class LibraryThumbPhase { Pending, Ready, Failed }
+
+@Composable
+private fun LibraryCover(project: Project) {
+    val loading = stringResource(R.string.studio_library_thumb_loading)
+    val unavailable = stringResource(R.string.studio_library_thumb_unavailable)
+    val fadeMs = pixiMotionMs(emphasized = false)
+    SubcomposeAsyncImage(
+        model = File(project.coverPath),
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .testTag("library_thumb")
+    ) {
+        val imageState by painter.state.collectAsState()
+        val phase = when (imageState) {
+            is AsyncImagePainter.State.Success -> LibraryThumbPhase.Ready
+            is AsyncImagePainter.State.Error -> LibraryThumbPhase.Failed
+            else -> LibraryThumbPhase.Pending
+        }
+        Crossfade(
+            targetState = phase,
+            modifier = Modifier.fillMaxSize(),
+            animationSpec = tween(durationMillis = fadeMs),
+            label = "libraryThumb"
+        ) { target ->
+            when (target) {
+                LibraryThumbPhase.Ready -> this@SubcomposeAsyncImage.SubcomposeAsyncImageContent(
+                    modifier = Modifier.fillMaxSize(),
+                    contentDescription = project.title
+                )
+                LibraryThumbPhase.Failed -> Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(PixiSurface2)
+                        .semantics { contentDescription = unavailable }
+                        .testTag("library_thumb_unavailable")
+                )
+                LibraryThumbPhase.Pending -> PixiSkeleton(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag("library_thumb_skeleton"),
+                    contentDescription = loading
+                )
+            }
         }
     }
 }

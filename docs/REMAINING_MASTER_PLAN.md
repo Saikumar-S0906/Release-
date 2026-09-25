@@ -130,7 +130,7 @@ Never land F* as isolated effects without listed primitives.
 | **G2** | Photo/Movie ViewModels | **Slider/preview extract complete** 2026-09-25 — Hilt session VMs own graph, tool chrome, and slider/preview baking. Screens observe that state. Movie players stay on the screen. Tool chrome still resets on entry/rotation. |
 | **G3** | Hilt in StudioApp | **MET** 2026-09-25 — one `StudioGraphModule`; shell navigates and observes injected engines; composition preview and export workers no longer construct engines |
 | **G5** | Haptics | **MET** crop Apply + movie split 2026-09-25 |
-| **G6** | Skeleton Library thumbs | With Library polish |
+| **G6** | Skeleton Library thumbs | **MET** 2026-09-25 — cover sheen while Coil decodes; still surface if the file fails. G7 empty art still open. |
 | **G7** | Empty-state illustrations | With empty CTA polish |
 | **G8** | Autosave + rename-after-create/export | Attach to Create/Export |
 | **G9** | BuildConfig cleanup | **MET** 2026-09-25 |
