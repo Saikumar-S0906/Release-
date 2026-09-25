@@ -108,7 +108,7 @@ def summarize(xlsx: Path, sheet: str, max_cols=12):
 
 
 def main():
-    base = Path(r"c:\Users\andro\AndroidStudioProjects\MyApplication")
+    base = Path(__file__).resolve().parent.parent
     out = {}
 
     # Consolidated

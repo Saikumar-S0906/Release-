@@ -192,7 +192,7 @@ Each step is a PR on `next`. Do not revive the old board hub.
 ## 12. Continue prompt (paste in a new session)
 
 ```
-Build PixiJoy local studio on branch next at C:\Users\andro\PixiJoy\PixiJoy.
+Build PixiJoy local studio on branch next.
 
 Read docs/ARCHITECTURE.md and docs/LIBS_AND_FEATURES.md first.
 Do not extend the old BoardScreenHost / Create AI / Community app.

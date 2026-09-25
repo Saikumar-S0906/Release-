@@ -25,7 +25,7 @@ Last updated: 2026-09-25 (IST)
 
 After **Reviwer** clears in-room → **push straight to `origin/next`**. No PR gate.
 
-Branch: `next` (remote integration). Work lives under `C:\Users\andro\PixiJoy\PixiJoy`.
+Branch: `next` (remote integration).
 
 ## Studio chrome rule (all tools)
 

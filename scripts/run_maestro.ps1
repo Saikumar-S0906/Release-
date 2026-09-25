@@ -12,7 +12,7 @@ param(
     [ValidateSet("all", "positive", "negative", "edge", "monkey")]
     [string]$Suite = "all",
     [string]$Flow = "",
-    [string]$MaestroBin = "C:\Users\andro\tools\maestro\bin\maestro.bat",
+    [string]$MaestroBin = $(if ($env:MAESTRO_BIN) { $env:MAESTRO_BIN } else { "maestro" }),
     [string]$Apk = "app\build\outputs\apk\debug\app-debug.apk",
     [switch]$SkipInstall
 )
@@ -21,8 +21,8 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
-if (-not (Test-Path $MaestroBin)) {
-    throw "Maestro not found at $MaestroBin. Install CLI 2.x first."
+if (-not (Get-Command $MaestroBin -ErrorAction SilentlyContinue)) {
+    throw "Maestro not found ($MaestroBin). Install CLI 2.x and put it on PATH, or pass -MaestroBin / set MAESTRO_BIN."
 }
 
 $env:MAESTRO_CLI_NO_ANALYTICS = "true"

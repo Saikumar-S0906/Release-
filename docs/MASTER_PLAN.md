@@ -262,7 +262,7 @@ Pick proven, mobile-bounded algorithms. Do not invent new vision papers for v1.
 ### 5.1 Tooling
 
 - AGP 8.7+, Kotlin 2.0, Compose BOM current, Hilt, KSP.  
-- JVM: **JBR 17** (`org.gradle.java.home`).  
+- JVM: **JDK 17** (not Studio JBR 25). Use `JAVA_HOME` or a user-level `org.gradle.java.home`; never commit a machine path.  
 - minSdk 31 (Android 12+ as in LIBS). targetSdk current.  
 - Version catalog `gradle/libs.versions.toml`.  
 - Detekt + Android Lint on CI.
@@ -420,7 +420,7 @@ Tablet/fold nightly, not every PR.
 ## 9. New-session kickoff
 
 ```
-Build PixiJoy local studio on branch next at C:\Users\andro\PixiJoy\PixiJoy.
+Build PixiJoy local studio on branch next.
 
 Read in order:
   docs/MASTER_PLAN.md

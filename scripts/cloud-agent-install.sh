@@ -10,9 +10,9 @@ cd "$REPO_ROOT"
 log() { printf '\n=== %s ===\n' "$*"; }
 
 # ---------------------------------------------------------------------------
-# JDK 17. AGP 8.7 / Gradle 8.10 require JDK 17. The repo's gradle.properties
-# pins a Windows JDK path (org.gradle.java.home), so override it for Linux via
-# the user-level Gradle properties (higher precedence than the project file).
+# JDK 17. AGP 8.10 / Gradle 8.11 should run on JDK 17, not Studio JBR 25.
+# The repo does not commit org.gradle.java.home. Pin JDK 17 in the user-level
+# Gradle properties so this environment does not pick up a newer default JDK.
 # ---------------------------------------------------------------------------
 log "Ensuring JDK 17"
 JAVA17_HOME="/usr/lib/jvm/java-17-openjdk-amd64"

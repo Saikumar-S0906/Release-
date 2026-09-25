@@ -4,7 +4,7 @@ Date: 2026-09-11
 Status: AUDIT ONLY — no implementation in this document.
 Goal: UI that looks great and feels easy. Brand (color, icons) stays. Bible is not a grid law.
 Product: PixiJoy (photo → stickers, beauty, memes, motion, WhatsApp).
-Code: C:\Users\andro\AndroidStudioProjects\MyApplication
+Code: prior MyApplication tree (machine path not committed)
 
 This file is the single source for the next UI pass. It captures (1) reviewer
 inputs, (2) what the code actually does, (3) tasks with descriptions, (4) order.

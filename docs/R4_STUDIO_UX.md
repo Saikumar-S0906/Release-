@@ -90,7 +90,7 @@ Recapture: movie `docs/ui_review/r4_after/.maestro/tests/2026-09-24_195106/` (sh
 ```powershell
 .\gradlew.bat :app:assembleDebug
 adb -s emulator-5556 install -r app\build\outputs\apk\debug\app-debug.apk
-C:\Users\andro\tools\maestro\bin\maestro.bat --device emulator-5556 test --debug-output docs\ui_review\r4_after .maestro\ui_review\after-shell.yaml
-C:\Users\andro\tools\maestro\bin\maestro.bat --device emulator-5556 test --debug-output docs\ui_review\r4_after .maestro\ui_review\after-photo.yaml
-C:\Users\andro\tools\maestro\bin\maestro.bat --device emulator-5556 test --debug-output docs\ui_review\r4_after .maestro\ui_review\after-movie.yaml
+maestro --device emulator-5556 test --debug-output docs\ui_review\r4_after .maestro\ui_review\after-shell.yaml
+maestro --device emulator-5556 test --debug-output docs\ui_review\r4_after .maestro\ui_review\after-photo.yaml
+maestro --device emulator-5556 test --debug-output docs\ui_review\r4_after .maestro\ui_review\after-movie.yaml
 ```
