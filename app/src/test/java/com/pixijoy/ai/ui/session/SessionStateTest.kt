@@ -317,6 +317,64 @@ class SessionStateTest {
     }
 
     @Test
+    fun saveStatus_staysSavedForQuietOpenThenTracksEdits() = runBlocking {
+        val scheduler = ManualGraphSaveScheduler()
+        val writes = mutableListOf<String>()
+        val viewModel = PhotoSessionViewModel(
+            initialGraph = "",
+            persistence = GraphPersistence { writes += it },
+            scheduler = scheduler
+        )
+        assertEquals(GraphSaveStatus.Saved, viewModel.saveStatus.value)
+        scheduler.runPending()
+        assertEquals(GraphSaveStatus.Saved, viewModel.saveStatus.value)
+        assertEquals(1, writes.size)
+
+        viewModel.push(LayeredOp("L1", "Grade", op = PhotoOp.Grade(0.5f, 1f)))
+        assertEquals(GraphSaveStatus.Saving, viewModel.saveStatus.value)
+        scheduler.runPending()
+        assertEquals(GraphSaveStatus.Saved, viewModel.saveStatus.value)
+        assertEquals(2, writes.size)
+    }
+
+    @Test
+    fun saveStatus_failedWriteStaysPendingForFlush() = runBlocking {
+        val scheduler = ManualGraphSaveScheduler()
+        var fail = true
+        val writes = mutableListOf<String>()
+        val saver = DebouncedGraphSaver(
+            persistence = GraphPersistence {
+                if (fail) error("disk")
+                writes += it
+            },
+            scheduler = scheduler
+        )
+        saver.submit("graph")
+        assertEquals(GraphSaveStatus.Saving, saver.status.value)
+        scheduler.runPending()
+        assertEquals(GraphSaveStatus.Failed, saver.status.value)
+        assertTrue(writes.isEmpty())
+
+        fail = false
+        saver.flush()
+        assertEquals(listOf("graph"), writes)
+        assertEquals(GraphSaveStatus.Saved, saver.status.value)
+    }
+
+    @Test
+    fun saveStatus_quietFailureIsVisible() = runBlocking {
+        val scheduler = ManualGraphSaveScheduler()
+        val saver = DebouncedGraphSaver(
+            persistence = GraphPersistence { error("disk") },
+            scheduler = scheduler
+        )
+        saver.submit("graph", quiet = true)
+        assertEquals(GraphSaveStatus.Saved, saver.status.value)
+        scheduler.runPending()
+        assertEquals(GraphSaveStatus.Failed, saver.status.value)
+    }
+
+    @Test
     fun boundedHistory_discardsOldestEntries() {
         val history = BoundedUndoHistory<Int>(limit = 2)
         history.record(1)

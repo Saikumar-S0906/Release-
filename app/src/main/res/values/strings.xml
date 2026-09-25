@@ -24,10 +24,10 @@
     <string name="studio_library_more">Project actions</string>
     <string name="studio_library_rename">Rename</string>
     <string name="studio_library_deleted">Project removed</string>
-    <string name="studio_library_edited_just_now">Edited just now</string>
-    <string name="studio_library_edited_minutes">Edited %1$d min ago</string>
-    <string name="studio_library_edited_hours">Edited %1$d hours ago</string>
-    <string name="studio_library_edited_days">Edited %1$d days ago</string>
+    <string name="studio_library_edited_just_now">Saved just now</string>
+    <string name="studio_library_edited_minutes">Saved %1$d min ago</string>
+    <string name="studio_library_edited_hours">Saved %1$d hours ago</string>
+    <string name="studio_library_edited_days">Saved %1$d days ago</string>
     <string name="studio_on_device_badge">Edits stay on this device</string>
     <string name="studio_open_tools">Browse tools</string>
     <string name="studio_recommended">Recommended</string>
@@ -45,6 +45,7 @@
     <string name="export_view">View</string>
     <string name="export_share">Share</string>
     <string name="export_done">Done</string>
+    <string name="export_name_project">Name this project</string>
     <string name="export_leave_safe">You can leave the app — export continues in the background.</string>
     <string name="studio_export_exif_gps_hint">Remove location from exported photo. GPS is always stripped.</string>
     <string name="nav_home">Home</string>
@@ -406,5 +407,7 @@
     <string name="session_compare_action_before">Show Before</string>
     <string name="session_compare_action_after">Show After</string>
     <string name="session_save_status_saved">Saved</string>
-    <string name="session_save_status_saving">Saving...</string>
+    <string name="session_save_status_saving">Saving…</string>
+    <string name="session_save_status_unsaved">Not saved</string>
+    <string name="session_rename_project">Rename project</string>
 </resources>

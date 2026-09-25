@@ -17,6 +17,8 @@ import com.pixijoy.photo.withBackgroundSeed
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -54,9 +56,22 @@ internal class CoroutineGraphSaveScheduler(
     }
 }
 
+/** What the session chrome may say about the on-disk graph. */
+enum class GraphSaveStatus {
+    /** The latest announced write landed, or no edit is waiting. */
+    Saved,
+    /** A user edit is debounced or a write is in flight. */
+    Saving,
+    /** The latest write failed. The graph stays pending for the next flush. */
+    Failed
+}
+
 /**
  * Keeps only the newest graph until the debounce expires. [flush] cancels and joins the
  * pending task before synchronously persisting the newest graph.
+ *
+ * [submit] with `quiet = true` still writes, but does not leave [GraphSaveStatus.Saved].
+ * That is the open-session rewrite of a graph that is already on disk.
  */
 internal class DebouncedGraphSaver(
     private val persistence: GraphPersistence,
@@ -68,8 +83,10 @@ internal class DebouncedGraphSaver(
     private var pendingGraph: String? = null
     private var scheduled: ScheduledGraphSave? = null
     private val flushMutex = Mutex()
+    private val _status = MutableStateFlow(GraphSaveStatus.Saved)
+    val status: StateFlow<GraphSaveStatus> = _status
 
-    fun submit(graph: String) {
+    fun submit(graph: String, quiet: Boolean = false) {
         val previous: ScheduledGraphSave?
         val token: Long
         synchronized(lock) {
@@ -80,6 +97,7 @@ internal class DebouncedGraphSaver(
             scheduled = null
         }
         previous?.cancel()
+        if (!quiet) _status.value = GraphSaveStatus.Saving
 
         val next = scheduler.schedule(delayMs) { persistIfCurrent(token) }
         synchronized(lock) {
@@ -104,23 +122,32 @@ internal class DebouncedGraphSaver(
         }
         task?.cancel()
         task?.join()
-        graph?.let { persistence.persist(it) }
-        synchronized(lock) {
-            if (generation == token && pendingGraph == graph) {
-                pendingGraph = null
-            }
-        }
+        if (graph == null) return@withLock
+        _status.value = GraphSaveStatus.Saving
+        val ok = write(graph)
+        finish(token, graph, ok)
     }
 
     private suspend fun persistIfCurrent(token: Long) {
         val graph = synchronized(lock) {
             if (generation == token) pendingGraph else null
-        }
-        graph?.let { persistence.persist(it) } ?: return
+        } ?: return
+        val ok = write(graph)
+        finish(token, graph, ok)
+    }
+
+    private suspend fun write(graph: String): Boolean =
+        runCatching { persistence.persist(graph) }.isSuccess
+
+    private fun finish(token: Long, graph: String, ok: Boolean) {
         synchronized(lock) {
-            if (generation == token && pendingGraph == graph) {
+            if (generation != token || pendingGraph != graph) return
+            scheduled = null
+            if (ok) {
                 pendingGraph = null
-                scheduled = null
+                _status.value = GraphSaveStatus.Saved
+            } else {
+                _status.value = GraphSaveStatus.Failed
             }
         }
     }
@@ -195,14 +222,15 @@ open class PhotoSessionViewModel(
         persistence = persistence,
         scheduler = scheduler ?: CoroutineGraphSaveScheduler(viewModelScope)
     )
+    val saveStatus: StateFlow<GraphSaveStatus> = saver.status
 
-    private val _state = kotlinx.coroutines.flow.MutableStateFlow(
+    private val _state = MutableStateFlow(
         PhotoSessionState(layers = initialGraph.decodeLayers())
     )
-    val state: kotlinx.coroutines.flow.StateFlow<PhotoSessionState> = _state
+    val state: StateFlow<PhotoSessionState> = _state
 
     init {
-        saver.submit(_state.value.layers.encodeLayers())
+        saver.submit(_state.value.layers.encodeLayers(), quiet = true)
     }
 
     internal fun pushOp(op: PhotoOp) {
@@ -382,15 +410,16 @@ open class MovieSessionViewModel(
         persistence = persistence,
         scheduler = scheduler ?: CoroutineGraphSaveScheduler(viewModelScope)
     )
+    val saveStatus: StateFlow<GraphSaveStatus> = saver.status
     private val history = BoundedUndoHistory<MultiTrackTimeline>(historyLimit)
     private var gestureStart: MultiTrackTimeline? = null
-    private val _state = kotlinx.coroutines.flow.MutableStateFlow(
+    private val _state = MutableStateFlow(
         MovieSessionState(multi = seededTimeline)
     )
-    val state: kotlinx.coroutines.flow.StateFlow<MovieSessionState> = _state
+    val state: StateFlow<MovieSessionState> = _state
 
     init {
-        saver.submit(_state.value.multi.encode())
+        saver.submit(_state.value.multi.encode(), quiet = true)
     }
 
     fun setTimeline(timeline: Timeline, live: Boolean = false) {

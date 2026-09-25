@@ -54,7 +54,7 @@ Movie preview used to call `setComposition` + `prepare()` on every timeline enco
 
 - Typing a slider number (Lightroom).
 - Library cover skeletons landed (G6). Empty library and pack download use the same glass plate (G7).
-- Rename after export (G8).
+- Rename after export (G8) — landed: tappable project title, and Name this project on export success.
 - Live PiP preview when `CompositionPlayer` can take more than one input.
 - Selective HSL on the GPU after a Pixel_7a frame-time measurement (B4).
 - LiteRT pack engines, and ViewModel extraction.

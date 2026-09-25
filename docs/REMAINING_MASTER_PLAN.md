@@ -132,7 +132,7 @@ Never land F* as isolated effects without listed primitives.
 | **G5** | Haptics | **MET** crop Apply + movie split 2026-09-25 |
 | **G6** | Skeleton Library thumbs | **MET** 2026-09-25 — cover sheen while Coil decodes; still surface if the file fails. |
 | **G7** | Empty-state illustrations | **MET** 2026-09-25 — one glass plate (`PixiEmptyState`): `empty_library` “No projects yet” + Create; `empty_packs` “Download to unlock” + Download. Same install states as pack CTAs. Neural copy only after Ready and bound. |
-| **G8** | Autosave + rename-after-create/export | Attach to Create/Export |
+| **G8** | Autosave + rename-after-create/export | **MET** 2026-09-25 — session chip follows graph writes; library Saved age; filename or dated title; tap title or Name this project after export |
 | **G9** | BuildConfig cleanup | **MET** 2026-09-25 |
 
 ---

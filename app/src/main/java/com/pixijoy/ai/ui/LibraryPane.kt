@@ -26,7 +26,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -218,8 +217,9 @@ fun LibraryPane(
         )
     }
     renameTarget?.let { target ->
-        RenameProjectDialog(
-            project = target,
+        ProjectRenameDialog(
+            titleKey = target.id,
+            initialTitle = target.title,
             onDismiss = { renameTarget = null },
             onConfirm = { title ->
                 onRenameProject(target, title)
@@ -305,6 +305,19 @@ private fun LibraryProjectCard(
                     .padding(horizontal = 8.dp, vertical = 4.dp)
                     .testTag("library_kind_badge")
             )
+            Text(
+                text = relativeEdited(project.updatedAt),
+                color = PixiText,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(8.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(PixiBg.copy(alpha = 0.72f))
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .testTag("library_edited_ago")
+            )
             Box(modifier = Modifier.align(Alignment.TopEnd)) {
                 IconButton(
                     onClick = { menuOpen = true },
@@ -345,16 +358,8 @@ private fun LibraryProjectCard(
             project.title,
             color = PixiText,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
             maxLines = 1
-        )
-        Text(
-            relativeEdited(project.updatedAt),
-            color = PixiTextMuted,
-            fontSize = 11.sp,
-            modifier = Modifier
-                .padding(start = 10.dp, end = 10.dp, bottom = 8.dp)
-                .testTag("library_edited_ago")
         )
         project.source?.durationMs?.takeIf { project.kind == MediaKind.MOVIE && it > 0 }?.let { ms ->
             Text(
@@ -443,42 +448,6 @@ private fun formatDuration(ms: Long): String {
     val m = totalSec / 60
     val s = totalSec % 60
     return "%d:%02d".format(m, s)
-}
-
-@Composable
-private fun RenameProjectDialog(
-    project: Project,
-    onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit
-) {
-    var draft by rememberSaveable(project.id) { mutableStateOf(project.title) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.studio_library_rename), color = PixiText) },
-        text = {
-            OutlinedTextField(
-                value = draft,
-                onValueChange = { draft = it },
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("library_rename_field")
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onConfirm(draft) },
-                modifier = Modifier.testTag("library_rename_confirm")
-            ) {
-                Text(stringResource(R.string.studio_apply), color = PixiAccent)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.studio_cancel), color = PixiTextMuted)
-            }
-        }
-    )
 }
 
 @Composable

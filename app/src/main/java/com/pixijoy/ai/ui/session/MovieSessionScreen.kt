@@ -28,11 +28,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
@@ -92,6 +92,7 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import coil3.compose.AsyncImage
 import com.pixijoy.ai.R
+import com.pixijoy.ai.ui.ProjectRenameDialog
 import com.pixijoy.ai.ui.isStudioTwoPane
 import com.pixijoy.ai.export.MovieExportWorker
 import com.pixijoy.core.common.AppResult
@@ -185,6 +186,8 @@ fun MovieSessionScreen(
         )
     }
     val sessionState by sessionViewModel.state.collectAsState()
+    val saveStatus by sessionViewModel.saveStatus.collectAsState()
+    var renaming by remember { mutableStateOf(false) }
     val multi = sessionState.multi
     val timeline = sessionState.timeline
     val previewEpoch = sessionState.previewEpoch
@@ -1236,12 +1239,10 @@ fun MovieSessionScreen(
                 TextButton(onClick = ::leaveSession, modifier = Modifier.testTag("session_back")) {
                     Text(stringResource(R.string.studio_back), color = PixiText)
                 }
-                Text(
-                    toolLabel,
-                    color = PixiText,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                SessionProjectTitle(
+                    title = project.title,
+                    toolLabel = toolLabel,
+                    onRename = { renaming = true },
                     modifier = Modifier.weight(1f)
                 )
                 TextButton(
@@ -1283,6 +1284,11 @@ fun MovieSessionScreen(
                 ) {
                     Text(stringResource(R.string.studio_redo), color = PixiTextMuted)
                 }
+                Spacer(Modifier.weight(1f))
+                SessionAutosaveChip(
+                    status = saveStatus,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
             }
             }
         }
@@ -1433,6 +1439,22 @@ fun MovieSessionScreen(
             onDone = {
                 exportSuccessUri = null
                 showExport = false
+            },
+            onRenameProject = {
+                exportSuccessUri = null
+                showExport = false
+                renaming = true
+            }
+        )
+    }
+    if (renaming) {
+        ProjectRenameDialog(
+            titleKey = project.id,
+            initialTitle = project.title,
+            onDismiss = { renaming = false },
+            onConfirm = { title ->
+                renaming = false
+                scope.launch { repo.rename(project.id, title) }
             }
         )
     }

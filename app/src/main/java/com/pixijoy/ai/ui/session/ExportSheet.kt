@@ -86,6 +86,7 @@ fun ExportSheet(
     onView: () -> Unit = {},
     onShare: () -> Unit = {},
     onDone: () -> Unit = {},
+    onRenameProject: (() -> Unit)? = null,
     showLeaveSafeHint: Boolean = false
 ) {
     Dialog(onDismissRequest = { if (!exporting) onDismiss() }) {
@@ -121,6 +122,17 @@ fun ExportSheet(
                         .testTag("export_share")
                 ) {
                     Text(stringResource(R.string.export_share), color = PixiAccent)
+                }
+                if (onRenameProject != null) {
+                    TextButton(
+                        onClick = onRenameProject,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp)
+                            .testTag("export_rename")
+                    ) {
+                        Text(stringResource(R.string.export_name_project), color = PixiText)
+                    }
                 }
                 TextButton(
                     onClick = onDone,

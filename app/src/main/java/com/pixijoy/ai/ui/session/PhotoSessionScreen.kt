@@ -40,6 +40,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -76,6 +77,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pixijoy.ai.R
+import com.pixijoy.ai.ui.ProjectRenameDialog
 import com.pixijoy.ai.ui.StudioShellViewModel
 import com.pixijoy.ai.export.MovieExportWorker
 import com.pixijoy.ai.ui.isStudioTwoPane
@@ -146,6 +148,8 @@ fun PhotoSessionScreen(
     val toolEntry = remember(project.id, toolKey) { Any() }
     sessionViewModel.syncToolChrome(toolKey, toolEntry)
     val sessionState by sessionViewModel.state.collectAsState()
+    val saveStatus by sessionViewModel.saveStatus.collectAsState()
+    var renaming by remember { mutableStateOf(false) }
     val layers = sessionState.layers
     val redo = sessionState.redo
     FlushSessionOnStop(sessionViewModel::flushInBackground)
@@ -494,12 +498,10 @@ fun PhotoSessionScreen(
                 TextButton(onClick = ::leaveSession, modifier = Modifier.testTag("session_back")) {
                     Text(stringResource(R.string.studio_back), color = PixiText)
                 }
-                Text(
-                    toolLabel,
-                    color = PixiText,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                SessionProjectTitle(
+                    title = project.title,
+                    toolLabel = toolLabel,
+                    onRename = { renaming = true },
                     modifier = Modifier.weight(1f)
                 )
                 if (isRawProject) {
@@ -584,19 +586,10 @@ fun PhotoSessionScreen(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                if (preview != null) {
-                    Text(
-                        text = stringResource(
-                            if (busy) R.string.session_save_status_saving
-                            else R.string.session_save_status_saved
-                        ),
-                        color = PixiTextMuted,
-                        maxLines = 1,
-                        modifier = Modifier
-                            .padding(end = 8.dp)
-                            .testTag("session_save_status")
-                    )
-                }
+                SessionAutosaveChip(
+                    status = saveStatus,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
             }
             }
         }
@@ -973,6 +966,11 @@ fun PhotoSessionScreen(
                 exportSuccessUri = null
                 showExport = false
             },
+            onRenameProject = {
+                exportSuccessUri = null
+                showExport = false
+                renaming = true
+            },
             onExport = {
                 if (exporting) return@ExportSheet
                 exportSuccessUri = null
@@ -1009,6 +1007,17 @@ fun PhotoSessionScreen(
                     exportSuccessUri = null
                     showExport = false
                 }
+            }
+        )
+    }
+    if (renaming) {
+        ProjectRenameDialog(
+            titleKey = project.id,
+            initialTitle = project.title,
+            onDismiss = { renaming = false },
+            onConfirm = { title ->
+                renaming = false
+                scope.launch { repo.rename(project.id, title) }
             }
         )
     }

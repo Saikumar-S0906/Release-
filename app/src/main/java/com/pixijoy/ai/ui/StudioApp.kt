@@ -176,6 +176,7 @@ fun StudioApp() {
         if (uri != null && request != null) {
             scope.launch {
                 openImported(
+                    context = context,
                     repo = repo,
                     prefs = prefs,
                     uri = uri,
@@ -196,6 +197,7 @@ fun StudioApp() {
         if (uri != null && request != null) {
             scope.launch {
                 openImported(
+                    context = context,
                     repo = repo,
                     prefs = prefs,
                     uri = uri,
@@ -255,7 +257,7 @@ fun StudioApp() {
         showPickSheet = false
         showCreateSheet = false
         scope.launch {
-            val title = context.getString(R.string.studio_sample_title)
+            val title = newProjectTitle(context, request.kind, sourceName = null, sample = true)
             val result = if (request.kind == MediaKind.MOVIE) {
                 importMovieSample(context, repo, title)
             } else {
@@ -446,6 +448,7 @@ fun StudioApp() {
                         cameraRequest = null
                         scope.launch {
                             openCaptured(
+                                context = context,
                                 repo = repo,
                                 prefs = prefs,
                                 file = file,
@@ -473,6 +476,7 @@ fun StudioApp() {
                         )
                         scope.launch {
                             openCaptured(
+                                context = context,
                                 repo = repo,
                                 prefs = prefs,
                                 file = file,
@@ -541,7 +545,40 @@ private suspend fun importMovieSample(
     AppResult.Err(error.localizedMessage ?: error.javaClass.simpleName, error)
 }
 
+internal fun newProjectTitle(
+    context: Context,
+    kind: MediaKind,
+    sourceName: String?,
+    sample: Boolean = false
+): String {
+    val date = android.text.format.DateFormat.format("MMM d", java.util.Date()).toString()
+    val kindLabel = when {
+        sample -> context.getString(R.string.studio_sample_title)
+        kind == MediaKind.MOVIE -> context.getString(R.string.studio_movie)
+        else -> context.getString(R.string.studio_photo)
+    }
+    return ProjectTitle.resolve(sourceName, kindLabel, date)
+}
+
+private fun contentDisplayName(context: Context, uri: Uri): String? {
+    val queried = runCatching {
+        context.contentResolver.query(
+            uri,
+            arrayOf(android.provider.OpenableColumns.DISPLAY_NAME),
+            null,
+            null,
+            null
+        )?.use { cursor ->
+            if (!cursor.moveToFirst()) return@use null
+            val index = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+            if (index < 0) null else cursor.getString(index)
+        }
+    }.getOrNull()
+    return queried ?: uri.lastPathSegment
+}
+
 private suspend fun openCaptured(
+    context: Context,
     repo: ProjectRepository,
     prefs: StudioPrefs,
     file: File,
@@ -550,7 +587,8 @@ private suspend fun openCaptured(
     onOpen: (OpenSession) -> Unit,
     onError: (String) -> Unit
 ) {
-    when (val result = repo.importFile(file, kind, request.title)) {
+    val title = newProjectTitle(context, kind, file.name)
+    when (val result = repo.importFile(file, kind, title)) {
         is AppResult.Ok -> {
             prefs.setLastProject(result.value.id)
             onOpen(OpenSession.fromProject(result.value, request.tool))
@@ -564,6 +602,7 @@ private suspend fun openCaptured(
 }
 
 private suspend fun openImported(
+    context: Context,
     repo: ProjectRepository,
     prefs: StudioPrefs,
     uri: Uri,
@@ -571,7 +610,8 @@ private suspend fun openImported(
     onOpen: (OpenSession) -> Unit,
     onError: (String) -> Unit
 ) {
-    when (val result = repo.importUri(uri, request.kind, request.title)) {
+    val title = newProjectTitle(context, request.kind, contentDisplayName(context, uri))
+    when (val result = repo.importUri(uri, request.kind, title)) {
         is AppResult.Ok -> {
             prefs.setLastProject(result.value.id)
             onOpen(OpenSession.fromProject(result.value, request.tool))

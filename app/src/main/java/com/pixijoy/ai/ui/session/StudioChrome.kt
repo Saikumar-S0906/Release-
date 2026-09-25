@@ -41,6 +41,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -48,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import com.pixijoy.ai.R
 import com.pixijoy.designsystem.PixiAccent
 import com.pixijoy.designsystem.PixiBg
+import com.pixijoy.designsystem.PixiError
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
 
@@ -124,6 +126,70 @@ fun StudioChromeBar(
         rail()
         Spacer(Modifier.height(4.dp))
     }
+}
+
+/**
+ * Project name on the top scrim. Tap opens rename. The chip hugs the title
+ * so the picture still shows through the rest of the bar.
+ */
+@Composable
+fun SessionProjectTitle(
+    title: String,
+    toolLabel: String,
+    onRename: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.heightIn(min = 48.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Text(
+            text = title,
+            color = PixiText,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .heightIn(min = 48.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(PixiBg.copy(alpha = 0.55f))
+                .clickable(onClickLabel = stringResource(R.string.session_rename_project), onClick = onRename)
+                .testTag("session_project_title")
+                .semantics {
+                    role = Role.Button
+                    stateDescription = toolLabel
+                }
+                .padding(horizontal = 10.dp, vertical = 12.dp)
+        )
+    }
+}
+
+/** Glass status for the graph write. It does not cover the canvas or block tools. */
+@Composable
+fun SessionAutosaveChip(
+    status: GraphSaveStatus,
+    modifier: Modifier = Modifier
+) {
+    val failed = status == GraphSaveStatus.Failed
+    val label = stringResource(
+        when (status) {
+            GraphSaveStatus.Saving -> R.string.session_save_status_saving
+            GraphSaveStatus.Failed -> R.string.session_save_status_unsaved
+            GraphSaveStatus.Saved -> R.string.session_save_status_saved
+        }
+    )
+    Text(
+        text = label,
+        color = if (failed) PixiError else PixiText,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Medium,
+        maxLines = 1,
+        modifier = modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(PixiBg.copy(alpha = 0.55f))
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .testTag("session_save_status")
+    )
 }
 
 /** Top glass fade so Back / Export sit on the picture. */
