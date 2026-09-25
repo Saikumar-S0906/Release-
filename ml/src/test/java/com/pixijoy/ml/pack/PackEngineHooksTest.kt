@@ -7,7 +7,9 @@ import com.pixijoy.ml.PackReadiness
 import com.pixijoy.ml.interpreterBindAllowed
 import com.pixijoy.ml.modelFileVerified
 import java.io.File
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -83,6 +85,28 @@ class PackEngineHooksTest {
         assertFalse(PackRuntime.isEngineReady(packReady = false, engineBound = true))
         assertFalse(PackRuntime.isEngineReady(packReady = false, engineBound = false))
         assertTrue(PackRuntime.isEngineReady(packReady = true, engineBound = true))
+    }
+
+    @Test
+    fun superResAndDenoise_readyFileIsNotNeural() {
+        listOf(PackId.SuperRes, PackId.Denoise).forEach { id ->
+            val spec = PackCatalog.spec(id)
+            assertTrue(PackCatalog.hasHttpsFallback(spec))
+            assertNull(spec.expectedSha256)
+            assertFalse(PackRuntime.engineReady(id))
+            assertEquals(
+                SuperResDenoiseStatus.ReadyFileOnly,
+                PackRuntime.superResDenoiseStatus(packReady = true, engineBound = false)
+            )
+            assertEquals(
+                SuperResDenoiseStatus.EngineReady,
+                PackRuntime.superResDenoiseStatus(packReady = true, engineBound = true)
+            )
+            assertEquals(
+                SuperResDenoiseStatus.NotReady,
+                PackRuntime.superResDenoiseStatus(packReady = false, engineBound = true)
+            )
+        }
     }
 
     @Test

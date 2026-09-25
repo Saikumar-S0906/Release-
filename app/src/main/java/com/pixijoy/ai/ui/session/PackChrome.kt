@@ -30,6 +30,7 @@ import com.pixijoy.ml.pack.PackId
 import com.pixijoy.ml.pack.PackInstallManager
 import com.pixijoy.ml.pack.PackInstallState
 import com.pixijoy.ml.pack.PackRuntime
+import com.pixijoy.ml.pack.SuperResDenoiseStatus
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -118,7 +119,7 @@ fun PackStatusRow(
 
 /**
  * Missing / installing / failed pack. Same install actions as the ready row.
- * Copy stays off "AI" and "neural" until the pack is Ready and the runner is bound.
+ * Copy stays off "neural" until [PackRuntime.engineReady]. Ready alone is the file.
  */
 @Composable
 private fun EmptyPackSurface(
@@ -192,13 +193,35 @@ private fun packStatusCopy(
         }
     )
     is PackInstallState.Installing -> stringResource(R.string.studio_pack_installing)
-    is PackInstallState.Ready -> when {
-        engineReady -> stringResource(R.string.studio_pack_engine_ready)
-        !PackRuntime.liteRtReady -> stringResource(R.string.studio_pack_ready_no_litert)
-        packId == PackId.FrameInterp || packId == PackId.Track ->
-            stringResource(R.string.studio_pack_ready_no_engine)
-        else -> stringResource(R.string.studio_pack_ready_unbound)
+    is PackInstallState.Ready -> when (packId) {
+        PackId.SuperRes, PackId.Denoise -> superResDenoiseReadyCopy(engineReady)
+        else -> when {
+            engineReady -> stringResource(R.string.studio_pack_engine_ready)
+            !PackRuntime.liteRtReady -> stringResource(R.string.studio_pack_ready_no_litert)
+            packId == PackId.FrameInterp || packId == PackId.Track ->
+                stringResource(R.string.studio_pack_ready_no_engine)
+            else -> stringResource(R.string.studio_pack_ready_unbound)
+        }
     }
     is PackInstallState.Failed -> state.message
     is PackInstallState.StorageError -> stringResource(R.string.studio_pack_storage, state.message)
 }
+
+/**
+ * Super-res and Denoise. [SuperResDenoiseStatus.ReadyFileOnly] is downloaded
+ * and verified. [SuperResDenoiseStatus.EngineReady] is the bound neural engine.
+ */
+@Composable
+private fun superResDenoiseReadyCopy(engineReady: Boolean): String =
+    when (PackRuntime.superResDenoiseStatus(packReady = true, engineBound = engineReady)) {
+        SuperResDenoiseStatus.EngineReady ->
+            stringResource(R.string.studio_pack_engine_ready)
+        SuperResDenoiseStatus.ReadyFileOnly ->
+            if (PackRuntime.liteRtReady) {
+                stringResource(R.string.studio_pack_sr_denoise_ready)
+            } else {
+                stringResource(R.string.studio_pack_sr_denoise_ready_no_litert)
+            }
+        SuperResDenoiseStatus.NotReady ->
+            stringResource(R.string.studio_pack_sr_denoise_ready)
+    }

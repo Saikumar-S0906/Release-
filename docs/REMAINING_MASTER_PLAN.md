@@ -98,10 +98,10 @@ Then:
 
 | ID | Pack | Prerequisite | Delivery |
 |----|------|--------------|----------|
-| **E5** | Base APK ≤ ~40 MB | With pack foundation | `:ml` pack runtime + `reportApkSize`; selfie_segmenter (~244 KB) stays in base. Scaffolding **MET 2026-09-25**. Measured minified unsigned APK **131.11 MB** (Media3/MediaPipe JNI). Pack models stay out |
+| **E5** | Base APK ≤ ~40 MB | With pack foundation | `:ml` pack runtime + `reportApkSize`; `selfie_segmenter` (~244 KB) stays in base for MediaPipe only (not a pack engine). Scaffolding **MET 2026-09-25**. Measured minified unsigned APK **131.11 MB** (Media3/MediaPipe JNI). Pack models stay out |
 | **E1** | Inpaint / generative fill | C3 + pack foundation | Fill pack CTA; LiteRT binds RGB+mask sideload after SplitCompat + SHA; Telea until then. No HTTPS pin |
-| **E2** | Super-resolution | Pack runtime | Graph `SR`; HTTPS ESRGAN + LiteRT 2×/4× RGB |
-| **E3** | Denoise | Same runtime | Graph `N`; HTTPS Raspberry Pi UNet + LiteRT same-size RGB |
+| **E2** | Super-resolution | Pack runtime | Graph `SR`; HTTPS ESRGAN SHA pin → Ready → FLOAT32 2×/4× NHWC → LiteRT. Apply uses `engineReady` (Ready alone is not neural) |
+| **E3** | Denoise | Same runtime | Graph `N`; HTTPS UNet SHA pin → Ready → FLOAT32 same-size RGB → LiteRT. Apply uses `engineReady` |
 | **E4** | Frame interpolation | D10 + pack runtime | `FrameInterp.mlAvailable` ← pack engine; D10 CTA. **HOLD** — runner not bound; no artifact, URL, or SHA yet |
 
 ---
@@ -131,7 +131,7 @@ Never land F* as isolated effects without listed primitives.
 | **G3** | Hilt in StudioApp | **MET** 2026-09-25 — one `StudioGraphModule`; shell navigates and observes injected engines; composition preview and export workers no longer construct engines |
 | **G5** | Haptics | **MET** crop Apply + movie split 2026-09-25 |
 | **G6** | Skeleton Library thumbs | **MET** 2026-09-25 — cover sheen while Coil decodes; still surface if the file fails. |
-| **G7** | Empty-state illustrations | **MET** 2026-09-25 — one glass plate (`PixiEmptyState`): `empty_library` “No projects yet” + Create; `empty_packs` “Download to unlock” + Download. Same install states as pack CTAs. Neural copy only after Ready and bound. |
+| **G7** | Empty-state illustrations | **MET** 2026-09-25 — one glass plate (`PixiEmptyState`): `empty_library` “No projects yet” + Create; `empty_packs` “Download to unlock” + Download. Same install states as pack CTAs. Neural copy only when `engineReady` (Ready alone is the file). |
 | **G8** | Autosave + rename-after-create/export | **MET** 2026-09-25 — session chip follows graph writes; library Saved age; filename or dated title; tap title or Name this project after export |
 | **G9** | BuildConfig cleanup | **MET** 2026-09-25 |
 

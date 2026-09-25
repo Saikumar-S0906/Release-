@@ -35,8 +35,8 @@ Evidence: `HomePane.kt`, `StudioPane.kt`, `LibraryPane.kt`, and `StudioApp.kt`.
 | Basic cutout | **FALLBACK** | Uses the bundled subject mask when available; otherwise removes colors matching sampled corners. |
 | Heal | **BAKED** | Clone/ring-based local repair. |
 | Fill | **BAKED** | Nearby-pixel Telea-like fill. Neural inpaint binds only when a sideloaded RGB+mask TFLite matches; there is no HTTPS inpaint pin. |
-| Super-res | **PACK** | Distilled ESRGAN (~33 KB) downloads when the user taps Download. Apply is gated until LiteRT binds a 2×/4× RGB graph. |
-| Denoise | **PACK** | Raspberry Pi UNet (~700 KB) downloads when the user taps Download. Apply is gated until LiteRT binds same-size RGB. |
+| Super-res | **PACK** | Distilled ESRGAN HTTPS pin in `PackCatalog` (`compressed_esrgan.tflite`). Ready is downloaded and SHA-verified only. Apply turns on only for `PackRuntime.engineReady` (FLOAT32 2×/4× NHWC). Ready without that bind leaves the photo unchanged. |
+| Denoise | **PACK** | Raspberry Pi UNet HTTPS pin in `PackCatalog` (`unet_rgb_fast.tflite`). Ready is not neural. Apply turns on only for `engineReady` (FLOAT32 same-size RGB). |
 | Text, stickers, collage | **BAKED** | Rasterized into the rendered photo. |
 | Layers, blend, opacity, masks | **BAKED** | Evaluated by the local layer renderer. |
 | Presets | **LIVE** | Edit graphs are saved and reapplied on this device. Library can batch-apply a saved look, then export locally. |
@@ -78,10 +78,10 @@ Evidence: `movie/ClipFrame.kt`, `ClipSlowMo.kt`, `ClipTrack.kt`, `MovieEngine.kt
 | Capability | Status | Gate |
 |---|---|---|
 | Neural inpaint | **PACK** | LiteRT binds a sideloaded RGB+mask graph (4-channel or image+mask) after SplitCompat + SHA gate. No HTTPS pin. Fill stays Telea until bound. |
-| Neural super-res | **PACK** | Distilled ESRGAN HTTPS fallback + Play-services LiteRT when tensor contract matches. |
-| Neural denoise | **PACK** | Raspberry Pi UNet HTTPS fallback + LiteRT same-size RGB. |
-| Neural frame interpolation | **UNAVAILABLE** | Disabled chip plus pack CTA; slow motion uses frame hold. No interp runner in this build. |
-| Point track / roto-lite | **UNAVAILABLE** | `ClipTrack` persists; engine is unbound. |
+| Neural super-res | **PACK** | HTTPS SHA pin → Ready → FLOAT32 `PackModelContract.superResScale` → `PackLiteRt` register. A miss releases the interpreter. Apply reads `engineReady`. Ready alone is not neural. |
+| Neural denoise | **PACK** | HTTPS SHA pin → Ready → FLOAT32 `isDenoiseSameRgb` → `PackLiteRt`. A 2×/4× graph cannot register. Apply reads `engineReady`. |
+| Neural frame interpolation | **UNAVAILABLE** | **HOLD.** `PackLiteRt` leaves `FrameInterp` as `Unit`. No `downloadUrl`, SHA, or shape gate. Slow motion uses frame hold, which is not neural. |
+| Point track / roto-lite | **UNAVAILABLE** | **HOLD.** `ClipTrack` persists. `PackLiteRt` leaves `Track` as `Unit`. No `downloadUrl`, SHA, or shape gate. |
 | True motion stabilization | **UNAVAILABLE** | No gyro/optical-flow tracking; the available control is named Steady crop. |
 | Generative expand | **UNAVAILABLE** | Mirror expand is the only edge-extension engine. |
 

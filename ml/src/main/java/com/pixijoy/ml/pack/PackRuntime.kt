@@ -63,8 +63,26 @@ object PackRuntime {
     internal fun isEngineReady(packReady: Boolean, engineBound: Boolean): Boolean =
         packReady && engineBound
 
+    /**
+     * Super-res and Denoise user status. [ReadyFileOnly] is downloaded and
+     * checksum-verified. [EngineReady] is the neural chip. They are not the same.
+     */
+    fun superResDenoiseStatus(packReady: Boolean, engineBound: Boolean): SuperResDenoiseStatus =
+        when {
+            isEngineReady(packReady, engineBound) -> SuperResDenoiseStatus.EngineReady
+            packReady -> SuperResDenoiseStatus.ReadyFileOnly
+            else -> SuperResDenoiseStatus.NotReady
+        }
+
     fun incomingDir(): File? {
         val ctx = appContext ?: return null
         return File(ctx.filesDir, PackStore.INCOMING_DIR)
     }
+}
+
+/** Super-res / Denoise: file Ready versus a bound neural engine. */
+enum class SuperResDenoiseStatus {
+    NotReady,
+    ReadyFileOnly,
+    EngineReady
 }

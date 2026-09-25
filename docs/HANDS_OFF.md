@@ -81,12 +81,12 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **D9** — ClipChroma green/blue key + GlEffect; Maestro `d9-chroma-key` **green** Pixel_7a.
 - **D10** — ClipSlowMo + FrameInterp contract (heuristic now; ML for E4); Maestro `d10-slowmo-interp` **green** Pixel_7a.
 - **D11** — MovieHdrMode + Composition.setHdrMode (+ Ultra HDR gain-map retain API 34+); Maestro `d11-hdr-export` **green** Pixel_7a.
-- **E pack runtime** — `:ml` checksum/store/Play+HTTPS/file-picker; Super-res ESRGAN + Denoise UNet HTTPS; inpaint LiteRT on sideload RGB+mask after SplitCompat; Slow-mo/Track runners stay unbound. See `docs/R5_ML_PACKS.md`.
-- **F1** — `ClipTrack` timeline contract + pack CTA (engine unbound).
+- **E pack runtime** — Super-res and Denoise: HTTPS+SHA → Ready → FLOAT32 contract → LiteRT. Ready alone is not neural (`engineReady`). Inpaint is sideload-only (no HTTPS pin). E4/F1 stay HOLD (`PackLiteRt` `Unit`, no URL or SHA). See `docs/R5_ML_PACKS.md`.
+- **F1** — `ClipTrack` timeline contract + pack CTA. **HOLD** — no artifact, URL, or SHA; engine unbound.
 - **G1** — session preview\|tools on `isStudioTwoPane` (`studio_session_side_tools`); phone remains single-pane.
 - **G5** — haptic on crop Apply and movie split.
 - **G6** — Library cover thumbs sheen while Coil decodes; a missing file stays a static surface.
-- **G7** — One empty plate: Library “No projects yet” + Create (`empty_library`); pack download “Download to unlock” + Download (`empty_packs`). Neural wording stays off until the pack is Ready and bound.
+- **G7** — One empty plate: Library “No projects yet” + Create (`empty_library`); pack download “Download to unlock” + Download (`empty_packs`). Neural wording stays off until `engineReady`. Ready is the verified file only.
 - **G9** — removed deprecated global BuildConfig default.
 **In progress:** R5 device gate (Maestro/TalkBack/five-user).
 

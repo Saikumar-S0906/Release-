@@ -8,10 +8,10 @@
 
 `:ml` owns install state, `PackSplits` (SplitCompat), and the Hilt singleton `PackEngineHooks`. Play feature modules (`ml_inpaint`, `ml_superres`, `ml_denoise`, `ml_interp`, `ml_track`) own model files only. `:photo` and `:movie` call the facade and do not depend on a pack module or LiteRT. Session UI observes install state and download CTAs; it does not call `register`.
 
-- Install state: missing / installing / ready / failed / storage error
-- SHA-256 sidecar on sideload; optional pinned hash in `PackCatalog`
+- Install state: missing / installing / ready / failed / storage error. **Ready** means the file is on the device and its SHA-256 verified. **Neural** is `PackRuntime.engineReady` (Ready and a bound interpreter). Ready alone does not enable Super-res or Denoise Apply
+- SHA-256 sidecar on sideload. Every live `PackSpec.expectedSha256` is null, so **Install from file** records the copied file's own SHA. Super-res and Denoise HTTPS Download still refuse a body that misses `downloadSha256` before Ready. Inpaint, FrameInterp, and Track have no `downloadUrl` and no SHA pin
 - Sideload: **Install from file** (`GetContent`) copies into cache then checksum-installs; fallback folder `filesDir/ml_incoming/{fileName}` (also app external files)
-- HTTPS fallback (user-tapped Download only). Photos are not uploaded. Pins below are the only hosted artifacts. `expectedSha256` stays null so **Install from file** records the copied file's own SHA; Download still refuses a body that misses `downloadSha256`.
+- HTTPS fallback (user-tapped Download only). Photos are not uploaded. Pins below are the only hosted artifacts.
   - Super-res `superres.tflite` / `ml_superres`: `https://github.com/captain-pool/GSOC/releases/download/2.0.0/compressed_esrgan.tflite` SHA-256 `27ed316318cac65fe350ccdb3c1e19ac08c512f4aa2fc23b1a351ce334809c3f`. Graph is FLOAT32 NHWC `1×180×320×3` → `1×720×1280×3` (4×). `PackModelContract.superResScale` accepts 2× or 4× NHWC RGB.
   - Denoise `denoise.tflite` / `ml_denoise`: `https://raw.githubusercontent.com/raspberrypi/AI_denoise/master/networks/unet_rgb_fast.tflite` SHA-256 `53f0112f248b18ae518af64942ea4741f5b22ccdc4af5aea0ff452875f17fb84`. Graph is FLOAT32 NHWC `1×256×256×3` → same size. `PackModelContract.isDenoiseSameRgb` plus FLOAT32 at bind. A 2×/4× graph cannot register as denoise.
 - Inpaint has a sideload path only (`inpaint.tflite` / `ml_inpaint`). No HTTPS URL and no invented weights. Bind still requires RGB+mask and FLOAT32.
@@ -39,10 +39,23 @@
 
 ## E5 size
 
-- `selfie_segmenter.tflite` stays in `:ml` (~244 KB) — moving it would not change the gate
+- `selfie_segmenter.tflite` stays in `:ml` (~244 KB) for MediaPipe `ImageSegmenter` only (`VisionFacade`). It is not a `PackId`, not in `PackCatalog`, and `PackLiteRt` does not bind it. Moving it would not change the pack gate
 - `./gradlew :app:assembleRelease :app:reportApkSize`
 - **Measured 2026-09-25:** minified `app-release-unsigned.apk` **131.11 MB**. Over the ~40 MB aspiration because of Media3 + MediaPipe JNI already in the base app, not because of pack models (none ship in the APK)
 - Gate for pack ship: do not add inpaint/SR/denoise/interp/track weights to the base APK
+
+## Device smoke — Super-res / Denoise
+
+Steps for when a desktop or KVM device is available. Do not record a pass in this file. No Maestro or device result is claimed.
+
+1. Install a debug build on a device or emulator that can initialize Play services LiteRT. If LiteRT init fails, stop after step 4.
+2. Photo → Retouch → Super-res. Before Download, the status is not “Neural ready” and Apply (`session_apply_super_res`) is off.
+3. Tap Download. When the status says downloaded and verified (Ready), read `filesDir/ml_packs/superres/1/superres.tflite.sha256` and confirm it equals `PackCatalog.SUPERRES_DOWNLOAD_SHA256` (`27ed316318cac65fe350ccdb3c1e19ac08c512f4aa2fc23b1a351ce334809c3f`). Apply must still be off while the copy says the neural engine is not bound.
+4. If Play services LiteRT is unavailable, the status stays Ready without neural and Apply stays off. Stop.
+5. When LiteRT is up and the FLOAT32 2×/4× NHWC contract accepts the graph, the status changes to “Neural ready” and Apply turns on. That is `PackRuntime.engineReady(SuperRes)`.
+6. Apply 2× once. Export uses the same op. If the interpreter is released, the status returns to Ready-without-neural and Apply turns off. The photo is left unchanged.
+7. Repeat steps 2–6 for Denoise (`session_apply_denoise`). The sidecar is `filesDir/ml_packs/denoise/1/denoise.tflite.sha256` and must equal `PackCatalog.DENOISE_DOWNLOAD_SHA256` (`53f0112f248b18ae518af64942ea4741f5b22ccdc4af5aea0ff452875f17fb84`). The bind is same-size FLOAT32 RGB. A 2×/4× graph must not turn Denoise Apply on.
+8. Do not use this list for FrameInterp, Track, or an Inpaint HTTPS pin. Those packs have no hosted URL or SHA. Inpaint stays sideload-only. E4 and F1 stay HOLD (`PackLiteRt` is `Unit`).
 
 ## Maestro
 
