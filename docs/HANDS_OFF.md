@@ -126,7 +126,7 @@ Bind LiteRT pack engines (E1–E4) + R5 device acceptance. F2+ still opt-in afte
 
 ### Follow-up epic (not a feature gate)
 
-G2 slider/preview extract complete: Hilt session ViewModels own graph, tool chrome, and preview baking. Screens observe that state. Movie players stay on the screen. Tool chrome still resets on entry/rotation. Remaining: downscaled live preview on Color drag if janky (B4). Pack registration stays `PackFeatureEntry` after SplitCompat; the base application registers nothing.
+G2 slider/preview extract complete: Hilt session ViewModels own graph, tool chrome, and preview baking. Screens observe that state. Movie players stay on the screen. Tool chrome still resets on entry/rotation. G3 Hilt consistency: one `StudioGraphModule`; the shell navigates and observes injected engines; composition preview and export workers take those bindings instead of constructing engines. Remaining: downscaled live preview on Color drag if janky (B4). Pack registration stays `PackFeatureEntry` after SplitCompat; the base application registers nothing.
 
 ## Docs on `next`
 

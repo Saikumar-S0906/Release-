@@ -7,9 +7,8 @@ import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.pixijoy.ai.di.studioGraph
 import com.pixijoy.core.common.AppResult
-import com.pixijoy.core.data.ProjectRepository
-import com.pixijoy.movie.Media3MovieEngine
 import com.pixijoy.movie.MultiTrackTimeline
 import com.pixijoy.movie.Timeline
 import kotlinx.coroutines.Dispatchers
@@ -27,11 +26,12 @@ class MovieExportWorker(
         val talking = inputData.getBoolean(KEY_TALKING, false)
         setForeground(foreground(0))
         return withContext(Dispatchers.IO) {
-            val repo = ProjectRepository(applicationContext)
+            val graph = studioGraph(applicationContext)
+            val repo = graph.repository()
             val project = repo.get(projectId) ?: return@withContext Result.failure(
                 workDataOf(KEY_ERROR to "Project missing.")
             )
-            val engine = Media3MovieEngine()
+            val engine = graph.movieEngine()
             val paths = project.media.map { it.path }.ifEmpty { listOf(project.coverPath) }
             val multi = MultiTrackTimeline.decode(project.graph)
                 ?: MultiTrackTimeline.fromFlatTimeline(

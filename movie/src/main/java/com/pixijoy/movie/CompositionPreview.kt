@@ -55,7 +55,7 @@ object CompositionPreviewPolicy {
 
 class CompositionPreview(
     context: Context,
-    private val engine: Media3MovieEngine = Media3MovieEngine()
+    private val engine: MovieEngine
 ) {
     private val appContext = context.applicationContext
     private val _state = MutableStateFlow(CompositionPreviewState())

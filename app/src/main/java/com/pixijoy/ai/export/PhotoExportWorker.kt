@@ -7,10 +7,8 @@ import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.pixijoy.ai.di.studioGraph
 import com.pixijoy.core.common.AppResult
-import com.pixijoy.core.data.ProjectRepository
-import com.pixijoy.ml.MediaPipeVision
-import com.pixijoy.photo.BitmapPhotoEngine
 import com.pixijoy.photo.ExportExifPolicy
 import com.pixijoy.photo.ExportFormatSupport
 import com.pixijoy.photo.decodeLayers
@@ -36,11 +34,12 @@ class PhotoExportWorker(
         }
         setForeground(foreground(0))
         return withContext(Dispatchers.IO) {
-            val repo = ProjectRepository(applicationContext)
+            val graph = studioGraph(applicationContext)
+            val repo = graph.repository()
             val project = repo.get(projectId) ?: return@withContext Result.failure(
                 workDataOf(KEY_ERROR to "Project missing.")
             )
-            val engine = BitmapPhotoEngine(MediaPipeVision(applicationContext)).also {
+            val engine = graph.exportPhotoEngine().also {
                 it.lutDirectory = File(applicationContext.filesDir, "projects/$projectId")
             }
             val sources = project.media.map { it.path }.ifEmpty { listOf(project.coverPath) }

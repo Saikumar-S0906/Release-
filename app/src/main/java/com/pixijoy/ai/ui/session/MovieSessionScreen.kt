@@ -284,8 +284,8 @@ fun MovieSessionScreen(
     val bedFile = timeline.bed?.let { File(projectDir, it.fileName) }?.takeIf { it.exists() }
     val voiceFile = timeline.voice?.let { File(projectDir, it.fileName) }?.takeIf { it.exists() }
 
-    val compositionPreview = remember {
-        if (still) null else CompositionPreview(context)
+    val compositionPreview = remember(still, engine) {
+        if (still) null else CompositionPreview(context, engine)
     }
     val previewState = if (compositionPreview == null) {
         CompositionPreviewState()

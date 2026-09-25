@@ -7,11 +7,9 @@ import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.pixijoy.ai.di.studioGraph
 import com.pixijoy.core.common.AppResult
-import com.pixijoy.core.data.ProjectRepository
-import com.pixijoy.ml.MediaPipeVision
 import com.pixijoy.photo.BatchPresetApply
-import com.pixijoy.photo.BitmapPhotoEngine
 import com.pixijoy.photo.ColorIntent
 import com.pixijoy.photo.ExportExifPolicy
 import com.pixijoy.photo.ExportFormatSupport
@@ -43,8 +41,9 @@ class BatchPhotoExportWorker(
         val preset = inputData.getString(KEY_PRESET)?.let(PhotoPreset::decode)
         setForeground(foreground(0))
         return withContext(Dispatchers.IO) {
-            val repo = ProjectRepository(applicationContext)
-            val engine = BitmapPhotoEngine(MediaPipeVision(applicationContext))
+            val graph = studioGraph(applicationContext)
+            val repo = graph.repository()
+            val engine = graph.exportPhotoEngine()
             var ok = 0
             ids.forEachIndexed { index, projectId ->
                 val project = repo.get(projectId) ?: return@forEachIndexed

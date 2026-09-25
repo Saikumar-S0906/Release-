@@ -128,7 +128,7 @@ Never land F* as isolated effects without listed primitives.
 | **G4** | Accessibility | **With B3** (must-exit) |
 | **G1** | Tablet/foldable two-pane | **MET** catalog\|session + session preview\|tools 2026-09-25 |
 | **G2** | Photo/Movie ViewModels | **Slider/preview extract complete** 2026-09-25 — Hilt session VMs own graph, tool chrome, and slider/preview baking. Screens observe that state. Movie players stay on the screen. Tool chrome still resets on entry/rotation. |
-| **G3** | Hilt in StudioApp | **Started** with G2 — `StudioShellViewModel` injects repo, prefs, photo/movie engines |
+| **G3** | Hilt in StudioApp | **MET** 2026-09-25 — one `StudioGraphModule`; shell navigates and observes injected engines; composition preview and export workers no longer construct engines |
 | **G5** | Haptics | **MET** crop Apply + movie split 2026-09-25 |
 | **G6** | Skeleton Library thumbs | With Library polish |
 | **G7** | Empty-state illustrations | With empty CTA polish |
