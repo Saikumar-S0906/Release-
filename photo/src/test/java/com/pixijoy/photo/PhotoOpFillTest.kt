@@ -22,8 +22,27 @@ class PhotoOpFillTest {
         assertFalse(encoded.startsWith("B,"))
         val decoded = encoded.decodeGraph().filterIsInstance<PhotoOp.Fill>().single()
         assertEquals(stamps, decoded.stamps)
+        assertFalse(decoded.neural)
+        assertFalse(encoded.contains(";n"))
         assertTrue(decoded.stamps[1].hasSource)
         assertFalse(decoded.stamps[0].hasSource)
+    }
+
+    @Test
+    fun fillGraph_neuralFlagRoundTripsAndLegacyStaysTelea() {
+        val stamps = listOf(Stamp(0.2f, 0.3f, 0.04f))
+        val neural = listOf(PhotoOp.Fill(stamps, neural = true)).encodeGraph().decodeGraph()
+            .filterIsInstance<PhotoOp.Fill>().single()
+        assertTrue(neural.neural)
+        assertEquals(stamps, neural.stamps)
+        val legacy = "I,0.2,0.3,0.04".decodeGraph().filterIsInstance<PhotoOp.Fill>().single()
+        assertFalse(legacy.neural)
+        assertEquals(1, legacy.stamps.size)
+        val emptyNeural = listOf(PhotoOp.Fill(emptyList(), neural = true)).encodeGraph()
+        assertEquals("I,n", emptyNeural)
+        assertTrue(
+            emptyNeural.decodeGraph().filterIsInstance<PhotoOp.Fill>().single().neural
+        )
     }
 
     @Test

@@ -320,7 +320,12 @@ fun PhotoSessionScreen(
             onApplyExpand = { push(PhotoOp.Expand(expand)) },
             onApplySkyReplace = { target, color -> push(PhotoOp.SkyReplace(target, color)) },
             onApplyHeal = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Heal(pendingStamps)) },
-            onApplyFill = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Fill(pendingStamps)); pendingStamps = emptyList() },
+            onApplyFill = { neural ->
+                if (pendingStamps.isNotEmpty()) {
+                    push(PhotoOp.Fill(pendingStamps, neural = neural))
+                }
+                pendingStamps = emptyList()
+            },
             onUndoFillStroke = {
                 if (pendingStamps.isNotEmpty()) pendingStamps = pendingStamps.dropLast(1)
                 lastStamp = pendingStamps.lastOrNull()
@@ -1158,7 +1163,7 @@ private fun ToolBody(
     onApplyExpand: () -> Unit,
     onApplySkyReplace: (SkyReplaceTarget, Int) -> Unit,
     onApplyHeal: () -> Unit,
-    onApplyFill: () -> Unit,
+    onApplyFill: (neural: Boolean) -> Unit,
     onClearFillStrokes: () -> Unit,
     onUndoFillStroke: () -> Unit,
     onApplyPerspective: (Float, Float) -> Unit,

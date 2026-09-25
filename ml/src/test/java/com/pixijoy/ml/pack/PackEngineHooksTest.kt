@@ -110,6 +110,37 @@ class PackEngineHooksTest {
     }
 
     @Test
+    fun inpaint_readyFileIsNotNeuralAndHasNoHttpsPin() {
+        val spec = PackCatalog.spec(PackId.Inpaint)
+        assertNull(spec.downloadUrl)
+        assertNull(spec.downloadSha256)
+        assertNull(spec.expectedSha256)
+        assertFalse(PackCatalog.hasHttpsFallback(spec))
+        assertEquals("inpaint.tflite", spec.fileName)
+        assertFalse(PackRuntime.engineReady(PackId.Inpaint))
+        assertEquals(
+            InpaintStatus.ReadyFileOnly,
+            PackRuntime.inpaintStatus(packReady = true, engineBound = false)
+        )
+        assertEquals(
+            InpaintStatus.EngineReady,
+            PackRuntime.inpaintStatus(packReady = true, engineBound = true)
+        )
+        assertEquals(
+            InpaintStatus.NotReady,
+            PackRuntime.inpaintStatus(packReady = false, engineBound = true)
+        )
+        assertEquals(
+            InpaintStatus.NotReady,
+            PackRuntime.inpaintStatus(packReady = false, engineBound = false)
+        )
+        assertFalse(PackRuntime.inpaintNeuralApplyEnabled(packReady = true, engineBound = false))
+        assertFalse(PackRuntime.inpaintNeuralApplyEnabled(packReady = false, engineBound = true))
+        assertFalse(PackRuntime.inpaintNeuralApplyEnabled(packReady = false, engineBound = false))
+        assertTrue(PackRuntime.inpaintNeuralApplyEnabled(packReady = true, engineBound = true))
+    }
+
+    @Test
     fun modelFile_mustMatchRecordedShaBeforeBind() {
         val file = File.createTempFile("pack-gate", ".bin")
         try {

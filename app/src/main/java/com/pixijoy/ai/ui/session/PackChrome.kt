@@ -25,6 +25,7 @@ import com.pixijoy.ai.R
 import com.pixijoy.designsystem.PixiEmptyState
 import com.pixijoy.designsystem.PixiPrimaryButton
 import com.pixijoy.designsystem.PixiTextMuted
+import com.pixijoy.ml.pack.InpaintStatus
 import com.pixijoy.ml.pack.PackCatalog
 import com.pixijoy.ml.pack.PackId
 import com.pixijoy.ml.pack.PackInstallManager
@@ -106,6 +107,7 @@ fun PackStatusRow(
         }
     } else {
         EmptyPackSurface(
+            packId = packId,
             state = state,
             statusTag = statusTag,
             downloadTag = downloadTag,
@@ -123,6 +125,7 @@ fun PackStatusRow(
  */
 @Composable
 private fun EmptyPackSurface(
+    packId: PackId,
     state: PackInstallState,
     statusTag: String,
     downloadTag: String,
@@ -130,9 +133,12 @@ private fun EmptyPackSurface(
     onPickFile: () -> Unit
 ) {
     val installing = state as? PackInstallState.Installing
+    val hosted = packHasHostedDownload(packId)
     PixiEmptyState(
-        line = packEmptyLine(state),
-        icon = painterResource(R.drawable.pj_ic_download),
+        line = packEmptyLine(packId, state),
+        icon = painterResource(
+            if (hosted) R.drawable.pj_ic_download else R.drawable.pj_ic_folder
+        ),
         modifier = Modifier
             .fillMaxWidth()
             .testTag("empty_packs"),
@@ -149,7 +155,7 @@ private fun EmptyPackSurface(
                             .fillMaxWidth()
                             .testTag("${statusTag}_progress")
                     )
-                } else {
+                } else if (hosted) {
                     PixiPrimaryButton(
                         text = stringResource(
                             if (state is PackInstallState.Missing) R.string.studio_pack_download
@@ -164,19 +170,46 @@ private fun EmptyPackSurface(
                     ) {
                         Text(stringResource(R.string.studio_pack_from_file), color = PixiTextMuted)
                     }
+                } else {
+                    PixiPrimaryButton(
+                        text = stringResource(R.string.studio_pack_from_file),
+                        onClick = onPickFile,
+                        modifier = Modifier.testTag("${downloadTag}_from_file")
+                    )
                 }
             }
         }
     )
 }
 
+private fun packHasHostedDownload(packId: PackId): Boolean =
+    PackCatalog.hasHttpsFallback(PackCatalog.spec(packId))
+
 @Composable
-private fun packEmptyLine(state: PackInstallState): String = when (state) {
-    PackInstallState.Missing -> stringResource(R.string.studio_packs_empty)
-    is PackInstallState.Installing -> stringResource(R.string.studio_pack_installing)
+private fun packEmptyLine(packId: PackId, state: PackInstallState): String = when (state) {
+    PackInstallState.Missing -> stringResource(
+        if (packHasHostedDownload(packId)) {
+            R.string.studio_packs_empty
+        } else {
+            R.string.studio_pack_missing_sideload
+        }
+    )
+    is PackInstallState.Installing -> stringResource(
+        if (packHasHostedDownload(packId)) {
+            R.string.studio_pack_installing
+        } else {
+            R.string.studio_pack_installing_sideload
+        }
+    )
     is PackInstallState.Failed -> state.message
     is PackInstallState.StorageError -> stringResource(R.string.studio_pack_storage, state.message)
-    is PackInstallState.Ready -> stringResource(R.string.studio_packs_empty)
+    is PackInstallState.Ready -> stringResource(
+        if (packHasHostedDownload(packId)) {
+            R.string.studio_packs_empty
+        } else {
+            R.string.studio_pack_missing_sideload
+        }
+    )
 }
 
 @Composable
@@ -186,15 +219,22 @@ private fun packStatusCopy(
     engineReady: Boolean
 ): String = when (state) {
     PackInstallState.Missing -> stringResource(
-        if (PackCatalog.hasHttpsFallback(PackCatalog.spec(packId))) {
+        if (packHasHostedDownload(packId)) {
             R.string.studio_pack_missing
         } else {
             R.string.studio_pack_missing_sideload
         }
     )
-    is PackInstallState.Installing -> stringResource(R.string.studio_pack_installing)
+    is PackInstallState.Installing -> stringResource(
+        if (packHasHostedDownload(packId)) {
+            R.string.studio_pack_installing
+        } else {
+            R.string.studio_pack_installing_sideload
+        }
+    )
     is PackInstallState.Ready -> when (packId) {
         PackId.SuperRes, PackId.Denoise -> superResDenoiseReadyCopy(engineReady)
+        PackId.Inpaint -> inpaintReadyCopy(engineReady)
         else -> when {
             engineReady -> stringResource(R.string.studio_pack_engine_ready)
             !PackRuntime.liteRtReady -> stringResource(R.string.studio_pack_ready_no_litert)
@@ -224,4 +264,23 @@ private fun superResDenoiseReadyCopy(engineReady: Boolean): String =
             }
         SuperResDenoiseStatus.NotReady ->
             stringResource(R.string.studio_pack_sr_denoise_ready)
+    }
+
+/**
+ * Inpaint. [InpaintStatus.ReadyFileOnly] is a sideloaded file that verified.
+ * [InpaintStatus.EngineReady] is the bound neural engine. Telea is neither.
+ */
+@Composable
+private fun inpaintReadyCopy(engineReady: Boolean): String =
+    when (PackRuntime.inpaintStatus(packReady = true, engineBound = engineReady)) {
+        InpaintStatus.EngineReady ->
+            stringResource(R.string.studio_pack_inpaint_engine_ready)
+        InpaintStatus.ReadyFileOnly ->
+            if (PackRuntime.liteRtReady) {
+                stringResource(R.string.studio_pack_inpaint_ready)
+            } else {
+                stringResource(R.string.studio_pack_inpaint_ready_no_litert)
+            }
+        InpaintStatus.NotReady ->
+            stringResource(R.string.studio_pack_inpaint_ready)
     }

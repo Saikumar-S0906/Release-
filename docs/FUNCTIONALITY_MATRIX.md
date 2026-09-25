@@ -34,7 +34,7 @@ Evidence: `HomePane.kt`, `StudioPane.kt`, `LibraryPane.kt`, and `StudioApp.kt`.
 | Mirror expand | **BAKED** | Extends the canvas with mirrored edge pixels. It is not generative fill. |
 | Basic cutout | **FALLBACK** | Uses the bundled subject mask when available; otherwise removes colors matching sampled corners. |
 | Heal | **BAKED** | Clone/ring-based local repair. |
-| Fill | **BAKED** | Nearby-pixel Telea-like fill. Neural inpaint binds only when a sideloaded RGB+mask TFLite matches; there is no HTTPS inpaint pin. |
+| Fill | **BAKED** | Nearby-pixel Telea fill. That Apply stays on and is not neural. Neural Apply stays off until `PackRuntime.engineReady` after a sideloaded RGB+mask FLOAT32 bind. Ready (file verified) is not neural. No HTTPS inpaint pin. |
 | Super-res | **PACK** | Distilled ESRGAN HTTPS pin in `PackCatalog` (`compressed_esrgan.tflite`). Ready is downloaded and SHA-verified only. Apply turns on only for `PackRuntime.engineReady` (FLOAT32 2×/4× NHWC). Ready without that bind leaves the photo unchanged. |
 | Denoise | **PACK** | Raspberry Pi UNet HTTPS pin in `PackCatalog` (`unet_rgb_fast.tflite`). Ready is not neural. Apply turns on only for `engineReady` (FLOAT32 same-size RGB). |
 | Text, stickers, collage | **BAKED** | Rasterized into the rendered photo. |
@@ -77,7 +77,7 @@ Evidence: `movie/ClipFrame.kt`, `ClipSlowMo.kt`, `ClipTrack.kt`, `MovieEngine.kt
 
 | Capability | Status | Gate |
 |---|---|---|
-| Neural inpaint | **PACK** | LiteRT binds a sideloaded RGB+mask graph (4-channel or image+mask) after SplitCompat + SHA gate. No HTTPS pin. Fill stays Telea until bound. |
+| Neural inpaint | **PACK** | Sideload only. No HTTPS pin and no Download CTA. Ready is the verified file (`InpaintStatus.ReadyFileOnly`). Neural Apply reads `engineReady` after `PackLiteRt` binds FLOAT32 RGB+mask (4-channel or image+mask). A miss leaves Telea. Telea is never labeled neural. |
 | Neural super-res | **PACK** | HTTPS SHA pin → Ready → FLOAT32 `PackModelContract.superResScale` → `PackLiteRt` register. A miss releases the interpreter. Apply reads `engineReady`. Ready alone is not neural. |
 | Neural denoise | **PACK** | HTTPS SHA pin → Ready → FLOAT32 `isDenoiseSameRgb` → `PackLiteRt`. A 2×/4× graph cannot register. Apply reads `engineReady`. |
 | Neural frame interpolation | **UNAVAILABLE** | **HOLD.** `PackLiteRt` leaves `FrameInterp` as `Unit`. No `downloadUrl`, SHA, or shape gate. Slow motion uses frame hold, which is not neural. |

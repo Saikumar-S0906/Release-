@@ -74,6 +74,22 @@ object PackRuntime {
             else -> SuperResDenoiseStatus.NotReady
         }
 
+    /**
+     * Inpaint user status. [InpaintStatus.ReadyFileOnly] is a sideloaded file
+     * whose SHA was recorded. [InpaintStatus.EngineReady] is the bound neural
+     * engine. There is no hosted weight. Telea never counts as [engineBound].
+     */
+    fun inpaintStatus(packReady: Boolean, engineBound: Boolean): InpaintStatus =
+        when {
+            isEngineReady(packReady, engineBound) -> InpaintStatus.EngineReady
+            packReady -> InpaintStatus.ReadyFileOnly
+            else -> InpaintStatus.NotReady
+        }
+
+    /** Neural inpaint Apply. Nearby-pixel fill does not use this gate. */
+    fun inpaintNeuralApplyEnabled(packReady: Boolean, engineBound: Boolean): Boolean =
+        inpaintStatus(packReady, engineBound) == InpaintStatus.EngineReady
+
     fun incomingDir(): File? {
         val ctx = appContext ?: return null
         return File(ctx.filesDir, PackStore.INCOMING_DIR)
@@ -82,6 +98,13 @@ object PackRuntime {
 
 /** Super-res / Denoise: file Ready versus a bound neural engine. */
 enum class SuperResDenoiseStatus {
+    NotReady,
+    ReadyFileOnly,
+    EngineReady
+}
+
+/** Inpaint: sideload file Ready versus a bound neural engine. */
+enum class InpaintStatus {
     NotReady,
     ReadyFileOnly,
     EngineReady

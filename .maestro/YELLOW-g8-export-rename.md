@@ -8,4 +8,4 @@ There is no `project_rename_sheet` tag. Library rename uses `library_rename_fiel
 
 `empty_library` needs a project list with nothing in it. `launch-to-home.yaml` uses `clearState`. Skipping clear-data on a device that already has projects will not show that plate.
 
-`empty_packs` is the download plate while a pack is not Ready. `.maestro/packs/empty-packs.yaml` opens Fill after `clearState` (inpaint Missing) and does not tap Download. It does not claim a bound neural engine. Installing the pack hides the plate.
+`empty_packs` is the Missing plate in PackChrome. `.maestro/packs/empty-packs.yaml` opens Fill after `clearState` (inpaint Missing). Inpaint is sideload-only, so the plate shows Install from file and does not show Download. It does not claim a bound neural engine. Installing the pack hides the plate.

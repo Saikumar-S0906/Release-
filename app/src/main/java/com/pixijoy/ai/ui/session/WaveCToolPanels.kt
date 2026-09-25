@@ -227,8 +227,9 @@ fun FillToolPanel(
     onBrush: (Float) -> Unit,
     onUndoStroke: () -> Unit,
     onClear: () -> Unit,
-    onApply: () -> Unit
+    onApply: (neural: Boolean) -> Unit
 ) {
+    val neuralReady = rememberPackEngineReady(PackId.Inpaint)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SessionLabeledSlider(
             stringResource(R.string.studio_brush),
@@ -237,7 +238,11 @@ fun FillToolPanel(
             "session_brush_size",
             onBrush
         )
-        Text(stringResource(R.string.studio_fill_hint), color = PixiTextMuted)
+        Text(
+            stringResource(R.string.studio_fill_hint),
+            color = PixiTextMuted,
+            modifier = Modifier.testTag("session_fill_hint")
+        )
         PackStatusRow(
             packId = PackId.Inpaint,
             statusTag = "session_fill_pack_status",
@@ -252,9 +257,15 @@ fun FillToolPanel(
             }
         }
         PixiPrimaryButton(
-            stringResource(R.string.studio_apply),
-            onApply,
+            stringResource(R.string.studio_fill_apply_nearby),
+            { onApply(false) },
             Modifier.testTag("session_apply_fill")
+        )
+        PixiPrimaryButton(
+            stringResource(R.string.studio_fill_apply_neural),
+            { onApply(true) },
+            Modifier.testTag("session_apply_fill_neural"),
+            enabled = neuralReady
         )
     }
 }

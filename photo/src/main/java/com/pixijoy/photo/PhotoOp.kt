@@ -42,7 +42,11 @@ sealed interface PhotoOp {
     data class Expand(val fraction: Float) : PhotoOp
     data object Cutout : PhotoOp
     data class Heal(val stamps: List<Stamp>) : PhotoOp
-    data class Fill(val stamps: List<Stamp>) : PhotoOp
+    /**
+     * [neural] requests the sideloaded inpaint engine. False is nearby-pixel
+     * Telea and is never a neural result. Legacy graphs omit the flag.
+     */
+    data class Fill(val stamps: List<Stamp>, val neural: Boolean = false) : PhotoOp
     data class Erase(val stamps: List<Stamp>) : PhotoOp
     data class TextLayer(
         val text: String,
@@ -105,6 +109,21 @@ fun List<Stamp>.pack(): String =
         if (s.hasSource) "${s.x},${s.y},${s.r},${s.sx},${s.sy}" else "${s.x},${s.y},${s.r}"
     }
 
+/** `n` marks a neural-inpaint request. Stamp tokens stay numeric, so this cannot collide. */
+private fun encodeFill(op: PhotoOp.Fill): String {
+    val packed = op.stamps.pack()
+    return when {
+        op.neural && packed.isEmpty() -> "I,n"
+        op.neural -> "I,$packed;n"
+        else -> "I,$packed"
+    }
+}
+
+private fun decodeFill(body: String): PhotoOp.Fill {
+    val neural = body.split(';').any { it == "n" }
+    return PhotoOp.Fill(body.unpackStamps(), neural = neural)
+}
+
 fun String.unpackStamps(): List<Stamp> {
     if (isBlank()) return emptyList()
     return split(';').mapNotNull { token ->
@@ -138,7 +157,7 @@ fun List<PhotoOp>.encodeGraph(): String =
             is PhotoOp.Expand -> "E,${op.fraction}"
             is PhotoOp.Cutout -> "K"
             is PhotoOp.Heal -> "B,${op.stamps.pack()}"
-            is PhotoOp.Fill -> "I,${op.stamps.pack()}"
+            is PhotoOp.Fill -> encodeFill(op)
             is PhotoOp.Erase -> "Z,${op.stamps.pack()}"
             is PhotoOp.TextLayer ->
                 "T,${op.x},${op.y},${op.size},${op.color},${op.text.encodePayload()}"
@@ -187,7 +206,7 @@ fun String.decodeGraph(): List<PhotoOp> {
                 "E" -> if (parts.size == 2) PhotoOp.Expand(parts[1].toFloat()) else null
                 "K" -> PhotoOp.Cutout
                 "B" -> PhotoOp.Heal(line.substringAfter(',').unpackStamps())
-                "I" -> PhotoOp.Fill(line.substringAfter(',').unpackStamps())
+                "I" -> decodeFill(line.substringAfter(','))
                 "Z" -> PhotoOp.Erase(line.substringAfter(',').unpackStamps())
                 "T" -> if (parts.size >= 6) {
                     PhotoOp.TextLayer(
