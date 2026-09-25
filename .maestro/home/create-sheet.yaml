@@ -1,6 +1,8 @@
 ﻿appId: com.pixijoy.ai
 ---
-# Create → source sheet. Prefer text until Dialog testTagsAsResourceId.
+# Create → source sheet. The sheet sets testTagsAsResourceId, but this flow stays
+# on visible text until a device hierarchy dump shows the resource-ids.
+# Do not treat the commented id asserts as green.
 - runFlow: ../launch-to-home.yaml
 - assertVisible:
     id: "home_create"

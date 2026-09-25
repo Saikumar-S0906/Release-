@@ -13,9 +13,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pixijoy.ai.R
@@ -25,7 +28,7 @@ import com.pixijoy.designsystem.PixiSurface2
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun CreateSourceSheet(
     onPhoto: () -> Unit,
@@ -36,11 +39,16 @@ fun CreateSourceSheet(
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    // ModalBottomSheet is its own window. MainActivity's testTagsAsResourceId does not apply
+    // here, same as ExportSheet and ProjectRenameDialog. Without this, create_source_sheet and
+    // source_* never become UIAutomator resource-ids. The flag is not spoken by TalkBack.
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = PixiSurface2,
-        modifier = Modifier.testTag("create_source_sheet")
+        modifier = Modifier
+            .semantics { testTagsAsResourceId = true }
+            .testTag("create_source_sheet")
     ) {
         Column(
             modifier = Modifier
