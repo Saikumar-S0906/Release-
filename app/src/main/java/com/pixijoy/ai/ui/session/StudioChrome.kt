@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -70,7 +71,8 @@ enum class MovieEffectSub(val tag: String) {
     Motion("movie_effect_motion"),
     Frame("movie_effect_frame"),
     Chroma("movie_effect_chroma"),
-    SlowMo("movie_effect_slow")
+    SlowMo("movie_effect_slow"),
+    Track("movie_effect_track")
 }
 
 data class StudioGroupItem(
@@ -79,29 +81,42 @@ data class StudioGroupItem(
     val iconRes: Int
 )
 
-/** Bottom glass: long fade into the picture, one panel, then the icon rail. */
+/** Bottom glass: long fade into the picture, one panel, then the icon rail.
+ *  [sideDock] is the G1 tablet/fold inner layout: tools sit beside the canvas. */
 @Composable
 fun StudioChromeBar(
     modifier: Modifier = Modifier,
+    sideDock: Boolean = false,
     abovePanel: (@Composable ColumnScope.() -> Unit)? = null,
     rail: @Composable () -> Unit,
     panel: @Composable ColumnScope.() -> Unit
 ) {
     Column(
         modifier
-            .fillMaxWidth()
+            .then(if (sideDock) Modifier.width(360.dp).fillMaxHeight() else Modifier.fillMaxWidth())
             .background(
-                Brush.verticalGradient(
-                    0f to Color.Transparent,
-                    0.18f to PixiBg.copy(alpha = 0.22f),
-                    0.5f to PixiBg.copy(alpha = 0.58f),
-                    1f to PixiBg.copy(alpha = 0.86f)
-                )
+                if (sideDock) {
+                    Brush.horizontalGradient(
+                        0f to PixiBg.copy(alpha = 0.78f),
+                        1f to PixiBg.copy(alpha = 0.94f)
+                    )
+                } else {
+                    Brush.verticalGradient(
+                        0f to Color.Transparent,
+                        0.18f to PixiBg.copy(alpha = 0.22f),
+                        0.5f to PixiBg.copy(alpha = 0.58f),
+                        1f to PixiBg.copy(alpha = 0.86f)
+                    )
+                }
             )
-            .testTag("studio_chrome_bar")
+            .testTag(if (sideDock) "studio_session_side_tools" else "studio_chrome_bar")
     ) {
         abovePanel?.invoke(this)
-        StudioFrostedPanel(content = panel)
+        StudioFrostedPanel(
+            modifier = if (sideDock) Modifier.weight(1f) else Modifier,
+            expanded = sideDock,
+            content = panel
+        )
         rail()
         Spacer(Modifier.height(4.dp))
     }
@@ -135,6 +150,7 @@ fun StudioTopChrome(
 @Composable
 fun StudioFrostedPanel(
     modifier: Modifier = Modifier,
+    expanded: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val scroll = rememberScrollState()
@@ -142,7 +158,7 @@ fun StudioFrostedPanel(
     Box(
         modifier
             .fillMaxWidth()
-            .heightIn(max = 220.dp)
+            .then(if (expanded) Modifier.fillMaxHeight() else Modifier.heightIn(max = 220.dp))
             .clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
             .background(Color.Black.copy(alpha = 0.40f))
             .testTag("session_tool_scrim")

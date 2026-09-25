@@ -1,5 +1,7 @@
 package com.pixijoy.movie
 
+import com.pixijoy.ml.pack.PackId
+import com.pixijoy.ml.pack.PackRuntime
 import kotlin.math.abs
 
 /**
@@ -102,7 +104,7 @@ object FrameInterp {
     @Volatile
     var mlAvailableOverride: Boolean? = null
 
-    fun mlAvailable(): Boolean = mlAvailableOverride ?: false
+    fun mlAvailable(): Boolean = mlAvailableOverride ?: PackRuntime.engineReady(PackId.FrameInterp)
 
     fun resolve(requested: SlowMoEngine): SlowMoEngine = when (requested) {
         SlowMoEngine.None -> SlowMoEngine.None

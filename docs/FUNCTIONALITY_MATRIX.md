@@ -34,14 +34,16 @@ Evidence: `HomePane.kt`, `StudioPane.kt`, `LibraryPane.kt`, and `StudioApp.kt`.
 | Mirror expand | **BAKED** | Extends the canvas with mirrored edge pixels. It is not generative fill. |
 | Basic cutout | **FALLBACK** | Uses the bundled subject mask when available; otherwise removes colors matching sampled corners. |
 | Heal | **BAKED** | Clone/ring-based local repair. |
-| Fill | **BAKED** | Nearby-pixel Telea-like fill. Neural inpaint is unavailable. |
+| Fill | **BAKED** | Nearby-pixel Telea-like fill. Neural inpaint stays unavailable until the inpaint pack **and** a bound interpreter exist. |
+| Super-res | **UNAVAILABLE** | Graph `SR` round-trips; Apply is gated on the super-res pack engine. |
+| Denoise | **UNAVAILABLE** | Graph `N` round-trips; Apply is gated on the denoise pack engine. |
 | Text, stickers, collage | **BAKED** | Rasterized into the rendered photo. |
 | Layers, blend, opacity, masks | **BAKED** | Evaluated by the local layer renderer. |
 | Presets | **LIVE** | Edit graphs are saved and reapplied on this device. Library can batch-apply a saved look, then export locally. |
 | Fit + spot preview | **LIVE** | Everyday editing uses a 1600px fit preview; heal/mask inspection at 2× or more requests a 4096px spot render. |
 
 Evidence: `photo/BitmapPhotoEngine.kt`, `PhotoFilters.kt`, `ContentAwareFill.kt`,
-`Layer.kt`, and `app/.../PhotoSessionScreen.kt`.
+`PackEnhance.kt`, `Layer.kt`, and `app/.../PhotoSessionScreen.kt`.
 
 ## Movie Studio
 
@@ -52,12 +54,13 @@ Evidence: `photo/BitmapPhotoEngine.kt`, `PhotoFilters.kt`, `ContentAwareFill.kt`
 | Music, voice, SFX, fades, ducking, EQ/dynamics | **LIVE** | Local mix controls feed preview/export. |
 | Chroma key | **LIVE** | Green/blue shader key with range and edge softness. |
 | Steady crop | **LIVE** | Constant digital zoom hides frame edges; there is no motion analysis. |
-| Slow motion | **LIVE** | Playback-rate change with frame hold. |
+| Slow motion | **LIVE** | Playback-rate change with frame hold. Neural frames stay locked until the interp pack engine is bound. |
+| Point track / roto-lite | **UNAVAILABLE** | Timeline contract `ClipTrack` + pack CTA. No motion follow in this build. |
 | PiP, split, grid | **LIVE** | The export composition previews through Media3’s multi-input graph. Multi-sequence seeking stays disabled; unsupported device/runtime paths show an explicit export-only fallback. |
 | Keep HDR | **FALLBACK** | Preserves HDR when the device/export path supports it, otherwise tone-maps safely. |
 | Talking still | **BAKED** | Ken Burns-style GIF encoded on-device. |
 
-Evidence: `movie/ClipFrame.kt`, `ClipSlowMo.kt`, `MovieEngine.kt`, and
+Evidence: `movie/ClipFrame.kt`, `ClipSlowMo.kt`, `ClipTrack.kt`, `MovieEngine.kt`, and
 `app/.../MovieSessionScreen.kt`.
 
 ## Export
@@ -74,8 +77,9 @@ Evidence: `movie/ClipFrame.kt`, `ClipSlowMo.kt`, `MovieEngine.kt`, and
 
 | Capability | Status | Gate |
 |---|---|---|
-| Neural inpaint | **UNAVAILABLE** | No model ships; Fill exposes only nearby-pixel reconstruction. |
-| Neural frame interpolation | **UNAVAILABLE** | The disabled chip is labeled unavailable; slow motion uses frame hold. |
+| Neural inpaint | **UNAVAILABLE** | Pack runtime can sideload/checksum a model; no interpreter is bound. Fill still uses nearby-pixel reconstruction. |
+| Neural frame interpolation | **UNAVAILABLE** | Disabled chip plus pack download CTA; slow motion uses frame hold. |
+| Point track / roto-lite | **UNAVAILABLE** | `ClipTrack` persists; engine is unbound. |
 | True motion stabilization | **UNAVAILABLE** | No gyro/optical-flow tracking; the available control is named Steady crop. |
 | Generative expand | **UNAVAILABLE** | Mirror expand is the only edge-extension engine. |
 

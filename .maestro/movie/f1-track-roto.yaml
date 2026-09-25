@@ -1,0 +1,41 @@
+appId: com.pixijoy.ai
+---
+# F1 tracking / roto-lite contract in movie session
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "home_open_studio"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_segment_movie"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_segment_movie"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_move"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_move"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "movie_session"
+    timeout: 90000
+- tapOn:
+    id: "studio_group_effects"
+- tapOn:
+    id: "movie_effect_track"
+- scrollUntilVisible:
+    element:
+      id: "movie_f1_hint"
+    direction: DOWN
+    timeout: 40000
+    visibilityPercentage: 40
+    speed: 40
+- assertVisible:
+    id: "movie_track_pack_status"
+- assertVisible:
+    id: "movie_track_locked"

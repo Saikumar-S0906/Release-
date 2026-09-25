@@ -51,6 +51,8 @@ dependencies {
     implementation(project(":photo"))
     implementation(project(":movie"))
     implementation(project(":ml"))
+    implementation(project(":ml:pack"))
+    implementation(libs.play.feature.delivery.ktx)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
@@ -86,4 +88,20 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+tasks.register("reportApkSize") {
+    group = "verification"
+    description = "Print minified release APK size for the E5 ~40 MB gate."
+    dependsOn("packageRelease")
+    doLast {
+        val apk = file("build/outputs/apk/release").listFiles()
+            ?.firstOrNull { it.extension == "apk" }
+            ?: error("No release APK. Run :app:assembleRelease first.")
+        val mb = apk.length() / (1024.0 * 1024.0)
+        logger.lifecycle("E5 APK ${apk.name}: ${"%.2f".format(mb)} MB (${apk.length()} bytes)")
+        if (mb > 40.0) {
+            logger.warn("E5 size gate: APK is above ~40 MB. Keep models out of the base APK.")
+        }
+    }
 }

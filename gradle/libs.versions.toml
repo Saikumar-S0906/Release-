@@ -37,6 +37,7 @@ profileinstaller = "1.4.1"
 media3 = "1.10.1"
 mediapipe = "0.10.21"
 work = "2.10.1"
+play-feature-delivery = "2.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -104,6 +105,7 @@ androidx-media3-transformer = { group = "androidx.media3", name = "media3-transf
 androidx-media3-effect = { group = "androidx.media3", name = "media3-effect", version.ref = "media3" }
 androidx-media3-common = { group = "androidx.media3", name = "media3-common", version.ref = "media3" }
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
+play-feature-delivery-ktx = { group = "com.google.android.play", name = "feature-delivery-ktx", version.ref = "play-feature-delivery" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

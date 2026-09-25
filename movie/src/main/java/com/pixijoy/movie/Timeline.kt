@@ -25,7 +25,9 @@ data class TimelineClip(
     /** Chroma key (D9). */
     val chroma: ClipChroma = ClipChroma.None,
     /** Frame-interp slow-mo contract (D10); E4 ML plugs in via [FrameInterp]. */
-    val slowMo: ClipSlowMo = ClipSlowMo.None
+    val slowMo: ClipSlowMo = ClipSlowMo.None,
+    /** Tracking / roto-lite contract (F1); pack engine via [TrackFacade]. */
+    val track: ClipTrack = ClipTrack.None
 ) {
     val sourceDurationMs: Long get() = (outMs - inMs).coerceAtLeast(1)
     val durationMs: Long
@@ -43,6 +45,7 @@ data class TimelineClip(
     val hasFrame: Boolean get() = !frame.isIdentity
     val hasChroma: Boolean get() = !chroma.isIdentity
     val hasSlowMo: Boolean get() = slowMo.isActive
+    val hasTrack: Boolean get() = track.isActive
 }
 
 data class AudioBed(
@@ -315,7 +318,7 @@ data class Timeline(
         append(clips.joinToString("\n") { c ->
             "C,${c.mediaIndex},${c.inMs},${c.outMs},${c.speed},${if (c.muted) 1 else 0},${c.id}," +
                 "${ClipMix.volume(c.volume)},${c.fadeInMs.coerceAtLeast(0)},${c.fadeOutMs.coerceAtLeast(0)}," +
-                "${c.transition.name},${c.transitionMs.coerceAtLeast(0)},${c.speedEnd},${c.motion.encode()},${c.frame.encode()},${c.chroma.encode()},${c.slowMo.encode()}"
+                "${c.transition.name},${c.transitionMs.coerceAtLeast(0)},${c.speedEnd},${c.motion.encode()},${c.frame.encode()},${c.chroma.encode()},${c.slowMo.encode()},${c.track.encode()}"
         })
         val music = bed
         if (music != null) {
@@ -395,7 +398,8 @@ data class Timeline(
                         motion = ClipMotion.decode(p.getOrNull(13)),
                         frame = ClipFrame.decode(p.getOrNull(14)),
                         chroma = ClipChroma.decode(p.getOrNull(15)),
-                        slowMo = ClipSlowMo.decode(p.getOrNull(16))
+                        slowMo = ClipSlowMo.decode(p.getOrNull(16)),
+                        track = ClipTrack.decode(p.getOrNull(17))
                     )
                 }.getOrNull()
             }.toList()

@@ -1,0 +1,26 @@
+appId: com.pixijoy.ai
+---
+# E1 Fill pack CTA — nearby-pixel fill stays; neural pack is unavailable in base
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "home_create"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+- tapOn:
+    id: "studio_group_retouch"
+- tapOn:
+    id: "session_fill"
+- extendedWaitUntil:
+    visible:
+      id: "session_fill_pack_status"
+    timeout: 10000
+- assertVisible:
+    id: "session_fill_pack_download"
+- assertVisible:
+    id: "session_apply_fill"

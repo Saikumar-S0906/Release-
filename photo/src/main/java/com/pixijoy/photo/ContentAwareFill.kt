@@ -11,7 +11,8 @@ import kotlin.math.sqrt
  * On-device content-aware fill / inpaint.
  *
  * Primary path: Telea-like fast-marching fill from known surroundings (no network).
- * [LiteRtInpaintHook] is an optional stub for a future on-device model — currently always null.
+ * [LiteRtInpaintHook] runs only when the E1 inpaint pack is installed **and** a real
+ * interpreter is bound. Telea is never reported as neural.
  *
  * Distinct from [applyHeal]: Heal is clone-stamp / ring-average per brush stamp;
  * Fill builds a unified mask then reconstructs the hole from the border inward.
@@ -36,14 +37,13 @@ fun applyFill(src: Bitmap, stamps: List<Stamp>): Bitmap {
 }
 
 /**
- * Stub hook for a future LiteRT / on-device neural inpaint.
- * Must never hit the network. Returns null → classical Telea path.
+ * Optional LiteRT inpaint. [isAvailable] is true only with a checksumed pack **and**
+ * a bound interpreter. Returns null → classical Telea path.
  */
 object LiteRtInpaintHook {
-    /** Base APK capability gate: no neural inpaint model is shipped. */
-    fun isAvailable(): Boolean = false
+    fun isAvailable(): Boolean = PackEnhance.inpaintAvailable()
 
-    fun tryInpaint(src: Bitmap, mask: BooleanArray): Bitmap? = null
+    fun tryInpaint(src: Bitmap, mask: BooleanArray): Bitmap? = PackEnhance.tryInpaint(src, mask)
 }
 
 /** Pure helper for unit tests: union stamp circles into a mask. */

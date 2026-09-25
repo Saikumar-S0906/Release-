@@ -1,0 +1,38 @@
+appId: com.pixijoy.ai
+---
+# E2/E3 Super-res + Denoise — pack download + Apply gated
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "home_create"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+- tapOn:
+    id: "studio_group_retouch"
+- tapOn:
+    id: "session_super_res"
+- extendedWaitUntil:
+    visible:
+      id: "session_super_res_hint"
+    timeout: 10000
+- assertVisible:
+    id: "session_super_res_pack_status"
+- assertVisible:
+    id: "session_super_res_2x"
+- assertVisible:
+    id: "session_apply_super_res"
+- tapOn:
+    id: "session_denoise"
+- extendedWaitUntil:
+    visible:
+      id: "session_denoise_hint"
+    timeout: 10000
+- assertVisible:
+    id: "session_denoise_pack_status"
+- assertVisible:
+    id: "session_apply_denoise"

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -60,6 +61,8 @@ import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -78,6 +81,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pixijoy.ai.R
 import com.pixijoy.ai.export.MovieExportWorker
+import com.pixijoy.ai.ui.isStudioTwoPane
 import com.pixijoy.ai.export.PhotoExportWorker
 import com.pixijoy.core.common.AppResult
 import com.pixijoy.core.data.Project
@@ -134,7 +138,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private enum class SessionMode { Crop, Adjust, Heal, Fill, Erase, Text, Expand, Stickers, Collage, Curves, SelectiveHsl, Looks, Layers, Mask, Sky, Warp, Soften, Presets }
+private enum class SessionMode { Crop, Adjust, Heal, Fill, Erase, Text, Expand, Stickers, Collage, Curves, SelectiveHsl, Looks, Layers, Mask, Sky, Warp, Soften, SuperRes, Denoise, Presets }
 
 @Composable
 fun PhotoSessionScreen(
@@ -520,6 +524,244 @@ fun PhotoSessionScreen(
         }
     }
 
+    val configuration = LocalConfiguration.current
+    val sideTools = isStudioTwoPane(configuration.screenWidthDp, configuration.screenHeightDp)
+    val haptics = LocalHapticFeedback.current
+    @Composable
+    fun ToolsChrome(sideDock: Boolean, modifier: Modifier = Modifier) {
+        StudioChromeBar(
+            modifier = modifier,
+            sideDock = sideDock,
+            rail = {
+                StudioGroupRail(
+                    items = photoGroupItems(),
+                    selectedTag = group.tag,
+                    onSelect = { tag ->
+                        val next = PhotoGroup.entries.first { it.tag == tag }
+                        group = next
+                        if (!modeBelongs(next, mode)) mode = defaultModeFor(next, toolKey)
+                    }
+                )
+            },
+            panel = {
+            ToolBody(
+            mode = mode,
+            group = group,
+            toolKey = toolKey,
+            onMode = { mode = it },
+            onRotate = { push(PhotoOp.Rotate(90)) },
+            onFlip = { push(PhotoOp.FlipH) },
+            exposure = exposure,
+            contrast = contrast,
+            hue = hue,
+            saturation = saturation,
+            expand = expand,
+            brush = brush,
+            text = text,
+            onExposure = { exposure = it },
+            onContrast = { contrast = it },
+            onHue = { hue = it },
+            onSaturation = { saturation = it },
+            onExpand = { expand = it },
+            onBrush = { brush = it },
+            onText = { text = it },
+            onApplyGrade = {
+                // Only push non-identity ops so Compare is never gated by a no-op Apply.
+                if (!PhotoOp.Grade(exposure, contrast).isIdentity()) push(PhotoOp.Grade(exposure, contrast))
+                if (!PhotoOp.Hsl(hue, saturation).isIdentity()) push(PhotoOp.Hsl(hue, saturation))
+                exposure = 0f
+                contrast = 1f
+                hue = 0f
+                saturation = 1f
+                if (sharpen > 0.01f) push(PhotoOp.Sharpen(sharpen))
+                if (vignette > 0.01f) push(PhotoOp.Vignette(vignette))
+                if (blurRadius > 0.5f) push(PhotoOp.Blur(blurRadius.toInt().coerceIn(1, 8)))
+                sharpen = 0f
+                vignette = 0f
+                blurRadius = 0f
+            },
+            sharpen = sharpen,
+            vignette = vignette,
+            blurRadius = blurRadius,
+            onSharpenAmount = { sharpen = it },
+            onVignetteAmount = { vignette = it },
+            onBlurAmount = { blurRadius = it },
+            onApplyCrop = {
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                push(crop); mode = defaultMode(toolKey)
+            },
+            onApplyExpand = { push(PhotoOp.Expand(expand)) },
+            onApplySkyReplace = { target, color -> push(PhotoOp.SkyReplace(target, color)) },
+            onApplyHeal = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Heal(pendingStamps)) },
+            onApplyFill = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Fill(pendingStamps)); pendingStamps = emptyList() },
+            onUndoFillStroke = {
+                if (pendingStamps.isNotEmpty()) pendingStamps = pendingStamps.dropLast(1)
+                lastStamp = pendingStamps.lastOrNull()
+            },
+            onClearFillStrokes = { pendingStamps = emptyList(); lastStamp = null },
+            onApplyPerspective = { h, v ->
+                if (!PhotoOp.Perspective(h, v).isIdentity()) push(PhotoOp.Perspective(h, v))
+            },
+            onApplyLiquify = { x, y, r, a ->
+                if (!PhotoOp.Liquify(x, y, r, a).isIdentity()) push(PhotoOp.Liquify(x, y, r, a))
+            },
+            onApplySoften = { a -> if (!PhotoOp.Soften(a).isIdentity()) push(PhotoOp.Soften(a)) },
+            onApplySuperRes = { s -> if (!PhotoOp.SuperRes(s).isIdentity()) push(PhotoOp.SuperRes(s)) },
+            onApplyDenoise = { a -> if (!PhotoOp.Denoise(a).isIdentity()) push(PhotoOp.Denoise(a)) },
+            onSavePreset = { name ->
+                scope.launch {
+                    val id = "p${System.currentTimeMillis()}"
+                    val preset = PhotoPreset(
+                        id = id,
+                        name = name.trim().ifBlank { "Preset" },
+                        layersEncoded = layers.encodeLayers()
+                    )
+                    when (val r = repo.writePresetFile(id, preset.encode())) {
+                        is AppResult.Ok -> {
+                            presets = listOf(preset) + presets.filterNot { it.id == id }
+                            StudioPrefs(context.applicationContext).setLastLookPreset(id)
+                            status = context.getString(R.string.studio_preset_save)
+                            statusIsError = false
+                        }
+                        is AppResult.Err -> reportStatusError(r.message)
+                    }
+                }
+            },
+            onApplyPreset = { id ->
+                scope.launch {
+                    when (val r = repo.readPresetFile(id)) {
+                        is AppResult.Ok -> {
+                            val preset = PhotoPreset.decode(r.value)
+                            if (preset == null) {
+                                reportStatusError(context.getString(R.string.studio_preset_unreadable))
+                            } else {
+                                sessionViewModel.replaceLayers(
+                                    preset.layersEncoded.decodeLayers().ifEmpty { layers }
+                                )
+                                status = context.getString(R.string.studio_presets)
+                                statusIsError = false
+                            }
+                        }
+                        is AppResult.Err -> reportStatusError(r.message)
+                    }
+                }
+            },
+            presets = presets,
+            onApplyErase = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Erase(pendingStamps)) },
+            onApplyText = { push(PhotoOp.TextLayer(text, placeX, placeY, 0.08f, 0xFFFFFFFF.toInt())) },
+            onRestore = { push(PhotoOp.Restore) },
+            onCutout = { push(PhotoOp.Subject); format = ExportFormat.PNG },
+            onApplyCurves = {
+                // Skip identity curves to keep layer stack clean and Compare meaningful.
+                if (!PhotoOp.Curves(it).isIdentity()) push(PhotoOp.Curves(it.copyOf()))
+                curveYs = floatArrayOf(0f, 0.25f, 0.5f, 0.75f, 1f)
+            },
+            selectiveRange = selectiveRange,
+            selectiveHue = selectiveHue,
+            selectiveSat = selectiveSat,
+            selectiveLight = selectiveLight,
+            onSelectiveRange = { selectiveRange = it },
+            onSelectiveHue = { selectiveHue = it },
+            onSelectiveSat = { selectiveSat = it },
+            onSelectiveLight = { selectiveLight = it },
+            onApplySelectiveHsl = {
+                val op = PhotoOp.SelectiveHsl(selectiveRange, selectiveHue, selectiveSat, selectiveLight)
+                if (!op.isIdentity()) {
+                    push(op)
+                    selectiveHue = 0f
+                    selectiveSat = 1f
+                    selectiveLight = 0f
+                }
+            },
+            curveYs = curveYs,
+            onCurveYs = { curveYs = it },
+            lookKey = lookKey,
+            onLookKey = { lookKey = it },
+            onApplyLook = { key ->
+                val imported = ImportedLuts.isImported(key)
+                if (imported || !BundledLooks.isIdentity(key)) {
+                    push(PhotoOp.Lut(key))
+                    lookKey = BundledLooks.ORIGINAL
+                    importedLookLabel = null
+                }
+            },
+            onImportLut = {
+                pickLut.launch(arrayOf("*/*"))
+            },
+            importedLookLabel = importedLookLabel,
+            maskFill = (layers.firstOrNull { it.id == selectedLayer } ?: layers.lastOrNull())?.maskFill
+                ?: MaskFill.None,
+            maskReveal = maskReveal,
+            onMaskReveal = { maskReveal = it },
+            onClearMask = {
+                val id = selectedLayer ?: layers.lastOrNull()?.id
+                val layer = layers.firstOrNull { it.id == id }
+                if (id != null && layer != null) {
+                    lastMaskSnapshot = layer.mask to layer.maskFill
+                    sessionViewModel.replaceLayers(
+                        layers.map {
+                            if (it.id == id) it.copy(mask = emptyList(), maskFill = MaskFill.None) else it
+                        }
+                    )
+                }
+            },
+            onRestoreMask = {
+                val snapshot = lastMaskSnapshot ?: return@ToolBody
+                val id = selectedLayer ?: layers.lastOrNull()?.id ?: return@ToolBody
+                sessionViewModel.replaceLayers(
+                    layers.map {
+                        if (it.id == id) it.copy(mask = snapshot.first, maskFill = snapshot.second) else it
+                    }
+                )
+            },
+            canRestoreMask = lastMaskSnapshot != null,
+            visionAvailable = visionAvailable,
+            onSubjectMask = {
+                val id = selectedLayer ?: layers.lastOrNull()?.id ?: return@ToolBody
+                sessionViewModel.replaceLayers(
+                    layers.map {
+                        if (it.id == id) it.copy(maskFill = MaskFill.Subject) else it
+                    }
+                )
+            },
+            onBackgroundMask = {
+                val id = selectedLayer ?: layers.lastOrNull()?.id ?: return@ToolBody
+                sessionViewModel.replaceLayers(
+                    layers.map {
+                        if (it.id == id) it.copy(maskFill = MaskFill.Background) else it
+                    }
+                )
+            },
+            collageCols = collageCols,
+            pickingHealSource = pickingHealSource,
+            healSourceSet = healSource != null,
+            onPickHealSource = { pickingHealSource = true },
+            onPaintHeal = { pickingHealSource = false },
+            onSticker = { glyph -> push(PhotoOp.Sticker(glyph, placeX, placeY, 0.18f)) },
+            onCollage = { cols ->
+                collageCols = cols
+                push(PhotoOp.Collage(cols))
+                status = context.getString(
+                    if (cols >= 4) R.string.studio_collage_4_hint else R.string.studio_collage_2_hint
+                )
+                statusIsError = false
+            },
+            onAddPhoto = {
+                addPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
+        )
+            if (group == PhotoGroup.Compose && mode == SessionMode.Layers && layers.isNotEmpty()) {
+                LayerStack(
+                    layers = layers,
+                    selectedId = selectedLayer,
+                    onSelect = { selectedLayer = it },
+                    onChange = { sessionViewModel.replaceLayers(it) }
+                )
+            }
+            }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -528,10 +770,15 @@ fun PhotoSessionScreen(
             .navigationBarsPadding()
             .testTag("photo_session")
     ) {
-        Box(
+        Row(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
+        ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
         ) {
         StudioTopChrome(Modifier.align(Alignment.TopCenter).zIndex(2f)) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
@@ -652,7 +899,7 @@ fun PhotoSessionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(PixiSurface)
-                .padding(bottom = if (mode == SessionMode.Crop) 156.dp else 0.dp),
+                .padding(bottom = if (!sideTools && mode == SessionMode.Crop) 156.dp else 0.dp),
             contentAlignment = Alignment.Center
         ) {
             val snap = compareSnapshot
@@ -953,231 +1200,17 @@ fun PhotoSessionScreen(
                     .testTag("session_status")
             )
         }
-        StudioChromeBar(
-            modifier = Modifier.align(Alignment.BottomCenter).zIndex(1f),
-            rail = {
-                StudioGroupRail(
-                    items = photoGroupItems(),
-                    selectedTag = group.tag,
-                    onSelect = { tag ->
-                        val next = PhotoGroup.entries.first { it.tag == tag }
-                        group = next
-                        if (!modeBelongs(next, mode)) mode = defaultModeFor(next, toolKey)
-                    }
-                )
-            },
-            panel = {
-            ToolBody(
-            mode = mode,
-            group = group,
-            toolKey = toolKey,
-            onMode = { mode = it },
-            onRotate = { push(PhotoOp.Rotate(90)) },
-            onFlip = { push(PhotoOp.FlipH) },
-            exposure = exposure,
-            contrast = contrast,
-            hue = hue,
-            saturation = saturation,
-            expand = expand,
-            brush = brush,
-            text = text,
-            onExposure = { exposure = it },
-            onContrast = { contrast = it },
-            onHue = { hue = it },
-            onSaturation = { saturation = it },
-            onExpand = { expand = it },
-            onBrush = { brush = it },
-            onText = { text = it },
-            onApplyGrade = {
-                // Only push non-identity ops so Compare is never gated by a no-op Apply.
-                if (!PhotoOp.Grade(exposure, contrast).isIdentity()) push(PhotoOp.Grade(exposure, contrast))
-                if (!PhotoOp.Hsl(hue, saturation).isIdentity()) push(PhotoOp.Hsl(hue, saturation))
-                exposure = 0f
-                contrast = 1f
-                hue = 0f
-                saturation = 1f
-                if (sharpen > 0.01f) push(PhotoOp.Sharpen(sharpen))
-                if (vignette > 0.01f) push(PhotoOp.Vignette(vignette))
-                if (blurRadius > 0.5f) push(PhotoOp.Blur(blurRadius.toInt().coerceIn(1, 8)))
-                sharpen = 0f
-                vignette = 0f
-                blurRadius = 0f
-            },
-            sharpen = sharpen,
-            vignette = vignette,
-            blurRadius = blurRadius,
-            onSharpenAmount = { sharpen = it },
-            onVignetteAmount = { vignette = it },
-            onBlurAmount = { blurRadius = it },
-            onApplyCrop = { push(crop); mode = defaultMode(toolKey) },
-            onApplyExpand = { push(PhotoOp.Expand(expand)) },
-            onApplySkyReplace = { target, color -> push(PhotoOp.SkyReplace(target, color)) },
-            onApplyHeal = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Heal(pendingStamps)) },
-            onApplyFill = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Fill(pendingStamps)); pendingStamps = emptyList() },
-            onUndoFillStroke = {
-                if (pendingStamps.isNotEmpty()) pendingStamps = pendingStamps.dropLast(1)
-                lastStamp = pendingStamps.lastOrNull()
-            },
-            onClearFillStrokes = { pendingStamps = emptyList(); lastStamp = null },
-            onApplyPerspective = { h, v ->
-                if (!PhotoOp.Perspective(h, v).isIdentity()) push(PhotoOp.Perspective(h, v))
-            },
-            onApplyLiquify = { x, y, r, a ->
-                if (!PhotoOp.Liquify(x, y, r, a).isIdentity()) push(PhotoOp.Liquify(x, y, r, a))
-            },
-            onApplySoften = { a -> if (!PhotoOp.Soften(a).isIdentity()) push(PhotoOp.Soften(a)) },
-            onSavePreset = { name ->
-                scope.launch {
-                    val id = "p${System.currentTimeMillis()}"
-                    val preset = PhotoPreset(
-                        id = id,
-                        name = name.trim().ifBlank { "Preset" },
-                        layersEncoded = layers.encodeLayers()
-                    )
-                    when (val r = repo.writePresetFile(id, preset.encode())) {
-                        is AppResult.Ok -> {
-                            presets = listOf(preset) + presets.filterNot { it.id == id }
-                            StudioPrefs(context.applicationContext).setLastLookPreset(id)
-                            status = context.getString(R.string.studio_preset_save)
-                            statusIsError = false
-                        }
-                        is AppResult.Err -> reportStatusError(r.message)
-                    }
-                }
-            },
-            onApplyPreset = { id ->
-                scope.launch {
-                    when (val r = repo.readPresetFile(id)) {
-                        is AppResult.Ok -> {
-                            val preset = PhotoPreset.decode(r.value)
-                            if (preset == null) {
-                                reportStatusError(context.getString(R.string.studio_preset_unreadable))
-                            } else {
-                                sessionViewModel.replaceLayers(
-                                    preset.layersEncoded.decodeLayers().ifEmpty { layers }
-                                )
-                                status = context.getString(R.string.studio_presets)
-                                statusIsError = false
-                            }
-                        }
-                        is AppResult.Err -> reportStatusError(r.message)
-                    }
-                }
-            },
-            presets = presets,
-            onApplyErase = { if (pendingStamps.isNotEmpty()) push(PhotoOp.Erase(pendingStamps)) },
-            onApplyText = { push(PhotoOp.TextLayer(text, placeX, placeY, 0.08f, 0xFFFFFFFF.toInt())) },
-            onRestore = { push(PhotoOp.Restore) },
-            onCutout = { push(PhotoOp.Subject); format = ExportFormat.PNG },
-            onApplyCurves = {
-                // Skip identity curves to keep layer stack clean and Compare meaningful.
-                if (!PhotoOp.Curves(it).isIdentity()) push(PhotoOp.Curves(it.copyOf()))
-                curveYs = floatArrayOf(0f, 0.25f, 0.5f, 0.75f, 1f)
-            },
-            selectiveRange = selectiveRange,
-            selectiveHue = selectiveHue,
-            selectiveSat = selectiveSat,
-            selectiveLight = selectiveLight,
-            onSelectiveRange = { selectiveRange = it },
-            onSelectiveHue = { selectiveHue = it },
-            onSelectiveSat = { selectiveSat = it },
-            onSelectiveLight = { selectiveLight = it },
-            onApplySelectiveHsl = {
-                val op = PhotoOp.SelectiveHsl(selectiveRange, selectiveHue, selectiveSat, selectiveLight)
-                if (!op.isIdentity()) {
-                    push(op)
-                    selectiveHue = 0f
-                    selectiveSat = 1f
-                    selectiveLight = 0f
-                }
-            },
-            curveYs = curveYs,
-            onCurveYs = { curveYs = it },
-            lookKey = lookKey,
-            onLookKey = { lookKey = it },
-            onApplyLook = { key ->
-                val imported = ImportedLuts.isImported(key)
-                if (imported || !BundledLooks.isIdentity(key)) {
-                    push(PhotoOp.Lut(key))
-                    lookKey = BundledLooks.ORIGINAL
-                    importedLookLabel = null
-                }
-            },
-            onImportLut = {
-                pickLut.launch(arrayOf("*/*"))
-            },
-            importedLookLabel = importedLookLabel,
-            maskFill = (layers.firstOrNull { it.id == selectedLayer } ?: layers.lastOrNull())?.maskFill
-                ?: MaskFill.None,
-            maskReveal = maskReveal,
-            onMaskReveal = { maskReveal = it },
-            onClearMask = {
-                val id = selectedLayer ?: layers.lastOrNull()?.id
-                val layer = layers.firstOrNull { it.id == id }
-                if (id != null && layer != null) {
-                    lastMaskSnapshot = layer.mask to layer.maskFill
-                    sessionViewModel.replaceLayers(
-                        layers.map {
-                            if (it.id == id) it.copy(mask = emptyList(), maskFill = MaskFill.None) else it
-                        }
-                    )
-                }
-            },
-            onRestoreMask = {
-                val snapshot = lastMaskSnapshot ?: return@ToolBody
-                val id = selectedLayer ?: layers.lastOrNull()?.id ?: return@ToolBody
-                sessionViewModel.replaceLayers(
-                    layers.map {
-                        if (it.id == id) it.copy(mask = snapshot.first, maskFill = snapshot.second) else it
-                    }
-                )
-            },
-            canRestoreMask = lastMaskSnapshot != null,
-            visionAvailable = visionAvailable,
-            onSubjectMask = {
-                val id = selectedLayer ?: layers.lastOrNull()?.id ?: return@ToolBody
-                sessionViewModel.replaceLayers(
-                    layers.map {
-                        if (it.id == id) it.copy(maskFill = MaskFill.Subject) else it
-                    }
-                )
-            },
-            onBackgroundMask = {
-                val id = selectedLayer ?: layers.lastOrNull()?.id ?: return@ToolBody
-                sessionViewModel.replaceLayers(
-                    layers.map {
-                        if (it.id == id) it.copy(maskFill = MaskFill.Background) else it
-                    }
-                )
-            },
-            collageCols = collageCols,
-            pickingHealSource = pickingHealSource,
-            healSourceSet = healSource != null,
-            onPickHealSource = { pickingHealSource = true },
-            onPaintHeal = { pickingHealSource = false },
-            onSticker = { glyph -> push(PhotoOp.Sticker(glyph, placeX, placeY, 0.18f)) },
-            onCollage = { cols ->
-                collageCols = cols
-                push(PhotoOp.Collage(cols))
-                status = context.getString(
-                    if (cols >= 4) R.string.studio_collage_4_hint else R.string.studio_collage_2_hint
-                )
-                statusIsError = false
-            },
-            onAddPhoto = {
-                addPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-            }
-        )
-            if (group == PhotoGroup.Compose && mode == SessionMode.Layers && layers.isNotEmpty()) {
-                LayerStack(
-                    layers = layers,
-                    selectedId = selectedLayer,
-                    onSelect = { selectedLayer = it },
-                    onChange = { sessionViewModel.replaceLayers(it) }
-                )
-            }
-            }
-        )
+
+        if (!sideTools) {
+            ToolsChrome(
+                sideDock = false,
+                modifier = Modifier.align(Alignment.BottomCenter).zIndex(1f)
+            )
+        }
+        }
+        if (sideTools) {
+            ToolsChrome(sideDock = true)
+        }
         }
     }
     if (showExport) {
@@ -1315,7 +1348,8 @@ private fun modeBelongs(group: PhotoGroup, mode: SessionMode): Boolean = when (g
     PhotoGroup.Color -> mode == SessionMode.Adjust || mode == SessionMode.Curves ||
         mode == SessionMode.SelectiveHsl || mode == SessionMode.Looks || mode == SessionMode.Presets
     PhotoGroup.Retouch -> mode == SessionMode.Heal || mode == SessionMode.Fill ||
-        mode == SessionMode.Erase || mode == SessionMode.Sky || mode == SessionMode.Soften
+        mode == SessionMode.Erase || mode == SessionMode.Sky || mode == SessionMode.Soften ||
+        mode == SessionMode.SuperRes || mode == SessionMode.Denoise
     PhotoGroup.Compose -> mode == SessionMode.Layers || mode == SessionMode.Mask ||
         mode == SessionMode.Warp || mode == SessionMode.Collage
     PhotoGroup.Add -> mode == SessionMode.Text || mode == SessionMode.Stickers
@@ -1391,6 +1425,12 @@ private fun PhotoGroupChips(
                 FormatChip(stringResource(R.string.studio_soften), mode == SessionMode.Soften, "session_soften") {
                     onMode(SessionMode.Soften)
                 }
+                FormatChip(stringResource(R.string.studio_super_res), mode == SessionMode.SuperRes, "session_super_res") {
+                    onMode(SessionMode.SuperRes)
+                }
+                FormatChip(stringResource(R.string.studio_denoise), mode == SessionMode.Denoise, "session_denoise") {
+                    onMode(SessionMode.Denoise)
+                }
                 FormatChip(stringResource(R.string.studio_sky), mode == SessionMode.Sky, "session_sky") {
                     onMode(SessionMode.Sky)
                 }
@@ -1465,6 +1505,8 @@ private fun ToolBody(
     onApplyPerspective: (Float, Float) -> Unit,
     onApplyLiquify: (Float, Float, Float, Float) -> Unit,
     onApplySoften: (Float) -> Unit,
+    onApplySuperRes: (Int) -> Unit,
+    onApplyDenoise: (Float) -> Unit,
     onSavePreset: (String) -> Unit,
     onApplyPreset: (String) -> Unit,
     presets: List<PhotoPreset>,
@@ -1808,6 +1850,8 @@ private fun ToolBody(
                 onApplyLiquify = onApplyLiquify
             )
             SessionMode.Soften -> SoftenToolPanel(onApply = onApplySoften)
+            SessionMode.SuperRes -> SuperResToolPanel(onApply = onApplySuperRes)
+            SessionMode.Denoise -> DenoiseToolPanel(onApply = onApplyDenoise)
             SessionMode.Presets -> PresetToolPanel(
                 presets = presets,
                 onSave = onSavePreset,

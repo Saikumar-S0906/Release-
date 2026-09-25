@@ -18,6 +18,9 @@ class StudioCapabilityTest {
     @Test
     fun neuralInpaint_isUnavailable() {
         assertFalse(LiteRtInpaintHook.isAvailable())
+        assertFalse(PackEnhance.inpaintAvailable())
+        assertFalse(PackEnhance.superResAvailable())
+        assertFalse(PackEnhance.denoiseAvailable())
     }
 
     @Test

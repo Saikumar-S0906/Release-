@@ -75,4 +75,6 @@ appId: com.pixijoy.ai
 - tapOn:
     id: "movie_slowmo_ml"
 - assertVisible:
+    id: "movie_slowmo_pack_status"
+- assertVisible:
     id: "movie_session"

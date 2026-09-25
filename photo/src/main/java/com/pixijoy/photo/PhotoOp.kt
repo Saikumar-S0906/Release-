@@ -81,6 +81,10 @@ sealed interface PhotoOp {
     ) : PhotoOp
     /** C8 lightweight portrait soften. Graph `O`. Model-heavy → R5. */
     data class Soften(val amount: Float) : PhotoOp
+    /** E2 on-demand super-resolution. Graph `SR`. No-op until the pack engine is bound. */
+    data class SuperRes(val scale: Int) : PhotoOp
+    /** E3 on-demand denoise. Graph `N`. No-op until the pack engine is bound. */
+    data class Denoise(val amount: Float) : PhotoOp
 }
 
 data class PixelRect(val left: Int, val top: Int, val right: Int, val bottom: Int) {
@@ -150,6 +154,8 @@ fun List<PhotoOp>.encodeGraph(): String =
             is PhotoOp.Perspective -> "D,${op.horizontal},${op.vertical}"
             is PhotoOp.Liquify -> "M,${op.x},${op.y},${op.radius},${op.amount}"
             is PhotoOp.Soften -> "O,${op.amount}"
+            is PhotoOp.SuperRes -> "SR,${if (op.scale >= 4) 4 else 2}"
+            is PhotoOp.Denoise -> "N,${op.amount}"
         }
     }
 
@@ -229,6 +235,10 @@ fun String.decodeGraph(): List<PhotoOp> {
                     )
                 } else null
                 "O" -> if (parts.size == 2) PhotoOp.Soften(parts[1].toFloat()) else null
+                "SR" -> if (parts.size == 2) {
+                    PhotoOp.SuperRes(parts[1].toInt().let { if (it >= 4) 4 else 2 })
+                } else null
+                "N" -> if (parts.size == 2) PhotoOp.Denoise(parts[1].toFloat()) else null
                 else -> null
             }
         } catch (_: NumberFormatException) {

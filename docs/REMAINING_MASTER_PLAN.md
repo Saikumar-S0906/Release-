@@ -5,7 +5,7 @@
 **Branch:** land on `origin/next` after review-clear.  
 **Excluded:** Section A (done/exited) — do not reopen.
 
-**Snapshot (2026-09-23):** **Wave B EXITED** · **Wave C EXITED** · **D1–D11 MET** · Wave D EXITED. Live gate: **E** (R5 ML packs).
+**Snapshot (2026-09-25):** **Wave B EXITED** · **Wave C EXITED** · **D1–D11 MET** · Wave D EXITED. Live: **E pack runtime + E1–E5 scaffolding + F1 track contract**. Neural engines remain unbound.
 
 ```
 B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5 ML packs) ──▶ F (R6+ opt-in)
@@ -36,7 +36,7 @@ B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5
 | **B5** | Docs on `origin/next` | **EXITED** with Phase 0 land | Status docs in same commit |
 | **B6** | Gallery Photo Picker | Yellow/manual | Keep documented; no fake green |
 
-**Immediate next:** **E** R5 ML packs (shared foundation + E5 size gate before E1–E4).
+**Immediate next:** bind real LiteRT interpreters into `PackEngineHooks` once models exist; device Maestro/TalkBack/five-user remains the R5 quality gate.
 
 **G overlap with B:** **G4** exited with B3 (chips ≥48dp, announced selection).
 
@@ -98,11 +98,11 @@ Then:
 
 | ID | Pack | Prerequisite | Delivery |
 |----|------|--------------|----------|
-| **E5** | Base APK ≤ ~40 MB | Before first pack release | Feature Delivery, manifest/versioning, install states, uninstall/retry UX | Prefer **E5 scaffolding with pack foundation**, enforce size gate at first pack ship |
-| **E1** | Inpaint / generative fill | C3 + pack foundation | `:ml-inpaint`; graph op; export parity |
-| **E2** | Super-resolution | Stable decode/export + pack runtime | Optional pack; explicit quality/time copy |
-| **E3** | Denoise | Same runtime | Preview + full-quality WorkManager export |
-| **E4** | Frame interpolation | D10 contract + pack runtime | Shared movie interp engine |
+| **E5** | Base APK ≤ ~40 MB | With pack foundation | `:ml:pack` + `reportApkSize`; selfie_segmenter (~244 KB) stays in base. Scaffolding **MET 2026-09-25**. Measured minified unsigned APK **131.11 MB** (Media3/MediaPipe JNI). Pack models stay out |
+| **E1** | Inpaint / generative fill | C3 + pack foundation | Fill pack CTA; `LiteRtInpaintHook` consults pack+hook; Telea fallback. Engine unbound |
+| **E2** | Super-resolution | Pack runtime | Graph `SR`; Apply gated; WorkManager export path. Engine unbound |
+| **E3** | Denoise | Same runtime | Graph `N`; preview + export same op. Engine unbound |
+| **E4** | Frame interpolation | D10 + pack runtime | `FrameInterp.mlAvailable` ← pack engine; D10 download CTA. Engine unbound |
 
 ---
 
@@ -110,7 +110,7 @@ Then:
 
 | ID | Feature | Depends on |
 |----|---------|------------|
-| **F1** | Tracking / roto-lite | D1, D3, segmentation/masks |
+| **F1** | Tracking / roto-lite | D1, D3, masks. **Contract MET 2026-09-25** (`ClipTrack` + pack CTA; engine unbound) |
 | **F2** | VFX / particles | F1 + compositor/layers |
 | **F3** | 3D / Filament titles | D4 + keyframe/transform |
 | **F4** | ARCore previz | F1 + 3D primitives + device gates |
@@ -126,14 +126,14 @@ Never land F* as isolated effects without listed primitives.
 | ID | Work | When |
 |----|------|------|
 | **G4** | Accessibility | **With B3** (must-exit) |
-| **G1** | Tablet/foldable two-pane | After B3; parallel with C |
+| **G1** | Tablet/foldable two-pane | **MET** catalog\|session + session preview\|tools 2026-09-25 |
 | **G2** | Photo/Movie ViewModels | After B3 stable; gradual extract |
 | **G3** | Hilt in StudioApp | With G2 |
-| **G5** | Haptics | Attach to crop/timeline/export slices |
+| **G5** | Haptics | **MET** crop Apply + movie split 2026-09-25 |
 | **G6** | Skeleton Library thumbs | With Library polish |
 | **G7** | Empty-state illustrations | With empty CTA polish |
 | **G8** | Autosave + rename-after-create/export | Attach to Create/Export |
-| **G9** | BuildConfig cleanup | Next Gradle touch only |
+| **G9** | BuildConfig cleanup | **MET** 2026-09-25 |
 
 ---
 
@@ -177,7 +177,7 @@ Never land F* as isolated effects without listed primitives.
 
 ## Next concrete slice (start here)
 
-1. **E** R5 ML packs — shared foundation + E5 size gate before E1–E4  
-2. **Kick G1** tablet two-pane refinement in parallel  
+1. Bind LiteRT interpreters to `PackEngineHooks` when models exist (E1–E4 engines)  
+2. R5 device gate (Maestro + TalkBack + five-user) on a mid-range phone 
 
 When this plan drifts, update this file and `TOTAL_REMAINING.txt` in the same commit as the exit.

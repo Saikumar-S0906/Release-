@@ -285,5 +285,7 @@ class BitmapPhotoEngine(
         is PhotoOp.Perspective -> applyPerspectiveKeystone(src, op.horizontal, op.vertical)
         is PhotoOp.Liquify -> applyLiquify(src, op.x, op.y, op.radius, op.amount)
         is PhotoOp.Soften -> applyPortraitSoften(src, op.amount)
+        is PhotoOp.SuperRes -> applySuperRes(src, op.scale)
+        is PhotoOp.Denoise -> applyDenoise(src, op.amount)
     }
 }

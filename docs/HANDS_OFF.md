@@ -2,7 +2,7 @@
 
 Saikumar acts as **client**. Day-to-day ownership sits with **ProjectManager** and the team. Do not wait on him for routine decisions. Ask only when a true client approval or product call is required.
 
-Last updated: 2026-09-23 (IST)
+Last updated: 2026-09-25 (IST)
 
 ## North star
 
@@ -81,7 +81,12 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **D9** — ClipChroma green/blue key + GlEffect; Maestro `d9-chroma-key` **green** Pixel_7a.
 - **D10** — ClipSlowMo + FrameInterp contract (heuristic now; ML for E4); Maestro `d10-slowmo-interp` **green** Pixel_7a.
 - **D11** — MovieHdrMode + Composition.setHdrMode (+ Ultra HDR gain-map retain API 34+); Maestro `d11-hdr-export` **green** Pixel_7a.
-**In progress:** Wave E (R5 ML packs).
+- **E pack runtime** — `:ml:pack` checksum/store/Play+file-picker sideload; Fill/SR/Denoise/Slow-mo/Track CTAs; engines unbound. Minified unsigned APK **131.11 MB** (models still out). See `docs/R5_ML_PACKS.md`.
+- **F1** — `ClipTrack` timeline contract + pack CTA (engine unbound).
+- **G1** — session preview\|tools on `isStudioTwoPane` (`studio_session_side_tools`); phone remains single-pane.
+- **G5** — haptic on crop Apply and movie split.
+- **G9** — removed deprecated global BuildConfig default.
+**In progress:** bind LiteRT interpreters; R5 device gate (Maestro/TalkBack/five-user).
 
 **Blockers:** None.
 
@@ -117,7 +122,7 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 
 ### Live gate
 
-**E** R5 ML packs (foundation + E5 before E1–E4).
+Bind LiteRT pack engines (E1–E4) + R5 device acceptance. F2+ still opt-in after F1 engine.
 
 ### Follow-up epic (not a feature gate)
 
@@ -130,6 +135,8 @@ Split Photo/Movie session → ViewModels + tool panels · consistent Hilt in Stu
 - `docs/TOTAL_REMAINING.txt`
 - `docs/REMAINING_MASTER_PLAN.md`
 - `docs/HANDS_OFF.md` (this file)
+- `docs/R5_ML_PACKS.md`
+- `docs/FUNCTIONALITY_MATRIX.md`
 
 ## When Saikumar returns
 

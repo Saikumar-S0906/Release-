@@ -29,6 +29,7 @@ import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
 import com.pixijoy.movie.ClipSlowMo
 import com.pixijoy.movie.FrameInterp
+import com.pixijoy.ml.pack.PackId
 import com.pixijoy.movie.SlowMoEngine
 import com.pixijoy.movie.SlowMoPreset
 import com.pixijoy.movie.TimelineClip
@@ -110,6 +111,13 @@ fun MovieSlowMoPanel(
                 color = PixiTextMuted,
                 modifier = Modifier.testTag("movie_slowmo_resolved")
             )
+            if (!FrameInterp.mlAvailable()) {
+                PackStatusRow(
+                    packId = PackId.FrameInterp,
+                    statusTag = "movie_slowmo_pack_status",
+                    downloadTag = "movie_slowmo_pack_download"
+                )
+            }
         }
     }
 }

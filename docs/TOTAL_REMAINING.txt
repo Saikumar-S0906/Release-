@@ -1,5 +1,5 @@
 ﻿PixiJoy — TOTAL remaining (all stages)
-Updated: 2026-09-23 ~8:35 PM IST
+Updated: 2026-09-25
 Source: room status + docs/NORTH_STAR_ROADMAP.md + UX backlog
 Branch: origin/next (tip moving)
 
@@ -60,16 +60,17 @@ D11. HDR export — MET (2026-09-23 MovieHdrMode + Composition.setHdrMode; Maest
 ================================================================
 E. R5 ML PACKS (on-demand, base APK lean)
 ================================================================
-E1. Inpaint / generative fill pack
-E2. Super-resolution
-E3. Denoise
-E4. Frame interp pack (shared with movie)
-E5. Keep base APK under ~40 MB via Play Feature Delivery
+Pack runtime MET 2026-09-25 (`:ml:pack` checksum, Play+sideload, SplitCompat, unavailable UI)
+E1. Inpaint pack CTA + LiteRtInpaintHook wiring — runtime MET; interpreter unbound (Telea fallback)
+E2. Super-resolution graph SR — contract MET; Apply gated; engine unbound
+E3. Denoise graph N — contract MET; preview+export path; engine unbound
+E4. Frame interp pack → FrameInterp.mlAvailable — wiring MET; engine unbound
+E5. Size scaffolding MET (`reportApkSize`); selfie_segmenter ~244 KB stays in base. Measured minified unsigned APK **131.11 MB** (Media3/MediaPipe JNI). ~40 MB remains an aspiration; pack **models** stay out of the base APK
 
 ================================================================
 F. R6+ AMBITION (opt-in packs, not base APK)
 ================================================================
-F1. Tracking / roto-lite
+F1. Tracking / roto-lite — contract MET 2026-09-25 (ClipTrack + pack CTA; engine unbound)
 F2. VFX / particle packs
 F3. 3D / Filament titles
 F4. ARCore previz
@@ -79,21 +80,21 @@ F6. Smart-object analog; advanced type; print/PDF
 ================================================================
 G. PLATFORM / UX CHROME (ongoing)
 ================================================================
-G1. Tablet / foldable two-pane (preview | tools) — NavigationSuite already partial
+G1. Tablet / foldable two-pane — catalog|session MET earlier; session preview|tools (`studio_session_side_tools`) MET 2026-09-25 (`isStudioTwoPane` 840×520)
 G2. ViewModel + Hilt for PhotoSessionScreen / MovieSessionScreen (~1100 lines each)
 G3. Consistent Hilt in StudioApp (repos/engines)
 G4. Accessibility: 48dp chips, announce selected state — exited with B3
-G5. Haptics (crop snap, timeline, export done)
+G5. Haptics — crop Apply + movie split MET 2026-09-25 (no crop-handle snap yet)
 G6. Skeleton loaders for Library thumbs
 G7. Friendly empty-state illustrations
 G8. Autosave indicator polish; rename after first create/export
-G9. Gradle BuildConfig deprecation cleanup
+G9. Gradle BuildConfig deprecation cleanup — MET 2026-09-25 (removed `android.defaults.buildfeatures.buildconfig`; `:app` still sets `buildFeatures.buildConfig`)
 
 ================================================================
 H. SUGGESTED PATH (ASAP, no fake greens)
 ================================================================
-1. E R5 ML packs (foundation + E5 size gate; E4 plugs into D10 FrameInterp)
-2. Parallel G1–G3 structural chrome
-3. F only as on-demand modules
+1. Bind LiteRT interpreters into PackEngineHooks when models exist
+2. Device Maestro / TalkBack / five-user (R5 entry gate)
+3. F2+ only as on-demand modules after F1 engine
 
 Hard rule stays: edit-graph or timeline op → engine → WorkManager export. Local-first. Quality > clock.

@@ -53,12 +53,11 @@ Movie preview used to call `setComposition` + `prepare()` on every timeline enco
 ## Deferred
 
 - Typing a slider number (Lightroom).
-- Haptics on crop snap and split (roadmap G5).
 - Skeleton thumbs and empty illustrations (G6, G7).
 - Rename after export (G8).
 - Live PiP preview when `CompositionPlayer` can take more than one input.
 - Selective HSL on the GPU after a Pixel_7a frame-time measurement (B4).
-- R5 ML packs, tablet two-pane, and ViewModel extraction.
+- LiteRT pack engines, and ViewModel extraction.
 
 ## After (glass overlay polish)
 

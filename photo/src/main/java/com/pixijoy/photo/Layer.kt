@@ -54,11 +54,14 @@ fun PhotoOp.layerName(): String = when (this) {
     is PhotoOp.Perspective -> "Perspective"
     is PhotoOp.Liquify -> "Liquify"
     is PhotoOp.Soften -> "Soften"
+    is PhotoOp.SuperRes -> "Super-res"
+    is PhotoOp.Denoise -> "Denoise"
 }
 
 fun PhotoOp.isGeometry(): Boolean =
     this is PhotoOp.Crop || this is PhotoOp.Rotate || this is PhotoOp.FlipH ||
-        this is PhotoOp.Expand || this is PhotoOp.Collage || this is PhotoOp.Perspective
+        this is PhotoOp.Expand || this is PhotoOp.Collage || this is PhotoOp.Perspective ||
+        this is PhotoOp.SuperRes
 
 /**
  * True when an operation changes pixels on its own. This keeps UI affordances such as
@@ -87,6 +90,8 @@ fun PhotoOp.isIdentity(): Boolean = when (this) {
     is PhotoOp.Perspective -> kotlin.math.abs(horizontal) < 0.001f && kotlin.math.abs(vertical) < 0.001f
     is PhotoOp.Liquify -> kotlin.math.abs(amount) < 0.001f || radius <= 0f
     is PhotoOp.Soften -> amount <= 0.01f
+    is PhotoOp.SuperRes -> scale <= 1
+    is PhotoOp.Denoise -> amount <= 0.01f
 }
 
 /** A visible layer with a non-identity operation is eligible for image comparison. */

@@ -66,6 +66,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -90,6 +92,7 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import coil3.compose.AsyncImage
 import com.pixijoy.ai.R
+import com.pixijoy.ai.ui.isStudioTwoPane
 import com.pixijoy.ai.export.MovieExportWorker
 import com.pixijoy.core.common.AppResult
 import com.pixijoy.core.data.Project
@@ -456,160 +459,63 @@ fun MovieSessionScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(PixiBg)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .testTag("movie_session")
-    ) {
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-        ) {
-        StudioTopChrome(Modifier.align(Alignment.TopCenter).zIndex(2f)) {
-            Column {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(onClick = ::leaveSession, modifier = Modifier.testTag("session_back")) {
-                    Text(stringResource(R.string.studio_back), color = PixiText)
+    val configuration = LocalConfiguration.current
+    val sideTools = isStudioTwoPane(configuration.screenWidthDp, configuration.screenHeightDp)
+    val haptics = LocalHapticFeedback.current
+    @Composable
+    fun TimelineDock() {
+        MovieTimelineDock(
+            playhead = playhead,
+            playing = playing,
+            timeline = timeline,
+            selected = selected,
+            paths = paths,
+            sourceDurations = sourceDurations,
+            thumbnailEpoch = previewEpoch,
+            seekEnabled = previewState.result.capability ==
+                CompositionPreviewCapability.LiveSingle,
+            playEnabled = previewState.result.capability !=
+                CompositionPreviewCapability.ExportOnly,
+            onPlayhead = { playhead = it },
+            onSeek = { ms ->
+                if (seekComposition(ms)) {
+                    val bedDur = bedPlayer?.duration ?: 0L
+                    if (bedDur > 0) bedPlayer?.seekTo(ms % bedDur)
+                    val voiceDur = voicePlayer?.duration ?: 0L
+                    if (voiceDur > 0) voicePlayer?.seekTo(ms.coerceAtMost(voiceDur))
+                    true
+                } else {
+                    false
                 }
-                Text(
-                    toolLabel,
-                    color = PixiText,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
+            },
+            onTogglePlay = {
+                playing = !playing
+                player?.playWhenReady = playing
+                bedPlayer?.playWhenReady = playing
+                voicePlayer?.playWhenReady = playing
+            },
+            onStep = { stepFrame(it) },
+            onSelectClip = { selectedId = it },
+            onTrimIn = { id, value ->
+                commitTimeline(timeline.rippleTrimIn(id, value), live = true)
+            },
+            onTrimOut = { id, value, sourceEnd ->
+                commitTimeline(
+                    timeline.rippleTrimOut(id, value, sourceEnd),
+                    live = true
                 )
-                TextButton(
-                    onClick = {
-                        exportGif = false
-                        showExport = true
-                    },
-                    enabled = !exporting,
-                    modifier = Modifier.testTag("session_export")
-                ) {
-                    Text(stringResource(R.string.studio_export), color = PixiText)
-                }
-                if (still) {
-                    TextButton(
-                        onClick = {
-                            if (!exporting) runExport(gif = true)
-                        },
-                        modifier = Modifier.testTag("session_export_gif")
-                    ) {
-                        Text(stringResource(R.string.studio_export_gif), color = PixiText)
-                    }
-                }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextButton(
-                    onClick = sessionViewModel::undo,
-                    enabled = sessionState.canUndo,
-                    modifier = Modifier.testTag("movie_undo")
-                ) {
-                    Text(stringResource(R.string.studio_undo), color = PixiTextMuted)
-                }
-                TextButton(
-                    onClick = sessionViewModel::redo,
-                    enabled = sessionState.canRedo,
-                    modifier = Modifier.testTag("movie_redo")
-                ) {
-                    Text(stringResource(R.string.studio_redo), color = PixiTextMuted)
-                }
-            }
-            }
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clipToBounds()
-                .background(PixiSurface)
-                .testTag("movie_preview")
-        ) {
-            if (still) {
-                KenBurnsPreview(path = path, talking = talking, durationMs = duration.toInt())
-            } else if (player != null) {
-                AndroidView(
-                    factory = { ctx ->
-                        PlayerView(ctx).apply {
-                            useController = false
-                            this.player = player
-                            layoutParams = ViewGroup.LayoutParams(
-                                ViewGroup.LayoutParams.MATCH_PARENT,
-                                ViewGroup.LayoutParams.MATCH_PARENT
-                            )
-                        }
-                    },
-                    update = { view -> view.player = player },
-                    modifier = Modifier.fillMaxSize()
-                )
-            } else {
-                Text(
-                    stringResource(R.string.studio_layout_preview_export_only),
-                    color = PixiText,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(24.dp)
-                        .testTag("movie_preview_export_only")
-                )
-            }
-        }
+            },
+            onTrimSettled = { settlePreview() }
+        )
+    }
+    @Composable
+    fun ToolsChrome(sideDock: Boolean, modifier: Modifier = Modifier) {
         StudioChromeBar(
-            modifier = Modifier.align(Alignment.BottomCenter).zIndex(1f),
-            abovePanel = if (!still) {
+            modifier = modifier,
+            sideDock = sideDock,
+            abovePanel = if (!sideDock && !still) {
                 {
-                    MovieTimelineDock(
-                        playhead = playhead,
-                        playing = playing,
-                        timeline = timeline,
-                        selected = selected,
-                        paths = paths,
-                        sourceDurations = sourceDurations,
-                        thumbnailEpoch = previewEpoch,
-                        seekEnabled = previewState.result.capability ==
-                            CompositionPreviewCapability.LiveSingle,
-                        playEnabled = previewState.result.capability !=
-                            CompositionPreviewCapability.ExportOnly,
-                        onPlayhead = { playhead = it },
-                        onSeek = { ms ->
-                            if (seekComposition(ms)) {
-                                val bedDur = bedPlayer?.duration ?: 0L
-                                if (bedDur > 0) bedPlayer?.seekTo(ms % bedDur)
-                                val voiceDur = voicePlayer?.duration ?: 0L
-                                if (voiceDur > 0) voicePlayer?.seekTo(ms.coerceAtMost(voiceDur))
-                                true
-                            } else {
-                                false
-                            }
-                        },
-                        onTogglePlay = {
-                            playing = !playing
-                            player?.playWhenReady = playing
-                            bedPlayer?.playWhenReady = playing
-                            voicePlayer?.playWhenReady = playing
-                        },
-                        onStep = { stepFrame(it) },
-                        onSelectClip = { selectedId = it },
-                        onTrimIn = { id, value ->
-                            commitTimeline(timeline.rippleTrimIn(id, value), live = true)
-                        },
-                        onTrimOut = { id, value, sourceEnd ->
-                            commitTimeline(
-                                timeline.rippleTrimOut(id, value, sourceEnd),
-                                live = true
-                            )
-                        },
-                        onTrimSettled = { settlePreview() }
-                    )
+                    TimelineDock()
                 }
             } else {
                 null
@@ -720,6 +626,9 @@ fun MovieSessionScreen(
                 StudioChip(stringResource(R.string.studio_slow_mo), effectSub == MovieEffectSub.SlowMo, MovieEffectSub.SlowMo.tag) {
                     effectSub = MovieEffectSub.SlowMo
                 }
+                StudioChip(stringResource(R.string.studio_track), effectSub == MovieEffectSub.Track, MovieEffectSub.Track.tag) {
+                    effectSub = MovieEffectSub.Track
+                }
             }
             if (effectSub == MovieEffectSub.Motion) {
             MovieMotionPanel(
@@ -755,6 +664,15 @@ fun MovieSessionScreen(
                 onSlowMo = { slowMo ->
                     val id = selected?.id ?: return@MovieSlowMoPanel
                     commitTimeline(timeline.update(id) { it.copy(slowMo = slowMo) })
+                }
+            )
+            }
+            if (effectSub == MovieEffectSub.Track) {
+            MovieTrackPanel(
+                selected = selected,
+                onTrack = { track ->
+                    val id = selected?.id ?: return@MovieTrackPanel
+                    commitTimeline(timeline.update(id) { it.copy(track = track) })
                 }
             )
             }
@@ -845,6 +763,7 @@ fun MovieSessionScreen(
                     onClick = {
                         val ph = (playhead * timeline.totalMs()).toLong()
                         val next = timeline.split(ph)
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                         commitTimeline(next)
                         selectedId = next.clips.firstOrNull()?.id
                     },
@@ -1301,6 +1220,136 @@ fun MovieSessionScreen(
             }
             }
         )
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(PixiBg)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .testTag("movie_session")
+    ) {
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+        ) {
+        StudioTopChrome(Modifier.align(Alignment.TopCenter).zIndex(2f)) {
+            Column {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = ::leaveSession, modifier = Modifier.testTag("session_back")) {
+                    Text(stringResource(R.string.studio_back), color = PixiText)
+                }
+                Text(
+                    toolLabel,
+                    color = PixiText,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                TextButton(
+                    onClick = {
+                        exportGif = false
+                        showExport = true
+                    },
+                    enabled = !exporting,
+                    modifier = Modifier.testTag("session_export")
+                ) {
+                    Text(stringResource(R.string.studio_export), color = PixiText)
+                }
+                if (still) {
+                    TextButton(
+                        onClick = {
+                            if (!exporting) runExport(gif = true)
+                        },
+                        modifier = Modifier.testTag("session_export_gif")
+                    ) {
+                        Text(stringResource(R.string.studio_export_gif), color = PixiText)
+                    }
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(
+                    onClick = sessionViewModel::undo,
+                    enabled = sessionState.canUndo,
+                    modifier = Modifier.testTag("movie_undo")
+                ) {
+                    Text(stringResource(R.string.studio_undo), color = PixiTextMuted)
+                }
+                TextButton(
+                    onClick = sessionViewModel::redo,
+                    enabled = sessionState.canRedo,
+                    modifier = Modifier.testTag("movie_redo")
+                ) {
+                    Text(stringResource(R.string.studio_redo), color = PixiTextMuted)
+                }
+            }
+            }
+        }
+        Column(Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .then(if (sideTools) Modifier.weight(1f).fillMaxWidth() else Modifier.fillMaxSize())
+                .clipToBounds()
+                .background(PixiSurface)
+                .testTag("movie_preview")
+        ) {
+            if (still) {
+                KenBurnsPreview(path = path, talking = talking, durationMs = duration.toInt())
+            } else if (player != null) {
+                AndroidView(
+                    factory = { ctx ->
+                        PlayerView(ctx).apply {
+                            useController = false
+                            this.player = player
+                            layoutParams = ViewGroup.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.MATCH_PARENT
+                            )
+                        }
+                    },
+                    update = { view -> view.player = player },
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Text(
+                    stringResource(R.string.studio_layout_preview_export_only),
+                    color = PixiText,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(24.dp)
+                        .testTag("movie_preview_export_only")
+                )
+            }
+        }
+        if (sideTools && !still) {
+            TimelineDock()
+        }
+        }
+
+        if (!sideTools) {
+            ToolsChrome(
+                sideDock = false,
+                modifier = Modifier.align(Alignment.BottomCenter).zIndex(1f)
+            )
+        }
+        }
+        if (sideTools) {
+            ToolsChrome(sideDock = true)
+        }
         }
 
         Column(

@@ -106,16 +106,20 @@ Smart objects, vector paths, group folders, generative fill, RAW (parallel track
 ## Wave C depth (C3/C5–C8): MET
 
 **Met:**
-- **C3** Fill undo stroke + clear; Telea; E1 `LiteRtInpaintHook` stub.
+- **C3** Fill undo stroke + clear; Telea; E1 `LiteRtInpaintHook` now consults `:ml:pack` (engine unbound).
 - **C5** `PhotoOp.Perspective` (`D`) + `Liquify` (`M`); `WarpOps`; session Warp rail.
 - **C6** `PhotoPreset` local files; Library **Export all photos** via `BatchPhotoExportWorker`.
 - **C7** `ColorIntent` sRGB / Display P3 on export path (best-effort device support).
-- **C8** light `PhotoOp.Soften` (`O`); model-heavy portrait → R5.
-**Units:** `WarpOpsTest` + graph round-trip. Maestro: `.maestro/warp/`, `.maestro/soften/`.
+- **C8** light `PhotoOp.Soften` (`O`); model-heavy → R5 Super-res/Denoise graphs `SR`/`N` (Apply gated).
+**Units:** `WarpOpsTest` + graph round-trip + `PackEnhanceOpTest`. Maestro: `.maestro/warp/`, `.maestro/soften/`, `.maestro/packs/`.
 
-## Next R3 / R4
+## R5 pack runtime: MET (engines unbound)
 
-**Next:** D2+ movie cinema (D1 composition E2E MET).
+See `docs/R5_ML_PACKS.md`. F1 `ClipTrack` contract landed.
+
+## Next
+
+Bind LiteRT interpreters. Do not ship Telea/bicubic as neural.
 
 See `TOTAL_REMAINING.txt` and `REMAINING_MASTER_PLAN.md`.
 

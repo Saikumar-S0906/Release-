@@ -12,6 +12,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -24,6 +25,8 @@ import com.pixijoy.designsystem.PixiAccent
 import com.pixijoy.designsystem.PixiPrimaryButton
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
+import com.pixijoy.ml.pack.PackId
+import com.pixijoy.photo.PackEnhance
 import com.pixijoy.photo.PhotoPreset
 
 /**
@@ -124,6 +127,68 @@ fun SoftenToolPanel(onApply: (Float) -> Unit) {
 }
 
 @Composable
+fun SuperResToolPanel(onApply: (Int) -> Unit) {
+    var scale by remember { mutableIntStateOf(2) }
+    val ready = PackEnhance.superResAvailable()
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            stringResource(R.string.studio_super_res_hint),
+            color = PixiTextMuted,
+            modifier = Modifier.testTag("session_super_res_hint")
+        )
+        PackStatusRow(
+            packId = PackId.SuperRes,
+            statusTag = "session_super_res_pack_status",
+            downloadTag = "session_super_res_pack_download"
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = { scale = 2 }, modifier = Modifier.testTag("session_super_res_2x")) {
+                Text(stringResource(R.string.studio_super_res_2x), color = PixiText)
+            }
+            TextButton(onClick = { scale = 4 }, modifier = Modifier.testTag("session_super_res_4x")) {
+                Text(stringResource(R.string.studio_super_res_4x), color = PixiText)
+            }
+        }
+        PixiPrimaryButton(
+            stringResource(R.string.studio_apply),
+            { onApply(scale) },
+            Modifier.testTag("session_apply_super_res"),
+            enabled = ready
+        )
+    }
+}
+
+@Composable
+fun DenoiseToolPanel(onApply: (Float) -> Unit) {
+    var amount by remember { mutableFloatStateOf(0.4f) }
+    val ready = PackEnhance.denoiseAvailable()
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            stringResource(R.string.studio_denoise_hint),
+            color = PixiTextMuted,
+            modifier = Modifier.testTag("session_denoise_hint")
+        )
+        PackStatusRow(
+            packId = PackId.Denoise,
+            statusTag = "session_denoise_pack_status",
+            downloadTag = "session_denoise_pack_download"
+        )
+        SessionLabeledSlider(
+            stringResource(R.string.studio_denoise_amount),
+            amount,
+            0f..1f,
+            "denoise_amount"
+        ) { amount = it }
+        PixiPrimaryButton(
+            stringResource(R.string.studio_apply),
+            { onApply(amount) },
+            Modifier.testTag("session_apply_denoise"),
+            enabled = ready
+        )
+    }
+}
+
+@Composable
 fun PresetToolPanel(
     presets: List<PhotoPreset>,
     onSave: (String) -> Unit,
@@ -174,6 +239,11 @@ fun FillToolPanel(
             onBrush
         )
         Text(stringResource(R.string.studio_fill_hint), color = PixiTextMuted)
+        PackStatusRow(
+            packId = PackId.Inpaint,
+            statusTag = "session_fill_pack_status",
+            downloadTag = "session_fill_pack_download"
+        )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = onUndoStroke, modifier = Modifier.testTag("session_fill_undo")) {
                 Text(stringResource(R.string.studio_fill_undo_stroke), color = PixiTextMuted)

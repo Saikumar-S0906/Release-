@@ -38,6 +38,10 @@
 -dontwarn javax.lang.model.type.TypeVisitor
 -dontwarn javax.lang.model.util.SimpleTypeVisitor8
 
+# Play Feature Delivery
+-keep class com.google.android.play.core.** { *; }
+-dontwarn com.google.android.play.core.**
+
 # Kotlin / coroutines
 -dontwarn kotlinx.coroutines.**
 -keepclassmembers class kotlinx.coroutines.** {
