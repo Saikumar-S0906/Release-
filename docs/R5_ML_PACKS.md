@@ -34,8 +34,8 @@
 
 | ID | Contract | Engine |
 |----|----------|--------|
-| E4 | `FrameInterp.mlAvailable` ← pack engine | **HOLD.** `PackLiteRt` leaves `FrameInterp` as `Unit`. No `downloadUrl`, no SHA pin, no shape gate, no `interp.tflite` in the repo. Chip stays off `engineReady` until Architect lands a real artifact |
-| F1 | `ClipTrack` field on `TimelineClip` | **HOLD.** `PackLiteRt` leaves `Track` as `Unit`. No `downloadUrl`, no SHA pin, no shape gate, no `track.tflite` in the repo. No motion follow |
+| E4 | `FrameInterp.mlAvailable` ← pack engine | **HOLD.** `PackLiteRt` leaves `FrameInterp` as `Unit`. No `downloadUrl`, no SHA pin, no shape gate, no `interp.tflite` in the repo. Unbound chip is disabled and says “Coming with pack”. Frame hold stays unlabeled as neural |
+| F1 | `ClipTrack` field on `TimelineClip` | **HOLD.** `PackLiteRt` leaves `Track` as `Unit`. No `downloadUrl`, no SHA pin, no shape gate, no `track.tflite` in the repo. Unbound control is disabled and says “Coming with pack”. No motion follow |
 
 ## E5 size
 

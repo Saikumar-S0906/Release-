@@ -30,7 +30,8 @@ class StudioTalkBackTest {
         val phrase = packTalkBackPhrase(
             PackTalkBackKind.Downloaded,
             downloaded = "Downloaded",
-            readyToApply = "Ready to apply"
+            readyToApply = "Ready to apply",
+            comingWithPack = "Coming with pack"
         )
         assertEquals("Downloaded", phrase)
         assertFalse(phrase!!.contains("neural", ignoreCase = true))
@@ -48,7 +49,8 @@ class StudioTalkBackTest {
             packTalkBackPhrase(
                 PackTalkBackKind.ReadyToApply,
                 downloaded = "Downloaded",
-                readyToApply = "Ready to apply"
+                readyToApply = "Ready to apply",
+                comingWithPack = "Coming with pack"
             )
         )
         assertEquals(PackTalkBackKind.Other, packTalkBackKind(fileReady = false, engineReady = true))
@@ -57,7 +59,8 @@ class StudioTalkBackTest {
             packTalkBackPhrase(
                 PackTalkBackKind.Other,
                 downloaded = "Downloaded",
-                readyToApply = "Ready to apply"
+                readyToApply = "Ready to apply",
+                comingWithPack = "Coming with pack"
             )
         )
     }

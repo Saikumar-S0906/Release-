@@ -7,6 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.pixijoy.ai.R
 import com.pixijoy.designsystem.PixiPrimaryButton
@@ -24,6 +26,13 @@ fun MovieTrackPanel(
 ) {
     val track = selected?.track ?: ClipTrack.None
     val ready = rememberPackEngineReady(PackId.Track)
+    val toggle = trackToggle(engineReady = ready, trackActive = track.isActive)
+    val coming = stringResource(R.string.studio_hold_coming)
+    val label = when (toggle) {
+        HoldControl.ComingWithPack -> coming
+        HoldControl.ClearTrack -> stringResource(R.string.studio_track_clear)
+        else -> stringResource(R.string.studio_track_enable)
+    }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             stringResource(R.string.studio_track_hint),
@@ -36,9 +45,7 @@ fun MovieTrackPanel(
             downloadTag = "movie_track_pack_download"
         )
         PixiPrimaryButton(
-            stringResource(
-                if (track.isActive) R.string.studio_track_clear else R.string.studio_track_enable
-            ),
+            label,
             {
                 onTrack(
                     if (track.isActive) ClipTrack.None
@@ -46,13 +53,16 @@ fun MovieTrackPanel(
                 )
             },
             Modifier.testTag("movie_track_toggle"),
-            enabled = ready || track.isActive
+            enabled = toggle.enabled,
+            contentDescription = label
         )
         if (!ready) {
             Text(
-                stringResource(R.string.studio_track_locked),
+                coming,
                 color = PixiTextMuted,
-                modifier = Modifier.testTag("movie_track_locked")
+                modifier = Modifier
+                    .testTag("movie_track_locked")
+                    .semantics { contentDescription = coming }
             )
         }
     }

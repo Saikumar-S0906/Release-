@@ -11,12 +11,21 @@ internal fun talkBackName(label: String, selected: Boolean, selectedFormat: Stri
 internal enum class PackTalkBackKind {
     ReadyToApply,
     Downloaded,
+    ComingWithPack,
     Other
 }
 
-/** A verified file is "Downloaded". "Ready to apply" only when the engine is bound. */
-internal fun packTalkBackKind(fileReady: Boolean, engineReady: Boolean): PackTalkBackKind = when {
+/**
+ * A verified hosted file is "Downloaded". "Ready to apply" only when the engine is bound.
+ * E4 / F1 stay "Coming with pack" until that bind. They have no hosted file to call downloaded.
+ */
+internal fun packTalkBackKind(
+    fileReady: Boolean,
+    engineReady: Boolean,
+    holdPack: Boolean = false
+): PackTalkBackKind = when {
     fileReady && engineReady -> PackTalkBackKind.ReadyToApply
+    holdPack && !engineReady -> PackTalkBackKind.ComingWithPack
     fileReady -> PackTalkBackKind.Downloaded
     else -> PackTalkBackKind.Other
 }
@@ -24,10 +33,12 @@ internal fun packTalkBackKind(fileReady: Boolean, engineReady: Boolean): PackTal
 internal fun packTalkBackPhrase(
     kind: PackTalkBackKind,
     downloaded: String,
-    readyToApply: String
+    readyToApply: String,
+    comingWithPack: String
 ): String? = when (kind) {
     PackTalkBackKind.ReadyToApply -> readyToApply
     PackTalkBackKind.Downloaded -> downloaded
+    PackTalkBackKind.ComingWithPack -> comingWithPack
     PackTalkBackKind.Other -> null
 }
 

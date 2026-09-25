@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -42,6 +43,9 @@ fun MovieSlowMoPanel(
     val slowMo = selected?.slowMo ?: ClipSlowMo.None
     val resolved = slowMo.resolvedEngine()
     val mlReady = rememberPackEngineReady(PackId.FrameInterp)
+    val neural = frameInterpNeuralChip(mlReady)
+    val frameHold = frameHoldChip()
+    val coming = stringResource(R.string.studio_hold_coming)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             stringResource(R.string.studio_movie_d10_hint),
@@ -87,24 +91,31 @@ fun MovieSlowMoPanel(
                 SlowChip(
                     label = stringResource(R.string.studio_slowmo_heuristic),
                     selected = resolved == SlowMoEngine.Heuristic,
-                    tag = "movie_slowmo_heuristic"
+                    tag = "movie_slowmo_heuristic",
+                    enabled = frameHold.enabled
                 ) { onSlowMo(slowMo.withEngine(SlowMoEngine.Heuristic)) }
                 SlowChip(
-                    label = if (mlReady) {
+                    label = if (neural is HoldControl.NeuralFrames) {
                         stringResource(R.string.studio_slowmo_ml)
                     } else {
-                        stringResource(R.string.studio_slowmo_ml_locked)
+                        coming
                     },
-                    selected = resolved == SlowMoEngine.Ml,
+                    selected = resolved == SlowMoEngine.Ml && neural is HoldControl.NeuralFrames,
                     tag = "movie_slowmo_ml",
-                    enabled = mlReady
+                    enabled = neural.enabled,
+                    lockedPhrase = if (neural is HoldControl.ComingWithPack) coming else null
                 ) { onSlowMo(slowMo.withEngine(SlowMoEngine.Ml)) }
             }
             Text(
                 stringResource(
                     R.string.studio_slowmo_resolved,
-                    when (resolved) {
-                        SlowMoEngine.Ml -> stringResource(R.string.studio_slowmo_ml)
+                    when (
+                        slowMoExportChip(
+                            neural,
+                            resolvedMl = resolved == SlowMoEngine.Ml
+                        )
+                    ) {
+                        HoldControl.NeuralFrames -> stringResource(R.string.studio_slowmo_ml)
                         else -> stringResource(R.string.studio_slowmo_heuristic)
                     }
                 ),
@@ -128,6 +139,7 @@ private fun SlowChip(
     selected: Boolean,
     tag: String,
     enabled: Boolean = true,
+    lockedPhrase: String? = null,
     onClick: () -> Unit
 ) {
     Text(
@@ -143,6 +155,7 @@ private fun SlowChip(
             .semantics {
                 role = Role.RadioButton
                 this.selected = selected
+                if (lockedPhrase != null) contentDescription = lockedPhrase
             }
             .padding(horizontal = 14.dp, vertical = 12.dp)
     )

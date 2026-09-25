@@ -87,9 +87,14 @@ fun PackStatusRow(
     if (state is PackInstallState.Ready) {
         val phrase = checkNotNull(
             packTalkBackPhrase(
-                packTalkBackKind(fileReady = true, engineReady = engineReady),
+                packTalkBackKind(
+                    fileReady = true,
+                    engineReady = engineReady,
+                    holdPack = isHoldPack(packId)
+                ),
                 downloaded = stringResource(R.string.a11y_downloaded),
-                readyToApply = stringResource(R.string.a11y_ready_to_apply)
+                readyToApply = stringResource(R.string.a11y_ready_to_apply),
+                comingWithPack = stringResource(R.string.studio_hold_coming)
             )
         )
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -248,16 +253,20 @@ private fun packStatusCopy(
     is PackInstallState.Ready -> when (packId) {
         PackId.SuperRes, PackId.Denoise -> superResDenoiseReadyCopy(engineReady)
         PackId.Inpaint -> inpaintReadyCopy(engineReady)
-        else -> when {
-            engineReady -> stringResource(R.string.studio_pack_engine_ready)
-            !PackRuntime.liteRtReady -> stringResource(R.string.studio_pack_ready_no_litert)
-            packId == PackId.FrameInterp || packId == PackId.Track ->
-                stringResource(R.string.studio_pack_ready_no_engine)
-            else -> stringResource(R.string.studio_pack_ready_unbound)
-        }
+        PackId.FrameInterp, PackId.Track -> holdReadyCopy(engineReady)
     }
     is PackInstallState.Failed -> state.message
     is PackInstallState.StorageError -> stringResource(R.string.studio_pack_storage, state.message)
+}
+
+/**
+ * E4 / F1. A verified sideload is still not neural. [HoldReadyLine.NeuralReady]
+ * is the only line that may say the engine is bound.
+ */
+@Composable
+private fun holdReadyCopy(engineReady: Boolean): String = when (holdReadyLine(engineReady)) {
+    HoldReadyLine.NeuralReady -> stringResource(R.string.studio_pack_engine_ready)
+    HoldReadyLine.ComingWithPack -> stringResource(R.string.studio_pack_ready_no_engine)
 }
 
 /**

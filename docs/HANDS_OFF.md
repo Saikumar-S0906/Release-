@@ -81,10 +81,10 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **D9** — ClipChroma green/blue key + GlEffect; Maestro `d9-chroma-key` **green** Pixel_7a.
 - **D10** — ClipSlowMo + FrameInterp contract (heuristic now; ML for E4); Maestro `d10-slowmo-interp` **green** Pixel_7a.
 - **D11** — MovieHdrMode + Composition.setHdrMode (+ Ultra HDR gain-map retain API 34+); Maestro `d11-hdr-export` **green** Pixel_7a.
-- **E pack runtime** — Super-res and Denoise: HTTPS+SHA → Ready → FLOAT32 contract → LiteRT. Ready alone is not neural (`engineReady`). Inpaint is sideload-only (Install from file, no HTTPS pin); neural Apply waits on `engineReady`. E4/F1 stay HOLD (`PackLiteRt` `Unit`, no URL or SHA). See `docs/R5_ML_PACKS.md`.
-- **F1** — `ClipTrack` timeline contract + pack CTA. **HOLD** — no artifact, URL, or SHA; engine unbound.
+- **E pack runtime** — Super-res and Denoise: HTTPS+SHA → Ready → FLOAT32 contract → LiteRT. Ready alone is not neural (`engineReady`). Inpaint is sideload-only (Install from file, no HTTPS pin); neural Apply waits on `engineReady`. E4/F1 stay HOLD (`PackLiteRt` `Unit`, no URL or SHA). Unbound Slow-mo / Track chrome is a disabled “Coming with pack”. See `docs/R5_ML_PACKS.md`.
+- **F1** — `ClipTrack` timeline contract + pack CTA. **HOLD** — no artifact, URL, or SHA; engine unbound. The control says “Coming with pack” until a real bind.
 - **G1** — session preview\|tools on `isStudioTwoPane` (`studio_session_side_tools`); phone remains single-pane.
-- **G4** — Studio TalkBack chrome: short verbs, "Looks, selected", crop edges, export View/Share/Done, and "Downloaded" vs "Ready to apply". Device TalkBack is yellow (`.maestro/YELLOW-talkback-studio.md`). E4/F1 untouched.
+- **G4** — Studio TalkBack chrome: short verbs, "Looks, selected", crop edges, export View/Share/Done, and "Downloaded" vs "Ready to apply". E4/F1 unbound status speaks "Coming with pack", not "Downloaded". Device TalkBack is yellow (`.maestro/YELLOW-talkback-studio.md`).
 - **G5** — haptic on crop Apply, movie split, and crop-handle edge snap (device drag yellow).
 - **G6** — Library cover thumbs sheen while Coil decodes; a missing file stays a static surface.
 - **G7** — One empty plate: Library “No projects yet” + Create (`empty_library`); hosted packs use “Download to unlock” + Download (`empty_packs`). Sideload-only packs (Inpaint, and HOLD interp/track) use Install from file on that plate. Neural wording stays off until `engineReady`. Ready is the verified file only.

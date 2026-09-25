@@ -8,7 +8,7 @@ Semantics covered in code (unit-tested where the phrase is pure):
 - Tool chips (`StudioChip`): same pattern, state only inside the name.
 - Crop overlay `session_crop_overlay` has no frame description. Four edge nodes speak "Crop edge, left", "Crop edge, right", "Crop edge, top", and "Crop edge, bottom".
 - Export success reuses the visible labels View, Share, and Done (`export_view` / `export_share` / `export_done`). Rename reuses "Name this project".
-- Pack status: a verified file speaks "Downloaded". `engineReady` speaks "Ready to apply". Those names replace the long visible sentence so TalkBack does not say "neural" or "AI" before the engine is bound. Apply on super-res, denoise, and neural fill speaks "Apply" until `engineReady`, then "Ready to apply". Nearby-pixel fill, Telea, bicubic, and frame-hold stay unlabeled as neural.
+- Pack status: a verified hosted file speaks "Downloaded". `engineReady` speaks "Ready to apply". Those names replace the long visible sentence so TalkBack does not say "neural" or "AI" before the engine is bound. Apply on super-res, denoise, and neural fill speaks "Apply" until `engineReady`, then "Ready to apply". Nearby-pixel fill, Telea, bicubic, and frame-hold stay unlabeled as neural. E4 / F1, unbound, speak "Coming with pack" instead of "Downloaded".
 - Save chip `session_save_status` speaks the visible Saved / Saving… / Not saved label, with a polite live region.
 - Undo, redo, Back, Export, compare, Brush, Place, trim handles, movie play/scrub.
 
