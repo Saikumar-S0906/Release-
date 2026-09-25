@@ -10,4 +10,4 @@ Manual:
 4. On a sideload APK or emulator, tap **Download** — Super-res fetches distilled ESRGAN; Denoise fetches Raspberry Pi UNet. Inpaint / Slow-mo / Track: **Install from file** or copy `{inpaint,interp,track}.tflite` into `filesDir/ml_incoming/`
 5. Super-res / Denoise Apply enable after LiteRT bind. Fill stays nearby-pixel until an RGB+mask inpaint file binds. Slow-mo / Track chips stay locked (no fake neural frames)
 
-Automated: `.maestro/packs/fill-pack-status.yaml`, `.maestro/packs/superres-denoise.yaml`, `.maestro/movie/f1-track-roto.yaml` assert the unavailable/download chrome.
+Automated: `.maestro/packs/fill-pack-status.yaml`, `.maestro/packs/empty-packs.yaml`, `.maestro/packs/superres-denoise.yaml`, `.maestro/movie/f1-track-roto.yaml` assert the unavailable/download chrome. `empty-packs.yaml` checks the `empty_packs` plate while the pack is Missing and does not install a model.

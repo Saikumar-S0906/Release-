@@ -1,0 +1,23 @@
+appId: com.pixijoy.ai
+---
+# G7 empty library. empty_library is only on the no-projects plate (LibraryPane showCreate).
+# launch-to-home uses clearState, so a cold start has no projects. A run that skips
+# clear-data and still has projects will not show this plate (filter-empty is library_filter_empty).
+- runFlow: ../launch-to-home.yaml
+- extendedWaitUntil:
+    visible:
+      id: "nav_my_stuff"
+    timeout: 20000
+- tapOn:
+    id: "nav_my_stuff"
+- extendedWaitUntil:
+    visible:
+      id: "empty_library"
+    timeout: 20000
+- assertVisible:
+    id: "library_empty"
+- assertVisible: "No projects yet"
+- assertVisible:
+    id: "library_empty_create"
+- assertNotVisible:
+    id: "library_project_card"
