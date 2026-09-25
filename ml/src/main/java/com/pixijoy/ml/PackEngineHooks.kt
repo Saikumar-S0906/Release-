@@ -128,12 +128,14 @@ class PackEngineHooks @Inject constructor(
             }
         }
         attach(this)
+        PackRuntime.notifyEngineChanged()
     }
 
     /** Drop one capability. Used when a pack file is removed. Does not bind a replacement. */
     internal fun release(id: PackId) {
         bound.remove(id)
         attach(this)
+        PackRuntime.notifyEngineChanged()
     }
 
     fun isBound(id: PackId): Boolean = bound[id] != null && readiness.verified(id)

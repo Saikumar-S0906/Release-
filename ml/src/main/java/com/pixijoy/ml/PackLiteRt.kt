@@ -13,6 +13,7 @@ import java.io.File
 import java.util.concurrent.Executors
 import kotlin.math.max
 import kotlin.math.min
+import org.tensorflow.lite.DataType
 import org.tensorflow.lite.InterpreterApi
 
 /**
@@ -53,10 +54,14 @@ object PackLiteRt {
         TfLite.initialize(appCtx)
             .addOnSuccessListener {
                 synchronized(lock) { tfliteReady = true }
+                PackRuntime.liteRtReady = true
+                PackRuntime.notifyEngineChanged()
                 bindInstalled()
             }
             .addOnFailureListener {
                 synchronized(lock) { tfliteReady = false }
+                PackRuntime.liteRtReady = false
+                PackRuntime.notifyEngineChanged()
             }
     }
 
@@ -67,6 +72,7 @@ object PackLiteRt {
                 sink
             }
             notify?.invoke(id, null)
+            PackRuntime.notifyEngineChanged()
         }
     }
 
@@ -82,15 +88,19 @@ object PackLiteRt {
     }
 
     private fun bindSync(id: PackId, file: File) {
-        if (!file.isFile) return
-        val ready = synchronized(lock) { tfliteReady }
-        if (!ready) return
-        when (id) {
-            PackId.SuperRes -> bindSuperRes(file)
-            PackId.Inpaint,
-            PackId.Denoise,
-            PackId.FrameInterp,
-            PackId.Track -> Unit
+        try {
+            if (!file.isFile) return
+            val ready = synchronized(lock) { tfliteReady }
+            if (!ready) return
+            when (id) {
+                PackId.SuperRes -> bindSuperRes(file)
+                PackId.Inpaint -> bindInpaint(file)
+                PackId.Denoise -> bindDenoise(file)
+                PackId.FrameInterp,
+                PackId.Track -> Unit
+            }
+        } finally {
+            PackRuntime.notifyEngineChanged()
         }
     }
 
@@ -120,6 +130,370 @@ object PackLiteRt {
             sink
         }
         notify?.invoke(PackId.SuperRes, engine)
+    }
+
+    private fun bindInpaint(file: File) {
+        val interpreter = openInterpreter(file) ?: return
+        val accepted = runCatching {
+            prepareInpaintShapes(interpreter)
+            interpreter.getInputTensor(0).dataType() == DataType.FLOAT32 &&
+                inpaintContractMatches(interpreter)
+        }.getOrDefault(false)
+        if (!accepted) {
+            interpreter.close()
+            synchronized(lock) { sink }?.invoke(PackId.Inpaint, null)
+            return
+        }
+        val engine = NeuralEngine.Inpaint { bitmap, mask ->
+            runCatching { inpaint(bitmap, mask) }.getOrNull()
+        }
+        val notify = synchronized(lock) {
+            engines.remove(PackId.Inpaint)?.close()
+            engines[PackId.Inpaint] = interpreter
+            sink
+        }
+        notify?.invoke(PackId.Inpaint, engine)
+    }
+
+    private fun bindDenoise(file: File) {
+        val interpreter = openInterpreter(file) ?: return
+        val accepted = runCatching {
+            prepareDenoiseShape(interpreter)
+            interpreter.getInputTensor(0).dataType() == DataType.FLOAT32 &&
+                PackModelContract.isDenoiseSameRgb(
+                    interpreter.getInputTensor(0).shape(),
+                    interpreter.getOutputTensor(0).shape()
+                )
+        }.getOrDefault(false)
+        if (!accepted) {
+            interpreter.close()
+            synchronized(lock) { sink }?.invoke(PackId.Denoise, null)
+            return
+        }
+        val engine = NeuralEngine.Denoise { bitmap, amount ->
+            runCatching { denoise(bitmap, amount) }.getOrNull()
+        }
+        val notify = synchronized(lock) {
+            engines.remove(PackId.Denoise)?.close()
+            engines[PackId.Denoise] = interpreter
+            sink
+        }
+        notify?.invoke(PackId.Denoise, engine)
+    }
+
+    private fun inpaintContractMatches(interpreter: InterpreterApi): Boolean {
+        val out = interpreter.getOutputTensor(0).shape()
+        return when (interpreter.inputTensorCount) {
+            1 -> PackModelContract.isInpaintRgbMask(interpreter.getInputTensor(0).shape(), out)
+            2 -> PackModelContract.isInpaintRgbAndMask(
+                interpreter.getInputTensor(0).shape(),
+                interpreter.getInputTensor(1).shape(),
+                out
+            )
+            else -> false
+        }
+    }
+
+    private fun prepareInpaintShapes(interpreter: InterpreterApi) {
+        when (interpreter.inputTensorCount) {
+            1 -> {
+                val shape = interpreter.getInputTensor(0).shape()
+                if ((shape.getOrNull(1) ?: 0) <= 0 || (shape.getOrNull(2) ?: 0) <= 0) {
+                    interpreter.resizeInput(0, intArrayOf(1, MAX_WORK_EDGE, MAX_WORK_EDGE, 4))
+                    interpreter.allocateTensors()
+                }
+            }
+            2 -> {
+                val image = interpreter.getInputTensor(0).shape()
+                if ((image.getOrNull(1) ?: 0) <= 0 || (image.getOrNull(2) ?: 0) <= 0) {
+                    interpreter.resizeInput(0, intArrayOf(1, MAX_WORK_EDGE, MAX_WORK_EDGE, 3))
+                    val mask = interpreter.getInputTensor(1).shape()
+                    if (mask.size == 3) {
+                        interpreter.resizeInput(1, intArrayOf(1, MAX_WORK_EDGE, MAX_WORK_EDGE))
+                    } else {
+                        interpreter.resizeInput(1, intArrayOf(1, MAX_WORK_EDGE, MAX_WORK_EDGE, 1))
+                    }
+                    interpreter.allocateTensors()
+                }
+            }
+        }
+    }
+
+    private fun prepareDenoiseShape(interpreter: InterpreterApi) {
+        val shape = interpreter.getInputTensor(0).shape()
+        if (PackModelContract.isNchwRgb(shape)) return
+        if ((shape.getOrNull(1) ?: 0) <= 0 || (shape.getOrNull(2) ?: 0) <= 0) {
+            interpreter.resizeInput(0, intArrayOf(1, MAX_WORK_EDGE, MAX_WORK_EDGE, 3))
+            interpreter.allocateTensors()
+        }
+    }
+
+    private fun inpaint(src: Bitmap, mask: BooleanArray): Bitmap? {
+        if (mask.size != src.width * src.height) return null
+        val interpreter = synchronized(lock) { engines[PackId.Inpaint] } ?: return null
+        val outShape = interpreter.getOutputTensor(0).shape()
+        val modelH = outShape[1]
+        val modelW = outShape[2]
+        if (modelH <= 0 || modelW <= 0) return null
+        val work = capLongEdge(src, MAX_WORK_EDGE)
+        val workMask = if (work === src) {
+            mask
+        } else {
+            scaleMask(mask, src.width, src.height, work.width, work.height)
+        }
+        val sized = if (work.width != modelW || work.height != modelH) {
+            Bitmap.createScaledBitmap(work, modelW, modelH, true)
+        } else {
+            work
+        }
+        val sizedMask = if (sized.width != work.width || sized.height != work.height) {
+            scaleMask(workMask, work.width, work.height, sized.width, sized.height)
+        } else {
+            workMask
+        }
+        try {
+            val generated = when (interpreter.inputTensorCount) {
+                1 -> inferInpaintFour(interpreter, sized, sizedMask, modelH, modelW)
+                2 -> inferInpaintDual(interpreter, sized, sizedMask, modelH, modelW)
+                else -> return null
+            }
+            val full = if (generated.width == src.width && generated.height == src.height) {
+                generated
+            } else {
+                Bitmap.createScaledBitmap(generated, src.width, src.height, true).also {
+                    if (it !== generated) generated.recycle()
+                }
+            }
+            val stamped = stampMasked(src, full, mask)
+            if (full !== stamped && !full.isRecycled) full.recycle()
+            return stamped
+        } finally {
+            if (sized !== work && !sized.isRecycled) sized.recycle()
+            if (work !== src && !work.isRecycled) work.recycle()
+        }
+    }
+
+    private fun inferInpaintFour(
+        interpreter: InterpreterApi,
+        tile: Bitmap,
+        mask: BooleanArray,
+        h: Int,
+        w: Int
+    ): Bitmap {
+        val input = Array(1) { Array(h) { Array(w) { FloatArray(4) } } }
+        fillRgb(tile, input[0])
+        var i = 0
+        for (row in 0 until h) {
+            for (col in 0 until w) {
+                input[0][row][col][3] = if (mask.getOrElse(i) { false }) 1f else 0f
+                i++
+            }
+        }
+        val output = Array(1) { Array(h) { Array(w) { FloatArray(3) } } }
+        interpreter.run(input, output)
+        return bitmapFromRgb(output[0], h, w)
+    }
+
+    private fun inferInpaintDual(
+        interpreter: InterpreterApi,
+        tile: Bitmap,
+        mask: BooleanArray,
+        h: Int,
+        w: Int
+    ): Bitmap {
+        val rgb = Array(1) { Array(h) { Array(w) { FloatArray(3) } } }
+        fillRgb(tile, rgb[0])
+        val maskShape = interpreter.getInputTensor(1).shape()
+        val maskInput: Any = if (maskShape.size == 3) {
+            Array(1) { Array(h) { FloatArray(w) } }.also { plane ->
+                var i = 0
+                for (row in 0 until h) {
+                    for (col in 0 until w) {
+                        plane[0][row][col] = if (mask.getOrElse(i) { false }) 1f else 0f
+                        i++
+                    }
+                }
+            }
+        } else {
+            Array(1) { Array(h) { Array(w) { FloatArray(1) } } }.also { vol ->
+                var i = 0
+                for (row in 0 until h) {
+                    for (col in 0 until w) {
+                        vol[0][row][col][0] = if (mask.getOrElse(i) { false }) 1f else 0f
+                        i++
+                    }
+                }
+            }
+        }
+        val output = Array(1) { Array(h) { Array(w) { FloatArray(3) } } }
+        val outputs = HashMap<Int, Any>()
+        outputs[0] = output
+        interpreter.runForMultipleInputsOutputs(arrayOf(rgb, maskInput), outputs)
+        return bitmapFromRgb(output[0], h, w)
+    }
+
+    private fun denoise(src: Bitmap, amount: Float): Bitmap? {
+        val interpreter = synchronized(lock) { engines[PackId.Denoise] } ?: return null
+        val inShape = interpreter.getInputTensor(0).shape()
+        val nchw = PackModelContract.isNchwRgb(inShape)
+        val modelH = if (nchw) inShape[2] else inShape[1]
+        val modelW = if (nchw) inShape[3] else inShape[2]
+        if (modelH <= 0 || modelW <= 0) return null
+        val cap = max(modelH, modelW)
+        val work = capLongEdge(src, cap)
+        val sized = if (work.width != modelW || work.height != modelH) {
+            Bitmap.createScaledBitmap(work, modelW, modelH, true)
+        } else {
+            work
+        }
+        try {
+            val restored = if (nchw) {
+                inferRgbNchw(interpreter, sized, modelH, modelW)
+            } else {
+                inferRgb(interpreter, sized, modelH, modelW, modelH, modelW)
+            }
+            val full = if (restored.width == src.width && restored.height == src.height) {
+                restored
+            } else {
+                Bitmap.createScaledBitmap(restored, src.width, src.height, true).also {
+                    if (it !== restored) restored.recycle()
+                }
+            }
+            val blended = blend(src, full, amount.coerceIn(0f, 1f))
+            if (full !== blended && !full.isRecycled) full.recycle()
+            return blended
+        } finally {
+            if (sized !== work && !sized.isRecycled) sized.recycle()
+            if (work !== src && !work.isRecycled) work.recycle()
+        }
+    }
+
+    private fun inferRgbNchw(interpreter: InterpreterApi, tile: Bitmap, h: Int, w: Int): Bitmap {
+        val input = Array(1) { Array(3) { Array(h) { FloatArray(w) } } }
+        val px = IntArray(w * h)
+        tile.getPixels(px, 0, w, 0, 0, w, h)
+        var i = 0
+        for (row in 0 until h) {
+            for (col in 0 until w) {
+                val c = px[i++]
+                input[0][0][row][col] = ((c shr 16) and 0xff) / 255f
+                input[0][1][row][col] = ((c shr 8) and 0xff) / 255f
+                input[0][2][row][col] = (c and 0xff) / 255f
+            }
+        }
+        val output = Array(1) { Array(3) { Array(h) { FloatArray(w) } } }
+        interpreter.run(input, output)
+        val outPx = IntArray(w * h)
+        i = 0
+        for (row in 0 until h) {
+            for (col in 0 until w) {
+                val r = (output[0][0][row][col].coerceIn(0f, 1f) * 255f).toInt()
+                val g = (output[0][1][row][col].coerceIn(0f, 1f) * 255f).toInt()
+                val b = (output[0][2][row][col].coerceIn(0f, 1f) * 255f).toInt()
+                outPx[i++] = (0xff shl 24) or (r shl 16) or (g shl 8) or b
+            }
+        }
+        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        bmp.setPixels(outPx, 0, w, 0, 0, w, h)
+        return bmp
+    }
+
+    private fun fillRgb(tile: Bitmap, dest: Array<Array<FloatArray>>) {
+        val h = dest.size
+        val w = dest[0].size
+        val px = IntArray(w * h)
+        tile.getPixels(px, 0, w, 0, 0, w, h)
+        var i = 0
+        for (row in 0 until h) {
+            for (col in 0 until w) {
+                val c = px[i++]
+                dest[row][col][0] = ((c shr 16) and 0xff) / 255f
+                dest[row][col][1] = ((c shr 8) and 0xff) / 255f
+                dest[row][col][2] = (c and 0xff) / 255f
+            }
+        }
+    }
+
+    private fun bitmapFromRgb(rgb: Array<Array<FloatArray>>, h: Int, w: Int): Bitmap {
+        val outPx = IntArray(w * h)
+        var i = 0
+        for (row in 0 until h) {
+            for (col in 0 until w) {
+                val r = (rgb[row][col][0].coerceIn(0f, 1f) * 255f).toInt()
+                val g = (rgb[row][col][1].coerceIn(0f, 1f) * 255f).toInt()
+                val b = (rgb[row][col][2].coerceIn(0f, 1f) * 255f).toInt()
+                outPx[i++] = (0xff shl 24) or (r shl 16) or (g shl 8) or b
+            }
+        }
+        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        bmp.setPixels(outPx, 0, w, 0, 0, w, h)
+        return bmp
+    }
+
+    private fun scaleMask(
+        mask: BooleanArray,
+        srcW: Int,
+        srcH: Int,
+        dstW: Int,
+        dstH: Int
+    ): BooleanArray {
+        val out = BooleanArray(dstW * dstH)
+        if (srcW <= 0 || srcH <= 0) return out
+        for (y in 0 until dstH) {
+            val sy = (y * srcH / dstH).coerceIn(0, srcH - 1)
+            for (x in 0 until dstW) {
+                val sx = (x * srcW / dstW).coerceIn(0, srcW - 1)
+                out[y * dstW + x] = mask[sy * srcW + sx]
+            }
+        }
+        return out
+    }
+
+    private fun stampMasked(src: Bitmap, generated: Bitmap, mask: BooleanArray): Bitmap {
+        val sw = src.width
+        val sh = src.height
+        val gw = generated.width
+        val gh = generated.height
+        val out = src.copy(Bitmap.Config.ARGB_8888, true)
+        val srcPx = IntArray(sw * sh)
+        val genPx = IntArray(gw * gh)
+        src.getPixels(srcPx, 0, sw, 0, 0, sw, sh)
+        generated.getPixels(genPx, 0, gw, 0, 0, gw, gh)
+        for (y in 0 until sh) {
+            for (x in 0 until sw) {
+                val i = y * sw + x
+                if (!mask.getOrElse(i) { false }) continue
+                val gx = (x * gw / sw).coerceIn(0, gw - 1)
+                val gy = (y * gh / sh).coerceIn(0, gh - 1)
+                srcPx[i] = genPx[gy * gw + gx]
+            }
+        }
+        out.setPixels(srcPx, 0, sw, 0, 0, sw, sh)
+        return out
+    }
+
+    private fun blend(src: Bitmap, restored: Bitmap, amount: Float): Bitmap {
+        if (amount >= 0.995f) return restored
+        if (amount <= 0.005f) return src
+        val w = src.width
+        val h = src.height
+        val a = amount
+        val ia = 1f - a
+        val srcPx = IntArray(w * h)
+        val dstPx = IntArray(w * h)
+        src.getPixels(srcPx, 0, w, 0, 0, w, h)
+        restored.getPixels(dstPx, 0, w, 0, 0, w, h)
+        for (i in srcPx.indices) {
+            val s = srcPx[i]
+            val d = dstPx[i]
+            val r = (((s shr 16) and 0xff) * ia + ((d shr 16) and 0xff) * a).toInt()
+            val g = (((s shr 8) and 0xff) * ia + ((d shr 8) and 0xff) * a).toInt()
+            val b = ((s and 0xff) * ia + (d and 0xff) * a).toInt()
+            dstPx[i] = (0xff shl 24) or (r shl 16) or (g shl 8) or b
+        }
+        val out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        out.setPixels(dstPx, 0, w, 0, 0, w, h)
+        return out
     }
 
     private fun openInterpreter(file: File): InterpreterApi? {

@@ -31,6 +31,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
+fun rememberPackEngineReady(packId: PackId): Boolean {
+    val context = LocalContext.current
+    val manager = remember(context) { PackInstallManager.get(context) }
+    val state by manager.observe(packId).collectAsState()
+    val epoch by PackRuntime.observeEngineEpoch().collectAsState()
+    return remember(state, epoch, packId) { PackRuntime.engineReady(packId) }
+}
+
+@Composable
 fun PackStatusRow(
     packId: PackId,
     statusTag: String,
@@ -40,7 +49,7 @@ fun PackStatusRow(
     val manager = remember(context) { PackInstallManager.get(context) }
     val state by manager.observe(packId).collectAsState()
     val scope = rememberCoroutineScope()
-    val engineReady = PackRuntime.engineReady(packId)
+    val engineReady = rememberPackEngineReady(packId)
     val pickPack = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
@@ -53,9 +62,13 @@ fun PackStatusRow(
                         tmp
                     }
                 }
-                if (copied != null) {
-                    manager.sideload(packId, copied)
+                if (copied == null) {
+                    manager.fail(packId, context.getString(R.string.studio_pack_file_unreadable))
+                } else {
+                    withContext(Dispatchers.IO) { manager.sideload(packId, copied) }
                 }
+            } catch (_: Exception) {
+                manager.fail(packId, context.getString(R.string.studio_pack_file_unreadable))
             } finally {
                 tmp.delete()
             }
@@ -63,7 +76,7 @@ fun PackStatusRow(
     }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-            packStatusCopy(state, engineReady),
+            packStatusCopy(packId, state, engineReady),
             color = PixiTextMuted,
             modifier = Modifier.testTag(statusTag)
         )
@@ -80,7 +93,9 @@ fun PackStatusRow(
                 is PackInstallState.Failed,
                 is PackInstallState.StorageError -> {
                     TextButton(
-                        onClick = { scope.launch { manager.install(packId) } },
+                        onClick = {
+                            scope.launch { withContext(Dispatchers.IO) { manager.install(packId) } }
+                        },
                         modifier = Modifier.testTag(downloadTag)
                     ) {
                         Text(
@@ -94,7 +109,9 @@ fun PackStatusRow(
                 }
                 is PackInstallState.Ready -> {
                     TextButton(
-                        onClick = { scope.launch { manager.uninstall(packId) } },
+                        onClick = {
+                            scope.launch { withContext(Dispatchers.IO) { manager.uninstall(packId) } }
+                        },
                         modifier = Modifier.testTag("${downloadTag}_remove")
                     ) {
                         Text(stringResource(R.string.studio_pack_remove), color = PixiTextMuted)
@@ -115,13 +132,25 @@ fun PackStatusRow(
 }
 
 @Composable
-private fun packStatusCopy(state: PackInstallState, engineReady: Boolean): String = when (state) {
-    PackInstallState.Missing -> stringResource(R.string.studio_pack_missing)
+private fun packStatusCopy(
+    packId: PackId,
+    state: PackInstallState,
+    engineReady: Boolean
+): String = when (state) {
+    PackInstallState.Missing -> stringResource(
+        if (PackCatalog.hasHttpsFallback(PackCatalog.spec(packId))) {
+            R.string.studio_pack_missing
+        } else {
+            R.string.studio_pack_missing_sideload
+        }
+    )
     is PackInstallState.Installing -> stringResource(R.string.studio_pack_installing)
-    is PackInstallState.Ready -> if (engineReady) {
-        stringResource(R.string.studio_pack_engine_ready)
-    } else {
-        stringResource(R.string.studio_pack_ready_unbound)
+    is PackInstallState.Ready -> when {
+        engineReady -> stringResource(R.string.studio_pack_engine_ready)
+        !PackRuntime.liteRtReady -> stringResource(R.string.studio_pack_ready_no_litert)
+        packId == PackId.FrameInterp || packId == PackId.Track ->
+            stringResource(R.string.studio_pack_ready_no_engine)
+        else -> stringResource(R.string.studio_pack_ready_unbound)
     }
     is PackInstallState.Failed -> state.message
     is PackInstallState.StorageError -> stringResource(R.string.studio_pack_storage, state.message)

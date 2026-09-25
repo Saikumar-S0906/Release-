@@ -14,7 +14,6 @@ import com.pixijoy.designsystem.PixiTextMuted
 import com.pixijoy.ml.pack.PackId
 import com.pixijoy.movie.ClipTrack
 import com.pixijoy.movie.TrackEngine
-import com.pixijoy.movie.TrackFacade
 import com.pixijoy.movie.TimelineClip
 
 /** F1 tracking / roto-lite contract — outside [MovieSessionScreen] for DEX size. */
@@ -24,7 +23,7 @@ fun MovieTrackPanel(
     onTrack: (ClipTrack) -> Unit
 ) {
     val track = selected?.track ?: ClipTrack.None
-    val ready = TrackFacade.mlAvailable()
+    val ready = rememberPackEngineReady(PackId.Track)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             stringResource(R.string.studio_track_hint),

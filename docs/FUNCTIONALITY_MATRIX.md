@@ -34,9 +34,9 @@ Evidence: `HomePane.kt`, `StudioPane.kt`, `LibraryPane.kt`, and `StudioApp.kt`.
 | Mirror expand | **BAKED** | Extends the canvas with mirrored edge pixels. It is not generative fill. |
 | Basic cutout | **FALLBACK** | Uses the bundled subject mask when available; otherwise removes colors matching sampled corners. |
 | Heal | **BAKED** | Clone/ring-based local repair. |
-| Fill | **BAKED** | Nearby-pixel Telea-like fill. Neural inpaint stays unavailable until the inpaint pack **and** a bound interpreter exist. |
+| Fill | **BAKED** | Nearby-pixel Telea-like fill. Neural inpaint binds only when a sideloaded RGB+mask TFLite matches; there is no HTTPS inpaint pin. |
 | Super-res | **PACK** | Distilled ESRGAN (~33 KB) downloads when the user taps Download. Apply is gated until LiteRT binds a 2×/4× RGB graph. |
-| Denoise | **UNAVAILABLE** | Graph `N` round-trips; Apply is gated on the denoise pack engine. |
+| Denoise | **PACK** | Raspberry Pi UNet (~700 KB) downloads when the user taps Download. Apply is gated until LiteRT binds same-size RGB. |
 | Text, stickers, collage | **BAKED** | Rasterized into the rendered photo. |
 | Layers, blend, opacity, masks | **BAKED** | Evaluated by the local layer renderer. |
 | Presets | **LIVE** | Edit graphs are saved and reapplied on this device. Library can batch-apply a saved look, then export locally. |
@@ -77,9 +77,10 @@ Evidence: `movie/ClipFrame.kt`, `ClipSlowMo.kt`, `ClipTrack.kt`, `MovieEngine.kt
 
 | Capability | Status | Gate |
 |---|---|---|
-| Neural inpaint | **UNAVAILABLE** | Pack runtime can sideload/checksum a model; no inpaint interpreter is bound. Fill still uses nearby-pixel reconstruction. |
+| Neural inpaint | **PACK** | LiteRT binds a sideloaded RGB+mask graph (4-channel or image+mask) after SplitCompat + SHA gate. No HTTPS pin. Fill stays Telea until bound. |
 | Neural super-res | **PACK** | Distilled ESRGAN HTTPS fallback + Play-services LiteRT when tensor contract matches. |
-| Neural frame interpolation | **UNAVAILABLE** | Disabled chip plus pack download CTA; slow motion uses frame hold. |
+| Neural denoise | **PACK** | Raspberry Pi UNet HTTPS fallback + LiteRT same-size RGB. |
+| Neural frame interpolation | **UNAVAILABLE** | Disabled chip plus pack CTA; slow motion uses frame hold. No interp runner in this build. |
 | Point track / roto-lite | **UNAVAILABLE** | `ClipTrack` persists; engine is unbound. |
 | True motion stabilization | **UNAVAILABLE** | No gyro/optical-flow tracking; the available control is named Steady crop. |
 | Generative expand | **UNAVAILABLE** | Mirror expand is the only edge-extension engine. |

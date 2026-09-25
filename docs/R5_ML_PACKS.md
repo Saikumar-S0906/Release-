@@ -1,6 +1,6 @@
 # R5 ML packs + F1 track contract
 
-**Status:** Pack runtime landed on `next`. Neural engines stay unbound in the base APK.
+**Status:** Pack runtime + LiteRT bind on matching contracts after SplitCompat. Interp/track stay unbound on purpose.
 **Pairs with:** `docs/REMAINING_MASTER_PLAN.md` Wave E / F1, `docs/FUNCTIONALITY_MATRIX.md`.
 **Hard rule:** pack file + checksum ≠ neural engine. Telea / bicubic / frame-hold are never labeled neural.
 
@@ -11,10 +11,11 @@
 - Install state: missing / installing / ready / failed / storage error
 - SHA-256 sidecar on sideload; optional pinned hash in `PackCatalog`
 - Sideload: **Install from file** (`GetContent`) copies into cache then checksum-installs; fallback folder `filesDir/ml_incoming/{fileName}` (also app external files)
-- HTTPS fallback (user-tapped Download only): Super-res fetches distilled ESRGAN (`PackCatalog.SUPERRES_DOWNLOAD_URL`) with a pinned SHA-256. Photos are not uploaded.
+- HTTPS fallback (user-tapped Download only): Super-res fetches distilled ESRGAN; Denoise fetches Raspberry Pi UNet RGB (`unet_rgb_fast.tflite`, BSD-3). Photos are not uploaded. Inpaint / interp / track have no HTTPS pin.
+- Failed Download for packs without a URL tells the user to **Install from file** (Play modules are not in this APK).
 - `PixiJoyApp.attachBaseContext` calls `PackSplits.install`. `onCreate` binds install state only and registers nothing
 - After SplitCompat, the studio shell calls `PackFeatureEntry.watchVerifiedModels`. That registers an interpreter only when the pack is Ready, the SHA-256 matches, and `PackModelContract` accepts the graph
-- `PackLiteRt` builds that Super-res interpreter only for a verified 2×/4× RGB file. Inpaint / denoise / interp / track stay unbound
+- `PackLiteRt` builds Super-res (2×/4× RGB), Denoise (same-size RGB), and Inpaint (RGB+mask) interpreters. Interp / track never bind — frame-hold is not labeled neural
 - Engines call `PackEnhance` and `TrackFacade.follow` / `FrameInterp.interpolatedFrames`
 - A null try result leaves Telea / bicubic / frame-hold in place, unlabeled as neural
 
@@ -22,16 +23,16 @@
 
 | ID | Graph | Engine |
 |----|-------|--------|
-| E1 Fill | `I` | Telea now; `LiteRtInpaintHook` only if inpaint pack **and** hook bound |
+| E1 Fill | `I` | Telea unless a sideloaded inpaint TFLite matches RGB+mask and LiteRT binds |
 | E2 Super-res | `SR,2` / `SR,4` | Distilled ESRGAN via Download or sideload; LiteRT bind on 2×/4× RGB contract |
-| E3 Denoise | `N,{amount}` | Identity until denoise hook; Apply gated; same op on preview + WorkManager export |
+| E3 Denoise | `N,{amount}` | Raspberry Pi UNet via Download or sideload; Apply gated; same op on preview + export |
 
 ## Movie
 
 | ID | Contract | Engine |
 |----|----------|--------|
-| E4 | `FrameInterp.mlAvailable` ← pack engine | Neural frames chip locked until bound |
-| F1 | `ClipTrack` field on `TimelineClip` | No motion follow in base; Track chip + pack CTA |
+| E4 | `FrameInterp.mlAvailable` ← pack engine | Chip stays locked; no interp inference in this build |
+| F1 | `ClipTrack` field on `TimelineClip` | No motion follow; Track chip stays locked until a real tracker ships |
 
 ## E5 size
 

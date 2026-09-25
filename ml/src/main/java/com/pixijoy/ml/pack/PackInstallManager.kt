@@ -39,12 +39,18 @@ class PackInstallManager internal constructor(
             }
             if (playResult?.isSuccess == true) {
                 incomingFile(spec)?.let { file ->
-                    emitReady(id, store.installFrom(spec, file))
-                    if (state(id).isReady) return
+                    if (PackChecksum.looksLikeTflite(file)) {
+                        emitReady(id, store.installFrom(spec, file))
+                        if (state(id).isReady) return
+                    }
                 }
             }
             val local = incomingFile(spec)
             if (local != null) {
+                if (!PackChecksum.looksLikeTflite(local)) {
+                    emit(id, PackInstallState.Failed("Incoming file is not a TFLite pack."))
+                    return
+                }
                 emitReady(id, store.installFrom(spec, local))
                 return
             }
@@ -79,12 +85,13 @@ class PackInstallManager internal constructor(
                     tmp.delete()
                 }
             }
-            val playError = playResult?.exceptionOrNull()?.message
             emit(
                 id,
                 PackInstallState.Failed(
-                    playError
-                        ?: "Pack is not on this phone yet. Copy ${spec.fileName} into the incoming folder."
+                    PackCatalog.installUnavailableMessage(
+                        spec,
+                        playResult?.exceptionOrNull()?.message
+                    )
                 )
             )
         }
@@ -93,7 +100,21 @@ class PackInstallManager internal constructor(
     suspend fun sideload(id: PackId, source: File) {
         mutex.withLock {
             emit(id, PackInstallState.Installing(0.5f))
+            if (!source.isFile) {
+                emit(id, PackInstallState.Failed("Could not read the selected file."))
+                return
+            }
+            if (!PackChecksum.looksLikeTflite(source)) {
+                emit(id, PackInstallState.Failed("Selected file is not a TFLite pack."))
+                return
+            }
             emitReady(id, store.installFrom(PackCatalog.spec(id), source))
+        }
+    }
+
+    suspend fun fail(id: PackId, message: String) {
+        mutex.withLock {
+            emit(id, PackInstallState.Failed(message))
         }
     }
 

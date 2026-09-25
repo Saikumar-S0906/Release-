@@ -28,7 +28,6 @@ import com.pixijoy.designsystem.PixiBg
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
 import com.pixijoy.movie.ClipSlowMo
-import com.pixijoy.movie.FrameInterp
 import com.pixijoy.ml.pack.PackId
 import com.pixijoy.movie.SlowMoEngine
 import com.pixijoy.movie.SlowMoPreset
@@ -42,6 +41,7 @@ fun MovieSlowMoPanel(
 ) {
     val slowMo = selected?.slowMo ?: ClipSlowMo.None
     val resolved = slowMo.resolvedEngine()
+    val mlReady = rememberPackEngineReady(PackId.FrameInterp)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             stringResource(R.string.studio_movie_d10_hint),
@@ -90,14 +90,14 @@ fun MovieSlowMoPanel(
                     tag = "movie_slowmo_heuristic"
                 ) { onSlowMo(slowMo.withEngine(SlowMoEngine.Heuristic)) }
                 SlowChip(
-                    label = if (FrameInterp.mlAvailable()) {
+                    label = if (mlReady) {
                         stringResource(R.string.studio_slowmo_ml)
                     } else {
                         stringResource(R.string.studio_slowmo_ml_locked)
                     },
                     selected = resolved == SlowMoEngine.Ml,
                     tag = "movie_slowmo_ml",
-                    enabled = FrameInterp.mlAvailable()
+                    enabled = mlReady
                 ) { onSlowMo(slowMo.withEngine(SlowMoEngine.Ml)) }
             }
             Text(
@@ -111,7 +111,7 @@ fun MovieSlowMoPanel(
                 color = PixiTextMuted,
                 modifier = Modifier.testTag("movie_slowmo_resolved")
             )
-            if (!FrameInterp.mlAvailable()) {
+            if (!mlReady) {
                 PackStatusRow(
                     packId = PackId.FrameInterp,
                     statusTag = "movie_slowmo_pack_status",

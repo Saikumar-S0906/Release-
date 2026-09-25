@@ -81,7 +81,7 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **D9** — ClipChroma green/blue key + GlEffect; Maestro `d9-chroma-key` **green** Pixel_7a.
 - **D10** — ClipSlowMo + FrameInterp contract (heuristic now; ML for E4); Maestro `d10-slowmo-interp` **green** Pixel_7a.
 - **D11** — MovieHdrMode + Composition.setHdrMode (+ Ultra HDR gain-map retain API 34+); Maestro `d11-hdr-export` **green** Pixel_7a.
-- **E pack runtime** — `:ml` checksum/store/Play+HTTPS/file-picker; Super-res Download fetches distilled ESRGAN; `PackEngineHooks` binds only a verified interpreter. Fill/Denoise/Slow-mo/Track stay unbound. See `docs/R5_ML_PACKS.md`.
+- **E pack runtime** — `:ml` checksum/store/Play+HTTPS/file-picker; Super-res ESRGAN + Denoise UNet HTTPS; inpaint LiteRT on sideload RGB+mask after SplitCompat; Slow-mo/Track runners stay unbound. See `docs/R5_ML_PACKS.md`.
 - **F1** — `ClipTrack` timeline contract + pack CTA (engine unbound).
 - **G1** — session preview\|tools on `isStudioTwoPane` (`studio_session_side_tools`); phone remains single-pane.
 - **G5** — haptic on crop Apply and movie split.
@@ -122,7 +122,7 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 
 ### Live gate
 
-Bind LiteRT pack engines (E1–E4) + R5 device acceptance. F2+ still opt-in after F1 engine.
+R5 device acceptance (Maestro/TalkBack/five-user). Interp/track inference still opt-in. F2+ after F1 engine.
 
 ### Follow-up epic (not a feature gate)
 

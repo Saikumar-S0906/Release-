@@ -5,7 +5,7 @@
 **Branch:** land on `origin/next` after review-clear.  
 **Excluded:** Section A (done/exited) — do not reopen.
 
-**Snapshot (2026-09-25):** **Wave B EXITED** · **Wave C EXITED** · **D1–D11 MET** · Wave D EXITED. Live: **E pack runtime + E1–E5 scaffolding + F1 track contract**. Neural engines remain unbound.
+**Snapshot (2026-09-25):** **Wave B EXITED** · **Wave C EXITED** · **D1–D11 MET** · Wave D EXITED. Live: **E pack runtime + Super-res/Denoise HTTPS LiteRT + inpaint sideload bind**. Interp/track runners stay unbound. G2 slider/preview extract complete.
 
 ```
 B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5 ML packs) ──▶ F (R6+ opt-in)
@@ -36,7 +36,7 @@ B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5
 | **B5** | Docs on `origin/next` | **EXITED** with Phase 0 land | Status docs in same commit |
 | **B6** | Gallery Photo Picker | Yellow/manual | Keep documented; no fake green |
 
-**Immediate next:** inpaint / denoise / interp / track engines when matching models exist; device Maestro/TalkBack/five-user remains the R5 quality gate.
+**Immediate next:** interp / track engines only with real movie inference; device Maestro/TalkBack/five-user remains the R5 quality gate.
 
 **G overlap with B:** **G4** exited with B3 (chips ≥48dp, announced selection).
 
@@ -99,10 +99,10 @@ Then:
 | ID | Pack | Prerequisite | Delivery |
 |----|------|--------------|----------|
 | **E5** | Base APK ≤ ~40 MB | With pack foundation | `:ml` pack runtime + `reportApkSize`; selfie_segmenter (~244 KB) stays in base. Scaffolding **MET 2026-09-25**. Measured minified unsigned APK **131.11 MB** (Media3/MediaPipe JNI). Pack models stay out |
-| **E1** | Inpaint / generative fill | C3 + pack foundation | Fill pack CTA; `LiteRtInpaintHook` consults pack+hook; Telea fallback. Engine unbound |
-| **E2** | Super-resolution | Pack runtime | Graph `SR`; Apply gated; WorkManager export path. Engine unbound |
-| **E3** | Denoise | Same runtime | Graph `N`; preview + export same op. Engine unbound |
-| **E4** | Frame interpolation | D10 + pack runtime | `FrameInterp.mlAvailable` ← pack engine; D10 download CTA. Engine unbound |
+| **E1** | Inpaint / generative fill | C3 + pack foundation | Fill pack CTA; LiteRT binds RGB+mask sideload after SplitCompat + SHA; Telea until then. No HTTPS pin |
+| **E2** | Super-resolution | Pack runtime | Graph `SR`; HTTPS ESRGAN + LiteRT 2×/4× RGB |
+| **E3** | Denoise | Same runtime | Graph `N`; HTTPS Raspberry Pi UNet + LiteRT same-size RGB |
+| **E4** | Frame interpolation | D10 + pack runtime | `FrameInterp.mlAvailable` ← pack engine; D10 CTA. Runner not bound (no fake frames) |
 
 ---
 
@@ -177,7 +177,7 @@ Never land F* as isolated effects without listed primitives.
 
 ## Next concrete slice (start here)
 
-1. When a real model exists, `PackFeatureEntry.registerEngines` after SplitCompat, Ready + SHA-256, and `PackModelContract`. Do not register from `Application.onCreate`. Do not register Telea / bicubic / frame-hold
+1. Interp / track engines only with real movie inference (do not bind on file alone). `PackFeatureEntry.registerEngines` after SplitCompat, Ready + SHA-256, and `PackModelContract`. Do not register from `Application.onCreate`. Do not register Telea / bicubic / frame-hold
 2. R5 device gate (Maestro + TalkBack + five-user) on a mid-range phone
 
 When this plan drifts, update this file and `TOTAL_REMAINING.txt` in the same commit as the exit.

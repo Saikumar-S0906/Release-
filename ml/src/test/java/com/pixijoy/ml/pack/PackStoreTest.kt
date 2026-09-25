@@ -74,6 +74,16 @@ class PackStoreTest {
         val sr = PackCatalog.spec(PackId.SuperRes)
         assertTrue(sr.downloadUrl!!.startsWith("https://"))
         assertEquals(64, sr.downloadSha256!!.length)
+        val denoise = PackCatalog.spec(PackId.Denoise)
+        assertTrue(denoise.downloadUrl!!.startsWith("https://"))
+        assertEquals(64, denoise.downloadSha256!!.length)
         assertEquals(null, PackCatalog.spec(PackId.Inpaint).downloadUrl)
+        assertFalse(PackCatalog.hasHttpsFallback(PackCatalog.spec(PackId.FrameInterp)))
+        val sideloadHint = PackCatalog.installUnavailableMessage(
+            PackCatalog.spec(PackId.Inpaint),
+            "Play is unavailable."
+        )
+        assertTrue(sideloadHint.contains("inpaint.tflite"))
+        assertTrue(sideloadHint.contains("not hosted for download"))
     }
 }

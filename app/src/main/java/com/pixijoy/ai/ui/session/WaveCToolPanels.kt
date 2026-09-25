@@ -26,7 +26,6 @@ import com.pixijoy.designsystem.PixiPrimaryButton
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
 import com.pixijoy.ml.pack.PackId
-import com.pixijoy.photo.PackEnhance
 import com.pixijoy.photo.PhotoPreset
 
 /**
@@ -129,7 +128,7 @@ fun SoftenToolPanel(onApply: (Float) -> Unit) {
 @Composable
 fun SuperResToolPanel(onApply: (Int) -> Unit) {
     var scale by remember { mutableIntStateOf(2) }
-    val ready = PackEnhance.superResAvailable()
+    val ready = rememberPackEngineReady(PackId.SuperRes)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             stringResource(R.string.studio_super_res_hint),
@@ -161,7 +160,7 @@ fun SuperResToolPanel(onApply: (Int) -> Unit) {
 @Composable
 fun DenoiseToolPanel(onApply: (Float) -> Unit) {
     var amount by remember { mutableFloatStateOf(0.4f) }
-    val ready = PackEnhance.denoiseAvailable()
+    val ready = rememberPackEngineReady(PackId.Denoise)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             stringResource(R.string.studio_denoise_hint),

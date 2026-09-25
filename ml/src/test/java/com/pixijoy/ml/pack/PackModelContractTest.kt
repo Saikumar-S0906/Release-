@@ -26,6 +26,31 @@ class PackModelContractTest {
         assertTrue(PackModelContract.isInpaintRgbMask(intArrayOf(1, 256, 256, 4), intArrayOf(1, 256, 256, 3)))
         assertFalse(PackModelContract.isInpaintRgbMask(intArrayOf(1, 256, 256, 3), intArrayOf(1, 256, 256, 3)))
     }
+
+    @Test
+    fun inpaint_acceptsRgbPlusSeparateMask() {
+        assertTrue(
+            PackModelContract.isInpaintRgbAndMask(
+                intArrayOf(1, 256, 256, 3),
+                intArrayOf(1, 256, 256, 1),
+                intArrayOf(1, 256, 256, 3)
+            )
+        )
+        assertFalse(
+            PackModelContract.isInpaintRgbAndMask(
+                intArrayOf(1, 256, 256, 3),
+                intArrayOf(1, 128, 128, 1),
+                intArrayOf(1, 256, 256, 3)
+            )
+        )
+    }
+
+    @Test
+    fun denoise_acceptsSameSizeRgb_rejectsSuperRes() {
+        assertTrue(PackModelContract.isDenoiseSameRgb(intArrayOf(1, 256, 256, 3), intArrayOf(1, 256, 256, 3)))
+        assertTrue(PackModelContract.isDenoiseSameRgb(intArrayOf(1, 3, 256, 256), intArrayOf(1, 3, 256, 256)))
+        assertFalse(PackModelContract.isDenoiseSameRgb(intArrayOf(1, 50, 50, 3), intArrayOf(1, 200, 200, 3)))
+    }
 }
 
 class PackDownloaderTest {
