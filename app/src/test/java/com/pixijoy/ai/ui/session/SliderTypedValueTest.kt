@@ -17,6 +17,16 @@ class SliderTypedValueTest {
     }
 
     @Test
+    fun parse_clampsACurvePointToZeroOne() {
+        val curve = 0f..1f
+        assertEquals(0.42f, parseSliderTypedValue("0.42", curve)!!, 0.0001f)
+        assertEquals(0f, parseSliderTypedValue("-0.2", curve)!!, 0f)
+        assertEquals(1f, parseSliderTypedValue("1.4", curve)!!, 0f)
+        assertNull(parseSliderTypedValue("-", curve))
+        assertNull(parseSliderTypedValue(".", curve))
+    }
+
+    @Test
     fun parse_clampsToTheSliderEnds() {
         assertEquals(1.5f, parseSliderTypedValue("9", exposure)!!, 0f)
         assertEquals(-1.5f, parseSliderTypedValue("-9", exposure)!!, 0f)

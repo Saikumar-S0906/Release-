@@ -1371,20 +1371,27 @@ private fun ToolBody(
                     onCurveYs(next)
                 }
                 val i = curveFocus.coerceIn(0, 4)
-                LabeledSlider(
-                    stringResource(
-                        when (i) {
-                            0 -> R.string.studio_curve_black
-                            1 -> R.string.studio_curve_shadow
-                            3 -> R.string.studio_curve_light
-                            4 -> R.string.studio_curve_white
-                            else -> R.string.studio_curve_mid
-                        }
-                    ),
-                    curveYs[i],
-                    0f..1f,
-                    "curve_slider"
-                ) { set(i, it) }
+                val curveLabel = stringResource(
+                    when (i) {
+                        0 -> R.string.studio_curve_black
+                        1 -> R.string.studio_curve_shadow
+                        3 -> R.string.studio_curve_light
+                        4 -> R.string.studio_curve_white
+                        else -> R.string.studio_curve_mid
+                    }
+                )
+                key(i) {
+                    StudioValueSlider(
+                        curveLabel,
+                        curveYs[i],
+                        0f..1f,
+                        "curve_slider",
+                        CurveIdentityYs[i],
+                        "%.2f".format(curveYs[i]),
+                        { set(i, it) },
+                        showLabel = false
+                    )
+                }
                 StudioApplyButton(
                     stringResource(R.string.studio_apply),
                     { onApplyCurves(curveYs.copyOf()) },
@@ -1646,6 +1653,9 @@ private fun ToolBody(
         }
     }
 }
+
+/** Output of the identity diagonal. Long-press resets the focused curve point to this. */
+private val CurveIdentityYs = floatArrayOf(0f, 0.25f, 0.5f, 0.75f, 1f)
 
 @Composable
 private fun LabeledSlider(
