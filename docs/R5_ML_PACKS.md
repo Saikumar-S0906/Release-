@@ -40,8 +40,15 @@
 ## E5 size
 
 - `selfie_segmenter.tflite` stays in `:ml` (~244 KB) for MediaPipe `ImageSegmenter` only (`VisionFacade`). It is not a `PackId`, not in `PackCatalog`, and `PackLiteRt` does not bind it. Moving it would not change the pack gate
-- `./gradlew :app:assembleRelease :app:reportApkSize`
-- **Measured 2026-09-25:** minified `app-release-unsigned.apk` **131.11 MB**. Over the ~40 MB aspiration because of Media3 + MediaPipe JNI already in the base app, not because of pack models (none ship in the APK)
+- `./gradlew :app:assembleRelease :app:reportApkSize` prints the minified unsigned APK size and each `.so`
+- **Baseline, remeasured on tip `03fb2ea` (2026-09-25):** minified `app-release-unsigned.apk` **54.80 MB** (57,457,669 bytes). The earlier **131.11 MB** note does not match this artifact. Nothing in that APK is a pack weight
+  - MediaPipe `libmediapipe_tasks_vision_jni.so`, stored uncompressed: x86 **20.30** + arm64-v8a **12.43** + armeabi-v7a **7.61** = **40.34 MB**
+  - dex **10.29 MB**. `material-icons-extended` is a ~35 MB Maven AAR, but R8 left **0** `androidx.compose.material.icons` classes in this dex. Studio chrome already uses `pj_ic_*` vectors
+  - Play Services LiteRT client `libtensorflowlite_jni_gms_client.so` **2.11 MB** across x86, x86_64, arm64-v8a, and armeabi-v7a. SuperRes/Denoise bind needs this client. It is not stripped
+  - `assets/selfie_segmenter.tflite` **0.24 MB**, vision only
+  - Media3 is Java/Kotlin in the dex. This graph ships no Media3 JNI
+- **After:** release `ndk.abiFilters` = `arm64-v8a` + `armeabi-v7a` (debug stays multi-ABI). Same task: **33.08 MB** (34,683,268 bytes), **−21.72 MB**. Phone MediaPipe stays (12.43 + 7.61). LiteRT client stays on those ABIs (0.55 + 0.35). Dex unchanged (7.87 + 2.42). The unused extended-icons dependency is removed so a later keep rule cannot pull the 35 MB AAR back in; that removal did not change the measured dex. x86 and x86_64 `.so` files are absent. No inpaint/SR/denoise/interp/track weights. E4 and F1 stay HOLD
+- This release APK is under the ~40 MB aspiration. A fat APK that also stores the emulator ABIs is the 54.80 MB baseline. What remains in base is phone MediaPipe JNI (~20.0 MB) plus dex (~10.3 MB)
 - Gate for pack ship: do not add inpaint/SR/denoise/interp/track weights to the base APK
 
 ## Device smoke — Super-res / Denoise

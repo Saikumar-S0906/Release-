@@ -65,7 +65,7 @@ E1. Inpaint pack CTA + LiteRT RGB+mask bind on sideload (no HTTPS pin); Telea un
 E2. Super-resolution graph SR — distilled ESRGAN HTTPS fallback + LiteRT contract bind
 E3. Denoise graph N — Raspberry Pi UNet HTTPS fallback + LiteRT same-size RGB bind
 E4. Frame interp pack → FrameInterp.mlAvailable — wiring MET; runner unbound (no fake frames)
-E5. Size scaffolding MET (`reportApkSize`); selfie_segmenter ~244 KB stays in base. Measured minified unsigned APK **131.11 MB** (Media3/MediaPipe JNI). ~40 MB remains an aspiration; pack **models** stay out of the base APK
+E5. Size: remeasured tip 03fb2ea minified unsigned APK **54.80 MB** (the 131.11 MB note does not match that artifact). Release ABI filter (arm64-v8a + armeabi-v7a; debug stays multi-ABI) measured **33.08 MB** (−21.72 MB). Phone MediaPipe JNI stays (~20.0 MB). LiteRT client stays. selfie_segmenter ~244 KB stays in base for vision only. `material-icons-extended` was already absent from dex; dependency removed. ~40 MB bar met by this release APK only. Pack **models** stay out. E4/F1 HOLD
 
 ================================================================
 F. R6+ AMBITION (opt-in packs, not base APK)

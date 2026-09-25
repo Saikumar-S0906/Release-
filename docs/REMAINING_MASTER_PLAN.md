@@ -98,7 +98,7 @@ Then:
 
 | ID | Pack | Prerequisite | Delivery |
 |----|------|--------------|----------|
-| **E5** | Base APK ≤ ~40 MB | With pack foundation | `:ml` pack runtime + `reportApkSize`; `selfie_segmenter` (~244 KB) stays in base for MediaPipe only (not a pack engine). Scaffolding **MET 2026-09-25**. Measured minified unsigned APK **131.11 MB** (Media3/MediaPipe JNI). Pack models stay out |
+| **E5** | Base APK ≤ ~40 MB | With pack foundation | `:ml` pack runtime + `reportApkSize`; `selfie_segmenter` (~244 KB) stays in base for MediaPipe only (not a pack engine). Remeasured tip `03fb2ea` minified unsigned APK **54.80 MB** (131.11 MB does not match). Release arm64+armeabi-v7a filter measured **33.08 MB** (−21.72). Phone MediaPipe JNI and LiteRT client stay. Extended icons were already gone from dex. Pack models stay out. E4/F1 HOLD |
 | **E1** | Inpaint / generative fill | C3 + pack foundation | Missing CTA is Install from file (no HTTPS pin, no Download). Ready file ≠ neural. Neural Apply uses `engineReady` after RGB+mask FLOAT32 sideload bind. Nearby-pixel Telea stays on and is not neural |
 | **E2** | Super-resolution | Pack runtime | Graph `SR`; HTTPS ESRGAN SHA pin → Ready → FLOAT32 2×/4× NHWC → LiteRT. Apply uses `engineReady` (Ready alone is not neural) |
 | **E3** | Denoise | Same runtime | Graph `N`; HTTPS UNet SHA pin → Ready → FLOAT32 same-size RGB → LiteRT. Apply uses `engineReady` |

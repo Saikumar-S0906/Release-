@@ -1,3 +1,5 @@
+import java.util.zip.ZipFile
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -24,6 +26,12 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            // Phone ABIs only. MediaPipe JNI is stored uncompressed; x86/x86_64
+            // copies exist for emulators and are the bulk of the fat APK.
+            // Debug stays multi-ABI. LiteRT's arm64/armeabi-v7a client stays.
+            ndk {
+                abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -67,7 +75,6 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.material.icons)
     implementation(libs.androidx.compose.material3.adaptive.navigation.suite)
     implementation(libs.androidx.window)
     implementation(libs.androidx.navigation.compose)
@@ -99,10 +106,26 @@ tasks.register("reportApkSize") {
     dependsOn("packageRelease")
     doLast {
         val apk = file("build/outputs/apk/release").listFiles()
-            ?.firstOrNull { it.extension == "apk" }
+            ?.filter { it.extension == "apk" }
+            ?.maxByOrNull { it.length() }
             ?: error("No release APK. Run :app:assembleRelease first.")
         val mb = apk.length() / (1024.0 * 1024.0)
         logger.lifecycle("E5 APK ${apk.name}: ${"%.2f".format(mb)} MB (${apk.length()} bytes)")
+        ZipFile(apk).use { zip ->
+            val sos = zip.entries().asSequence()
+                .filter { !it.isDirectory && it.name.endsWith(".so") }
+                .sortedByDescending { it.size }
+                .toList()
+            val soBytes = sos.sumOf { it.size }
+            logger.lifecycle(
+                "E5 native libs: ${"%.2f".format(soBytes / (1024.0 * 1024.0))} MB across ${sos.size} .so files"
+            )
+            sos.forEach { entry ->
+                logger.lifecycle(
+                    "E5 so ${"%.2f".format(entry.size / (1024.0 * 1024.0))} MB ${entry.name}"
+                )
+            }
+        }
         if (mb > 40.0) {
             logger.warn("E5 size gate: APK is above ~40 MB. Keep models out of the base APK.")
         }
