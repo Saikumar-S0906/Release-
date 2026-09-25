@@ -51,7 +51,6 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImagePainter
@@ -64,6 +63,7 @@ import com.pixijoy.photo.PhotoPreset
 import com.pixijoy.designsystem.PixiAccent
 import com.pixijoy.designsystem.PixiBg
 import com.pixijoy.designsystem.PixiCardShape
+import com.pixijoy.designsystem.PixiEmptyState
 import com.pixijoy.designsystem.PixiError
 import com.pixijoy.designsystem.PixiPrimaryButton
 import com.pixijoy.designsystem.PixiSkeleton
@@ -508,32 +508,27 @@ private fun EmptyLibrary(
     showCreate: Boolean,
     onCreate: () -> Unit
 ) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                painter = painterResource(R.drawable.pj_ic_folder),
-                contentDescription = null,
-                tint = PixiAccent,
-                modifier = Modifier.size(40.dp)
-            )
-            Text(
-                message,
-                color = PixiTextMuted,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .padding(top = 8.dp)
-                    .fillMaxWidth()
-                    .testTag(tag)
-            )
-            if (showCreate) {
-                PixiPrimaryButton(
-                    text = stringResource(R.string.studio_library_create_cta),
-                    onClick = onCreate,
-                    modifier = Modifier
-                        .padding(top = 16.dp)
-                        .testTag("library_empty_create")
-                )
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .then(if (showCreate) Modifier.testTag("empty_library") else Modifier),
+        contentAlignment = Alignment.Center
+    ) {
+        PixiEmptyState(
+            line = message,
+            icon = painterResource(R.drawable.pj_ic_folder),
+            lineModifier = Modifier.testTag(tag),
+            cta = if (showCreate) {
+                {
+                    PixiPrimaryButton(
+                        text = stringResource(R.string.studio_library_create_cta),
+                        onClick = onCreate,
+                        modifier = Modifier.testTag("library_empty_create")
+                    )
+                }
+            } else {
+                null
             }
-        }
+        )
     }
 }

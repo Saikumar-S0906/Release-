@@ -86,6 +86,7 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **G1** — session preview\|tools on `isStudioTwoPane` (`studio_session_side_tools`); phone remains single-pane.
 - **G5** — haptic on crop Apply and movie split.
 - **G6** — Library cover thumbs sheen while Coil decodes; a missing file stays a static surface.
+- **G7** — One empty plate: Library “No projects yet” + Create (`empty_library`); pack download “Download to unlock” + Download (`empty_packs`). Neural wording stays off until the pack is Ready and bound.
 - **G9** — removed deprecated global BuildConfig default.
 **In progress:** R5 device gate (Maestro/TalkBack/five-user).
 

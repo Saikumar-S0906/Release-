@@ -86,7 +86,7 @@ G3. Consistent Hilt in StudioApp — MET 2026-09-25 (one `StudioGraphModule`; sh
 G4. Accessibility: 48dp chips, announce selected state — exited with B3
 G5. Haptics — crop Apply + movie split MET 2026-09-25 (no crop-handle snap yet)
 G6. Skeleton loaders for Library thumbs — MET 2026-09-25 (PixiSurface sheen while the cover decodes; static surface on failure; no device recapture)
-G7. Friendly empty-state illustrations
+G7. Friendly empty-state illustrations — MET 2026-09-25 (one glass wash: empty_library “No projects yet” + Create; empty_packs “Download to unlock” + Download; prior pack status tags kept)
 G8. Autosave indicator polish; rename after first create/export
 G9. Gradle BuildConfig deprecation cleanup — MET 2026-09-25 (removed `android.defaults.buildfeatures.buildconfig`; `:app` still sets `buildFeatures.buildConfig`)
 

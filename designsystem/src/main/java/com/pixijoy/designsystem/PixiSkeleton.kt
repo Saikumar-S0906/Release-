@@ -25,8 +25,8 @@ const val PixiSkeletonSweepMs = 1200
 /** Width of the moving band as a fraction of the placeholder. */
 const val PixiSkeletonSheenFraction = 0.42f
 
-private val PixiSkeletonSheen = PixiTextMuted.copy(alpha = 0.16f)
-private val PixiSkeletonSheenCore = PixiTextMuted.copy(alpha = 0.38f)
+internal val PixiSkeletonSheen = PixiTextMuted.copy(alpha = 0.16f)
+internal val PixiSkeletonSheenCore = PixiTextMuted.copy(alpha = 0.38f)
 
 /**
  * Horizontal start of the sheen band.
