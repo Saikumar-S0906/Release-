@@ -129,7 +129,7 @@ Never land F* as isolated effects without listed primitives.
 | **G1** | Tablet/foldable two-pane | **MET** catalog\|session + session preview\|tools 2026-09-25 |
 | **G2** | Photo/Movie ViewModels | **Slider/preview extract complete** 2026-09-25 — Hilt session VMs own graph, tool chrome, and slider/preview baking. Screens observe that state. Movie players stay on the screen. Tool chrome soft-resets on entry, rotation, and tool switch; the edit graph stays. |
 | **G3** | Hilt in StudioApp | **MET** 2026-09-25 — one `StudioGraphModule`; shell navigates and observes injected engines; composition preview and export workers no longer construct engines |
-| **G5** | Haptics | **MET** crop Apply + movie split 2026-09-25 |
+| **G5** | Haptics | **MET** crop Apply + movie split 2026-09-25; crop-handle edge snap + haptic 2026-09-25 (unit-tested, device drag yellow) |
 | **G6** | Skeleton Library thumbs | **MET** 2026-09-25 — cover sheen while Coil decodes; still surface if the file fails. |
 | **G7** | Empty-state illustrations | **MET** 2026-09-25 — one glass plate (`PixiEmptyState`): `empty_library` “No projects yet” + Create; hosted `empty_packs` “Download to unlock” + Download. Sideload-only packs (Inpaint) show Install from file on that plate. Neural copy only when `engineReady` (Ready alone is the file). |
 | **G8** | Autosave + rename-after-create/export | **MET** 2026-09-25 — session chip follows graph writes; library Saved age; filename or dated title; tap title or Name this project after export |

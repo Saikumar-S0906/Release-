@@ -84,7 +84,7 @@ G1. Tablet / foldable two-pane — catalog|session MET earlier; session preview|
 G2. ViewModel + Hilt for PhotoSessionScreen / MovieSessionScreen — slider/preview extract COMPLETE 2026-09-25 (graph, tool chrome, and preview baking in Hilt VMs; screens observe; movie players stay on the screen; tool chrome soft-resets on entry, rotation, and tool switch; the edit graph stays)
 G3. Consistent Hilt in StudioApp — MET 2026-09-25 (one `StudioGraphModule`; shell navigates and observes injected engines; composition preview and export workers no longer construct engines)
 G4. Accessibility: 48dp chips, announce selected state — exited with B3
-G5. Haptics — crop Apply + movie split MET 2026-09-25 (no crop-handle snap yet)
+G5. Haptics — crop Apply + movie split MET 2026-09-25; crop-handle edge snap + haptic MET 2026-09-25 (unit-tested; device drag not run — `.maestro/YELLOW-crop-snap.md`)
 G6. Skeleton loaders for Library thumbs — MET 2026-09-25 (PixiSurface sheen while the cover decodes; static surface on failure; no device recapture)
 G7. Friendly empty-state illustrations — MET 2026-09-25 (one glass wash: empty_library “No projects yet” + Create; empty_packs “Download to unlock” + Download; prior pack status tags kept)
 G8. Autosave indicator polish; rename after first create/export — MET 2026-09-25 (session chip follows graph writes; library Saved age; filename or dated title; tap title or Name this project after export)

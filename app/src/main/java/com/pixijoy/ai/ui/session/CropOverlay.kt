@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -13,12 +14,22 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import com.pixijoy.designsystem.PixiAccent
 import com.pixijoy.photo.PhotoOp
 
 internal enum class CropHandle { TL, TR, BL, BR }
+
+internal enum class CropBound { Left, Top, Right, Bottom }
+
+/** Normalized distance at which a crop edge sticks to the photo bound. */
+internal const val CropEdgeSnap = 0.02f
+
+internal const val CropMinSpan = 0.15f
 
 @Composable
 fun CropOverlay(
@@ -29,19 +40,24 @@ fun CropOverlay(
     viewportZoom: Float = 1f
 ) {
     var handle by remember { mutableStateOf<CropHandle?>(null) }
+    var heldBounds by remember { mutableStateOf(cropBoundEdges(crop)) }
+    val latestCrop by rememberUpdatedState(crop)
+    val haptics = LocalHapticFeedback.current
     val safeZoom = viewportZoom.coerceAtLeast(1f)
     Canvas(
         modifier = modifier
             .testTag("session_crop_overlay")
-            .pointerInput(crop, imageRect, safeZoom) {
+            .pointerInput(imageRect, safeZoom) {
                 detectDragGestures(
                     onDragStart = { start ->
+                        val current = latestCrop
                         handle = hitTestCropHandle(
                             start = start,
                             imageRect = imageRect,
-                            crop = crop,
+                            crop = current,
                             hitRadiusPx = 26.dp.toPx() / safeZoom
                         )
+                        heldBounds = cropBoundEdges(current)
                     },
                     onDragEnd = { handle = null },
                     onDragCancel = { handle = null },
@@ -49,13 +65,18 @@ fun CropOverlay(
                         val active = handle ?: return@detectDragGestures
                         if (imageRect.width <= 0f || imageRect.height <= 0f) return@detectDragGestures
                         change.consume()
-                        onChange(
-                            crop.drag(
-                                active,
-                                amount.x / imageRect.width,
-                                amount.y / imageRect.height
-                            )
+                        val next = dragCropHandle(
+                            latestCrop,
+                            active,
+                            amount.x / imageRect.width,
+                            amount.y / imageRect.height
                         )
+                        val bounds = cropBoundEdges(next)
+                        if ((bounds - heldBounds).isNotEmpty()) {
+                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        }
+                        heldBounds = bounds
+                        onChange(next)
                     }
                 )
             }
@@ -84,12 +105,26 @@ fun CropOverlay(
             topLeft = Offset(r, t),
             size = Size((imageRect.right - r).coerceAtLeast(0f), (b - t).coerceAtLeast(0f))
         )
+        val stroke = 2.dp.toPx() / safeZoom
         drawRect(
             color = Color.White,
             topLeft = Offset(l, t),
             size = Size(r - l, b - t),
-            style = Stroke(width = 2.dp.toPx() / safeZoom)
+            style = Stroke(width = stroke)
         )
+        val bounds = cropBoundEdges(crop)
+        if (CropBound.Left in bounds) {
+            drawLine(PixiAccent, Offset(l, t), Offset(l, b), strokeWidth = stroke)
+        }
+        if (CropBound.Right in bounds) {
+            drawLine(PixiAccent, Offset(r, t), Offset(r, b), strokeWidth = stroke)
+        }
+        if (CropBound.Top in bounds) {
+            drawLine(PixiAccent, Offset(l, t), Offset(r, t), strokeWidth = stroke)
+        }
+        if (CropBound.Bottom in bounds) {
+            drawLine(PixiAccent, Offset(l, b), Offset(r, b), strokeWidth = stroke)
+        }
         // The common viewport layer scales positions; compensate radii so handles remain
         // 10dp visually and retain a separate 26dp touch radius at every zoom.
         val radius = 10.dp.toPx() / safeZoom
@@ -153,29 +188,46 @@ internal fun hitTestCropHandle(
         ?.first
 }
 
-private fun PhotoOp.Crop.drag(handle: CropHandle, dx: Float, dy: Float): PhotoOp.Crop {
-    val min = 0.15f
-    var l = left
-    var t = top
-    var r = right
-    var b = bottom
+internal fun dragCropHandle(crop: PhotoOp.Crop, handle: CropHandle, dx: Float, dy: Float): PhotoOp.Crop {
+    var l = crop.left
+    var t = crop.top
+    var r = crop.right
+    var b = crop.bottom
     when (handle) {
         CropHandle.TL -> {
-            l = (l + dx).coerceIn(0f, r - min)
-            t = (t + dy).coerceIn(0f, b - min)
+            l = snapCropEdge(l + dx, low = 0f, high = r - CropMinSpan)
+            t = snapCropEdge(t + dy, low = 0f, high = b - CropMinSpan)
         }
         CropHandle.TR -> {
-            r = (r + dx).coerceIn(l + min, 1f)
-            t = (t + dy).coerceIn(0f, b - min)
+            r = snapCropEdge(r + dx, low = l + CropMinSpan, high = 1f)
+            t = snapCropEdge(t + dy, low = 0f, high = b - CropMinSpan)
         }
         CropHandle.BL -> {
-            l = (l + dx).coerceIn(0f, r - min)
-            b = (b + dy).coerceIn(t + min, 1f)
+            l = snapCropEdge(l + dx, low = 0f, high = r - CropMinSpan)
+            b = snapCropEdge(b + dy, low = t + CropMinSpan, high = 1f)
         }
         CropHandle.BR -> {
-            r = (r + dx).coerceIn(l + min, 1f)
-            b = (b + dy).coerceIn(t + min, 1f)
+            r = snapCropEdge(r + dx, low = l + CropMinSpan, high = 1f)
+            b = snapCropEdge(b + dy, low = t + CropMinSpan, high = 1f)
         }
     }
-    return copy(left = l, top = t, right = r, bottom = b)
+    return crop.copy(left = l, top = t, right = r, bottom = b)
+}
+
+/**
+ * Pulls an edge onto the photo bound when it is within [CropEdgeSnap] and that
+ * bound is still legal. The minimum-span wall is not a snap target.
+ */
+internal fun snapCropEdge(raw: Float, low: Float, high: Float): Float {
+    val clamped = raw.coerceIn(low, high)
+    if (low == 0f && clamped <= CropEdgeSnap) return 0f
+    if (high == 1f && clamped >= 1f - CropEdgeSnap) return 1f
+    return clamped
+}
+
+internal fun cropBoundEdges(crop: PhotoOp.Crop): Set<CropBound> = buildSet {
+    if (crop.left == 0f) add(CropBound.Left)
+    if (crop.top == 0f) add(CropBound.Top)
+    if (crop.right == 1f) add(CropBound.Right)
+    if (crop.bottom == 1f) add(CropBound.Bottom)
 }
