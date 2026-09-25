@@ -2,7 +2,16 @@
 
 `export_rename` (“Name this project”) is composed only after a successful export (`successUri != null` in `ExportSheet`). `.maestro/export/success-actions.yaml` stops at `export_sheet_confirm` and leaves the confirm/success steps commented because that path waits on the export worker and can open a system viewer. A Maestro flow that must finish an export before it can tap `export_rename` is not added here.
 
-There is no `project_rename_sheet` tag. Library rename uses `library_rename_field` and `library_rename_confirm` (`.maestro/library/rename-project.yaml`). The overflow row is the string Rename.
+`ProjectRenameDialog` is an `AlertDialog` (its own window). `MainActivity`'s flag does not cross into that window. The dialog modifier sets `testTagsAsResourceId = true` (same pattern as `ExportSheet` and `CreateSourceSheet`) and the root tag `project_rename_sheet`. TalkBack labels stay the visible strings; the flag is not an accessibility announcement.
+
+Tags that should surface as resource-ids once a device dump confirms them:
+
+- `project_rename_sheet`
+- `library_rename_field` (title field)
+- `library_rename_confirm`
+- `library_rename_dismiss`
+
+No hierarchy dump was taken for this change. `.maestro/library/rename-project.yaml` still opens the dialog from the overflow string Rename (`DropdownMenu` is a separate popup; `library_action_rename` is not asserted as an id) and still asserts only `library_rename_field` and `library_rename_confirm`. `project_rename_sheet` and `library_rename_dismiss` stay commented until a dump shows those resource-ids. Soft-emu stays yellow.
 
 `session_save_status` is the session autosave chip. `rename-project.yaml` asserts it once the sample session is open. `.maestro/chrome/compare-hold.yaml` already asserts the same chip. No extra flow.
 

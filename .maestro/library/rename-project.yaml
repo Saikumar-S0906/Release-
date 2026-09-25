@@ -2,7 +2,8 @@ appId: com.pixijoy.ai
 ---
 # G8 library rename. One sample so the library has a card (title is dated, e.g. Sample · Sep 25).
 # Overflow is a separate window: tap text Rename (studio_library_rename), same as Delete.
-# Dialog resource-ids: library_rename_field, library_rename_confirm.
+# Dialog sets testTagsAsResourceId. Live ids below are the ones this flow already used.
+# project_rename_sheet and library_rename_dismiss stay commented until a hierarchy dump.
 # session_save_status is the session chip while the sample is open (same chrome as compare-hold).
 - runFlow: ../launch-to-home.yaml
 - tapOn:
@@ -39,6 +40,11 @@ appId: com.pixijoy.ai
     visible:
       id: "library_rename_field"
     timeout: 10000
+# Soft until a hierarchy dump shows the new resource-ids:
+# - assertVisible:
+#     id: "project_rename_sheet"
+# - assertVisible:
+#     id: "library_rename_dismiss"
 - tapOn:
     id: "library_rename_field"
 - eraseText: 64

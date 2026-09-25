@@ -32,10 +32,12 @@ internal fun ProjectRenameDialog(
 ) {
     var draft by rememberSaveable(titleKey) { mutableStateOf(initialTitle) }
     // AlertDialog is its own window. MainActivity's testTagsAsResourceId does not apply here,
-    // same as ExportSheet. Without this, library_rename_* never become resource-ids.
+    // same as ExportSheet and CreateSourceSheet. The flag is not spoken by TalkBack.
     AlertDialog(
         onDismissRequest = onDismiss,
-        modifier = Modifier.semantics { testTagsAsResourceId = true },
+        modifier = Modifier
+            .semantics { testTagsAsResourceId = true }
+            .testTag("project_rename_sheet"),
         containerColor = PixiSurface2,
         title = { Text(stringResource(R.string.studio_library_rename), color = PixiText) },
         text = {
@@ -57,7 +59,10 @@ internal fun ProjectRenameDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.testTag("library_rename_dismiss")
+            ) {
                 Text(stringResource(R.string.studio_cancel), color = PixiTextMuted)
             }
         }
