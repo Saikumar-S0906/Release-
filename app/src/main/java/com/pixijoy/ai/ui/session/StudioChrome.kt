@@ -1,5 +1,6 @@
 package com.pixijoy.ai.ui.session
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -27,6 +28,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -87,6 +89,7 @@ data class StudioGroupItem(
 fun StudioChromeBar(
     modifier: Modifier = Modifier,
     sideDock: Boolean = false,
+    panelScrollKey: Any = Unit,
     abovePanel: (@Composable ColumnScope.() -> Unit)? = null,
     rail: @Composable () -> Unit,
     panel: @Composable ColumnScope.() -> Unit
@@ -115,6 +118,7 @@ fun StudioChromeBar(
         StudioFrostedPanel(
             modifier = if (sideDock) Modifier.weight(1f) else Modifier,
             expanded = sideDock,
+            scrollKey = panelScrollKey,
             content = panel
         )
         rail()
@@ -151,9 +155,10 @@ fun StudioTopChrome(
 fun StudioFrostedPanel(
     modifier: Modifier = Modifier,
     expanded: Boolean = false,
+    scrollKey: Any = Unit,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val scroll = rememberScrollState()
+    val scroll = remember(scrollKey) { ScrollState(0) }
     val moreBelow = scroll.maxValue > 0 && scroll.value < scroll.maxValue
     Box(
         modifier

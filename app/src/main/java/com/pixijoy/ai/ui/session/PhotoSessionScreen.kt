@@ -39,6 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -143,10 +144,7 @@ fun PhotoSessionScreen(
             }
         )
     val toolEntry = remember(project.id, toolKey) { Any() }
-    if (sessionViewModel.toolEntryId !== toolEntry) {
-        sessionViewModel.toolEntryId = toolEntry
-        sessionViewModel.bindTool(toolKey)
-    }
+    sessionViewModel.syncToolChrome(toolKey, toolEntry)
     val sessionState by sessionViewModel.state.collectAsState()
     val layers = sessionState.layers
     val redo = sessionState.redo
@@ -239,7 +237,7 @@ fun PhotoSessionScreen(
                                 label,
                                 context.getString(R.string.studio_lut_imported, label)
                             )
-                            mode = SessionMode.Looks
+                            sessionViewModel.selectMode(SessionMode.Looks)
                         }
                     }
                 }
@@ -267,24 +265,27 @@ fun PhotoSessionScreen(
         StudioChromeBar(
             modifier = modifier,
             sideDock = sideDock,
+            panelScrollKey = sessionViewModel.chromeEpoch to group to mode,
             rail = {
                 StudioGroupRail(
                     items = photoGroupItems(),
                     selectedTag = group.tag,
                     onSelect = { tag ->
-                        val next = PhotoGroup.entries.first { it.tag == tag }
-                        group = next
-                        if (!modeBelongs(next, mode)) mode = defaultModeFor(next, toolKey)
+                        sessionViewModel.selectGroup(
+                            PhotoGroup.entries.first { it.tag == tag },
+                            toolKey
+                        )
                     }
                 )
             },
             panel = {
+            key(sessionViewModel.chromeEpoch) {
             ToolBody(
             controls = sessionControls,
             mode = mode,
             group = group,
             toolKey = toolKey,
-            onMode = { mode = it },
+            onMode = sessionViewModel::selectMode,
             onRotate = { push(PhotoOp.Rotate(90)) },
             onFlip = { push(PhotoOp.FlipH) },
             exposure = exposure,
@@ -310,7 +311,7 @@ fun PhotoSessionScreen(
             onBlurAmount = sessionViewModel.preview::setBlur,
             onApplyCrop = {
                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                push(crop); mode = defaultMode(toolKey)
+                push(crop); sessionViewModel.selectMode(defaultMode(toolKey))
             },
             onApplyExpand = { push(PhotoOp.Expand(expand)) },
             onApplySkyReplace = { target, color -> push(PhotoOp.SkyReplace(target, color)) },
@@ -460,6 +461,7 @@ fun PhotoSessionScreen(
                     onSelect = { selectedLayer = it },
                     onChange = { sessionViewModel.replaceLayers(it) }
                 )
+            }
             }
             }
         )

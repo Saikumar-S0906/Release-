@@ -84,6 +84,29 @@ internal class PhotoSessionControls(toolKey: String) {
     var curveFocus by mutableIntStateOf(2)
     var skyTarget by mutableStateOf(SkyReplaceTarget.Sky)
     var skyColor by mutableStateOf(SkyReplacePresets.BlueSky)
+    private var strokeDraftMode: SessionMode? = null
+
+    /**
+     * Drops drafts that would paint or bake as the wrong tool.
+     * Strokes stay parked when leaving Heal for Light so the same tool can resume;
+     * they clear when another stroke tool (Fill / Erase) would apply them.
+     */
+    fun abandonModeDrafts(previous: SessionMode, next: SessionMode) {
+        if (previous == next) return
+        val strokes = setOf(SessionMode.Heal, SessionMode.Fill, SessionMode.Erase)
+        val spacing = strokes + SessionMode.Mask
+        if (previous in strokes) {
+            strokeDraftMode = if (pendingStamps.isEmpty()) null else previous
+        }
+        if (next in strokes && strokeDraftMode != null && strokeDraftMode != next) {
+            pendingStamps = emptyList()
+            lastStamp = null
+            strokeDraftMode = null
+        }
+        if (previous in spacing && previous != next) lastStamp = null
+        if (next != SessionMode.Heal) pickingHealSource = false
+        if (next == SessionMode.Erase && previous != SessionMode.Erase) healSource = null
+    }
 
     fun reset(toolKey: String) {
         releaseBitmaps()
@@ -136,6 +159,7 @@ internal class PhotoSessionControls(toolKey: String) {
         curveFocus = 2
         skyTarget = SkyReplaceTarget.Sky
         skyColor = SkyReplacePresets.BlueSky
+        strokeDraftMode = null
     }
 
     fun releaseBitmaps() {

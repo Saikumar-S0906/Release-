@@ -81,7 +81,7 @@ F6. Smart-object analog; advanced type; print/PDF
 G. PLATFORM / UX CHROME (ongoing)
 ================================================================
 G1. Tablet / foldable two-pane — catalog|session MET earlier; session preview|tools (`studio_session_side_tools`) MET 2026-09-25 (`isStudioTwoPane` 840×520)
-G2. ViewModel + Hilt for PhotoSessionScreen / MovieSessionScreen — slider/preview extract COMPLETE 2026-09-25 (graph, tool chrome, and preview baking in Hilt VMs; screens observe; movie players stay on the screen; tool chrome resets on entry/rotation)
+G2. ViewModel + Hilt for PhotoSessionScreen / MovieSessionScreen — slider/preview extract COMPLETE 2026-09-25 (graph, tool chrome, and preview baking in Hilt VMs; screens observe; movie players stay on the screen; tool chrome soft-resets on entry, rotation, and tool switch; the edit graph stays)
 G3. Consistent Hilt in StudioApp — MET 2026-09-25 (one `StudioGraphModule`; shell navigates and observes injected engines; composition preview and export workers no longer construct engines)
 G4. Accessibility: 48dp chips, announce selected state — exited with B3
 G5. Haptics — crop Apply + movie split MET 2026-09-25 (no crop-handle snap yet)

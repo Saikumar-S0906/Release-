@@ -5,6 +5,7 @@ import com.pixijoy.movie.TimelineClip
 import com.pixijoy.photo.ExportFormat
 import com.pixijoy.photo.LayeredOp
 import com.pixijoy.photo.PhotoOp
+import com.pixijoy.photo.Stamp
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -155,6 +156,86 @@ class SessionStateTest {
     }
 
     @Test
+    fun photoChrome_resetsOnEntryRotationAndToolSwitch_keepsGraph() {
+        val viewModel = PhotoSessionViewModel(
+            initialGraph = "",
+            persistence = GraphPersistence { },
+            scheduler = ManualGraphSaveScheduler(),
+            toolKey = "editor"
+        )
+        val layer = LayeredOp("L1", "Grade", op = PhotoOp.Grade(0.2f, 1f))
+        viewModel.push(layer)
+        viewModel.controls.exposure = 0.6f
+        viewModel.controls.pendingStamps = listOf(Stamp(0.2f, 0.3f, 0.05f))
+        viewModel.toolMode = SessionMode.Heal
+        viewModel.toolGroup = PhotoGroup.Retouch
+
+        val surface = Any()
+        assertTrue(viewModel.syncToolChrome("editor", surface))
+        assertEquals(1, viewModel.chromeEpoch)
+        assertEquals(SessionMode.Crop, viewModel.toolMode)
+        assertEquals(PhotoGroup.Crop, viewModel.toolGroup)
+        assertEquals(0f, viewModel.controls.exposure)
+        assertTrue(viewModel.controls.pendingStamps.isEmpty())
+        assertEquals(listOf(layer), viewModel.state.value.layers)
+
+        viewModel.controls.exposure = 0.4f
+        assertFalse(viewModel.syncToolChrome("editor", surface))
+        assertEquals(1, viewModel.chromeEpoch)
+        assertEquals(0.4f, viewModel.controls.exposure)
+
+        assertTrue(viewModel.syncToolChrome("editor", Any()))
+        assertEquals(2, viewModel.chromeEpoch)
+        assertEquals(0f, viewModel.controls.exposure)
+        assertEquals(listOf(layer), viewModel.state.value.layers)
+
+        viewModel.controls.exposure = 0.7f
+        assertTrue(viewModel.syncToolChrome("cutout", surface))
+        assertEquals(SessionMode.Erase, viewModel.toolMode)
+        assertEquals(PhotoGroup.Retouch, viewModel.toolGroup)
+        assertEquals(ExportFormat.PNG, viewModel.controls.format)
+        assertEquals(0f, viewModel.controls.exposure)
+        assertEquals(listOf(layer), viewModel.state.value.layers)
+    }
+
+    @Test
+    fun photoToolSwitch_dropsForeignStrokeDrafts_keepsSharedGrade() {
+        val viewModel = PhotoSessionViewModel(
+            initialGraph = "",
+            persistence = GraphPersistence { },
+            scheduler = ManualGraphSaveScheduler(),
+            toolKey = "editor"
+        )
+        viewModel.selectGroup(PhotoGroup.Light, "editor")
+        viewModel.controls.exposure = 0.55f
+        viewModel.controls.hue = 12f
+        viewModel.selectGroup(PhotoGroup.Color, "editor")
+        assertEquals(SessionMode.Adjust, viewModel.toolMode)
+        assertEquals(0.55f, viewModel.controls.exposure)
+        assertEquals(12f, viewModel.controls.hue)
+
+        viewModel.selectGroup(PhotoGroup.Retouch, "editor")
+        viewModel.selectMode(SessionMode.Heal)
+        viewModel.controls.pendingStamps = listOf(Stamp(0.1f, 0.2f, 0.04f))
+        viewModel.controls.pickingHealSource = true
+        viewModel.controls.healSource = 0.4f to 0.5f
+        viewModel.selectMode(SessionMode.Fill)
+        assertTrue(viewModel.controls.pendingStamps.isEmpty())
+        assertFalse(viewModel.controls.pickingHealSource)
+
+        viewModel.controls.pendingStamps = listOf(Stamp(0.3f, 0.3f, 0.04f))
+        viewModel.selectGroup(PhotoGroup.Light, "editor")
+        assertEquals(listOf(0.3f), viewModel.controls.pendingStamps.map { it.x })
+        assertEquals(0.55f, viewModel.controls.exposure)
+        viewModel.selectMode(SessionMode.Fill)
+        assertEquals(listOf(0.3f), viewModel.controls.pendingStamps.map { it.x })
+
+        viewModel.selectMode(SessionMode.Erase)
+        assertTrue(viewModel.controls.pendingStamps.isEmpty())
+        assertEquals(null, viewModel.controls.healSource)
+    }
+
+    @Test
     fun movieToolSelection_startsOnFirstClip() {
         val viewModel = MovieSessionViewModel(
             initialTimeline = timeline(volume = 1f),
@@ -191,6 +272,48 @@ class SessionStateTest {
         assertFalse(viewModel.controls.exporting)
         assertEquals("content://movie", viewModel.controls.exportSuccessUri)
         assertTrue(viewModel.controls.showExport)
+    }
+
+    @Test
+    fun movieChrome_resetsOnEntryRotationAndToolSwitch_keepsTimeline() {
+        val viewModel = MovieSessionViewModel(
+            initialTimeline = timeline(volume = 1f),
+            persistence = GraphPersistence { },
+            scheduler = ManualGraphSaveScheduler()
+        )
+        viewModel.setTimeline(viewModel.state.value.timeline.copy(
+            clips = viewModel.state.value.timeline.clips.map { it.copy(volume = 0.25f) }
+        ))
+        viewModel.movieGroup = MovieGroup.Audio
+        viewModel.effectSub = MovieEffectSub.SlowMo
+        viewModel.controls.playhead = 0.8f
+        viewModel.selectedTitleId = "title"
+
+        val surface = Any()
+        assertTrue(viewModel.syncToolChrome("move", surface))
+        assertEquals(1, viewModel.chromeEpoch)
+        assertEquals(MovieGroup.Edit, viewModel.movieGroup)
+        assertEquals(MovieEffectSub.Motion, viewModel.effectSub)
+        assertEquals(0f, viewModel.controls.playhead)
+        assertEquals(null, viewModel.selectedTitleId)
+        assertEquals(0.25f, viewModel.state.value.timeline.clips.single().volume)
+
+        viewModel.movieGroup = MovieGroup.Color
+        viewModel.controls.playhead = 0.2f
+        assertFalse(viewModel.syncToolChrome("move", surface))
+        assertEquals(MovieGroup.Color, viewModel.movieGroup)
+        assertEquals(0.2f, viewModel.controls.playhead)
+
+        assertTrue(viewModel.syncToolChrome("move", Any()))
+        assertEquals(MovieGroup.Edit, viewModel.movieGroup)
+        assertEquals(2, viewModel.chromeEpoch)
+
+        viewModel.movieGroup = MovieGroup.Effects
+        viewModel.effectSub = MovieEffectSub.Chroma
+        assertTrue(viewModel.syncToolChrome("talking", surface))
+        assertEquals(MovieGroup.Edit, viewModel.movieGroup)
+        assertEquals(MovieEffectSub.Motion, viewModel.effectSub)
+        assertEquals(0.25f, viewModel.state.value.timeline.clips.single().volume)
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.pixijoy.ai.ui.session
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -143,15 +144,46 @@ open class PhotoSessionViewModel(
     internal val selectedLayerState = mutableStateOf<String?>(null)
     internal var selectedLayerId by selectedLayerState
     internal var toolEntryId: Any? = null
+    internal var boundToolKey: String? = null
+    internal val chromeEpochState = mutableIntStateOf(0)
+    internal var chromeEpoch by chromeEpochState
     internal val controls = PhotoSessionControls(toolKey)
     internal val preview = PhotoSessionPreview(controls)
 
-    /** Fresh screen entry (including rotation) picks the tool and slider defaults again. */
+    /**
+     * Soft-resets tool chrome when the session surface is new (entry, rotation)
+     * or the hub tool key changed. The edit graph is left alone.
+     * Returns true when chrome was reset.
+     */
+    internal fun syncToolChrome(nextToolKey: String, surfaceId: Any): Boolean {
+        if (toolEntryId === surfaceId && boundToolKey == nextToolKey) return false
+        toolEntryId = surfaceId
+        bindTool(nextToolKey)
+        return true
+    }
+
+    /** Fresh screen entry (including rotation and tool switch) picks slider defaults again. */
     internal fun bindTool(nextToolKey: String) {
         toolMode = defaultMode(nextToolKey)
         toolGroup = groupForTool(nextToolKey)
         selectedLayerId = null
         controls.reset(nextToolKey)
+        boundToolKey = nextToolKey
+        chromeEpoch += 1
+    }
+
+    /** Group rail. Shared grade stays; the active mode's drafts do not leak into another tool. */
+    internal fun selectGroup(next: PhotoGroup, toolKey: String) {
+        val nextMode = if (modeBelongs(next, toolMode)) toolMode else defaultModeFor(next, toolKey)
+        toolGroup = next
+        selectMode(nextMode)
+    }
+
+    /** Chip row inside the current group. */
+    internal fun selectMode(next: SessionMode) {
+        if (toolMode == next) return
+        controls.abandonModeDrafts(toolMode, next)
+        toolMode = next
     }
 
     override fun onCleared() {
@@ -319,7 +351,23 @@ open class MovieSessionViewModel(
     internal val selectedTitleState = mutableStateOf<String?>(null)
     internal var selectedTitleId by selectedTitleState
     internal var toolEntryId: Any? = null
+    internal var boundToolKey: String? = null
+    internal val chromeEpochState = mutableIntStateOf(0)
+    internal var chromeEpoch by chromeEpochState
     internal val controls = MovieSessionControls()
+
+    /**
+     * Soft-resets tool chrome when the session surface is new (entry, rotation)
+     * or the hub tool key changed. The timeline is left alone.
+     * Returns true when chrome was reset.
+     */
+    internal fun syncToolChrome(toolKey: String, surfaceId: Any): Boolean {
+        if (toolEntryId === surfaceId && boundToolKey == toolKey) return false
+        toolEntryId = surfaceId
+        boundToolKey = toolKey
+        resetToolChrome()
+        return true
+    }
 
     /** Fresh screen entry returns to Edit / first clip and slider defaults. */
     internal fun resetToolChrome() {
@@ -328,6 +376,7 @@ open class MovieSessionViewModel(
         selectedTitleId = null
         selectedClipId = _state.value.timeline.clips.firstOrNull()?.id
         controls.reset()
+        chromeEpoch += 1
     }
     private val saver = DebouncedGraphSaver(
         persistence = persistence,

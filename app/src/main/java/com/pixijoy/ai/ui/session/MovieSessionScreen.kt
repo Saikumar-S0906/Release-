@@ -54,6 +54,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -178,9 +179,7 @@ fun MovieSessionScreen(
             }
         )
     val toolEntry = remember(project.id, toolKey) { Any() }
-    if (sessionViewModel.toolEntryId !== toolEntry) {
-        sessionViewModel.toolEntryId = toolEntry
-        sessionViewModel.resetToolChrome()
+    if (sessionViewModel.syncToolChrome(toolKey, toolEntry)) {
         sessionViewModel.controls.bindEndMs(
             if (still) duration else engine.durationMs(path).coerceAtLeast(1000)
         )
@@ -498,6 +497,7 @@ fun MovieSessionScreen(
         StudioChromeBar(
             modifier = modifier,
             sideDock = sideDock,
+            panelScrollKey = sessionViewModel.chromeEpoch to movieGroup to effectSub,
             abovePanel = if (!sideDock && !still) {
                 {
                     TimelineDock()
@@ -570,6 +570,7 @@ fun MovieSessionScreen(
                 left.mediaIndex == right.mediaIndex && left.outMs == right.inMs
             }
             if (movieGroup == MovieGroup.Edit) {
+            key(sessionViewModel.chromeEpoch) {
             MovieEditOpsPanel(
                 selected = selected,
                 canRoll = canRoll,
@@ -596,6 +597,7 @@ fun MovieSessionScreen(
                 },
                 onSettled = { settlePreview() }
             )
+            }
             }
             if (movieGroup == MovieGroup.Effects) {
             StudioHScrollRow {
