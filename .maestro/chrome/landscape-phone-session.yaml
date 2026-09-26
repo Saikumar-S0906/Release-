@@ -1,24 +1,38 @@
 appId: com.pixijoy.ai
 ---
-# Phone landscape (short height): single-pane glass, not tablet side dock.
-# Drive size from the host before this flow, e.g.:
-#   adb shell wm size 2400x1080
-# Maestro 2.10 on this machine has no setOrientation — restore with wm size reset after.
+# Phone landscape (wide + short): side tools beside canvas (not bottom glass).
+# Drive orientation from the host before this flow (Maestro 2.10 has no setOrientation):
+#   adb shell settings put system accelerometer_rotation 0
+#   adb shell settings put system user_rotation 1
+# Restore after:
+#   adb shell settings put system user_rotation 0
+#   adb shell settings put system accelerometer_rotation 1
+# Note: wm size alone does not flip Configuration on API 35 Pixel AVDs — use user_rotation.
 - runFlow: ../launch-to-home.yaml
 - tapOn:
     id: "home_create"
 - extendedWaitUntil:
-    visible: "Try a sample"
+    visible:
+      id: "create_source_sheet"
     timeout: 20000
-- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "source_sample"
+    timeout: 10000
+- tapOn:
+    id: "source_sample"
 - extendedWaitUntil:
     visible:
       id: "photo_session"
-    timeout: 60000
+    timeout: 90000
 - assertVisible:
+    id: "studio_session_side_tools"
+- assertNotVisible:
     id: "studio_chrome_bar"
 - assertNotVisible:
-    id: "studio_session_side_tools"
+    id: "studio_two_pane"
+- assertNotVisible:
+    id: "nav_home"
 - tapOn:
     id: "studio_group_light"
 - tapOn:

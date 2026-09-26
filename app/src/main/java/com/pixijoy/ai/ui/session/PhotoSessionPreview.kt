@@ -370,8 +370,9 @@ internal fun PhotoPreviewEffects(
                 viewModel.preview.onExport(
                     PhotoExportPhase.Failed,
                     uri = null,
-                    message = info.outputData.getString(PhotoExportWorker.KEY_ERROR)
-                        ?: context.getString(R.string.studio_export_failed)
+                    message = (info.outputData.getString(PhotoExportWorker.KEY_ERROR)
+                        ?: context.getString(R.string.studio_export_failed)) +
+                        "\n" + context.getString(R.string.studio_export_failed_help)
                 )
             else -> Unit
         }

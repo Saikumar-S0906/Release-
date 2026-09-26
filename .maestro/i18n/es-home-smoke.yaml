@@ -1,0 +1,11 @@
+# Smoke: launch with Spanish locale and assert key home strings exist.
+# Requires device language set to Spanish, OR appdebug locale override if present.
+appId: com.pixijoy.ai
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: ".*home.*"
+    timeout: 15000
+- assertVisible: "Crear"
+- assertVisible: "PixiJoy"

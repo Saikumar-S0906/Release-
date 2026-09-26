@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PixiJoy it plurals — machine-assisted; review before store release -->
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">%s uso IA rimasto oggi</item>
+        <item quantity="other">%s usi IA rimasti oggi</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">%s export HD rimasto oggi</item>
+        <item quantity="other">%s export HD rimasti oggi</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">%d annuncio reward rimasto oggi</item>
+        <item quantity="other">%d annunci reward rimasti oggi</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">Pack sticker salvato! %d sticker pronto per WhatsApp</item>
+        <item quantity="other">Pack sticker salvato! %d sticker pronti per WhatsApp</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">Salvato %d sticker per WhatsApp!</item>
+        <item quantity="other">Salvati %d sticker per WhatsApp!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">Serie di %d giorno</item>
+        <item quantity="other">Serie di %d giorni</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">Viral Pack salvato! %d immagini pronte da condividere 🚀</item>
+    </plurals>
+</resources>

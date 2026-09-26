@@ -83,7 +83,7 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - **D11** — MovieHdrMode + Composition.setHdrMode (+ Ultra HDR gain-map retain API 34+); Maestro `d11-hdr-export` **green** Pixel_7a.
 - **E pack runtime** — Super-res and Denoise: HTTPS+SHA → Ready → FLOAT32 contract → LiteRT. Ready alone is not neural (`engineReady`). Inpaint is sideload-only (Install from file, no HTTPS pin); neural Apply waits on `engineReady`. E4/F1 stay HOLD (`PackLiteRt` `Unit`, no URL or SHA). Unbound Slow-mo / Track chrome is a disabled “Coming with pack”. See `docs/R5_ML_PACKS.md`.
 - **F1** — `ClipTrack` timeline contract + pack CTA. **HOLD** — no artifact, URL, or SHA; engine unbound. The control says “Coming with pack” until a real bind.
-- **G1** — session preview\|tools on `isStudioTwoPane` (`studio_session_side_tools`); phone remains single-pane.
+- **G1** — hub catalog\|canvas on `isStudioTwoPane` (tablet); session side tools on `isStudioSessionSideTools` (tablet + phone landscape full-bleed).
 - **G4** — Studio TalkBack chrome: short verbs, "Looks, selected", crop edges, export View/Share/Done, and "Downloaded" vs "Ready to apply". E4/F1 unbound status speaks "Coming with pack", not "Downloaded". Device TalkBack is yellow (`.maestro/YELLOW-talkback-studio.md`).
 - **G5** — haptic on crop Apply, movie split, and crop-handle edge snap (device drag yellow).
 - **G6** — Library cover thumbs sheen while Coil decodes; a missing file stays a static surface.

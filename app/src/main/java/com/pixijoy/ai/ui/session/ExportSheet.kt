@@ -37,7 +37,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.pixijoy.ai.R
 import com.pixijoy.designsystem.PixiAccent
+import com.pixijoy.designsystem.PixiAccentSoft
 import com.pixijoy.designsystem.PixiBg
+import com.pixijoy.designsystem.PixiChip
 import com.pixijoy.designsystem.PixiPrimaryButton
 import com.pixijoy.designsystem.PixiSurface2
 import com.pixijoy.designsystem.PixiText
@@ -174,21 +176,11 @@ fun ExportSheet(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     formats.forEach { (key, label) ->
                         val selected = selectedKey == key
-                        Text(
-                            label,
-                            color = PixiText,
-                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                            modifier = Modifier
-                                .heightIn(min = 48.dp)
-                                .clip(RoundedCornerShape(999.dp))
-                                .background(if (selected) PixiAccent else PixiBg)
-                                .clickable { onSelectFormat(key) }
-                                .testTag("export_format_$key")
-                                .semantics {
-                                    role = Role.RadioButton
-                                    this.selected = selected
-                                }
-                                .padding(horizontal = 14.dp, vertical = 12.dp)
+                        PixiChip(
+                            label = label,
+                            selected = selected,
+                            onClick = { onSelectFormat(key) },
+                            modifier = Modifier.testTag("export_format_$key")
                         )
                     }
                 }
@@ -229,22 +221,11 @@ fun ExportSheet(
                             "srgb" to stringResource(R.string.studio_export_color_srgb),
                             "display_p3" to stringResource(R.string.studio_export_color_p3)
                         ).forEach { (key, label) ->
-                            val selected = colorIntentKey == key
-                            Text(
-                                label,
-                                color = PixiText,
-                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                                modifier = Modifier
-                                    .heightIn(min = 48.dp)
-                                    .clip(RoundedCornerShape(999.dp))
-                                    .background(if (selected) PixiAccent else PixiBg)
-                                    .clickable { onColorIntent(key) }
-                                    .testTag("export_color_$key")
-                                    .semantics {
-                                        role = Role.RadioButton
-                                        this.selected = selected
-                                    }
-                                    .padding(horizontal = 14.dp, vertical = 12.dp)
+                            PixiChip(
+                                label = label,
+                                selected = colorIntentKey == key,
+                                onClick = { onColorIntent(key) },
+                                modifier = Modifier.testTag("export_color_$key")
                             )
                         }
                     }
@@ -256,22 +237,11 @@ fun ExportSheet(
                             "sdr" to stringResource(R.string.studio_export_hdr_sdr),
                             "keep" to stringResource(R.string.studio_export_hdr_keep)
                         ).forEach { (key, label) ->
-                            val selected = hdrModeKey == key
-                            Text(
-                                label,
-                                color = PixiText,
-                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                                modifier = Modifier
-                                    .heightIn(min = 48.dp)
-                                    .clip(RoundedCornerShape(999.dp))
-                                    .background(if (selected) PixiAccent else PixiBg)
-                                    .clickable { onHdrMode(key) }
-                                    .testTag("export_hdr_$key")
-                                    .semantics {
-                                        role = Role.RadioButton
-                                        this.selected = selected
-                                    }
-                                    .padding(horizontal = 14.dp, vertical = 12.dp)
+                            PixiChip(
+                                label = label,
+                                selected = hdrModeKey == key,
+                                onClick = { onHdrMode(key) },
+                                modifier = Modifier.testTag("export_hdr_$key")
                             )
                         }
                     }
@@ -293,7 +263,7 @@ fun ExportSheet(
                                 modifier = Modifier
                                     .heightIn(min = 48.dp)
                                     .clip(RoundedCornerShape(16.dp))
-                                    .background(if (selected) PixiAccent else PixiBg)
+                                    .background(if (selected) PixiAccentSoft else PixiBg)
                                     .clickable { onSelectHeight(height) }
                                     .testTag("export_height_$height")
                                     .semantics {
@@ -336,21 +306,11 @@ fun ExportSheet(
                                 ExportQualityPreset.High -> stringResource(R.string.export_quality_high)
                                 ExportQualityPreset.Maximum -> stringResource(R.string.export_quality_maximum)
                             }
-                            Text(
-                                label,
-                                color = PixiText,
-                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                                modifier = Modifier
-                                    .heightIn(min = 48.dp)
-                                    .clip(RoundedCornerShape(999.dp))
-                                    .background(if (selected) PixiAccent else PixiBg)
-                                    .clickable { onQuality(preset.quality) }
-                                    .testTag("export_quality_${preset.name.lowercase()}")
-                                    .semantics {
-                                        role = Role.RadioButton
-                                        this.selected = selected
-                                    }
-                                    .padding(horizontal = 14.dp, vertical = 12.dp)
+                            PixiChip(
+                                label = label,
+                                selected = selected,
+                                onClick = { onQuality(preset.quality) },
+                                modifier = Modifier.testTag("export_quality_${preset.name.lowercase()}")
                             )
                         }
                     }

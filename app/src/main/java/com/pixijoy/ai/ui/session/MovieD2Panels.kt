@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -17,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
@@ -29,6 +28,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pixijoy.ai.R
 import com.pixijoy.designsystem.PixiAccent
+import com.pixijoy.designsystem.PixiAccentSoft
+import com.pixijoy.designsystem.PixiSlider
 import com.pixijoy.designsystem.PixiBg
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
@@ -119,15 +120,11 @@ fun MovieEditOpsPanel(
                         stringResource(R.string.studio_transition_ms, selected.transitionMs.toInt()),
                         color = PixiTextMuted
                     )
-                    Slider(
+                    PixiSlider(
                         value = selected.transitionMs.toFloat().coerceIn(80f, 1200f),
                         onValueChange = { onTransition(ClipTransition.Soft, it.toLong()) },
                         onValueChangeFinished = onSettled,
                         valueRange = 80f..1200f,
-                        colors = SliderDefaults.colors(
-                            thumbColor = PixiAccent,
-                            activeTrackColor = PixiAccent
-                        ),
                         modifier = Modifier
                             .heightIn(min = 48.dp)
                             .testTag("movie_transition_ms")
@@ -141,28 +138,20 @@ fun MovieEditOpsPanel(
                     stringResource(R.string.studio_speed_ramp_values, start, end),
                     color = PixiTextMuted
                 )
-                Slider(
+                PixiSlider(
                     value = start,
                     onValueChange = { onSpeedRamp(MovieSpeed.normalize(it), end) },
                     onValueChangeFinished = onSettled,
                     valueRange = 0.5f..2f,
-                    colors = SliderDefaults.colors(
-                        thumbColor = PixiAccent,
-                        activeTrackColor = PixiAccent
-                    ),
                     modifier = Modifier
                         .heightIn(min = 48.dp)
                         .testTag("movie_speed_start")
                 )
-                Slider(
+                PixiSlider(
                     value = end,
                     onValueChange = { onSpeedRamp(start, MovieSpeed.normalize(it)) },
                     onValueChangeFinished = onSettled,
                     valueRange = 0.5f..2f,
-                    colors = SliderDefaults.colors(
-                        thumbColor = PixiAccent,
-                        activeTrackColor = PixiAccent
-                    ),
                     modifier = Modifier
                         .heightIn(min = 48.dp)
                         .testTag("movie_speed_end")
@@ -186,7 +175,7 @@ private fun TransitionChip(
         modifier = Modifier
             .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(999.dp))
-            .background(if (selected) PixiAccent else PixiBg)
+            .background(if (selected) PixiAccentSoft else Color.White.copy(alpha = 0.08f))
             .clickable(onClick = onClick)
             .testTag(tag)
             .semantics {

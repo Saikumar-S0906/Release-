@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PixiJoy ja plurals — machine-assisted; review before store release -->
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">本日のAI利用残り %s 回</item>
+        <item quantity="other">本日のAI利用残り %s 回</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">本日のHD書き出し残り %s 回</item>
+        <item quantity="other">本日のHD書き出し残り %s 回</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">本日のリワード広告残り %d 回</item>
+        <item quantity="other">本日のリワード広告残り %d 回</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">ステッカーパックを保存しました！WhatsApp用ステッカー %d 個準備完了</item>
+        <item quantity="other">ステッカーパックを保存しました！WhatsApp用ステッカー %d 個準備完了</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">WhatsApp用ステッカー %d 個を保存しました！</item>
+        <item quantity="other">WhatsApp用ステッカー %d 個を保存しました！</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">%d 日連続</item>
+        <item quantity="other">%d 日連続</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">Viral Packを保存しました！共有用画像 %d 枚準備完了 🚀</item>
+    </plurals>
+</resources>

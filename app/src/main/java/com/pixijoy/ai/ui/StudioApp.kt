@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -37,7 +39,10 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import android.content.Intent
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -76,10 +81,13 @@ import com.pixijoy.core.data.ProjectRepository
 import com.pixijoy.core.data.StudioPrefs
 import com.pixijoy.core.media.MediaKind
 import com.pixijoy.designsystem.PixiAccent
+import com.pixijoy.designsystem.PixiAccentMuted
 import com.pixijoy.designsystem.PixiBg
 import com.pixijoy.designsystem.PixiPink
 import com.pixijoy.designsystem.PixiPrimaryButton
+import com.pixijoy.designsystem.PixiSurface
 import com.pixijoy.designsystem.PixiText
+import com.pixijoy.designsystem.PixiTextMuted
 import com.pixijoy.designsystem.pixiMotionMs
 import com.pixijoy.photo.PhotoPreset
 import java.io.File
@@ -367,7 +375,25 @@ fun StudioApp() {
                         },
                         snackbarHostState = snackbarHostState,
                         libraryPresets = libraryPresets,
-                        lastLookPresetId = lastLookPresetId
+                        lastLookPresetId = lastLookPresetId,
+                        onDeleteAllProjects = {
+                            scope.launch {
+                                deleteJob?.cancel()
+                                pendingDeleteIds = emptySet()
+                                session = null
+                                repo.deleteAll()
+                            }
+                        },
+                        onResetAppData = {
+                            scope.launch {
+                                deleteJob?.cancel()
+                                pendingDeleteIds = emptySet()
+                                session = null
+                                repo.deleteAll()
+                                prefs.clearAll()
+                                gate = Gate.Privacy
+                            }
+                        }
                     )
                 }
             }
@@ -520,6 +546,7 @@ private fun enqueuePhotoBatch(
     val request = OneTimeWorkRequestBuilder<BatchPhotoExportWorker>()
         .setInputData(data.build())
         .build()
+    com.pixijoy.ai.export.ExportNotifications.ensureChannel(context)
     WorkManager.getInstance(context).enqueueUniqueWork(
         BatchPhotoExportWorker.uniqueName(),
         ExistingWorkPolicy.REPLACE,
@@ -734,7 +761,9 @@ private fun StudioShell(
     onRenameProject: (Project, String) -> Unit,
     snackbarHostState: SnackbarHostState,
     libraryPresets: List<PhotoPreset> = emptyList(),
-    lastLookPresetId: String? = null
+    lastLookPresetId: String? = null,
+    onDeleteAllProjects: () -> Unit = {},
+    onResetAppData: () -> Unit = {}
 ) {
     val context = LocalContext.current
     NavigationSuiteScaffold(
@@ -746,14 +775,27 @@ private fun StudioShell(
                     icon = {
                         Icon(
                             painter = painterResource(dest.icon),
-                            contentDescription = stringResource(dest.label)
+                            contentDescription = stringResource(dest.label),
+                            tint = if (tab == dest) PixiAccentMuted else PixiTextMuted
                         )
                     },
-                    label = { Text(stringResource(dest.label)) },
+                    label = {
+                        Text(
+                            stringResource(dest.label),
+                            color = if (tab == dest) PixiText else PixiTextMuted
+                        )
+                    },
                     modifier = Modifier.testTag(dest.tag)
                 )
             }
-        }
+        },
+        containerColor = PixiBg,
+        navigationSuiteColors = NavigationSuiteDefaults.colors(
+            navigationBarContainerColor = PixiSurface,
+            navigationBarContentColor = PixiTextMuted,
+            navigationRailContainerColor = PixiSurface,
+            navigationRailContentColor = PixiTextMuted
+        )
     ) {
         Box(Modifier.statusBarsPadding()) {
             when (tab) {
@@ -763,7 +805,8 @@ private fun StudioShell(
                     onOpenStudio = onOpenStudio,
                     onCreate = onCreate,
                     onContinue = onOpenProject,
-                    onOpenProject = onOpenProject
+                    onOpenProject = onOpenProject,
+                    onPickTool = onPickTool
                 )
                 StudioTab.Studio -> {
                     if (twoPane) {
@@ -797,7 +840,9 @@ private fun StudioShell(
                     onExportPhotosWithLook = { presetId ->
                         val body = libraryPresets.firstOrNull { it.id == presetId }?.encode()
                         enqueuePhotoBatch(context, projects, body)
-                    }
+                    },
+                    onDeleteAllProjects = onDeleteAllProjects,
+                    onResetAppData = onResetAppData
                 )
             }
             SnackbarHost(
@@ -882,42 +927,79 @@ private fun StudioSplash() {
 
 @Composable
 private fun StudioPrivacy(onAccept: () -> Unit) {
+    val context = LocalContext.current
+    val shortHeight = LocalConfiguration.current.screenHeightDp < 560
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(PixiBg)
-            .padding(24.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 24.dp)
+            .padding(bottom = 16.dp)
     ) {
-        Spacer(Modifier.height(24.dp))
-        Image(
-            painter = painterResource(R.drawable.board_logo_pixijoy),
-            contentDescription = null,
-            modifier = Modifier.size(64.dp)
-        )
-        Text(
-            stringResource(R.string.studio_privacy_title),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = Color.White
-        )
-        Text(
-            stringResource(R.string.studio_privacy_body),
-            style = MaterialTheme.typography.bodyLarge,
-            color = Color.White.copy(alpha = 0.8f)
-        )
-        Text(
-            stringResource(R.string.studio_promise),
-            style = MaterialTheme.typography.bodyMedium,
-            color = PixiPink
-        )
-        Spacer(Modifier.height(24.dp))
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(if (shortHeight) 10.dp else 16.dp)
+        ) {
+            Spacer(Modifier.height(if (shortHeight) 8.dp else 24.dp))
+            Image(
+                painter = painterResource(R.drawable.board_logo_pixijoy),
+                contentDescription = null,
+                modifier = Modifier.size(if (shortHeight) 48.dp else 64.dp)
+            )
+            Text(
+                stringResource(R.string.studio_privacy_title),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White
+            )
+            Text(
+                stringResource(R.string.studio_privacy_body),
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.White.copy(alpha = 0.8f)
+            )
+            Text(
+                stringResource(R.string.studio_promise),
+                style = MaterialTheme.typography.bodyMedium,
+                color = PixiPink
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(
+                    onClick = { openWebUrl(context, context.getString(R.string.studio_url_privacy)) },
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .testTag("privacy_policy_link")
+                ) {
+                    Text(stringResource(R.string.studio_privacy_policy), color = PixiAccent)
+                }
+                TextButton(
+                    onClick = { openWebUrl(context, context.getString(R.string.studio_url_terms)) },
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .testTag("privacy_terms_link")
+                ) {
+                    Text(stringResource(R.string.studio_terms), color = PixiAccent)
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+        }
         PixiPrimaryButton(
             text = stringResource(R.string.studio_accept),
             onClick = onAccept,
-            modifier = Modifier.testTag("privacy_accept")
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("privacy_accept")
         )
+    }
+}
+
+private fun openWebUrl(context: Context, url: String) {
+    runCatching {
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     }
 }
 

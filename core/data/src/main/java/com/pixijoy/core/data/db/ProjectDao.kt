@@ -36,4 +36,7 @@ interface ProjectDao {
 
     @Query("DELETE FROM projects WHERE id = :id")
     suspend fun deleteProject(id: String)
+
+    @Query("DELETE FROM projects")
+    suspend fun deleteAllProjects()
 }

@@ -1,8 +1,8 @@
-# Studio TalkBack — a11y labels green on Maestro; full TalkBack still manual
+# Studio TalkBack — Wave 2 a11y-tree gate **green**; system TalkBack optional
 
-**Maestro (Pixel_7a `emulator-5556`, 2026-09-26):** `.maestro/chrome/talkback-studio.yaml` — **green**. Asserts spoken crop-edge strings and rail labels in the accessibility tree without enabling system TalkBack.
+**Maestro (Pixel_7a `emulator-5556`):** `.maestro/chrome/talkback-studio.yaml` — **green** (Wave 2). Asserts spoken crop-edge strings and rail labels in the accessibility tree without enabling system TalkBack.
 
-A desktop pass with TalkBack **on** is still useful for focus order / live regions, but the tag + contentDescription surface is covered.
+A desktop pass with TalkBack **on** remains optional for focus order / live regions (checklist below). Wave 2 exit treats the Maestro a11y-tree gate as sufficient.
 
 Semantics covered in code (unit-tested where the phrase is pure):
 

@@ -3,7 +3,6 @@ package com.pixijoy.ai.ui.session
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,11 +22,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,9 +38,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -52,10 +52,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -64,11 +62,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pixijoy.ai.R
 import com.pixijoy.ai.ui.studioGlassMaxDp
-import com.pixijoy.designsystem.PixiAccent
+import com.pixijoy.ai.ui.studioSideDockWidthDp
+import com.pixijoy.designsystem.PixiAccentMuted
+import com.pixijoy.designsystem.PixiApply
 import com.pixijoy.designsystem.PixiBg
+import com.pixijoy.designsystem.PixiChip
+import com.pixijoy.designsystem.PixiChipSelectedScale
 import com.pixijoy.designsystem.PixiError
+import com.pixijoy.designsystem.PixiHint
+import com.pixijoy.designsystem.PixiLabel
+import com.pixijoy.designsystem.PixiLabeledSlider
+import com.pixijoy.designsystem.PixiSlider
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
+import com.pixijoy.designsystem.PixiValue
+import com.pixijoy.designsystem.pixiChipTween
+import com.pixijoy.designsystem.pixiGroupTween
 import kotlinx.coroutines.launch
 
 enum class PhotoGroup(val tag: String) {
@@ -104,7 +113,7 @@ data class StudioGroupItem(
 )
 
 /** Bottom glass: long fade into the picture, one panel, then the icon rail.
- *  [sideDock] is the G1 tablet/fold inner layout: tools sit beside the canvas. */
+ *  [sideDock] is the G1 tablet / fold / phone-landscape layout: tools sit beside the canvas. */
 @Composable
 fun StudioChromeBar(
     modifier: Modifier = Modifier,
@@ -114,9 +123,14 @@ fun StudioChromeBar(
     rail: @Composable () -> Unit,
     panel: @Composable ColumnScope.() -> Unit
 ) {
+    val configuration = LocalConfiguration.current
+    val dockWidth = studioSideDockWidthDp(
+        configuration.screenWidthDp,
+        configuration.screenHeightDp
+    ).dp
     Column(
         modifier
-            .then(if (sideDock) Modifier.width(360.dp).fillMaxHeight() else Modifier.fillMaxWidth())
+            .then(if (sideDock) Modifier.width(dockWidth).fillMaxHeight() else Modifier.fillMaxWidth())
             // Edge-to-edge + adjustResize: lift glass above the IME so tap-to-type stays visible.
             .imePadding()
             .background(
@@ -137,12 +151,22 @@ fun StudioChromeBar(
             .testTag(if (sideDock) "studio_session_side_tools" else "studio_chrome_bar")
     ) {
         abovePanel?.invoke(this)
-        StudioFrostedPanel(
-            modifier = if (sideDock) Modifier.weight(1f) else Modifier,
-            expanded = sideDock,
-            scrollKey = panelScrollKey,
-            content = panel
-        )
+        val groupFade = pixiGroupTween()
+        AnimatedContent(
+            targetState = panelScrollKey,
+            transitionSpec = {
+                fadeIn(animationSpec = groupFade) togetherWith fadeOut(animationSpec = groupFade)
+            },
+            label = "studio_panel_group",
+            modifier = if (sideDock) Modifier.weight(1f) else Modifier
+        ) { key ->
+            StudioFrostedPanel(
+                modifier = if (sideDock) Modifier.fillMaxHeight() else Modifier,
+                expanded = sideDock,
+                scrollKey = key,
+                content = panel
+            )
+        }
         rail()
         Spacer(Modifier.height(4.dp))
     }
@@ -254,7 +278,8 @@ fun StudioFrostedPanel(
     val scope = rememberCoroutineScope()
     val density = LocalDensity.current
     val pagePx = with(density) { 96.dp.roundToPx() }
-    val glassMax = studioGlassMaxDp(LocalConfiguration.current.screenHeightDp).dp
+    val config = LocalConfiguration.current
+    val glassMax = studioGlassMaxDp(config.screenHeightDp, config.fontScale).dp
     Box(
         modifier
             .fillMaxWidth()
@@ -414,13 +439,13 @@ fun StudioGroupRail(
                 Icon(
                     painter = painterResource(item.iconRes),
                     contentDescription = null,
-                    tint = if (selected) PixiAccent else PixiText.copy(alpha = 0.78f),
+                    tint = if (selected) PixiAccentMuted else PixiText.copy(alpha = 0.78f),
                     modifier = Modifier.size(24.dp)
                 )
                 Text(
                     item.label,
                     color = if (selected) PixiText else PixiTextMuted,
-                    fontSize = 12.sp,
+                    style = PixiHint,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -432,7 +457,7 @@ fun StudioGroupRail(
                         .width(18.dp)
                         .height(2.dp)
                         .clip(RoundedCornerShape(1.dp))
-                        .background(if (selected) PixiAccent else Color.Transparent)
+                        .background(if (selected) PixiAccentMuted else Color.Transparent)
                 )
             }
         }
@@ -442,24 +467,21 @@ fun StudioGroupRail(
 @Composable
 fun StudioChip(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
     val spoken = talkBackName(label, selected, stringResource(R.string.a11y_selected))
-    Text(
-        label,
-        color = if (selected) PixiText else PixiText.copy(alpha = 0.85f),
-        fontSize = 13.sp,
-        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
+    val dense = LocalConfiguration.current.screenHeightDp < 560
+    val scale by animateFloatAsState(
+        targetValue = if (selected) PixiChipSelectedScale else 1f,
+        animationSpec = pixiChipTween(),
+        label = "studio_chip_scale"
+    )
+    PixiChip(
+        label = label,
+        selected = selected,
+        onClick = onClick,
+        contentDescription = spoken,
+        dense = dense,
         modifier = Modifier
-            .heightIn(min = 48.dp)
-            .clip(RoundedCornerShape(999.dp))
-            .background(
-                if (selected) PixiAccent.copy(alpha = 0.92f)
-                else Color.White.copy(alpha = 0.10f)
-            )
-            .clickable(onClick = onClick)
+            .scale(scale)
             .testTag(tag)
-            .semantics { contentDescription = spoken }
-            .padding(horizontal = 14.dp, vertical = 12.dp)
     )
 }
 
@@ -467,9 +489,8 @@ fun StudioChip(label: String, selected: Boolean, tag: String, onClick: () -> Uni
 fun StudioHint(text: String, tag: String? = null) {
     Text(
         text,
-        // Slightly brighter than PixiTextMuted so one-line tool hints read on glass.
         color = PixiText.copy(alpha = 0.78f),
-        fontSize = 12.sp,
+        style = PixiHint,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
         modifier = Modifier
@@ -485,27 +506,16 @@ fun StudioApplyButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    tag: String? = null
+    tag: String? = null,
+    compact: Boolean = false
 ) {
-    Button(
+    PixiApply(
+        text = text,
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(48.dp)
-            .then(if (tag != null) Modifier.testTag(tag) else Modifier)
-            .semantics { contentDescription = text },
-        colors = ButtonDefaults.buttonColors(containerColor = PixiAccent),
-        shape = RoundedCornerShape(12.dp),
-        contentPadding = ButtonDefaults.ContentPadding
-    ) {
-        Text(
-            text,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 14.sp,
-            modifier = Modifier.clearAndSetSemantics { }
-        )
-    }
+        compact = compact,
+        modifier = modifier.then(if (tag != null) Modifier.testTag(tag) else Modifier)
+    )
 }
 
 /**
@@ -513,6 +523,7 @@ fun StudioApplyButton(
  * Short-tap the value to type a number (clamped to [range] on IME Done or focus clear).
  * Long-press resets to [defaultValue]. A value that does not parse is left unchanged.
  * When [showLabel] is false the chip row already names the control.
+ * Dense layout kicks in on short landscape glass so tablet/fold/phone stay consistent.
  */
 @Composable
 fun StudioValueSlider(
@@ -531,6 +542,7 @@ fun StudioValueSlider(
     val editLabel = stringResource(R.string.a11y_edit_slider_value)
     var editing by remember(tag) { mutableStateOf(false) }
     val keyboard = LocalSoftwareKeyboardController.current
+    val dense = LocalConfiguration.current.screenHeightDp < 560
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -555,10 +567,9 @@ fun StudioValueSlider(
             Text(
                 valueText,
                 color = PixiText,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = if (dense) PixiValue.copy(fontSize = 18.sp) else PixiValue,
                 modifier = Modifier
-                    .heightIn(min = 48.dp)
+                    .heightIn(min = if (dense) 40.dp else 48.dp)
                     .testTag("session_slider_value")
                     .semantics {
                         contentDescription = spokenValue
@@ -572,27 +583,46 @@ fun StudioValueSlider(
                         onClickLabel = editLabel,
                         onClick = { editing = true }
                     )
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                    .padding(horizontal = 12.dp, vertical = if (dense) 4.dp else 8.dp)
             )
         }
         if (showLabel) {
-            Text(label, color = PixiTextMuted, fontSize = 12.sp)
+            Text(label, color = PixiTextMuted, style = PixiLabel)
         }
-        Slider(
-            value = value.coerceIn(range.start, range.endInclusive),
+        PixiSlider(
+            value = value,
             onValueChange = onChange,
             onValueChangeFinished = onSettled,
             valueRange = range,
-            colors = SliderDefaults.colors(
-                thumbColor = PixiAccent,
-                activeTrackColor = PixiAccent,
-                inactiveTrackColor = Color.White.copy(alpha = 0.18f)
-            ),
+            contentDescription = label,
             modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 48.dp)
+                .padding(horizontal = if (dense) 2.dp else 0.dp)
                 .testTag(tag)
-                .semantics { contentDescription = label }
         )
     }
+}
+
+/**
+ * Secondary option slider (trim, brush, warp…). Routes through [PixiLabeledSlider]
+ * so every form factor shares the same seekbar craft.
+ */
+@Composable
+fun StudioLabeledSlider(
+    label: String,
+    value: Float,
+    range: ClosedFloatingPointRange<Float>,
+    tag: String,
+    onChange: (Float) -> Unit,
+    onSettled: () -> Unit = {}
+) {
+    val dense = LocalConfiguration.current.screenHeightDp < 560
+    PixiLabeledSlider(
+        label = label,
+        value = value,
+        onValueChange = onChange,
+        valueRange = range,
+        onValueChangeFinished = onSettled,
+        dense = dense,
+        sliderModifier = Modifier.testTag(tag)
+    )
 }

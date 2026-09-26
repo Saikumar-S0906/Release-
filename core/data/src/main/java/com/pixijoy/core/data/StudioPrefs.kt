@@ -35,4 +35,9 @@ class StudioPrefs(private val context: Context) {
     suspend fun setLastLookPreset(id: String) {
         context.studioStore.edit { it[lastLookPreset] = id }
     }
+
+    /** Clears studio preferences (privacy flag, last project, looks). */
+    suspend fun clearAll() {
+        context.studioStore.edit { it.clear() }
+    }
 }

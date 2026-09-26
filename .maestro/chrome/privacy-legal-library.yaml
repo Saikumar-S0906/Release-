@@ -1,0 +1,17 @@
+appId: com.pixijoy.ai
+---
+# Privacy links on first-run + Library legal footer.
+- runFlow: ../launch-to-home.yaml
+# After launch-to-home privacy is already accepted; open Library.
+- tapOn:
+    id: "nav_my_stuff"
+- extendedWaitUntil:
+    visible:
+      id: "library_legal_footer"
+    timeout: 15000
+- assertVisible:
+    id: "library_privacy_link"
+- assertVisible:
+    id: "library_terms_link"
+- assertVisible:
+    id: "library_reset_app"

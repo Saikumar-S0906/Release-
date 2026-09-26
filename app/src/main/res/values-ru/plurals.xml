@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PixiJoy ru plurals — machine-assisted; review before store release -->
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">Сегодня осталось %s использование ИИ</item>
+        <item quantity="few">Сегодня осталось %s использования ИИ</item>
+        <item quantity="many">Сегодня осталось %s использований ИИ</item>
+        <item quantity="other">Сегодня осталось %s использований ИИ</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">Сегодня остался %s HD-экспорт</item>
+        <item quantity="few">Сегодня осталось %s HD-экспорта</item>
+        <item quantity="many">Сегодня осталось %s HD-экспортов</item>
+        <item quantity="other">Сегодня осталось %s HD-экспортов</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">Сегодня осталась %d реклама с наградой</item>
+        <item quantity="few">Сегодня осталось %d рекламы с наградой</item>
+        <item quantity="many">Сегодня осталось %d реклам с наградой</item>
+        <item quantity="other">Сегодня осталось %d реклам с наградой</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">Набор стикеров сохранён! %d стикер готов для WhatsApp</item>
+        <item quantity="few">Набор стикеров сохранён! %d стикера готовы для WhatsApp</item>
+        <item quantity="many">Набор стикеров сохранён! %d стикеров готовы для WhatsApp</item>
+        <item quantity="other">Набор стикеров сохранён! %d стикеров готовы для WhatsApp</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">Сохранён %d стикер для WhatsApp!</item>
+        <item quantity="few">Сохранены %d стикера для WhatsApp!</item>
+        <item quantity="many">Сохранено %d стикеров для WhatsApp!</item>
+        <item quantity="other">Сохранено %d стикеров для WhatsApp!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">Серия %d день</item>
+        <item quantity="few">Серия %d дня</item>
+        <item quantity="many">Серия %d дней</item>
+        <item quantity="other">Серия %d дней</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">Viral Pack сохранён! %d изображений готовы к публикации 🚀</item>
+    </plurals>
+</resources>

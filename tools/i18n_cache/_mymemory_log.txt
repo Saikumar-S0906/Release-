@@ -1,0 +1,11 @@
+es: skip (cache complete)
+fr: 20/433
+fr: 40/433
+fr: 60/433
+fr: 80/433
+fr: 100/433
+fr: 120/433
+fr: 140/433
+fr: 160/433
+    rate-limited, sleep 25s
+    rate-limited, sleep 50s

@@ -18,8 +18,8 @@ import androidx.window.layout.FoldingFeature
 import androidx.window.layout.WindowInfoTracker
 
 /**
- * Preview | tools for tablet / fold-inner. Phone landscape stays single-pane
- * even when width is large — short height keeps the glass under the canvas.
+ * Catalog | canvas for tablet / fold-inner (hub). Phone landscape stays a
+ * single-pane hub so an open session can go full-bleed with side tools.
  *
  * Pixel Tablet AVD is ~800×500 dp (2560×1600 @ 320dpi). The older 840×520
  * Expanded gate skipped that device entirely.
@@ -28,17 +28,46 @@ fun isStudioTwoPane(widthDp: Int, heightDp: Int): Boolean =
     widthDp >= 800 && heightDp >= 480
 
 /**
+ * Session tools beside the canvas: tablet / fold-inner, and wide phone
+ * landscape so the short axis stays for the picture (not bottom glass).
+ */
+fun isStudioSessionSideTools(widthDp: Int, heightDp: Int): Boolean {
+    if (isStudioTwoPane(widthDp, heightDp)) return true
+    return widthDp >= 700 && widthDp > heightDp && heightDp in 1 until 560
+}
+
+/**
+ * Side dock width. Tablet / fold keep 360 dp; phone landscape stays ~36% so
+ * the canvas remains the majority of a ~900 dp-wide stage.
+ */
+fun studioSideDockWidthDp(widthDp: Int, heightDp: Int): Int {
+    if (isStudioTwoPane(widthDp, heightDp)) return 360
+    return (widthDp * 36 / 100).coerceIn(280, 320)
+}
+
+/**
  * Bottom glass max height on single-pane. Short landscape viewports keep more
  * of the canvas visible instead of a fixed 280 dp panel eating most of the
- * screen.
+ * screen. (Wide phone landscape normally uses [isStudioSessionSideTools]; this
+ * still covers narrow / multi-window landscape.)
+ *
+ * [fontScale] above 1 grows the glass so large-type chips/sliders stay usable
+ * without swallowing more than ~55% of the viewport.
  */
-fun studioGlassMaxDp(heightDp: Int): Int {
+fun studioGlassMaxDp(heightDp: Int, fontScale: Float = 1f): Int {
     if (heightDp <= 0) return 280
-    if (heightDp < 560) {
+    val base = if (heightDp < 560) {
         // Leave ~top chrome + canvas: cap around 42% of height, floor 160.
-        return (heightDp * 42 / 100).coerceIn(160, 220)
+        (heightDp * 42 / 100).coerceIn(160, 220)
+    } else {
+        280
     }
-    return 280
+    val scale = fontScale.coerceIn(1f, 1.6f)
+    if (scale <= 1.05f) return base
+    val bumped = (base * scale).toInt()
+    val hardCap = (heightDp * 55 / 100).coerceAtLeast(base)
+    val absCap = if (heightDp < 560) 260 else 360
+    return bumped.coerceAtMost(hardCap).coerceAtMost(absCap)
 }
 
 @Composable

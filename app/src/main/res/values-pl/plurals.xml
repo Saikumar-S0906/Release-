@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PixiJoy pl plurals — machine-assisted; review before store release -->
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">Pozostało %s użycie AI dziś</item>
+        <item quantity="few">Pozostały %s użycia AI dziś</item>
+        <item quantity="many">Pozostało %s użyć AI dziś</item>
+        <item quantity="other">Pozostało %s użyć AI dziś</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">Pozostał %s eksport HD dziś</item>
+        <item quantity="few">Pozostały %s eksporty HD dziś</item>
+        <item quantity="many">Pozostało %s eksportów HD dziś</item>
+        <item quantity="other">Pozostało %s eksportów HD dziś</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">Pozostała %d reklama z nagrodą dziś</item>
+        <item quantity="few">Pozostały %d reklamy z nagrodą dziś</item>
+        <item quantity="many">Pozostało %d reklam z nagrodą dziś</item>
+        <item quantity="other">Pozostało %d reklam z nagrodą dziś</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">Zapisano pakiet naklejek! %d naklejka gotowa do WhatsApp</item>
+        <item quantity="few">Zapisano pakiet naklejek! %d naklejki gotowe do WhatsApp</item>
+        <item quantity="many">Zapisano pakiet naklejek! %d naklejek gotowych do WhatsApp</item>
+        <item quantity="other">Zapisano pakiet naklejek! %d naklejek gotowych do WhatsApp</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">Zapisano %d naklejkę do WhatsApp!</item>
+        <item quantity="few">Zapisano %d naklejki do WhatsApp!</item>
+        <item quantity="many">Zapisano %d naklejek do WhatsApp!</item>
+        <item quantity="other">Zapisano %d naklejek do WhatsApp!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">Seria %d dzień</item>
+        <item quantity="few">Seria %d dni</item>
+        <item quantity="many">Seria %d dni</item>
+        <item quantity="other">Seria %d dni</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">Zapisano Viral Pack! %d obrazów gotowych do udostępnienia 🚀</item>
+    </plurals>
+</resources>

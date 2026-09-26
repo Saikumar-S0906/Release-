@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PixiJoy in plurals — machine-assisted; review before store release -->
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">%s penggunaan AI tersisa hari ini</item>
+        <item quantity="other">%s penggunaan AI tersisa hari ini</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">%s ekspor HD tersisa hari ini</item>
+        <item quantity="other">%s ekspor HD tersisa hari ini</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">%d iklan reward tersisa hari ini</item>
+        <item quantity="other">%d iklan reward tersisa hari ini</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">Paket stiker disimpan! %d stiker siap untuk WhatsApp</item>
+        <item quantity="other">Paket stiker disimpan! %d stiker siap untuk WhatsApp</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">%d stiker disimpan untuk WhatsApp!</item>
+        <item quantity="other">%d stiker disimpan untuk WhatsApp!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">Streak %d hari</item>
+        <item quantity="other">Streak %d hari</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">Viral Pack disimpan! %d gambar siap dibagikan 🚀</item>
+    </plurals>
+</resources>

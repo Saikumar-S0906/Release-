@@ -29,10 +29,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -63,6 +63,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -81,7 +82,7 @@ import com.pixijoy.ai.R
 import com.pixijoy.ai.ui.ProjectRenameDialog
 import com.pixijoy.ai.ui.StudioShellViewModel
 import com.pixijoy.ai.export.MovieExportWorker
-import com.pixijoy.ai.ui.isStudioTwoPane
+import com.pixijoy.ai.ui.isStudioSessionSideTools
 import com.pixijoy.ai.export.PhotoExportWorker
 import com.pixijoy.core.common.AppResult
 import com.pixijoy.core.data.Project
@@ -89,6 +90,7 @@ import com.pixijoy.core.media.RawPreview
 import com.pixijoy.designsystem.PixiAccent
 import com.pixijoy.designsystem.PixiBg
 import com.pixijoy.designsystem.PixiError
+import com.pixijoy.designsystem.PixiIconButton
 import com.pixijoy.designsystem.PixiPrimaryButton
 import com.pixijoy.designsystem.PixiSecondaryButton
 import com.pixijoy.designsystem.PixiSuccess
@@ -132,6 +134,7 @@ fun PhotoSessionScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val withExportNotifications = rememberExportNotificationGate()
     val shell = hiltViewModel<StudioShellViewModel>()
     val repo = shell.repository
     val engine = shell.photoEngine
@@ -263,7 +266,7 @@ fun PhotoSessionScreen(
     val workManager = remember { WorkManager.getInstance(context) }
 
     val configuration = LocalConfiguration.current
-    val sideTools = isStudioTwoPane(configuration.screenWidthDp, configuration.screenHeightDp)
+    val sideTools = isStudioSessionSideTools(configuration.screenWidthDp, configuration.screenHeightDp)
     val haptics = LocalHapticFeedback.current
     @Composable
     fun ToolsChrome(sideDock: Boolean, modifier: Modifier = Modifier) {
@@ -502,14 +505,12 @@ fun PhotoSessionScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val backLabel = stringResource(R.string.studio_back)
-                TextButton(
+                PixiIconButton(
+                    painter = painterResource(R.drawable.pj_ic_back),
+                    contentDescription = backLabel,
                     onClick = ::leaveSession,
-                    modifier = Modifier
-                        .testTag("session_back")
-                        .semantics { contentDescription = backLabel }
-                ) {
-                    Text(backLabel, color = PixiText, modifier = Modifier.clearAndSetSemantics { })
-                }
+                    modifier = Modifier.testTag("session_back")
+                )
                 SessionProjectTitle(
                     title = project.title,
                     toolLabel = toolLabel,
@@ -527,15 +528,13 @@ fun PhotoSessionScreen(
                     )
                 }
                 val exportLabel = stringResource(R.string.studio_export)
-                TextButton(
+                PixiIconButton(
+                    painter = painterResource(R.drawable.pj_ic_export),
+                    contentDescription = exportLabel,
                     onClick = { showExport = true },
                     enabled = !exporting && !busy,
-                    modifier = Modifier
-                        .testTag("session_export")
-                        .semantics { contentDescription = exportLabel }
-                ) {
-                    Text(exportLabel, color = PixiText, modifier = Modifier.clearAndSetSemantics { })
-                }
+                    modifier = Modifier.testTag("session_export")
+                )
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -543,24 +542,22 @@ fun PhotoSessionScreen(
             ) {
                 val undoLabel = stringResource(R.string.studio_undo)
                 val redoLabel = stringResource(R.string.studio_redo)
-                TextButton(
+                PixiIconButton(
+                    painter = painterResource(R.drawable.pj_ic_undo),
+                    contentDescription = undoLabel,
                     onClick = sessionViewModel::undo,
                     enabled = layers.isNotEmpty(),
-                    modifier = Modifier
-                        .testTag("session_undo")
-                        .semantics { contentDescription = undoLabel }
-                ) {
-                    Text(undoLabel, color = PixiTextMuted, modifier = Modifier.clearAndSetSemantics { })
-                }
-                TextButton(
+                    tint = PixiTextMuted,
+                    modifier = Modifier.testTag("session_undo")
+                )
+                PixiIconButton(
+                    painter = painterResource(R.drawable.pj_ic_redo),
+                    contentDescription = redoLabel,
                     onClick = sessionViewModel::redo,
                     enabled = redo.isNotEmpty(),
-                    modifier = Modifier
-                        .testTag("session_redo")
-                        .semantics { contentDescription = redoLabel }
-                ) {
-                    Text(redoLabel, color = PixiTextMuted, modifier = Modifier.clearAndSetSemantics { })
-                }
+                    tint = PixiTextMuted,
+                    modifier = Modifier.testTag("session_redo")
+                )
                 val compareLabel = stringResource(
                     when {
                         !canCompare -> R.string.session_compare_disabled
@@ -962,6 +959,7 @@ fun PhotoSessionScreen(
                     else -> com.pixijoy.photo.ColorIntent.Srgb
                 }
             },
+            showLeaveSafeHint = true,
             successUri = exportSuccessUri,
             onView = {
                 exportSuccessUri?.let { uri ->
@@ -999,33 +997,34 @@ fun PhotoSessionScreen(
             },
             onExport = {
                 if (exporting) return@ExportSheet
-                exportSuccessUri = null
-                exporting = true
-                status = context.getString(R.string.studio_export_background)
-                statusIsError = false
-                scope.launch {
-                    sessionViewModel.flush()
-                    MovieExportWorker.ensureChannel(context)
-                    val request = OneTimeWorkRequestBuilder<PhotoExportWorker>()
-                        .setInputData(
-                            workDataOf(
-                                PhotoExportWorker.KEY_PROJECT to project.id,
-                                PhotoExportWorker.KEY_FORMAT to format.name.lowercase(),
-                                PhotoExportWorker.KEY_QUALITY to quality,
-                                PhotoExportWorker.KEY_KEEP_EXIF to keepExif,
-                                PhotoExportWorker.KEY_STRIP_GPS to true,
-                                PhotoExportWorker.KEY_COLOR_INTENT to when (colorIntent) {
-                                    com.pixijoy.photo.ColorIntent.DisplayP3 -> "display_p3"
-                                    else -> "srgb"
-                                }
+                withExportNotifications {
+                    exportSuccessUri = null
+                    exporting = true
+                    status = context.getString(R.string.studio_export_background)
+                    statusIsError = false
+                    scope.launch {
+                        sessionViewModel.flush()
+                        val request = OneTimeWorkRequestBuilder<PhotoExportWorker>()
+                            .setInputData(
+                                workDataOf(
+                                    PhotoExportWorker.KEY_PROJECT to project.id,
+                                    PhotoExportWorker.KEY_FORMAT to format.name.lowercase(),
+                                    PhotoExportWorker.KEY_QUALITY to quality,
+                                    PhotoExportWorker.KEY_KEEP_EXIF to keepExif,
+                                    PhotoExportWorker.KEY_STRIP_GPS to true,
+                                    PhotoExportWorker.KEY_COLOR_INTENT to when (colorIntent) {
+                                        com.pixijoy.photo.ColorIntent.DisplayP3 -> "display_p3"
+                                        else -> "srgb"
+                                    }
+                                )
                             )
+                            .build()
+                        workManager.enqueueUniqueWork(
+                            PhotoExportWorker.uniqueName(project.id),
+                            ExistingWorkPolicy.KEEP,
+                            request
                         )
-                        .build()
-                    workManager.enqueueUniqueWork(
-                        PhotoExportWorker.uniqueName(project.id),
-                        ExistingWorkPolicy.KEEP,
-                        request
-                    )
+                    }
                 }
             },
             onDismiss = {
@@ -1662,16 +1661,12 @@ private fun LabeledSlider(
     tag: String,
     onChange: (Float) -> Unit
 ) {
-    Text(label, color = PixiTextMuted)
-    Slider(
+    StudioLabeledSlider(
+        label = label,
         value = value,
-        onValueChange = onChange,
-        valueRange = range,
-        colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
-        modifier = Modifier
-            .heightIn(min = 48.dp)
-            .testTag(tag)
-            .semantics { contentDescription = label }
+        range = range,
+        tag = tag,
+        onChange = onChange
     )
 }
 
@@ -1728,24 +1723,7 @@ private fun SkyToolPanel(
 
 @Composable
 private fun FormatChip(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
-    val spoken = talkBackName(label, selected, stringResource(R.string.a11y_selected))
-    Text(
-        label,
-        color = PixiText,
-        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-        modifier = Modifier
-            .heightIn(min = 48.dp)
-            .clip(RoundedCornerShape(999.dp))
-            .background(if (selected) PixiAccent else PixiSurface2)
-            .clickable(onClick = onClick)
-            .testTag(tag)
-            .semantics {
-                contentDescription = spoken
-                role = Role.RadioButton
-                this.selected = selected
-            }
-            .padding(horizontal = 14.dp, vertical = 12.dp)
-    )
+    StudioChip(label = label, selected = selected, tag = tag, onClick = onClick)
 }
 
 @Composable
@@ -1843,15 +1821,15 @@ private fun HistogramStrip(bins: IntArray, modifier: Modifier = Modifier) {
     val clip = remember(bins) { histogramClip(bins) }
     Column(
         modifier
-            .padding(horizontal = 20.dp, vertical = 4.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .background(PixiBg.copy(alpha = 0.45f))
-            .padding(horizontal = 10.dp, vertical = 6.dp)
+            .padding(horizontal = 28.dp, vertical = 2.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(PixiBg.copy(alpha = 0.32f))
+            .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Canvas(
             Modifier
                 .fillMaxWidth()
-                .height(28.dp)
+                .height(20.dp)
                 .testTag("photo_histogram")
         ) {
             val peak = bins.maxOrNull()?.coerceAtLeast(1) ?: 1
@@ -1861,10 +1839,10 @@ private fun HistogramStrip(bins: IntArray, modifier: Modifier = Modifier) {
                 val color = when {
                     i < 5 -> Color(0xFFE05A5A)
                     i >= 251 -> Color(0xFF6FA8FF)
-                    else -> PixiAccent
+                    else -> PixiAccent.copy(alpha = 0.75f)
                 }
                 drawRect(
-                    color = color.copy(alpha = 0.9f),
+                    color = color.copy(alpha = 0.85f),
                     topLeft = Offset(i * bar, size.height - h),
                     size = Size(bar.coerceAtLeast(1f), h)
                 )
@@ -1872,7 +1850,8 @@ private fun HistogramStrip(bins: IntArray, modifier: Modifier = Modifier) {
         }
         Text(
             "${stringResource(R.string.studio_clip_shadows, clip.shadowPct * 100f)}   ${stringResource(R.string.studio_clip_highlights, clip.highlightPct * 100f)}",
-            color = PixiTextMuted,
+            color = PixiTextMuted.copy(alpha = 0.85f),
+            style = MaterialTheme.typography.labelSmall,
             modifier = Modifier.testTag("photo_clipping")
         )
     }

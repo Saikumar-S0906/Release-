@@ -5,11 +5,17 @@
     <string name="studio_promise">No upload. No account. No watermark. No monthly fee.</string>
     <string name="studio_privacy_title">Your work stays here</string>
     <string name="studio_privacy_body">PixiJoy edits photos and movies on this device. Your pictures are not uploaded. Optional on-device packs download a model file only after you tap Download.</string>
+    <string name="studio_privacy_policy">Privacy policy</string>
+    <string name="studio_terms">Terms of use</string>
+    <string name="studio_url_privacy" translatable="false">https://pixijoy.ai/privacy</string>
+    <string name="studio_url_terms" translatable="false">https://pixijoy.ai/terms</string>
     <string name="studio_accept">Continue</string>
     <string name="studio_open">Open studio</string>
     <string name="home_create">Create</string>
+    <string name="home_start_with">Start with</string>
     <string name="home_continue">Continue %1$s</string>
     <string name="create_source_title">Create</string>
+    <string name="create_source_subtitle">Photo or movie — edits stay on this device.</string>
     <string name="create_source_camera">Camera</string>
     <string name="studio_hub_sub">Photo and movie. All on this phone.</string>
     <string name="studio_photo">Photo</string>
@@ -24,6 +30,15 @@
     <string name="studio_library_more">Project actions</string>
     <string name="studio_library_rename">Rename</string>
     <string name="studio_library_deleted">Project removed</string>
+    <string name="studio_library_delete_all">Delete all projects</string>
+    <string name="studio_library_delete_all_title">Delete all projects?</string>
+    <string name="studio_library_delete_all_body">Removes every project on this phone. This cannot be undone.</string>
+    <string name="studio_library_delete_all_confirm">Delete all</string>
+    <string name="studio_library_reset_app">Reset app data</string>
+    <string name="studio_library_reset_title">Reset PixiJoy?</string>
+    <string name="studio_library_reset_body">Deletes all projects and clears app settings on this phone. You will see the privacy screen again. Packs you downloaded stay until you remove them.</string>
+    <string name="studio_library_reset_confirm">Reset</string>
+    <string name="studio_library_legal">Privacy &amp; terms</string>
     <string name="studio_library_edited_just_now">Saved just now</string>
     <string name="studio_library_edited_minutes">Saved %1$d min ago</string>
     <string name="studio_library_edited_hours">Saved %1$d hours ago</string>
@@ -224,7 +239,7 @@
     <string name="studio_fill_apply_neural">Apply neural</string>
     <string name="studio_fill_clear_strokes">Clear strokes</string>
     <string name="studio_fill_undo_stroke">Undo stroke</string>
-    <string name="studio_packs_empty">Download to unlock</string>
+    <string name="studio_packs_empty">Download an on-device model pack. Edits never leave this phone.</string>
     <string name="studio_pack_download">Download</string>
     <string name="studio_pack_retry">Retry pack download</string>
     <string name="studio_pack_remove">Remove pack</string>
@@ -360,6 +375,8 @@
     <string name="studio_fx_reset">Reset FX</string>
     <string name="studio_export_background">Exporting in the background. You can leave this screen.</string>
     <string name="studio_export_failed">Export failed.</string>
+    <string name="studio_export_failed_help">Try again with a shorter clip or lower resolution. Keep the phone awake until the notification finishes.</string>
+    <string name="studio_pack_failed_help">Check your connection and tap Retry. Only the model file downloads — your photo stays on this phone.</string>
     <string name="studio_import_failed">Couldn’t import media: %1$s</string>
     <string name="studio_import_unknown">No compatible picker is available.</string>
     <string name="studio_sample_unavailable">The built-in sample could not be opened.</string>

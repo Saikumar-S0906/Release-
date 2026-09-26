@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PixiJoy ko plurals — machine-assisted; review before store release -->
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">오늘 AI 사용 %s회 남음</item>
+        <item quantity="other">오늘 AI 사용 %s회 남음</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">오늘 HD 내보내기 %s회 남음</item>
+        <item quantity="other">오늘 HD 내보내기 %s회 남음</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">오늘 리워드 광고 %d회 남음</item>
+        <item quantity="other">오늘 리워드 광고 %d회 남음</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">스티커 팩 저장! WhatsApp용 스티커 %d개 준비됨</item>
+        <item quantity="other">스티커 팩 저장! WhatsApp용 스티커 %d개 준비됨</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">WhatsApp용 스티커 %d개 저장!</item>
+        <item quantity="other">WhatsApp용 스티커 %d개 저장!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">%d일 연속</item>
+        <item quantity="other">%d일 연속</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">Viral Pack 저장! 공유할 이미지 %d장 준비됨 🚀</item>
+    </plurals>
+</resources>

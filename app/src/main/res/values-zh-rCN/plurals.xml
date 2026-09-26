@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PixiJoy zh-rCN plurals — machine-assisted; review before store release -->
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">今日剩余 %s 次 AI 使用</item>
+        <item quantity="other">今日剩余 %s 次 AI 使用</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">今日剩余 %s 次 HD 导出</item>
+        <item quantity="other">今日剩余 %s 次 HD 导出</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">今日剩余 %d 次激励广告</item>
+        <item quantity="other">今日剩余 %d 次激励广告</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">贴纸包已保存！%d 张贴纸可供 WhatsApp 使用</item>
+        <item quantity="other">贴纸包已保存！%d 张贴纸可供 WhatsApp 使用</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">已保存 %d 张 WhatsApp 贴纸！</item>
+        <item quantity="other">已保存 %d 张 WhatsApp 贴纸！</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">连续 %d 天</item>
+        <item quantity="other">连续 %d 天</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">Viral Pack 已保存！%d 张图片可分享 🚀</item>
+    </plurals>
+</resources>

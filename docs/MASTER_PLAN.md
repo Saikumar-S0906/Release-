@@ -110,7 +110,7 @@ Motion spec: 200–280 ms emphasized, 120 ms standard (`PixiMotionMs`). Shared e
 | Pixel 6/8 | Compact | Bottom bar, full-screen session |
 | Pixel Fold outer | Compact/Medium | Same as phone |
 | Pixel Fold inner / Pixel Tablet | Expanded | Nav rail + list\|canvas |
-| Phone landscape | Compact width-tall? **No** — width may be Expanded, height short → **single pane**, not two-pane |
+| Phone landscape | Hub single-pane; open session → **side tools** full-bleed (`isStudioSessionSideTools`) |
 
 ---
 

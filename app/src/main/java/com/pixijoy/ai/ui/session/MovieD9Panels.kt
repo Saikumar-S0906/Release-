@@ -10,10 +10,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
@@ -26,6 +25,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pixijoy.ai.R
 import com.pixijoy.designsystem.PixiAccent
+import com.pixijoy.designsystem.PixiAccentSoft
+import com.pixijoy.designsystem.PixiSlider
 import com.pixijoy.designsystem.PixiBg
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
@@ -99,12 +100,11 @@ fun MovieChromaPanel(
                 stringResource(R.string.studio_chroma_softness, (chroma.softness * 100).toInt()),
                 color = PixiTextMuted
             )
-            Slider(
+            PixiSlider(
                 value = chroma.softness,
                 onValueChange = { onChroma(chroma.withSoftness(it)) },
                 onValueChangeFinished = onSettled,
                 valueRange = 0f..0.4f,
-                colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                 modifier = Modifier.testTag("movie_chroma_softness")
             )
         }
@@ -125,7 +125,7 @@ private fun ChromaChip(
         modifier = Modifier
             .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(999.dp))
-            .background(if (selected) PixiAccent else PixiBg)
+            .background(if (selected) PixiAccentSoft else Color.White.copy(alpha = 0.08f))
             .clickable(onClick = onClick)
             .testTag(tag)
             .semantics {

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PixiJoy tr plurals — machine-assisted; review before store release -->
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">Bugün %s YZ kullanımı kaldı</item>
+        <item quantity="other">Bugün %s YZ kullanımı kaldı</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">Bugün %s HD dışa aktarma kaldı</item>
+        <item quantity="other">Bugün %s HD dışa aktarma kaldı</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">Bugün %d ödüllü reklam kaldı</item>
+        <item quantity="other">Bugün %d ödüllü reklam kaldı</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">Çıkartma paketi kaydedildi! WhatsApp için %d çıkartma hazır</item>
+        <item quantity="other">Çıkartma paketi kaydedildi! WhatsApp için %d çıkartma hazır</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">WhatsApp için %d çıkartma kaydedildi!</item>
+        <item quantity="other">WhatsApp için %d çıkartma kaydedildi!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">%d günlük seri</item>
+        <item quantity="other">%d günlük seri</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">Viral Pack kaydedildi! Paylaşmaya hazır %d görsel 🚀</item>
+    </plurals>
+</resources>

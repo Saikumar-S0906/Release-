@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -24,7 +22,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.pixijoy.ai.R
-import com.pixijoy.designsystem.PixiAccent
 import com.pixijoy.designsystem.PixiPrimaryButton
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
@@ -43,15 +40,12 @@ private fun SessionLabeledSlider(
     tag: String,
     onChange: (Float) -> Unit
 ) {
-    Text(label, color = PixiTextMuted)
-    Slider(
+    StudioLabeledSlider(
+        label = label,
         value = value,
-        onValueChange = onChange,
-        valueRange = range,
-        colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
-        modifier = Modifier
-            .testTag(tag)
-            .semantics { contentDescription = label }
+        range = range,
+        tag = tag,
+        onChange = onChange
     )
 }
 

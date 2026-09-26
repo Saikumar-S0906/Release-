@@ -1,0 +1,101 @@
+wrote app\src\main\res\values-es\strings.xml keys=433 filled_from_en=0
+emitted es (1/22)
+wrote app\src\main\res\values-pt-rBR\strings.xml keys=433 filled_from_en=0
+emitted pt-rBR (2/22)
+wrote app\src\main\res\values-de\strings.xml keys=433 filled_from_en=0
+emitted de (3/22)
+wrote app\src\main\res\values-in\strings.xml keys=433 filled_from_en=0
+emitted in (4/22)
+status es:433 pt-rBR:433 fr:80 de:433 it:0 in:433 hi:140 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:120 zh-rTW:0 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+wrote app\src\main\res\values-it\strings.xml keys=433 filled_from_en=0
+emitted it (5/22)
+status es:433 pt-rBR:433 fr:100 de:433 it:433 in:433 hi:160 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:140 zh-rTW:0 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:100 de:433 it:20 in:433 hi:180 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:140 zh-rTW:0 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:120 de:433 it:40 in:433 hi:180 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:160 zh-rTW:0 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:120 de:433 it:40 in:433 hi:200 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:180 zh-rTW:0 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:140 de:433 it:60 in:433 hi:220 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:180 zh-rTW:0 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:140 de:433 it:60 in:433 hi:220 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:200 zh-rTW:0 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:200 zh-rTW:0 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:200 zh-rTW:0 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:200 zh-rTW:0 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:200 zh-rTW:0 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:200 zh-rTW:0 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:200 zh-rTW:0 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:200 zh-rTW:0 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:200 zh-rTW:0 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:200 zh-rTW:0 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:200 zh-rTW:0 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:200 zh-rTW:0 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:200 zh-rTW:0 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:200 zh-rTW:0 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+wrote app\src\main\res\values-zh-rCN\strings.xml keys=433 filled_from_en=0
+emitted zh-rCN (6/22)
+wrote app\src\main\res\values-zh-rTW\strings.xml keys=433 filled_from_en=0
+emitted zh-rTW (7/22)
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:0 ko:0 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+wrote app\src\main\res\values-ja\strings.xml keys=433 filled_from_en=0
+emitted ja (8/22)
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:433 ko:0 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:433 ko:0 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:433 ko:0 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:433 ko:0 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:433 ko:0 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:433 ko:0 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:433 ko:0 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+wrote app\src\main\res\values-ko\strings.xml keys=433 filled_from_en=0
+emitted ko (9/22)
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:240 ar:0 iw:0 ur:0 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+wrote app\src\main\res\values-hi\strings.xml keys=433 filled_from_en=0
+emitted hi (10/22)
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:433 ar:0 iw:0 ur:0 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:433 ar:0 iw:0 ur:0 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:433 ar:0 iw:0 ur:0 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:0 pl:0 fil:0 ms:0 uk:0
+wrote app\src\main\res\values-ru\strings.xml keys=433 filled_from_en=0
+emitted ru (11/22)
+wrote app\src\main\res\values-uk\strings.xml keys=433 filled_from_en=0
+emitted uk (12/22)
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:433 ar:0 iw:0 ur:0 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:433 pl:0 fil:0 ms:0 uk:433
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:433 ar:0 iw:0 ur:0 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:433 pl:0 fil:0 ms:0 uk:433
+wrote app\src\main\res\values-ar\strings.xml keys=433 filled_from_en=0
+emitted ar (13/22)
+status es:433 pt-rBR:433 fr:160 de:433 it:80 in:433 hi:433 ar:433 iw:0 ur:0 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:433 pl:0 fil:0 ms:0 uk:433
+wrote app\src\main\res\values-fr\strings.xml keys=433 filled_from_en=0
+emitted fr (14/22)
+status es:433 pt-rBR:433 fr:433 de:433 it:433 in:433 hi:433 ar:433 iw:0 ur:0 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:433 pl:0 fil:0 ms:0 uk:433
+status es:433 pt-rBR:433 fr:433 de:433 it:433 in:433 hi:433 ar:433 iw:0 ur:0 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:433 pl:0 fil:0 ms:0 uk:433
+status es:433 pt-rBR:433 fr:433 de:433 it:433 in:433 hi:433 ar:433 iw:0 ur:0 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:433 pl:0 fil:0 ms:0 uk:433
+status es:433 pt-rBR:433 fr:433 de:433 it:433 in:433 hi:433 ar:433 iw:0 ur:0 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:433 pl:0 fil:0 ms:0 uk:433
+wrote app\src\main\res\values-iw\strings.xml keys=433 filled_from_en=0
+emitted iw (15/22)
+status es:433 pt-rBR:433 fr:433 de:433 it:433 in:433 hi:433 ar:433 iw:433 ur:0 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:0 ru:433 pl:0 fil:0 ms:0 uk:433
+wrote app\src\main\res\values-tr\strings.xml keys=433 filled_from_en=0
+emitted tr (16/22)
+wrote app\src\main\res\values-pl\strings.xml keys=433 filled_from_en=0
+emitted pl (17/22)
+wrote app\src\main\res\values-fil\strings.xml keys=433 filled_from_en=0
+emitted fil (18/22)
+wrote app\src\main\res\values-ms\strings.xml keys=433 filled_from_en=0
+emitted ms (19/22)
+status es:433 pt-rBR:433 fr:433 de:433 it:433 in:433 hi:433 ar:433 iw:433 ur:0 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:433 ru:433 pl:433 fil:433 ms:433 uk:433
+status es:433 pt-rBR:433 fr:433 de:433 it:433 in:433 hi:433 ar:433 iw:433 ur:0 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:433 ru:433 pl:433 fil:433 ms:433 uk:433
+status es:433 pt-rBR:433 fr:433 de:433 it:433 in:433 hi:433 ar:433 iw:433 ur:0 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:433 ru:433 pl:433 fil:433 ms:433 uk:433
+status es:433 pt-rBR:433 fr:433 de:433 it:433 in:433 hi:433 ar:433 iw:433 ur:0 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:433 ru:433 pl:433 fil:433 ms:433 uk:433
+wrote app\src\main\res\values-ur\strings.xml keys=433 filled_from_en=0
+emitted ur (20/22)
+status es:433 pt-rBR:433 fr:433 de:433 it:433 in:433 hi:433 ar:433 iw:433 ur:433 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:433 ru:433 pl:433 fil:433 ms:433 uk:433
+status es:433 pt-rBR:433 fr:433 de:433 it:433 in:433 hi:433 ar:433 iw:433 ur:433 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:433 ru:433 pl:433 fil:433 ms:433 uk:433
+status es:433 pt-rBR:433 fr:433 de:433 it:433 in:433 hi:433 ar:433 iw:433 ur:433 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:433 ru:433 pl:433 fil:433 ms:433 uk:433
+status es:433 pt-rBR:433 fr:433 de:433 it:433 in:433 hi:433 ar:433 iw:433 ur:433 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:433 ru:433 pl:433 fil:433 ms:433 uk:433
+status es:433 pt-rBR:433 fr:433 de:433 it:433 in:433 hi:433 ar:433 iw:433 ur:433 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:433 ru:433 pl:433 fil:433 ms:433 uk:433
+status es:433 pt-rBR:433 fr:433 de:433 it:433 in:433 hi:433 ar:433 iw:433 ur:433 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:433 ru:433 pl:433 fil:433 ms:433 uk:433
+status es:433 pt-rBR:433 fr:433 de:433 it:433 in:433 hi:433 ar:433 iw:433 ur:433 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:433 ru:433 pl:433 fil:433 ms:433 uk:433
+status es:433 pt-rBR:433 fr:433 de:433 it:433 in:433 hi:433 ar:433 iw:433 ur:433 ja:433 ko:433 zh-rCN:433 zh-rTW:433 th:0 vi:0 tr:433 ru:433 pl:433 fil:433 ms:433 uk:433
+wrote app\src\main\res\values-th\strings.xml keys=433 filled_from_en=0
+emitted th (21/22)
+wrote app\src\main\res\values-vi\strings.xml keys=433 filled_from_en=0
+emitted vi (22/22)
+all locales emitted

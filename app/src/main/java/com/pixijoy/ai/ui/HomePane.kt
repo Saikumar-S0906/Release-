@@ -3,8 +3,10 @@ package com.pixijoy.ai.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,9 +15,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -36,12 +40,14 @@ import com.pixijoy.ai.R
 import com.pixijoy.core.data.Project
 import com.pixijoy.designsystem.PixiBg
 import com.pixijoy.designsystem.PixiCardShape
+import com.pixijoy.designsystem.PixiEmptyState
 import com.pixijoy.designsystem.PixiPrimaryButton
 import com.pixijoy.designsystem.PixiSecondaryButton
 import com.pixijoy.designsystem.PixiSurface
 import com.pixijoy.designsystem.PixiSurface2
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
+import com.pixijoy.designsystem.PixiToolTile
 import java.io.File
 
 @Composable
@@ -51,7 +57,8 @@ fun HomePane(
     onOpenStudio: () -> Unit,
     onCreate: () -> Unit,
     onContinue: (Project) -> Unit,
-    onOpenProject: (Project) -> Unit
+    onOpenProject: (Project) -> Unit,
+    onPickTool: (StudioTool) -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -109,17 +116,56 @@ fun HomePane(
         ) {
             Text(stringResource(R.string.studio_open_tools), color = PixiTextMuted)
         }
+
+        Text(
+            stringResource(R.string.home_start_with),
+            color = PixiText,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+                .padding(top = 8.dp, bottom = 10.dp)
+                .testTag("home_start_with")
+        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .testTag("home_start_row")
+        ) {
+            listOf(
+                PhotoTools.first { it.key == "editor" },
+                PhotoTools.first { it.key == "cutout" },
+                MovieTools.first { it.key == "move" }
+            ).forEach { tool ->
+                PixiToolTile(
+                    title = stringResource(tool.title),
+                    subtitle = stringResource(tool.subtitle),
+                    icon = painterResource(tool.icon),
+                    onClick = { onPickTool(tool) },
+                    modifier = Modifier
+                        .width(168.dp)
+                        .testTag("home_start_${tool.key}")
+                )
+            }
+        }
+
         Text(
             stringResource(R.string.studio_recents),
             color = PixiText,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(top = 16.dp, bottom = 12.dp)
+            modifier = Modifier.padding(top = 20.dp, bottom = 12.dp)
         )
         if (projects.isEmpty()) {
-            Text(
-                stringResource(R.string.studio_recents_empty),
-                color = PixiTextMuted,
-                modifier = Modifier.testTag("home_recents_empty")
+            PixiEmptyState(
+                line = stringResource(R.string.studio_recents_empty),
+                icon = painterResource(R.drawable.pj_ic_folder),
+                showGhostThumbs = true,
+                lineModifier = Modifier.testTag("home_recents_empty"),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+                    .testTag("home_recents_empty_block")
             )
         } else {
             LazyVerticalGrid(

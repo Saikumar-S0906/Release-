@@ -178,6 +178,12 @@ class ProjectRepository(
         File(context.filesDir, "projects/$id").deleteRecursively()
     }
 
+    /** Wipe every project row and the on-disk projects tree. */
+    suspend fun deleteAll(): Unit = withContext(dispatchers.io) {
+        dao.deleteAllProjects()
+        File(context.filesDir, "projects").deleteRecursively()
+    }
+
     fun projectDir(id: String): File = File(context.filesDir, "projects/$id")
 
     fun presetsDir(): File = File(context.filesDir, "presets").also { it.mkdirs() }

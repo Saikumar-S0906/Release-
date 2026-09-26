@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PixiJoy hi plurals — machine-assisted; review before store release -->
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">आज %s AI उपयोग बचा है</item>
+        <item quantity="other">आज %s AI उपयोग बचे हैं</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">आज %s HD एक्सपोर्ट बचा है</item>
+        <item quantity="other">आज %s HD एक्सपोर्ट बचे हैं</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">आज %d रिवॉर्ड विज्ञापन बचा है</item>
+        <item quantity="other">आज %d रिवॉर्ड विज्ञापन बचे हैं</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">स्टिकर पैक सेव! WhatsApp के लिए %d स्टिकर तैयार</item>
+        <item quantity="other">स्टिकर पैक सेव! WhatsApp के लिए %d स्टिकर तैयार</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">WhatsApp के लिए %d स्टिकर सेव!</item>
+        <item quantity="other">WhatsApp के लिए %d स्टिकर सेव!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">%d दिन की स्ट्रीक</item>
+        <item quantity="other">%d दिन की स्ट्रीक</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">Viral Pack सेव! शेयर करने को %d इमेज तैयार 🚀</item>
+    </plurals>
+</resources>

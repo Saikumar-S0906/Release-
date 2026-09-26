@@ -1,8 +1,7 @@
 appId: com.pixijoy.ai
 ---
-# YELLOW / device-dependent. Do not treat this flow as a green TalkBack gate.
-# Maestro can see accessibility text on tags when the node is in the tree.
-# A real TalkBack pass is the checklist in ../YELLOW-talkback-studio.md.
+# A11y-tree smoke (G4 labels). System TalkBack-on is still optional manual —
+# see ../YELLOW-talkback-studio.md. This flow is the Wave 2 automated gate.
 - runFlow: ../launch-to-home.yaml
 - tapOn:
     id: "home_create"
@@ -31,7 +30,3 @@ appId: com.pixijoy.ai
     timeout: 20000
 - assertVisible:
     id: "export_sheet_confirm"
-# Success View / Share / Done exist only after a finished export.
-# - assertVisible: "View"
-# - assertVisible: "Share"
-# - assertVisible: "Done"

@@ -1,0 +1,165 @@
+key	zh-rCN	zh-rTW	th	vi	tr	ru	pl	fil	ms	uk
+studio_super_res_hint	2× 或 4× 仅在绑定 neural 引擎时运行。已下载并验证（Ready）时 Apply 关闭。导出使用相同操作。大图分块处理。	2× 或 4× 僅在綁定 neural 引擎時執行。已下載並驗證（Ready）時 Apply 關閉。匯出使用相同操作。大圖分塊處理。	2× หรือ 4× ทำงานเมื่อผูก neural engine เท่านั้น Ready แล้ว Apply ปิด ส่งออกใช้ op เดียวกัน รูปใหญ่แบ่งไทล์	2× hoặc 4× chỉ chạy khi neural engine được gắn. Ready thì Apply tắt. Xuất dùng cùng thao tác. Ảnh lớn chia tile.	2× veya 4× yalnızca neural engine bağlıyken çalışır. Ready iken Apply kapalı. Dışa aktarma aynı op. Büyük görseller döşenir.	2× или 4× только при привязанном neural engine. При Ready Apply выкл. Экспорт использует ту же op. Большие изображения плитками.	2× lub 4× działa tylko po powiązaniu neural engine. Ready wyłącza Apply. Eksport używa tej samej op. Duże obrazy w kafelkach.	2× o 4× tumatakbo lang kapag naka-bind ang neural engine. Ready — Apply off. Parehong op sa export. Malalaking larawan naka-tile.	2× atau 4× hanya apabila neural engine diikat. Ready — Apply dimatikan. Eksport guna op sama. Imej besar di tile.	2× або 4× лише коли neural engine прив’язано. Ready — Apply вимкнено. Експорт використовує ту саму op. Великі зображення плитками.
+studio_denoise_hint	下载会获取固定的本机 UNet。Ready 表示文件已验证。Apply 在 neural 引擎绑定前关闭。预览与导出使用相同操作。	下載會取得固定的本機 UNet。Ready 表示檔案已驗證。Apply 在 neural 引擎綁定前關閉。預覽與匯出使用相同操作。	ดาวน์โหลดดึง UNet บนเครื่อง Ready คือไฟล์ยืนยันแล้ว Apply ปิดจนกว่าจะผูก neural engine ตัวอย่างและส่งออกใช้ op เดียวกัน	Tải sẽ lấy UNet trên thiết bị. Ready nghĩa là tệp đã xác minh. Apply tắt đến khi gắn neural engine. Xem trước và xuất dùng cùng op.	İndirme sabit cihaz UNet'ini getirir. Ready dosyanın doğrulandığı anlamına gelir. Neural engine bağlanana kadar Apply kapalı. Önizleme ve dışa aktarma aynı op.	Загрузка получает UNet на устройстве. Ready — файл проверен. Apply выкл. до привязки neural engine. Предпросмотр и экспорт — одна op.	Pobieranie pobiera UNet na urządzeniu. Ready — plik zweryfikowany. Apply wył. do powiązania neural engine. Podgląd i eksport — ta sama op.	Ang download ay kumukuha ng pinned on-device UNet. Ready = verified. Apply off hanggang ma-bind ang neural engine. Preview at export parehong op.	Muat turun mengambil UNet peranti. Ready — fail disahkan. Apply dimatikan sehingga neural engine diikat. Pratonton dan eksport op sama.	Завантаження отримує UNet на пристрої. Ready — файл перевірено. Apply вимкнено до прив’язки neural engine. Попередній перегляд і експорт — та сама op.
+studio_track_hint	点跟踪将随功能包提供。此版本不支持运动跟随。	點追蹤將隨功能包提供。此版本不支援運動跟隨。	การติดตามจุดมาพร้อมแพ็ก ยังไม่มี motion follow ใน build นี้	Theo dõi điểm sẽ có trong gói. Không có motion follow trong bản này.	Nokta izleme paketle gelecek. Bu derlemede motion follow yok.	Point track будет с пакетом. В этой сборке нет motion follow.	Point track w pakiecie. Brak motion follow w tej wersji.	Point track darating sa pack. Walang motion follow sa build na ito.	Jejak titik akan datang dengan pek. Tiada motion follow dalam build ini.	Point track буде з пакетом. У цій збірці немає motion follow.
+studio_sky_hint	用纯色替换天空。背景回退使用基础角点匹配。	以純色替換天空。背景回退使用基礎角點比對。	แทนที่ท้องฟ้าด้วยสีทึบ พื้นหลังใช้การจับคู่มุมพื้นฐาน	Thay trời bằng màu đặc. Nền dùng khớp góc cơ bản.	Gökyüzünü düz renkle değiştir. Arka plan köşe eşlemesi kullanır.	Заменить небо сплошным цветом. Фон — базовое сопоставление углов.	Zamień niebo kolorem. Tło — dopasowanie rogów.	Palitan ang langit ng solid color. Background fallback corner match.	Ganti langit dengan warna padu. Latar guna padanan sudut asas.	Замінити небо суцільним кольором. Фон — базове зіставлення кутів.
+studio_warp_hint	透视或液化。应用后烘焙。	透視或液化。套用後烘焙。	มุมมองหรือ liquify Apply จะ bake	Phối cảnh hoặc liquify. Apply sẽ bake.	Perspektif veya liquify. Apply pişirir.	Перспектива или liquify. Apply запекает.	Perspektywa lub liquify. Apply wypieka.	Perspective o liquify. Apply bakes.	Perspektif atau liquify. Apply membakar.	Перспектива або liquify. Apply «запікає».
+studio_soften_hint	在本机进行轻度美肤。	在本機進行輕度美膚。	นุ่มผิวเบาบนบนเครื่องนี้	Làm mềm da nhẹ trên thiết bị.	Bu cihazda hafif cilt yumuşatma.	Лёгкое смягчение кожи на устройстве.	Lekkie zmiękczenie skóry na urządzeniu.	Light skin soften sa device na ito.	Lembutkan kulit ringan pada peranti ini.	Легке пом’якшення шкіри на пристрої.
+studio_presets_hint	将此编辑栈保存为本机预设。可稍后应用到任意照片项目。	將此編輯棧保存為本機預設。可稍後套用到任意照片專案。	บันทึกสแต็กแก้ไขเป็นพรีเซ็ตบนเครื่อง ใช้กับโปรเจกต์รูปภายหลัง	Lưu stack chỉnh sửa làm preset trên thiết bị. Áp dụng sau cho mọi dự án ảnh.	Düzenleme yığınını cihazda preset olarak kaydet. Sonra her foto projesine uygula.	Сохранить стек правок как пресет на устройстве. Применить позже к любому фото.	Zapisz stos edycji jako preset na urządzeniu. Zastosuj później do projektu.	I-save ang edit stack bilang preset sa phone. I-apply sa anumang photo project.	Simpan tumpukan edit sebagai pratetap pada peranti. Guna kemudian pada projek foto.	Зберегти стек правок як пресет на пристрої. Застосувати пізніше до будь-якого фото.
+studio_library_export_photos	导出全部照片	匯出全部照片	ส่งออกรูปทั้งหมด	Xuất tất cả ảnh	Tüm fotoğrafları dışa aktar	Экспорт всех фото	Eksportuj wszystkie zdjęcia	I-export lahat ng larawan	Eksport semua foto	Експорт усіх фото
+studio_library_export_with_look	导出全部照片并应用风格	匯出全部照片並套用風格	ส่งออกรูปทั้งหมดพร้อม look	Xuất tất cả ảnh với look	Tüm fotoğrafları look ile dışa aktar	Экспорт всех фото со стилем	Eksport wszystkich zdjęć z look	I-export lahat ng larawan na may look	Eksport semua foto dengan gaya	Експорт усіх фото зі стилем
+studio_library_pick_look	选择已保存的风格	選擇已儲存的風格	เลือก look ที่บันทึก	Chọn look đã lưu	Kaydedilmiş look seç	Выберите сохранённый стиль	Wybierz zapisany look	Pumili ng saved look	Pilih gaya tersimpan	Оберіть збережений стиль
+studio_library_look_recent	%1$s · 上次保存	%1$s · 上次儲存	%1$s · บันทึกล่าสุด	%1$s · lưu gần nhất	%1$s · son kayıt	%1$s · последнее сохранение	%1$s · ostatni zapis	%1$s · huling save	%1$s · terakhir disimpan	%1$s · останнє збереження
+studio_cutout_subject_available	本机可用主体蒙版。	本機可用主體遮罩。	มีมาสก์วัตถุบนเครื่องนี้	Có mặt nạ chủ thể trên thiết bị.	Konu maskesi bu cihazda var.	Маска объекта доступна на устройстве.	Maska obiektu dostępna na urządzeniu.	Available ang subject mask sa device.	Topeng subjek tersedia pada peranti.	Маска об’єкта доступна на пристрої.
+studio_cutout_corner_fallback	主体蒙版不可用。基础抠图会移除与照片角点匹配的颜色。	主體遮罩無法使用。基礎去背會移除與照片角點相符的顏色。	ไม่มีมาสก์วัตถุ ตัดพื้นหลังพื้นฐานลบสีที่มุมรูป	Không có mặt nạ chủ thể. Cắt nền cơ bản xóa màu ở góc ảnh.	Konu maskesi yok. Temel kesim köşe renklerini kaldırır.	Маска объекта недоступна. Базовая вырезка убирает цвета углов.	Brak maski obiektu. Podstawowe wycięcie usuwa kolory rogów.	Walang subject mask. Basic cutout tinatanggal ang kulay sa sulok.	Topeng subjek tiada. Cutout asas buang warna sudut foto.	Маска об’єкта недоступна. Базове вирізання прибирає кольори кутів.
+studio_mask_restore	恢复上次蒙版	恢復上次遮罩	คืนมาสก์ล่าสุด	Khôi phục mặt nạ trước	Son maskeyi geri yükle	Восстановить последнюю маску	Przywróć ostatnią maskę	I-restore ang huling mask	Pulihkan topeng terakhir	Відновити останню маску
+studio_mask_subject_unavailable	主体填充需要本机蒙版。请涂抹 refine。	主體填充需要本機遮罩。請塗抹 refine。	การเติมวัตถุต้องมีมาสก์บนเครื่อง ทาสีเพื่อปรับแทน	Tô chủ thể cần mặt nạ trên thiết bị. Vẽ để tinh chỉnh.	Konu doldurma cihaz maskesi ister. İyileştirmek için boyayın.	Заливка объекта требует маску на устройстве. Рисуйте для уточнения.	Wypełnienie obiektu wymaga maski na urządzeniu. Maluj, by dopracować.	Kailangan ng on-device mask ang subject fill. Mag-paint para i-refine.	Isian subjek perlukan topeng peranti. Cat untuk perincikan.	Заливка об’єкта потребує маски на пристрої. Малюйте для уточнення.
+studio_export_color_srgb	sRGB	sRGB	sRGB	sRGB	sRGB	sRGB	sRGB	sRGB	sRGB	sRGB
+studio_export_color_p3	Display P3	Display P3	Display P3	Display P3	Display P3	Display P3	Display P3	Display P3	Display P3	Display P3
+studio_export_color_label	色彩	色彩	สี	Màu	Renk	Цвет	Kolor	Color	Warna	Колір
+studio_raw_preview_badge	RAW 预览	RAW 預覽	ตัวอย่าง RAW	Xem trước RAW	RAW önizleme	Предпросмотр RAW	Podgląd RAW	RAW preview	Pratonton RAW	Попередній перегляд RAW
+studio_open_file	打开文件	開啟檔案	เปิดไฟล์	Mở tệp	Dosya aç	Открыть файл	Otwórz plik	Buksan ang file	Buka fail	Відкрити файл
+create_source_files	照片或 RAW 文件	照片或 RAW 檔案	รูปหรือไฟล์ RAW	Ảnh hoặc tệp RAW	Foto veya RAW dosyası	Фото или RAW-файл	Zdjęcie lub plik RAW	Larawan o RAW file	Foto atau fail RAW	Фото або файл RAW
+studio_text	文字	文字	ข้อความ	Văn bản	Metin	Текст	Tekst	Text	Teks	Текст
+studio_stickers	贴纸	貼圖	สติกเกอร์	Nhãn dán	Çıkartma	Стикеры	Naklejki	Stickers	Pelekat	Стікери
+studio_collage	拼图	拼貼	คอลลาจ	Ghép ảnh	Kolaj	Коллаж	Kolaż	Collage	Kolaj	Колаж
+studio_expand_tool	镜像扩展	鏡像擴展	ขยายแบบสะท้อน	Mở rộng gương	Ayna genişletme	Зеркальное расширение	Rozszerzenie lustrzane	Mirror expand	Kembangan cermin	Дзеркальне розширення
+studio_brush	画笔	筆刷	แปรง	Cọ	Fırça	Кисть	Pędzel	Brush	Berus	Пензель
+studio_hue	色相	色相	สี	Sắc	Ton	Тон	Odcień	Hue	Rona	Відтінок
+studio_saturation	饱和度	飽和度	ความอิ่มสี	Độ bão hòa	Doygunluk	Насыщенность	Nasycenie	Saturation	Ketepuan	Насиченість
+studio_restore_now	应用快速增强	套用快速增強	ใช้ปรับด่วน	Áp dụng cải thiện nhanh	Hızlı iyileştirmeyi uygula	Применить быстрое улучшение	Zastosuj szybką poprawę	I-apply ang quick enhance	Guna peningkatan pantas	Застосувати швидке покращення
+studio_cutout_now	应用基础抠图	套用基礎去背	ใช้ตัดพื้นหลังพื้นฐาน	Áp dụng cắt nền cơ bản	Temel kesimi uygula	Применить базовую вырезку	Zastosuj podstawowe wycięcie	I-apply ang basic cutout	Guna cutout asas	Застосувати базове вирізання
+studio_tap_place	点按照片放置	點按照片放置	แตะรูปเพื่อวาง	Chạm ảnh để đặt	Yerleştirmek için fotoğrafa dokun	Коснитесь фото, чтобы разместить	Stuknij zdjęcie, by umieścić	I-tap ang larawan para ilagay	Ketik foto untuk letakkan	Торкніться фото, щоб розмістити
+studio_add_photo	添加照片	新增照片	เพิ่มรูป	Thêm ảnh	Foto ekle	Добавить фото	Dodaj zdjęcie	Magdagdag ng larawan	Tambah foto	Додати фото
+studio_filter_all	全部	全部	ทั้งหมด	Tất cả	Tümü	Все	Wszystkie	Lahat	Semua	Усе
+studio_library_delete	删除	刪除	ลบ	Xóa	Sil	Удалить	Usuń	Tanggalin	Padam	Видалити
+studio_library_filter_empty	此筛选暂无内容	此篩選暫無內容	ยังไม่มีใน фильтрนี้	Chưa có gì trong bộ lọc này	Bu filtrede henüz yok	В этом фильтре пока пусто	Brak w tym filtrze	Wala pa sa filter na ito	Tiada dalam penapis ini	У цьому фільтрі поки порожньо
+studio_export_sheet_title	导出	匯出	ส่งออก	Xuất	Dışa aktar	Экспорт	Eksport	Export	Eksport	Експорт
+studio_export_quality	质量 %1$d	品質 %1$d	คุณภาพ %1$d	Chất lượng %1$d	Kalite %1$d	Качество %1$d	Jakość %1$d	Quality %1$d	Kualiti %1$d	Якість %1$d
+studio_export_quality_label	质量	品質	คุณภาพ	Chất lượng	Kalite	Качество	Jakość	Quality	Kualiti	Якість
+studio_export_destination_pictures	保存到 Pictures/PixiJoy	儲存至 Pictures/PixiJoy	บันทึกที่ Pictures/PixiJoy	Lưu vào Pictures/PixiJoy	Pictures/PixiJoy'a kaydeder	Сохраняет в Pictures/PixiJoy	Zapisuje do Pictures/PixiJoy	Saves to Pictures/PixiJoy	Disimpan ke Pictures/PixiJoy	Зберігає в Pictures/PixiJoy
+studio_export_destination_movies	保存到 Movies/PixiJoy	儲存至 Movies/PixiJoy	บันทึกที่ Movies/PixiJoy	Lưu vào Movies/PixiJoy	Movies/PixiJoy'a kaydeder	Сохраняет в Movies/PixiJoy	Zapisuje do Movies/PixiJoy	Saves to Movies/PixiJoy	Disimpan ke Movies/PixiJoy	Зберігає в Movies/PixiJoy
+studio_export_no_watermark	无水印。不上传任何内容。	無浮水印。不上傳任何內容。	ไม่มีลายน้ำ ไม่อัปโหลด	Không watermark. Không tải lên.	Filigran yok. Yükleme yok.	Без водяного знака. Ничего не загружается.	Bez znaku wodnego. Bez wysyłania.	Walang watermark. Walang upload.	Tiada tera air. Tiada muat naik.	Без водяного знака. Нічого не завантажується.
+studio_curves	曲线	曲線	เส้นโค้ง	Đường cong	Eğriler	Кривые	Krzywe	Curves	Lengkung	Криві
+studio_looks	风格	風格	ลุค	Look	Görünüm	Стили	Looki	Looks	Gaya	Стилі
+studio_looks_hint	点选风格后应用。或导入 LUT。	點選風格後套用。或匯入 LUT。	แตะ look แล้ว Apply หรือนำเข้า LUT	Chạm look rồi Apply. Hoặc nhập LUT.	Look'a dokun, Apply. Veya LUT içe aktar.	Выберите look и Apply. Или импортируйте LUT.	Stuknij look, Apply. Lub importuj LUT.	Tap a look, Apply. O mag-import ng LUT.	Ketik gaya, Apply. Atau import LUT.	Оберіть look і Apply. Або імпортуйте LUT.
+studio_lut_import	导入 LUT	匯入 LUT	นำเข้า LUT	Nhập LUT	LUT içe aktar	Импорт LUT	Importuj LUT	Import LUT	Import LUT	Імпорт LUT
+studio_lut_imported	已导入 %1$s	已匯入 %1$s	นำเข้า %1$s แล้ว	Đã nhập %1$s	İçe aktarıldı %1$s	Импортировано %1$s	Zaimportowano %1$s	Na-import ang %1$s	Diimport %1$s	Імпортовано %1$s
+studio_lut_selected	正在使用 %1$s	正在使用 %1$s	ใช้ %1$s	Đang dùng %1$s	Kullanılıyor %1$s	Используется %1$s	Używane %1$s	Ginagamit ang %1$s	Menggunakan %1$s	Використовується %1$s
+studio_look_original	原图	原圖	ต้นฉบับ	Gốc	Orijinal	Оригинал	Oryginał	Original	Asal	Оригінал
+studio_look_clean	清爽	清爽	คลีน	Sạch	Temiz	Чистый	Czysty	Clean	Bersih	Чистий
+studio_look_warm	暖色	暖色	อุ่น	Ấm	Sıcak	Тёплый	Ciepły	Warm	Hangat	Теплий
+studio_look_cool	冷色	冷色	เย็น	Lạnh	Soğuk	Холодный	Chłodny	Cool	Sejuk	Холодний
+studio_look_film	胶片	膠片	ฟิlm	Phim	Film	Плёнка	Film	Film	Filem	Плівка
+studio_look_night	夜景	夜景	กลางคืน	Đêm	Gece	Ночь	Noc	Night	Malam	Ніч
+studio_curves_hint	调整亮度而不冲掉色彩。	調整亮度而不沖掉色彩。	ปรับความสว่างโดยไม่ล้างสี	Chỉnh sáng mà không rửa màu.	Parlaklığı renkleri silmeden ayarla.	Настройте яркость без вымывания цвета.	Dostosuj jasność bez wypłukiwania koloru.	I-shape ang brightness nang hindi nawawash ang color.	Laraskan kecerahan tanpa membasuh warna.	Налаштуйте яскравість без вимивання кольору.
+studio_blur	模糊	模糊	เบลอ	Làm mờ	Bulanık	Размытие	Rozmycie	Blur	Kabur	Розмиття
+studio_sharpen	锐化	銳化	คมชัด	Làm nét	Keskinleştir	Резкость	Wyostrz	Sharpen	Tajamkan	Різкість
+studio_vignette	暗角	暗角	วิกเน็ต	Vignette	Vinyet	Виньетка	Winietowanie	Vignette	Vignet	Віньєтка
+studio_curve_black	黑色	黑色	ดำ	Đen	Siyah	Чёрные	Czernie	Blacks	Hitam	Чорні
+studio_curve_shadow	阴影	陰影	เงา	Bóng	Gölgeler	Тени	Cienie	Shadows	Bayangan	Тіні
+studio_curve_mid	中间调	中間調	มิด	Trung	Orta ton	Средние	Średnie	Midtones	Pertengahan	Середні
+studio_curve_light	高光	高光	ไฮไลต์	Sáng	Işıklar	Света	Światła	Lights	Sorotan	Світла
+studio_curve_white	白色	白色	ขาว	Trắng	Beyaz	Белые	Biel	Whites	Putih	Білі
+studio_split	分割	分割	แยก	Chia	Böl	Разделить	Podziel	Split	Pisah	Розділити
+studio_mute	静音	靜音	ปิดเสียง	Tắt tiếng	Sessiz	Без звука	Wycisz	I-mute	Redam	Без звуку
+studio_unmute	取消静音	取消靜音	เปิดเสียง	Bật tiếng	Sesi aç	Со звуком	Włącz dźwięk	I-unmute	Nyahredam	Увімкнути звук
+studio_volume	音量 %1$.0f%%	音量 %1$.0f%%	ระดับเสียง %1$.0f%%	Âm lượng %1$.0f%%	Ses %1$.0f%%	Громкость %1$.0f%%	Głośność %1$.0f%%	Volume %1$.0f%%	Kelantangan %1$.0f%%	Гучність %1$.0f%%
+studio_fade_in	淡入 %1$d ms	淡入 %1$d ms	เฟดอิน %1$d ms	Fade in %1$d ms	Fade in %1$d ms	Нарастание %1$d ms	Fade in %1$d ms	Fade in %1$d ms	Fade masuk %1$d ms	Наростання %1$d ms
+studio_fade_out	淡出 %1$d ms	淡出 %1$d ms	เฟดเอาท์ %1$d ms	Fade out %1$d ms	Fade out %1$d ms	Затухание %1$d ms	Fade out %1$d ms	Fade out %1$d ms	Fade keluar %1$d ms	Затухання %1$d ms
+studio_add_music	添加音乐	新增音樂	เพิ่มเพลง	Thêm nhạc	Müzik ekle	Добавить музыку	Dodaj muzykę	Magdagdag ng music	Tambah muzik	Додати музику
+studio_replace_music	替换音乐	替換音樂	แทนที่เพลง	Thay nhạc	Müziği değiştir	Заменить музыку	Zastąp muzykę	Palitan ang music	Ganti muzik	Замінити музику
+studio_remove_music	移除音乐	移除音樂	ลบเพลง	Gỡ nhạc	Müziği kaldır	Удалить музыку	Usuń muzykę	Alisin ang music	Buang muzik	Прибрати музику
+studio_music_volume	音乐 %1$.0f%%	音樂 %1$.0f%%	เพลง %1$.0f%%	Nhạc %1$.0f%%	Müzik %1$.0f%%	Музыка %1$.0f%%	Muzyka %1$.0f%%	Music %1$.0f%%	Muzik %1$.0f%%	Музика %1$.0f%%
+studio_add_voice	添加旁白	新增旁白	เพิ่มพากย์	Thêm lồng tiếng	Seslendirme ekle	Добавить закадровый голос	Dodaj lektora	Magdagdag ng voice-over	Tambah suara latar	Додати закадровий голос
+studio_replace_voice	替换旁白	替換旁白	แทนที่พากย์	Thay lồng tiếng	Seslendirmeyi değiştir	Заменить голос	Zastąp lektora	Palitan ang voice-over	Ganti suara latar	Замінити голос
+studio_remove_voice	移除旁白	移除旁白	ลบพากย์	Gỡ lồng tiếng	Seslendirmeyi kaldır	Удалить голос	Usuń lektora	Alisin ang voice-over	Buang suara latar	Прибрати голос
+studio_voice_volume	旁白 %1$.0f%%	旁白 %1$.0f%%	พากย์ %1$.0f%%	Giọng %1$.0f%%	Ses %1$.0f%%	Голос %1$.0f%%	Głos %1$.0f%%	Voice %1$.0f%%	Suara %1$.0f%%	Голос %1$.0f%%
+studio_duck	对话下压 %1$.0f%%	對話下壓 %1$.0f%%	ใต้บทสนทนา %1$.0f%%	Dưới thoại %1$.0f%%	Diyalog altı %1$.0f%%	Под диалогом %1$.0f%%	Pod dialogiem %1$.0f%%	Under dialogue %1$.0f%%	Bawah dialog %1$.0f%%	Під діалогом %1$.0f%%
+studio_add_sfx	添加音效	新增音效	เพิ่ม SFX	Thêm SFX	SFX ekle	Добавить SFX	Dodaj SFX	Magdagdag ng SFX	Tambah SFX	Додати SFX
+studio_replace_sfx	替换音效	替換音效	แทนที่ SFX	Thay SFX	SFX değiştir	Заменить SFX	Zastąp SFX	Palitan ang SFX	Ganti SFX	Замінити SFX
+studio_remove_sfx	移除音效	移除音效	ลบ SFX	Gỡ SFX	SFX kaldır	Удалить SFX	Usuń SFX	Alisin ang SFX	Buang SFX	Прибрати SFX
+studio_sfx_volume	SFX %1$.0f%%	SFX %1$.0f%%	SFX %1$.0f%%	SFX %1$.0f%%	SFX %1$.0f%%	SFX %1$.0f%%	SFX %1$.0f%%	SFX %1$.0f%%	SFX %1$.0f%%	SFX %1$.0f%%
+studio_master_eq	主 EQ	主 EQ	Master EQ	Master EQ	Master EQ	Master EQ	Master EQ	Master EQ	Master EQ	Master EQ
+studio_eq_low	低频 %1$.0f dB	低頻 %1$.0f dB	ต่ำ %1$.0f dB	Thấp %1$.0f dB	Düşük %1$.0f dB	Низкие %1$.0f dB	Niskie %1$.0f dB	Low %1$.0f dB	Rendah %1$.0f dB	Низькі %1$.0f dB
+studio_eq_mid	中频 %1$.0f dB	中頻 %1$.0f dB	กลาง %1$.0f dB	Trung %1$.0f dB	Orta %1$.0f dB	Средние %1$.0f dB	Średnie %1$.0f dB	Mid %1$.0f dB	Pertengahan %1$.0f dB	Середні %1$.0f dB
+studio_eq_high	高频 %1$.0f dB	高頻 %1$.0f dB	สูง %1$.0f dB	Cao %1$.0f dB	Yüksek %1$.0f dB	Высокие %1$.0f dB	Wysokie %1$.0f dB	High %1$.0f dB	Tinggi %1$.0f dB	Високі %1$.0f dB
+studio_master_dynamics	动态	動態	ไดนามิก	Động	Dinamik	Динамика	Dynamika	Dynamics	Dinamik	Динаміка
+studio_comp_threshold	阈值 %1$.0f dB	閾值 %1$.0f dB	threshold %1$.0f dB	Ngưỡng %1$.0f dB	Eşik %1$.0f dB	Порог %1$.0f dB	Próg %1$.0f dB	Threshold %1$.0f dB	Ambang %1$.0f dB	Поріг %1$.0f dB
+studio_comp_ratio	比率 %1$.1f:1	比率 %1$.1f:1	อัตราส่วน %1$.1f:1	Tỷ lệ %1$.1f:1	Oran %1$.1f:1	Соотношение %1$.1f:1	Stosunek %1$.1f:1	Ratio %1$.1f:1	Nisbah %1$.1f:1	Співвідношення %1$.1f:1
+studio_limiter_on	限幅开	限幅開	Limiter เปิด	Limiter bật	Limiter açık	Лимитер вкл.	Limiter wł.	Limiter on	Limiter hidup	Лімітер увімк.
+studio_limiter_off	限幅关	限幅關	Limiter ปิด	Limiter tắt	Limiter kapalı	Лимитер выкл.	Limiter wył.	Limiter off	Limiter mati	Лімітер вимк.
+studio_fx_reset	重置效果	重置效果	รีเซ็ต FX	Đặt lại FX	FX sıfırla	Сброс FX	Resetuj FX	I-reset ang FX	Set semula FX	Скинути FX
+studio_export_background	正在后台导出。可离开此屏幕。	正在背景匯出。可離開此畫面。	ส่งออกในพื้นหลัง ออกจากหน้าจอได้	Đang xuất nền. Có thể rời màn hình.	Arka planda dışa aktarılıyor. Ekrandan çıkabilirsiniz.	Экспорт в фоне. Можно покинуть экран.	Eksport w tle. Możesz opuścić ekran.	Nag-e-export sa background. Pwede umalis sa screen.	Mengeksport di latar. Boleh tinggalkan skrin.	Експорт у фоні. Можна залишити екран.
+studio_export_failed	导出失败。	匯出失敗。	ส่งออกล้มเหลว	Xuất thất bại.	Dışa aktarma başarısız.	Экспорт не удался.	Eksport nie powiódł się.	Nabigo ang export.	Eksport gagal.	Експорт не вдався.
+studio_import_failed	无法导入媒体：%1$s	無法匯入媒體：%1$s	นำเข้าไม่ได้: %1$s	Không nhập được: %1$s	Medya içe aktarılamadı: %1$s	Не удалось импортировать: %1$s	Import nieudany: %1$s	Hindi ma-import ang media: %1$s	Import gagal: %1$s	Не вдалося імпортувати: %1$s
+studio_import_unknown	没有可用的选择器。	沒有可用的選擇器。	ไม่มีตัวเลือกที่รองรับ	Không có bộ chọn tương thích.	Uyumlu seçici yok.	Нет совместимого выбора.	Brak kompatybilnego wyboru.	Walang compatible picker.	Tiada pemilih serasi.	Немає сумісного засобу вибору.
+studio_sample_unavailable	无法打开内置样片。	無法開啟內建樣片。	เปิดตัวอย่างในตัวไม่ได้	Không mở được mẫu tích hợp.	Yerleşik örnek açılamadı.	Не удалось открыть образец.	Nie można otworzyć próbki.	Hindi mabuksan ang sample.	Tidak dapat buka sampel.	Не вдалося відкрити зразок.
+studio_photo_render_failed	无法更新预览。仍显示上一预览。	無法更新預覽。仍顯示上一預覽。	อัปเดตตัวอย่างไม่ได้ ยังมีตัวอย่างก่อนหน้า	Không cập nhật xem trước. Vẫn có bản trước.	Önizleme güncellenemedi. Önceki duruyor.	Не удалось обновить предпросмотр. Предыдущий доступен.	Nie zaktualizowano podglądu. Poprzedni dostępny.	Hindi ma-update ang preview. Nandiyan pa ang dati.	Tidak dapat kemas kini pratonton. Yang lama masih ada.	Не вдалося оновити перегляд. Попередній лишається.
+studio_timeline_clips	%1$d 个片段在时间轴上	%1$d 個片段在時間軸上	%1$d คลิปบนไทม์ไลน์	%1$d clip trên timeline	Zaman çizgisinde %1$d klip	%1$d клипов на шкале	%1$d klipów na osi	%1$d clip sa timeline	%1$d klip pada garis masa	%1$d кліпів на шкалі
+studio_track_muted	%1$s（已静音）	%1$s（已靜音）	%1$s (ปิดเสียง)	%1$s (tắt tiếng)	%1$s (sessiz)	%1$s (без звука)	%1$s (wyciszony)	%1$s (muted)	%1$s (redam)	%1$s (без звуку)
+studio_layers	图层	圖層	เลเยอร์	Lớp	Katmanlar	Слои	Warstwy	Layers	Lapisan	Шари
+studio_layer_background	背景	背景	พื้นหลัง	Nền	Arka plan	Фон	Tło	Background	Latar	Фон
+studio_layers_hint	点按图层以调整淡入或混合。	點按圖層以調整淡入或混合。	แตะเลเยอร์เพื่อจางหรือผสม	Chạm lớp để fade hoặc blend.	Katmana dokunarak fade/blend.	Коснитесь слоя для fade или blend.	Stuknij warstwę, by fade/blend.	I-tap ang layer para fade o blend.	Ketik lapisan untuk fade atau campuran.	Торкніться шару для fade або blend.
+studio_opacity	不透明度	不透明度	ความทึบ	Độ mờ	Opaklık	Непрозрачность	Krycie	Opacity	Kelegapan	Непрозорість
+studio_hide	隐藏	隱藏	ซ่อน	Ẩn	Gizle	Скрыть	Ukryj	Itago	Sembunyi	Приховати
+studio_show	显示	顯示	แสดง	Hiện	Göster	Показать	Pokaż	Ipakita	Tunjuk	Показати
+studio_delete_clip	删除片段	刪除片段	ลบคลิป	Xóa clip	Klibi sil	Удалить клип	Usuń klip	Tanggalin ang clip	Padam klip	Видалити кліп
+studio_mask	蒙版	遮罩	มาสก์	Mặt nạ	Maske	Маска	Maska	Mask	Topeng	Маска
+studio_mask_hide	隐藏	隱藏	ซ่อน	Ẩn	Gizle	Скрыть	Ukryj	Itago	Sembunyi	Приховати
+studio_mask_reveal	显示	顯示	แสดง	Hiện	Göster	Показать	Pokaż	Ipakita	Tunjuk	Показати
+studio_mask_clear	清除蒙版	清除遮罩	ล้างมาสก์	Xóa mặt nạ	Maskeyi temizle	Очистить маску	Wyczyść maskę	I-clear ang mask	Kosongkan topeng	Очистити маску
+studio_mask_subject	主体	主體	วัตถุ	Chủ thể	Konu	Объект	Obiekt	Subject	Subjek	Об’єкт
+studio_mask_background	背景	背景	พื้นหลัง	Nền	Arka plan	Фон	Tło	Background	Latar	Фон
+studio_mask_hint	主体填充蒙版。涂抹以 refine。	主體填充遮罩。塗抹以 refine。	วัตถุเติมมาสก์ ทาสีเพื่อปรับ	Chủ thể lấp mặt nạ. Vẽ để tinh chỉnh.	Konu maskeyi doldurur. Boyayarak iyileştirin.	Объект заполняет маску. Рисуйте для уточнения.	Obiekt wypełnia maskę. Maluj, by dopracować.	Pinupunan ng subject ang mask. Mag-paint para i-refine.	Subjek mengisi topeng. Cat untuk perincikan.	Об’єкт заповнює маску. Малюйте для уточнення.
+studio_export_resolution	分辨率	解析度	ความละเอียด	Độ phân giải	Çözünürlük	Разрешение	Rozdzielczość	Resolution	Resolusi	Роздільна здатність
+studio_export_exif_keep	保留 EXIF	保留 EXIF	เก็บ EXIF	Giữ EXIF	EXIF koru	Сохранить EXIF	Zachowaj EXIF	Panatilihin ang EXIF	Kekalkan EXIF	Зберегти EXIF
+studio_export_exif_strip	移除 EXIF	移除 EXIF	ลบ EXIF	Gỡ EXIF	EXIF kaldır	Удалить EXIF	Usuń EXIF	Alisin ang EXIF	Buang EXIF	Прибрати EXIF
+studio_collage_2	2-up	2-up	2-up	2-up	2-up	2-up	2-up	2-up	2-up	2-up
+studio_collage_4	4-up	4-up	4-up	4-up	4-up	4-up	4-up	4-up	4-up	4-up
+studio_collage_2_hint	双图网格	雙圖網格	ตาราง 2 รูป	Lưới 2 ảnh	2 foto ızgarası	Сетка из 2 фото	Siatka 2 zdjęć	2-photo grid	Grid 2 foto	Сітка з 2 фото
+studio_collage_4_hint	四图网格	四圖網格	ตาราง 4 รูป	Lưới 4 ảnh	4 foto ızgarası	Сетка из 4 фото	Siatka 4 zdjęć	4-photo grid	Grid 4 foto	Сітка з 4 фото
+studio_heal_set_source	设置源点	設定源點	ตั้งแหล่ง	Đặt nguồn	Kaynak ayarla	Задать источник	Ustaw źródło	Set source	Set sumber	Задати джерело
+studio_heal_paint	涂抹	塗抹	ทาสี	Vẽ	Boyama	Рисование	Malowanie	Paint	Cat	Малювання
+studio_heal_source_set	从源点克隆。	從源點複製。	โคลนจากจุดแหล่ง	Nhân bản từ điểm nguồn.	Kaynak noktadan klonla.	Клонировать из источника.	Klonuj ze źródła.	I-clone mula sa source point.	Klon dari titik sumber.	Клонувати з джерела.
+studio_heal_source_ring	无源点 — 环形修复。	無源點 — 環形修復。	ไม่มีแหล่ง — ring heal	Không nguồn — ring heal.	Kaynak yok — ring heal.	Нет источника — ring heal.	Brak źródła — ring heal.	Walang source — ring heal.	Tiada sumber — ring heal.	Немає джерела — ring heal.
+studio_export_4k_cost	编码更重 · 手机上更慢	編碼更重 · 手機上更慢	เข้ารหัสหนักกว่า · ช้าบนมือถือ	Mã hóa nặng hơn · chậm trên điện thoại	Daha ağır kodlama · telefonda yavaş	Тяжелее кодирование · медленнее на телефоне	Cięższe kodowanie · wolniej na telefonie	Mas mabigat ang encode · mas mabagal sa phone	Encode lebih berat · lebih perlahan pada telefon	Важче кодування · повільніше на телефоні
+studio_mask_protect	保护	保護	ป้องกัน	Bảo vệ	Koru	Защита	Chroń	Protect	Lindungi	Захист
+studio_mask_erase	擦除区域	擦除區域	ลบพื้นที่	Xóa vùng	Alanı sil	Стереть область	Wymaż obszar	Burahin ang area	Padam kawasan	Стерти область
+studio_fade	淡化	淡化	จาง	Fade	Fade	Затухание	Fade	Fade	Fade	Згасання
+studio_selective_hsl	色彩	色彩	สี	Màu	Renk	Цвет	Kolor	Color	Warna	Колір
+studio_selective_hsl_hint	选择范围，微调，然后应用。	選擇範圍，微調，然後套用。	เลือกช่วง ปรับ แล้ว Apply	Chọn vùng, chỉnh, rồi Apply.	Aralık seç, ayarla, Apply.	Выберите диапазон, настройте, Apply.	Wybierz zakres, dostosuj, Apply.	Pumili ng range, i-tweak, Apply.	Pilih julat, laraskan, Apply.	Оберіть діапазон, налаштуйте, Apply.
+studio_selective_light	亮度	亮度	ความสว่าง	Độ sáng	Parlaklık	Яркость	Jasność	Brightness	Kecerahan	Яскравість
+studio_hsl_reds	红色	紅色	แดง	Đỏ	Kırmızılar	Красные	Czerwienie	Reds	Merah	Червоні
+studio_hsl_oranges	橙色	橙色	ส้ม	Cam	Turuncular	Оранжевые	Pomarańcze	Oranges	Oren	Помаранчеві
+studio_hsl_yellows	黄色	黃色	เหลือง	Vàng	Sarılar	Жёлтые	Żółcie	Yellows	Kuning	Жовті
+studio_hsl_greens	绿色	綠色	เขียว	Xanh lá	Yeşiller	Зелёные	Zielenie	Greens	Hijau	Зелені
+studio_hsl_cyans	青色	青色	ฟ้า	Lam ngọc	Camgöbekler	Бирюзовые	Cyjan	Cyans	Sian	Бірюзові
+studio_hsl_blues	蓝色	藍色	น้ำเงิน	Xanh dương	Maviler	Синие	Błękity	Blues	Biru	Сині
+studio_hsl_magentas	洋红	洋紅	ม่วงแดง	Hồng tím	Macentalar	Пурпурные	Mageny	Magentas	Magenta	Пурпурні
+session_compare_hint	按住以对比。	按住以對比。	กดค้างเพื่อเปรียบเทียบ	Giữ để so sánh.	Karşılaştırmak için basılı tut.	Удерживайте для сравнения.	Przytrzymaj, by porównać.	Hold para ikumpara.	Tahan untuk bandingkan.	Утримуйте для порівняння.
+session_compare_disabled	先应用编辑才能对比。	先套用編輯才能對比。	ใช้การแก้ไขก่อนจึงเปรียบเทียบได้	Áp dụng chỉnh sửa để so sánh.	Karşılaştırmak için düzenleme uygula.	Примените правку для сравнения.	Zastosuj edycję, by porównać.	Mag-apply muna ng edit para ikumpara.	Guna suntingan untuk bandingkan.	Застосуйте правку для порівняння.
+session_compare_after_hold	之后 · 按住看之前	之後 · 按住看之前	หลัง · กดค้างดูก่อน	Sau · giữ xem trước	Sonra · önce için bas	После · удерж. для «до»	Po · przytrzymaj «przed»	After · hold for Before	Selepas · tahan untuk Sebelum	Після · утрим. для «до»
+session_compare_before	之前 · 松开看之后	之前 · 鬆開看之後	ก่อน · ปล่อยดูหลัง	Trước · thả xem sau	Önce · sonra için bırak	До · отпустите для «после»	Przed · puść «po»	Before · release for After	Sebelum · lepas untuk Selepas	До · відпустіть для «після»
+session_compare_state_before	正在显示之前	正在顯示之前	กำลังแสดงก่อน	Đang hiển thị trước	Önce gösteriliyor	Показ «до»	Pokazuję «przed»	Showing Before	Menunjuk Sebelum	Показ «до»
+session_compare_state_after	正在显示之后	正在顯示之後	กำลังแสดงหลัง	Đang hiển thị sau	Sonra gösteriliyor	Показ «после»	Pokazuję «po»	Showing After	Menunjuk Selepas	Показ «після»
+session_compare_action_before	显示之前	顯示之前	แสดงก่อน	Hiện trước	Önceyi göster	Показать «до»	Pokaż «przed»	Show Before	Tunjuk Sebelum	Показати «до»
+session_compare_action_after	显示之后	顯示之後	แสดงหลัง	Hiện sau	Sonrayı göster	Показать «после»	Pokaż «po»	Show After	Tunjuk Selepas	Показати «після»
+session_save_status_saved	已保存	已儲存	บันทึกแล้ว	Đã lưu	Kaydedildi	Сохранено	Zapisano	Saved	Disimpan	Збережено
+session_save_status_saving	正在保存…	正在儲存…	กำลังบันทึก…	Đang lưu…	Kaydediliyor…	Сохранение…	Zapisywanie…	Saving…	Menyimpan…	Збереження…
+session_save_status_unsaved	未保存	未儲存	ยังไม่บันทึก	Chưa lưu	Kaydedilmedi	Не сохранено	Niezapisano	Not saved	Belum disimpan	Не збережено
+session_rename_project	重命名项目	重新命名專案	เปลี่ยนชื่อโปรเจกต์	Đổi tên dự án	Projeyi yeniden adlandır	Переименовать проект	Zmień nazwę projektu	Palitan ang pangalan ng proyekto	Namakan semula projek	Перейменувати проєкт
+a11y_selected	%1$s，已选中	%1$s，已選取	%1$s เลือกแล้ว	%1$s, đã chọn	%1$s, seçili	%1$s, выбрано	%1$s, wybrano	%1$s, selected	%1$s, dipilih	%1$s, вибрано
+a11y_downloaded	已下载	已下載	ดาวน์โหลดแล้ว	Đã tải	İndirildi	Загружено	Pobrano	Downloaded	Dimuat turun	Завантажено
+a11y_ready_to_apply	可应用	可套用	พร้อม Apply	Sẵn sàng Apply	Uygulamaya hazır	Готово к Apply	Gotowe do Apply	Ready to apply	Sedia untuk Apply	Готово до Apply
+a11y_crop_edge_left	裁剪边，左	裁剪邊，左	ขอบครอบ ซ้าย	Cạnh cắt, trái	Kırpma kenarı, sol	Край кадра, слева	Krawędź kadru, lewo	Crop edge, left	Tepi pangkas, kiri	Край кадру, ліворуч
+a11y_crop_edge_right	裁剪边，右	裁剪邊，右	ขอบครอบ ขวา	Cạnh cắt, phải	Kırpma kenarı, sağ	Край кадра, справа	Krawędź kadru, prawo	Crop edge, right	Tepi pangkas, kanan	Край кадру, праворуч
+a11y_crop_edge_top	裁剪边，上	裁剪邊，上	ขอบครอบ บน	Cạnh cắt, trên	Kırpma kenarı, üst	Край кадра, сверху	Krawędź kadru, góra	Crop edge, top	Tepi pangkas, atas	Край кадру, зверху
+a11y_crop_edge_bottom	裁剪边，下	裁剪邊，下	ขอบครอบ ล่าง	Cạnh cắt, dưới	Kırpma kenarı, alt	Край кадра, снизу	Krawędź kadru, dół	Crop edge, bottom	Tepi pangkas, bawah	Край кадру, знизу
+a11y_trim_in	修剪起点	修剪起點	จุดเริ่มตัด	Điểm vào	Giriş	Начало обрезки	Początek przycięcia	Trim start	Mula pangkas	Початок обрізки
+a11y_trim_out	修剪终点	修剪終點	จุดจบตัด	Điểm ra	Çıkış	Конец обрезки	Koniec przycięcia	Trim end	Akhir pangkas	Кінець обрізки
+a11y_slider_value	%1$s，%2$s	%1$s，%2$s	%1$s, %2$s	%1$s, %2$s	%1$s, %2$s	%1$s, %2$s	%1$s, %2$s	%1$s, %2$s	%1$s, %2$s	%1$s, %2$s
+a11y_edit_slider_value	编辑数值	編輯數值	แก้ไขค่า	Sửa giá trị	Değeri düzenle	Изменить значение	Edytuj wartość	Edit value	Edit nilai	Редагувати значення
+a11y_slider_sign	切换正负	切換正負	สลับเครื่องหมาย	Đổi dấu	İşareti değiştir	Сменить знак	Zmień znak	Change sign	Tukar tanda	Змінити знак
+a11y_reset_value	重置	重置	รีเซ็ต	Đặt lại	Sıfırla	Сброс	Reset	Reset	Set semula	Скинути
+a11y_place	放置	放置	วาง	Đặt	Yerleştir	Разместить	Umieść	Place	Letak	Розмістити

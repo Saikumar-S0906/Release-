@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PixiJoy uk plurals — machine-assisted; review before store release -->
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">Сьогодні залишилось %s використання ШІ</item>
+        <item quantity="few">Сьогодні залишилось %s використання ШІ</item>
+        <item quantity="many">Сьогодні залишилось %s використань ШІ</item>
+        <item quantity="other">Сьогодні залишилось %s використань ШІ</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">Сьогодні залишився %s HD-експорт</item>
+        <item quantity="few">Сьогодні залишилось %s HD-експорти</item>
+        <item quantity="many">Сьогодні залишилось %s HD-експортів</item>
+        <item quantity="other">Сьогодні залишилось %s HD-експортів</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">Сьогодні залишилась %d реклама з нагородою</item>
+        <item quantity="few">Сьогодні залишилось %d реклами з нагородою</item>
+        <item quantity="many">Сьогодні залишилось %d реклам з нагородою</item>
+        <item quantity="other">Сьогодні залишилось %d реклам з нагородою</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">Набір стікерів збережено! %d стікер готовий для WhatsApp</item>
+        <item quantity="few">Набір стікерів збережено! %d стікери готові для WhatsApp</item>
+        <item quantity="many">Набір стікерів збережено! %d стікерів готові для WhatsApp</item>
+        <item quantity="other">Набір стікерів збережено! %d стікерів готові для WhatsApp</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">Збережено %d стікер для WhatsApp!</item>
+        <item quantity="few">Збережено %d стікери для WhatsApp!</item>
+        <item quantity="many">Збережено %d стікерів для WhatsApp!</item>
+        <item quantity="other">Збережено %d стікерів для WhatsApp!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">Серія %d день</item>
+        <item quantity="few">Серія %d дні</item>
+        <item quantity="many">Серія %d днів</item>
+        <item quantity="other">Серія %d днів</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">Viral Pack збережено! %d зображень готові до поширення 🚀</item>
+    </plurals>
+</resources>

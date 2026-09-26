@@ -45,8 +45,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -69,6 +67,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -95,12 +94,15 @@ import androidx.work.workDataOf
 import coil3.compose.AsyncImage
 import com.pixijoy.ai.R
 import com.pixijoy.ai.ui.ProjectRenameDialog
-import com.pixijoy.ai.ui.isStudioTwoPane
+import com.pixijoy.ai.ui.isStudioSessionSideTools
 import com.pixijoy.ai.export.MovieExportWorker
 import com.pixijoy.core.common.AppResult
 import com.pixijoy.core.data.Project
 import com.pixijoy.designsystem.PixiAccent
+import com.pixijoy.designsystem.PixiAccentSoft
+import com.pixijoy.designsystem.PixiSlider
 import com.pixijoy.designsystem.PixiBg
+import com.pixijoy.designsystem.PixiIconButton
 import com.pixijoy.designsystem.PixiPrimaryButton
 import com.pixijoy.designsystem.PixiSecondaryButton
 import com.pixijoy.designsystem.PixiSuccess
@@ -145,6 +147,7 @@ fun MovieSessionScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val withExportNotifications = rememberExportNotificationGate()
     val shell = hiltViewModel<StudioShellViewModel>()
     val repo = shell.repository
     val engine = shell.movieEngine
@@ -387,8 +390,9 @@ fun MovieSessionScreen(
                 )
             }
             WorkInfo.State.FAILED -> sessionViewModel.onExportFailed(
-                info.outputData.getString(MovieExportWorker.KEY_ERROR)
-                    ?: context.getString(R.string.studio_export_failed)
+                (info.outputData.getString(MovieExportWorker.KEY_ERROR)
+                    ?: context.getString(R.string.studio_export_failed)) +
+                    "\n" + context.getString(R.string.studio_export_failed_help)
             )
             else -> Unit
         }
@@ -424,32 +428,33 @@ fun MovieSessionScreen(
     }
 
     fun runExport(gif: Boolean) {
-        player?.playWhenReady = false
-        bedPlayer?.playWhenReady = false
-        voicePlayer?.playWhenReady = false
-        sessionViewModel.beginExport(context.getString(R.string.studio_export_pct, 0))
-        scope.launch {
-            sessionViewModel.flush()
-            MovieExportWorker.ensureChannel(context)
-            val request = OneTimeWorkRequestBuilder<MovieExportWorker>()
-                .setInputData(
-                    workDataOf(
-                        MovieExportWorker.KEY_PROJECT to project.id,
-                        MovieExportWorker.KEY_GIF to gif,
-                        MovieExportWorker.KEY_TALKING to talking
+        withExportNotifications {
+            player?.playWhenReady = false
+            bedPlayer?.playWhenReady = false
+            voicePlayer?.playWhenReady = false
+            sessionViewModel.beginExport(context.getString(R.string.studio_export_pct, 0))
+            scope.launch {
+                sessionViewModel.flush()
+                val request = OneTimeWorkRequestBuilder<MovieExportWorker>()
+                    .setInputData(
+                        workDataOf(
+                            MovieExportWorker.KEY_PROJECT to project.id,
+                            MovieExportWorker.KEY_GIF to gif,
+                            MovieExportWorker.KEY_TALKING to talking
+                        )
                     )
+                    .build()
+                workManager.enqueueUniqueWork(
+                    MovieExportWorker.uniqueName(project.id),
+                    ExistingWorkPolicy.KEEP,
+                    request
                 )
-                .build()
-            workManager.enqueueUniqueWork(
-                MovieExportWorker.uniqueName(project.id),
-                ExistingWorkPolicy.KEEP,
-                request
-            )
+            }
         }
     }
 
     val configuration = LocalConfiguration.current
-    val sideTools = isStudioTwoPane(configuration.screenWidthDp, configuration.screenHeightDp)
+    val sideTools = isStudioSessionSideTools(configuration.screenWidthDp, configuration.screenHeightDp)
     val haptics = LocalHapticFeedback.current
     @Composable
     fun TimelineDock() {
@@ -726,29 +731,27 @@ fun MovieSessionScreen(
                     paths.getOrElse(selected?.mediaIndex ?: 0) { path }
                 ).coerceAtLeast(1000)
                 Text(stringResource(R.string.studio_trim_start), color = PixiTextMuted)
-                Slider(
+                PixiSlider(
                     value = ((selected?.inMs ?: startMs) / selectedSourceEnd.toFloat()).coerceIn(0f, 1f),
                     onValueChange = {
-                        val id = selected?.id ?: return@Slider
+                        val id = selected?.id ?: return@PixiSlider
                         val inn = (it * selectedSourceEnd).toLong()
                         sessionViewModel.setTrimStart(inn)
                         commitTimeline(timeline.rippleTrimIn(id, inn), live = true)
                     },
                     onValueChangeFinished = { settlePreview() },
-                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_trim_start")
                 )
                 Text(stringResource(R.string.studio_trim_end), color = PixiTextMuted)
-                Slider(
+                PixiSlider(
                     value = ((selected?.outMs ?: endMs) / selectedSourceEnd.toFloat()).coerceIn(0f, 1f),
                     onValueChange = {
-                        val id = selected?.id ?: return@Slider
+                        val id = selected?.id ?: return@PixiSlider
                         val out = (it * selectedSourceEnd).toLong()
                         sessionViewModel.setTrimEnd(out)
                         commitTimeline(timeline.rippleTrimOut(id, out, selectedSourceEnd), live = true)
                     },
                     onValueChangeFinished = { settlePreview() },
-                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_trim_end")
                 )
                 TextButton(
@@ -780,45 +783,42 @@ fun MovieSessionScreen(
                     stringResource(R.string.studio_volume, (selected?.volume ?: 1f) * 100f),
                     color = PixiTextMuted
                 )
-                Slider(
+                PixiSlider(
                     value = selected?.volume ?: 1f,
                     onValueChange = { v ->
-                        val id = selected?.id ?: return@Slider
+                        val id = selected?.id ?: return@PixiSlider
                         commitTimeline(timeline.update(id) { it.copy(volume = ClipMix.volume(v)) }, live = true)
                     },
                     onValueChangeFinished = { settlePreview() },
                     valueRange = 0f..1f,
-                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_volume")
                 )
                 Text(
                     stringResource(R.string.studio_fade_in, (selected?.fadeInMs ?: 0L).toInt()),
                     color = PixiTextMuted
                 )
-                Slider(
+                PixiSlider(
                     value = (selected?.fadeInMs ?: 0L).toFloat(),
                     onValueChange = { v ->
-                        val id = selected?.id ?: return@Slider
+                        val id = selected?.id ?: return@PixiSlider
                         commitTimeline(timeline.update(id) { it.copy(fadeInMs = v.toLong().coerceAtLeast(0)) }, live = true)
                     },
                     onValueChangeFinished = { settlePreview() },
                     valueRange = 0f..2000f,
-                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_fade_in")
                 )
                 Text(
                     stringResource(R.string.studio_fade_out, (selected?.fadeOutMs ?: 0L).toInt()),
                     color = PixiTextMuted
                 )
-                Slider(
+                PixiSlider(
                     value = (selected?.fadeOutMs ?: 0L).toFloat(),
                     onValueChange = { v ->
-                        val id = selected?.id ?: return@Slider
+                        val id = selected?.id ?: return@PixiSlider
                         commitTimeline(timeline.update(id) { it.copy(fadeOutMs = v.toLong().coerceAtLeast(0)) }, live = true)
                     },
                     onValueChangeFinished = { settlePreview() },
                     valueRange = 0f..2000f,
-                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_fade_out")
                 )
                 TextButton(
@@ -869,7 +869,7 @@ fun MovieSessionScreen(
                     stringResource(R.string.studio_music_volume, bed.volume * 100f),
                     color = PixiTextMuted
                 )
-                Slider(
+                PixiSlider(
                     value = bed.volume,
                     onValueChange = { v ->
                         commitTimeline(
@@ -879,14 +879,13 @@ fun MovieSessionScreen(
                     },
                     onValueChangeFinished = { settlePreview() },
                     valueRange = 0f..1f,
-                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_bed_volume")
                 )
                 Text(
                     stringResource(R.string.studio_fade_in, bed.fadeInMs.toInt()),
                     color = PixiTextMuted
                 )
-                Slider(
+                PixiSlider(
                     value = bed.fadeInMs.toFloat(),
                     onValueChange = {
                         commitTimeline(
@@ -896,14 +895,13 @@ fun MovieSessionScreen(
                     },
                     onValueChangeFinished = { settlePreview() },
                     valueRange = 0f..2000f,
-                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_bed_fade_in")
                 )
                 Text(
                     stringResource(R.string.studio_fade_out, bed.fadeOutMs.toInt()),
                     color = PixiTextMuted
                 )
-                Slider(
+                PixiSlider(
                     value = bed.fadeOutMs.toFloat(),
                     onValueChange = {
                         commitTimeline(
@@ -913,14 +911,13 @@ fun MovieSessionScreen(
                     },
                     onValueChangeFinished = { settlePreview() },
                     valueRange = 0f..2000f,
-                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_bed_fade_out")
                 )
                 Text(
                     stringResource(R.string.studio_duck, bed.duck * 100f),
                     color = PixiTextMuted
                 )
-                Slider(
+                PixiSlider(
                     value = bed.duck,
                     onValueChange = { v ->
                         commitTimeline(
@@ -930,7 +927,6 @@ fun MovieSessionScreen(
                     },
                     onValueChangeFinished = { settlePreview() },
                     valueRange = 0f..1f,
-                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_bed_duck")
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -965,7 +961,7 @@ fun MovieSessionScreen(
                     stringResource(R.string.studio_voice_volume, voice.volume * 100f),
                     color = PixiTextMuted
                 )
-                Slider(
+                PixiSlider(
                     value = voice.volume,
                     onValueChange = { v ->
                         commitTimeline(
@@ -975,14 +971,13 @@ fun MovieSessionScreen(
                     },
                     onValueChangeFinished = { settlePreview() },
                     valueRange = 0f..1f,
-                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_voice_volume")
                 )
                 Text(
                     stringResource(R.string.studio_fade_in, voice.fadeInMs.toInt()),
                     color = PixiTextMuted
                 )
-                Slider(
+                PixiSlider(
                     value = voice.fadeInMs.toFloat(),
                     onValueChange = {
                         commitTimeline(
@@ -992,14 +987,13 @@ fun MovieSessionScreen(
                     },
                     onValueChangeFinished = { settlePreview() },
                     valueRange = 0f..2000f,
-                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_voice_fade_in")
                 )
                 Text(
                     stringResource(R.string.studio_fade_out, voice.fadeOutMs.toInt()),
                     color = PixiTextMuted
                 )
-                Slider(
+                PixiSlider(
                     value = voice.fadeOutMs.toFloat(),
                     onValueChange = {
                         commitTimeline(
@@ -1009,7 +1003,6 @@ fun MovieSessionScreen(
                     },
                     onValueChangeFinished = { settlePreview() },
                     valueRange = 0f..2000f,
-                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_voice_fade_out")
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1044,7 +1037,7 @@ fun MovieSessionScreen(
                     stringResource(R.string.studio_sfx_volume, sfx.volume * 100f),
                     color = PixiTextMuted
                 )
-                Slider(
+                PixiSlider(
                     value = sfx.volume,
                     onValueChange = { v ->
                         commitTimeline(
@@ -1058,7 +1051,6 @@ fun MovieSessionScreen(
                     },
                     onValueChangeFinished = { settlePreview() },
                     valueRange = 0f..1f,
-                    colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                     modifier = Modifier.testTag("movie_sfx_volume")
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1096,42 +1088,39 @@ fun MovieSessionScreen(
                 stringResource(R.string.studio_eq_low, fx.lowGainDb),
                 color = PixiTextMuted
             )
-            Slider(
+            PixiSlider(
                 value = fx.lowGainDb,
                 onValueChange = {
                     commitTimeline(timeline.copy(masterFx = fx.copy(lowGainDb = it)), live = true)
                 },
                 onValueChangeFinished = { settlePreview() },
                 valueRange = -12f..12f,
-                colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                 modifier = Modifier.testTag("movie_eq_low")
             )
             Text(
                 stringResource(R.string.studio_eq_mid, fx.midGainDb),
                 color = PixiTextMuted
             )
-            Slider(
+            PixiSlider(
                 value = fx.midGainDb,
                 onValueChange = {
                     commitTimeline(timeline.copy(masterFx = fx.copy(midGainDb = it)), live = true)
                 },
                 onValueChangeFinished = { settlePreview() },
                 valueRange = -12f..12f,
-                colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                 modifier = Modifier.testTag("movie_eq_mid")
             )
             Text(
                 stringResource(R.string.studio_eq_high, fx.highGainDb),
                 color = PixiTextMuted
             )
-            Slider(
+            PixiSlider(
                 value = fx.highGainDb,
                 onValueChange = {
                     commitTimeline(timeline.copy(masterFx = fx.copy(highGainDb = it)), live = true)
                 },
                 onValueChangeFinished = { settlePreview() },
                 valueRange = -12f..12f,
-                colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                 modifier = Modifier.testTag("movie_eq_high")
             )
             Text(stringResource(R.string.studio_master_dynamics), color = PixiTextMuted)
@@ -1139,21 +1128,20 @@ fun MovieSessionScreen(
                 stringResource(R.string.studio_comp_threshold, fx.compThresholdDb),
                 color = PixiTextMuted
             )
-            Slider(
+            PixiSlider(
                 value = fx.compThresholdDb,
                 onValueChange = {
                     commitTimeline(timeline.copy(masterFx = fx.copy(compThresholdDb = it)), live = true)
                 },
                 onValueChangeFinished = { settlePreview() },
                 valueRange = -40f..0f,
-                colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                 modifier = Modifier.testTag("movie_comp_threshold")
             )
             Text(
                 stringResource(R.string.studio_comp_ratio, fx.compRatio),
                 color = PixiTextMuted
             )
-            Slider(
+            PixiSlider(
                 value = fx.compRatio,
                 onValueChange = {
                     commitTimeline(
@@ -1163,7 +1151,6 @@ fun MovieSessionScreen(
                 },
                 onValueChangeFinished = { settlePreview() },
                 valueRange = 1f..8f,
-                colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                 modifier = Modifier.testTag("movie_comp_ratio")
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1194,7 +1181,7 @@ fun MovieSessionScreen(
                 stringResource(R.string.studio_speed, MovieSpeed.normalize(selected?.speed ?: speed)),
                 color = PixiTextMuted
             )
-            Slider(
+            PixiSlider(
                 value = MovieSpeed.normalize(selected?.speed ?: speed),
                 onValueChange = {
                     val s = MovieSpeed.normalize(it)
@@ -1206,7 +1193,6 @@ fun MovieSessionScreen(
                 },
                 onValueChangeFinished = { settlePreview() },
                 valueRange = 0.5f..2f,
-                colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
                 modifier = Modifier.testTag("movie_speed")
             )
             }
@@ -1239,14 +1225,12 @@ fun MovieSessionScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val backLabel = stringResource(R.string.studio_back)
-                TextButton(
+                PixiIconButton(
+                    painter = painterResource(R.drawable.pj_ic_back),
+                    contentDescription = backLabel,
                     onClick = ::leaveSession,
-                    modifier = Modifier
-                        .testTag("session_back")
-                        .semantics { contentDescription = backLabel }
-                ) {
-                    Text(backLabel, color = PixiText, modifier = Modifier.clearAndSetSemantics { })
-                }
+                    modifier = Modifier.testTag("session_back")
+                )
                 SessionProjectTitle(
                     title = project.title,
                     toolLabel = toolLabel,
@@ -1254,7 +1238,9 @@ fun MovieSessionScreen(
                     modifier = Modifier.weight(1f)
                 )
                 val exportLabel = stringResource(R.string.studio_export)
-                TextButton(
+                PixiIconButton(
+                    painter = painterResource(R.drawable.pj_ic_export),
+                    contentDescription = exportLabel,
                     onClick = {
                         // GIF stays a format chip inside ExportSheet (still projects),
                         // so the top bar keeps one Export control.
@@ -1262,12 +1248,8 @@ fun MovieSessionScreen(
                         showExport = true
                     },
                     enabled = !exporting,
-                    modifier = Modifier
-                        .testTag("session_export")
-                        .semantics { contentDescription = exportLabel }
-                ) {
-                    Text(exportLabel, color = PixiText, modifier = Modifier.clearAndSetSemantics { })
-                }
+                    modifier = Modifier.testTag("session_export")
+                )
             }
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
@@ -1275,24 +1257,22 @@ fun MovieSessionScreen(
             ) {
                 val undoLabel = stringResource(R.string.studio_undo)
                 val redoLabel = stringResource(R.string.studio_redo)
-                TextButton(
+                PixiIconButton(
+                    painter = painterResource(R.drawable.pj_ic_undo),
+                    contentDescription = undoLabel,
                     onClick = sessionViewModel::undo,
                     enabled = sessionState.canUndo,
-                    modifier = Modifier
-                        .testTag("movie_undo")
-                        .semantics { contentDescription = undoLabel }
-                ) {
-                    Text(undoLabel, color = PixiTextMuted, modifier = Modifier.clearAndSetSemantics { })
-                }
-                TextButton(
+                    tint = PixiTextMuted,
+                    modifier = Modifier.testTag("movie_undo")
+                )
+                PixiIconButton(
+                    painter = painterResource(R.drawable.pj_ic_redo),
+                    contentDescription = redoLabel,
                     onClick = sessionViewModel::redo,
                     enabled = sessionState.canRedo,
-                    modifier = Modifier
-                        .testTag("movie_redo")
-                        .semantics { contentDescription = redoLabel }
-                ) {
-                    Text(redoLabel, color = PixiTextMuted, modifier = Modifier.clearAndSetSemantics { })
-                }
+                    tint = PixiTextMuted,
+                    modifier = Modifier.testTag("movie_redo")
+                )
                 Spacer(Modifier.weight(1f))
                 SessionAutosaveChip(
                     status = saveStatus,
@@ -1540,14 +1520,13 @@ private fun MovieTimelineDock(
             }
         }
         val scrubLabel = stringResource(R.string.studio_scrub)
-        Slider(
+        PixiSlider(
             value = playhead.coerceIn(0f, 1f),
             onValueChange = {
                 val total = timeline.totalMs().coerceAtLeast(1)
                 if (onSeek((it * total).toLong())) onPlayhead(it)
             },
             enabled = seekEnabled,
-            colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 28.dp)
@@ -1622,7 +1601,7 @@ private fun TimelineClipBlock(
             .width(widthDp.dp)
             .height(68.dp)
             .clip(RoundedCornerShape(8.dp))
-            .background(if (selected) PixiAccent else PixiBg)
+            .background(if (selected) PixiAccentSoft else Color.White.copy(alpha = 0.08f))
             .clickable(onClick = onSelect)
             .testTag("timeline_clip")
             .semantics {

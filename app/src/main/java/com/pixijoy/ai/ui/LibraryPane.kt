@@ -41,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -62,6 +63,7 @@ import com.pixijoy.photo.PhotoPreset
 import com.pixijoy.designsystem.PixiAccent
 import com.pixijoy.designsystem.PixiBg
 import com.pixijoy.designsystem.PixiCardShape
+import com.pixijoy.designsystem.PixiChip
 import com.pixijoy.designsystem.PixiEmptyState
 import com.pixijoy.designsystem.PixiError
 import com.pixijoy.designsystem.PixiPrimaryButton
@@ -84,11 +86,16 @@ fun LibraryPane(
     onExportAllPhotos: (() -> Unit)? = null,
     presets: List<PhotoPreset> = emptyList(),
     lastLookPresetId: String? = null,
-    onExportPhotosWithLook: ((String) -> Unit)? = null
+    onExportPhotosWithLook: ((String) -> Unit)? = null,
+    onDeleteAllProjects: (() -> Unit)? = null,
+    onResetAppData: (() -> Unit)? = null
 ) {
     var filter by rememberSaveable { mutableStateOf(LibraryFilter.ALL) }
     var renameTarget by remember { mutableStateOf<Project?>(null) }
     var showLookPicker by remember { mutableStateOf(false) }
+    var confirmDeleteAll by remember { mutableStateOf(false) }
+    var confirmReset by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     val visible = projects.filterBy(filter)
     val photoCount = projects.count { it.kind == MediaKind.PHOTO }
     Column(
@@ -144,40 +151,152 @@ fun LibraryPane(
                 }
             }
         }
-        if (projects.isEmpty()) {
-            EmptyLibrary(
-                message = stringResource(R.string.studio_library_empty),
-                tag = "library_empty",
-                showCreate = true,
-                onCreate = onCreate
-            )
-        } else if (visible.isEmpty()) {
-            EmptyLibrary(
-                message = stringResource(R.string.studio_library_filter_empty),
-                tag = "library_filter_empty",
-                showCreate = false,
-                onCreate = onCreate
-            )
-        } else {
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(140.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(bottom = 24.dp),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .testTag("library_grid")
-            ) {
-                items(visible, key = { it.id }) { project ->
-                    SwipeDeleteCard(
-                        project = project,
-                        onOpen = onOpenProject,
-                        onRequestDelete = onRequestDelete,
-                        onRename = { renameTarget = it }
-                    )
+        Box(modifier = Modifier.weight(1f)) {
+            if (projects.isEmpty()) {
+                EmptyLibrary(
+                    message = stringResource(R.string.studio_library_empty),
+                    tag = "library_empty",
+                    showCreate = true,
+                    onCreate = onCreate
+                )
+            } else if (visible.isEmpty()) {
+                EmptyLibrary(
+                    message = stringResource(R.string.studio_library_filter_empty),
+                    tag = "library_filter_empty",
+                    showCreate = false,
+                    onCreate = onCreate
+                )
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(140.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = PaddingValues(bottom = 24.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag("library_grid")
+                ) {
+                    items(visible, key = { it.id }) { project ->
+                        SwipeDeleteCard(
+                            project = project,
+                            onOpen = onOpenProject,
+                            onRequestDelete = onRequestDelete,
+                            onRename = { renameTarget = it }
+                        )
+                    }
                 }
             }
         }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+                .testTag("library_legal_footer"),
+            verticalArrangement = Arrangement.spacedBy(0.dp)
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(
+                    onClick = {
+                        runCatching {
+                            context.startActivity(
+                                android.content.Intent(
+                                    android.content.Intent.ACTION_VIEW,
+                                    android.net.Uri.parse(context.getString(R.string.studio_url_privacy))
+                                )
+                            )
+                        }
+                    },
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .testTag("library_privacy_link")
+                ) {
+                    Text(stringResource(R.string.studio_privacy_policy), color = PixiTextMuted)
+                }
+                TextButton(
+                    onClick = {
+                        runCatching {
+                            context.startActivity(
+                                android.content.Intent(
+                                    android.content.Intent.ACTION_VIEW,
+                                    android.net.Uri.parse(context.getString(R.string.studio_url_terms))
+                                )
+                            )
+                        }
+                    },
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .testTag("library_terms_link")
+                ) {
+                    Text(stringResource(R.string.studio_terms), color = PixiTextMuted)
+                }
+            }
+            if (onDeleteAllProjects != null && projects.isNotEmpty()) {
+                TextButton(
+                    onClick = { confirmDeleteAll = true },
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .testTag("library_delete_all")
+                ) {
+                    Text(stringResource(R.string.studio_library_delete_all), color = PixiTextMuted)
+                }
+            }
+            if (onResetAppData != null) {
+                TextButton(
+                    onClick = { confirmReset = true },
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .testTag("library_reset_app")
+                ) {
+                    Text(stringResource(R.string.studio_library_reset_app), color = PixiTextMuted)
+                }
+            }
+        }
+    }
+    if (confirmDeleteAll && onDeleteAllProjects != null) {
+        AlertDialog(
+            onDismissRequest = { confirmDeleteAll = false },
+            title = { Text(stringResource(R.string.studio_library_delete_all_title)) },
+            text = { Text(stringResource(R.string.studio_library_delete_all_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmDeleteAll = false
+                        onDeleteAllProjects()
+                    },
+                    modifier = Modifier.testTag("library_delete_all_confirm")
+                ) {
+                    Text(stringResource(R.string.studio_library_delete_all_confirm), color = PixiAccent)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDeleteAll = false }) {
+                    Text(stringResource(R.string.studio_cancel), color = PixiTextMuted)
+                }
+            }
+        )
+    }
+    if (confirmReset && onResetAppData != null) {
+        AlertDialog(
+            onDismissRequest = { confirmReset = false },
+            title = { Text(stringResource(R.string.studio_library_reset_title)) },
+            text = { Text(stringResource(R.string.studio_library_reset_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmReset = false
+                        onResetAppData()
+                    },
+                    modifier = Modifier.testTag("library_reset_confirm")
+                ) {
+                    Text(stringResource(R.string.studio_library_reset_confirm), color = PixiAccent)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmReset = false }) {
+                    Text(stringResource(R.string.studio_cancel), color = PixiTextMuted)
+                }
+            }
+        )
     }
     if (showLookPicker && onExportPhotosWithLook != null) {
         AlertDialog(
@@ -456,22 +575,12 @@ private fun formatDuration(ms: Long): String {
 
 @Composable
 private fun FilterChip(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
-    Text(
-        label,
-        color = PixiText,
-        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-        modifier = Modifier
-            .heightIn(min = 48.dp)
-            .clip(RoundedCornerShape(999.dp))
-            .background(if (selected) PixiAccent else PixiSurface2)
-            .clickable(onClick = onClick)
-            .testTag(tag)
-            .semantics {
-                contentDescription = label
-                role = Role.Tab
-                this.selected = selected
-            }
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+    PixiChip(
+        label = label,
+        selected = selected,
+        onClick = onClick,
+        contentDescription = label,
+        modifier = Modifier.testTag(tag)
     )
 }
 
@@ -491,6 +600,7 @@ private fun EmptyLibrary(
         PixiEmptyState(
             line = message,
             icon = painterResource(R.drawable.pj_ic_folder),
+            showGhostThumbs = showCreate,
             lineModifier = Modifier.testTag(tag),
             cta = if (showCreate) {
                 {

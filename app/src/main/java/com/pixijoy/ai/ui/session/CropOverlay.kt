@@ -120,9 +120,9 @@ fun CropOverlay(
             topLeft = Offset(r, t),
             size = Size((imageRect.right - r).coerceAtLeast(0f), (b - t).coerceAtLeast(0f))
         )
-        val stroke = 2.dp.toPx() / safeZoom
+        val stroke = 1.5.dp.toPx() / safeZoom
         drawRect(
-            color = Color.White,
+            color = Color.White.copy(alpha = 0.92f),
             topLeft = Offset(l, t),
             size = Size(r - l, b - t),
             style = Stroke(width = stroke)
@@ -140,11 +140,18 @@ fun CropOverlay(
         if (CropBound.Bottom in bounds) {
             drawLine(PixiAccent, Offset(l, b), Offset(r, b), strokeWidth = stroke)
         }
-        // The common viewport layer scales positions; compensate radii so handles remain
-        // 10dp visually and retain a separate 26dp touch radius at every zoom.
-        val radius = 10.dp.toPx() / safeZoom
-        listOf(Offset(l, t), Offset(r, t), Offset(l, b), Offset(r, b)).forEach { center ->
-            drawCircle(Color.White, radius, center)
+        // Thin L-corner handles — CapCut/Lightroom grade, not solid white blobs.
+        val arm = 14.dp.toPx() / safeZoom
+        val handleStroke = 2.dp.toPx() / safeZoom
+        listOf(
+            Offset(l, t) to listOf(Offset(l + arm, t), Offset(l, t + arm)),
+            Offset(r, t) to listOf(Offset(r - arm, t), Offset(r, t + arm)),
+            Offset(l, b) to listOf(Offset(l + arm, b), Offset(l, b - arm)),
+            Offset(r, b) to listOf(Offset(r - arm, b), Offset(r, b - arm))
+        ).forEach { (corner, arms) ->
+            arms.forEach { end ->
+                drawLine(Color.White, corner, end, strokeWidth = handleStroke)
+            }
         }
     }
         CropEdgeSemantics(CropBound.Left, edgeLeft, imageRect, crop)

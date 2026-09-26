@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PixiJoy ur plurals — machine-assisted; review before store release -->
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">آج %s AI استعمال باقی</item>
+        <item quantity="other">آج %s AI استعمالات باقی</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">آج %s HD ایکسپورٹ باقی</item>
+        <item quantity="other">آج %s HD ایکسپورٹس باقی</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">آج %d انعامی اشتہار باقی</item>
+        <item quantity="other">آج %d انعامی اشتہارات باقی</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">اسٹیکر پیک محفوظ! WhatsApp کے لیے %d اسٹیکر تیار</item>
+        <item quantity="other">اسٹیکر پیک محفوظ! WhatsApp کے لیے %d اسٹیکرز تیار</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">WhatsApp کے لیے %d اسٹیکر محفوظ!</item>
+        <item quantity="other">WhatsApp کے لیے %d اسٹیکرز محفوظ!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">%d دن کی اسٹریک</item>
+        <item quantity="other">%d دن کی اسٹریک</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">Viral Pack محفوظ! شیئر کے لیے %d تصاویر تیار 🚀</item>
+    </plurals>
+</resources>

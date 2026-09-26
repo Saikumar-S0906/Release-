@@ -1,0 +1,69 @@
+key	zh-rCN	zh-rTW	th	vi	tr	ru	pl	fil	ms	uk
+studio_move_hint	在本机编码的慢速缩放与平移。	在本機編碼的慢速縮放與平移。	ซูมและแพนช้า เข้ารหัสบนเครื่องนี้	Thu phóng và pan chậm, mã hóa trên thiết bị.	Yavaş zoom ve pan, bu telefonda kodlanır.	Медленный зум и панорама, кодируется на устройстве.	Wolne powiększenie i panoramowanie, kodowane na urządzeniu.	Mabagal na zoom at pan, naka-encode sa phone.	Zum dan pan perlahan, dikodkan pada peranti.	Повільний зум і панорама, кодується на пристрої.
+studio_talking_hint	在本机为静态照片添加轻微脉冲动效。	在本機為靜態照片加入輕微脈衝動效。	ชีพจรเบาบน still เข้ารหัสที่นี่	Nhịp nhẹ trên ảnh tĩnh, mã hóa tại đây.	Durgun görüntüde hafif nabız, burada kodlanır.	Лёгкий «пульс» на кадре, кодируется здесь.	Lekki puls na klatce, kodowany tutaj.	Banayad na pulse sa still, naka-encode dito.	Nadi lembut pada still, dikodkan di sini.	Легкий «пульс» на кадрі, кодується тут.
+studio_speed	速度 ×%1$.1f	速度 ×%1$.1f	ความเร็ว ×%1$.1f	Tốc độ ×%1$.1f	Hız ×%1$.1f	Скорость ×%1$.1f	Prędkość ×%1$.1f	Bilis ×%1$.1f	Kelajuan ×%1$.1f	Швидкість ×%1$.1f
+studio_movie_d2_hint	滚动剪辑、叠化或变速。	滾動剪輯、疊化或變速。	ม้วนตัด ละลาย หรือเร่งความเร็ว	Roll, dissolve hoặc đổi tốc.	Rulo kes, dissolve veya hız.	Склейка, растворение или изменение скорости.	Roll, dissolve lub zmiana tempa.	Roll, dissolve, o ramp speed.	Roll, dissolve, atau ramp kelajuan.	Склейка, розчинення або зміна швидкості.
+studio_roll_left	滚动剪辑 ←	滾動剪輯 ←	ม้วนตัด ←	Roll cắt ←	Rulo kes ←	Склейка ←	Roll cut ←	Roll cut ←	Roll cut ←	Склейка ←
+studio_roll_right	滚动剪辑 →	滾動剪輯 →	ม้วนตัด →	Roll cắt →	Rulo kes →	Склейка →	Roll cut →	Roll cut →	Roll cut →	Склейка →
+studio_transition	转场	轉場	ทรานซิชัน	Chuyển cảnh	Geçiş	Переход	Przejście	Transition	Transisi	Перехід
+studio_transition_none	硬切	硬切	ตัดตรง	Cắt thẳng	Kes	Резкий срез	Twarde cięcie	Cut	Cut	Різкий перехід
+studio_transition_soft	柔和	柔和	นุ่ม	Mềm	Yumuşak	Мягкий	Miękkie	Soft	Lembut	М’який
+studio_transition_ms	叠化 %1$d ms	疊化 %1$d ms	ละลาย %1$d ms	Dissolve %1$d ms	Dissolve %1$d ms	Растворение %1$d ms	Dissolve %1$d ms	Dissolve %1$d ms	Dissolve %1$d ms	Розчинення %1$d ms
+studio_speed_ramp	变速	變速	เร่งความเร็ว	Đổi tốc	Hız ramp	Изменение скорости	Zmiana tempa	Speed ramp	Ramp kelajuan	Зміна швидкості
+studio_speed_ramp_values	起始 ×%1$.1f → 结束 ×%2$.1f	起始 ×%1$.1f → 結束 ×%2$.1f	เริ่ม ×%1$.1f → จบ ×%2$.1f	Bắt đầu ×%1$.1f → kết thúc ×%2$.1f	Baş ×%1$.1f → bitiş ×%2$.1f	Начало ×%1$.1f → конец ×%2$.1f	Start ×%1$.1f → koniec ×%2$.1f	Start ×%1$.1f → end ×%2$.1f	Mula ×%1$.1f → akhir ×%2$.1f	Початок ×%1$.1f → кінець ×%2$.1f
+studio_movie_d3_hint	在此片段上缩放与平移。	在此片段上縮放與平移。	ซูมและแพนบนคลิปนี้	Thu phóng và pan trên clip này.	Bu klipte zoom ve pan.	Зум и панорама на этом клипе.	Powiększenie i pan na tym klipie.	Zoom at pan sa clip na ito.	Zum dan pan pada klip ini.	Зум і панорама на цьому кліпі.
+studio_motion	动感	動感	โมชัน	Chuyển động	Hareket	Движение	Ruch	Galaw	Gerak	Рух
+studio_motion_none	无	無	ไม่มี	Không	Yok	Нет	Brak	Wala	Tiada	Немає
+studio_motion_zoom_in	放大	放大	ซูมเข้า	Phóng to	Yakınlaştır	Приближение	Powiększenie	Zoom in	Zum masuk	Наближення
+studio_motion_zoom_out	缩小	縮小	ซูมออก	Thu nhỏ	Uzaklaştır	Отдаление	Pomniejszenie	Zoom out	Zum keluar	Віддалення
+studio_motion_pan_left	向左平移 ←	向左平移 ←	แพนซ้าย ←	Pan trái ←	Sola pan ←	Панорама влево ←	Pan w lewo ←	Pan ← ←	Pan kiri ←	Панорама вліво ←
+studio_motion_pan_right	向右平移 →	向右平移 →	แพนขวา →	Pan phải →	Sağa pan →	Панорама вправо →	Pan w prawo →	Pan → →	Pan kanan →	Панорама вправо →
+studio_motion_drift	漂移	漂移	ลอย	Trôi	Sürüklenme	Дрейф	Dryf	Drift	Hanyut	Дрейф
+studio_movie_d4_hint	在时间轴上添加标题或字幕。	在時間軸上新增標題或字幕。	ชื่อเรื่องหรือคำบรรยายบ عرضเวลา	Tiêu đề hoặc phụ đề trên timeline.	Zaman çizgisinde başlık veya altyazı.	Заголовок или подпись на шкале времени.	Tytuł lub napisy na osi czasu.	Title o caption sa timeline.	Tajuk atau kapsyen pada garis masa.	Заголовок або підпис на шкалі часу.
+studio_title_add	添加标题	新增標題	เพิ่มชื่อเรื่อง	Thêm tiêu đề	Başlık ekle	Добавить заголовок	Dodaj tytuł	Magdagdag ng title	Tambah tajuk	Додати заголовок
+studio_caption_add	添加字幕	新增字幕	เพิ่มคำบรรยาย	Thêm phụ đề	Altyazı ekle	Добавить подпись	Dodaj napisy	Magdagdag ng caption	Tambah kapsyen	Додати підпис
+studio_titles_clear	清除文字	清除文字	ล้างข้อความ	Xóa chữ	Metni temizle	Очистить текст	Wyczyść tekst	I-clear ang text	Kosongkan teks	Очистити текст
+studio_title_chip	标题 · %1$s	標題 · %1$s	ชื่อเรื่อง · %1$s	Tiêu đề · %1$s	Başlık · %1$s	Заголовок · %1$s	Tytuł · %1$s	Title · %1$s	Tajuk · %1$s	Заголовок · %1$s
+studio_caption_chip	字幕 · %1$s	字幕 · %1$s	คำบรรยาย · %1$s	Phụ đề · %1$s	Altyazı · %1$s	Подпись · %1$s	Napis · %1$s	Caption · %1$s	Kapsyen · %1$s	Підпис · %1$s
+studio_movie_d5_hint	调色与风格。示波器同步。	調色與風格。示波器同步。	เกรดและลุค สcope ตาม	Chỉnh màu và look. Scope theo dõi.	Grade ve görünüm. Osiloskoplar eşlik eder.	Цвет и стиль. Осциллографы следуют.	Korekcja i look. Oscyloskopy w sync.	Grade at looks. Sumusunod ang scopes.	Gred dan gaya. Skop mengikut.	Колір і стиль. Осцилографи слідують.
+studio_movie_look	风格	風格	ลุค	Look	Görünüm	Стиль	Look	Look	Gaya	Стиль
+studio_movie_exposure	曝光 %1$.1f EV	曝光 %1$.1f EV	Exposure %1$.1f EV	Phơi sáng %1$.1f EV	Pozlama %1$.1f EV	Экспозиция %1$.1f EV	Ekspozycja %1$.1f EV	Exposure %1$.1f EV	Dedahan %1$.1f EV	Експозиція %1$.1f EV
+studio_movie_contrast	对比度 ×%1$.2f	對比度 ×%1$.2f	คอนทราสต์ ×%1$.2f	Tương phản ×%1$.2f	Kontrast ×%1$.2f	Контраст ×%1$.2f	Kontrast ×%1$.2f	Contrast ×%1$.2f	Kontras ×%1$.2f	Контраст ×%1$.2f
+studio_movie_saturation	饱和度 ×%1$.2f	飽和度 ×%1$.2f	ความอิ่มสี ×%1$.2f	Độ bão hòa ×%1$.2f	Doygunluk ×%1$.2f	Насыщенность ×%1$.2f	Nasycenie ×%1$.2f	Saturation ×%1$.2f	Ketepuan ×%1$.2f	Насиченість ×%1$.2f
+studio_movie_scopes	示波器	示波器	สcope	Scope	Osiloskop	Осциллографы	Oscyloskopy	Scopes	Skop	Осцилографи
+studio_movie_d6_hint	对话时降低背景音乐。	對話時降低背景音樂。	ลดเพลงเมื่อมีเสียงพูด	Nhỏ nhạc khi có thoại.	Diyalogda müziği kıs.	Приглушать музыку под речь.	Ścisz muzykę pod dialog.	I-duck ang music sa dialogue.	Rendahkan muzik semasa dialog.	Приглушати музику під мовлення.
+studio_movie_d6_vo_active	旁白正在压低背景音乐。	旁白正在壓低背景音樂。	เสียงพากย์กำลังลดเพลง	Giọng thuyết minh đang hạ nhạc.	Seslendirme müziği bastırıyor.	Закадровый голос приглушает музыку.	Lektor ścisza muzykę.	Voice-over ay nagdu-duck ng music.	Suara latar sedang merendahkan muzik.	Закадровий голос приглушує музику.
+studio_duck_preset	旁白时压低	旁白時壓低	ลดใต้ VO	Duck dưới VO	VO altında duck	Приглушение под VO	Ściszenie pod VO	Duck under VO	Duck bawah VO	Приглушення під VO
+studio_duck_soft	柔和	柔和	นุ่ม	Mềm	Yumuşak	Мягко	Miękko	Soft	Lembut	М’яко
+studio_duck_medium	中等	中等	ปานกลาง	Trung bình	Orta	Средне	Średnio	Medium	Sederhana	Помірно
+studio_duck_hard	强	強	แรง	Mạnh	Sert	Сильно	Mocno	Hard	Kuat	Сильно
+studio_duck_attack	压低起音 %1$d ms	壓低起音 %1$d ms	โจมตี duck %1$d ms	Tấn công duck %1$d ms	Duck attack %1$d ms	Атака duck %1$d ms	Atak duck %1$d ms	Duck attack %1$d ms	Serangan duck %1$d ms	Атака duck %1$d ms
+studio_duck_release	压低释放 %1$d ms	壓低釋放 %1$d ms	ปล่อย duck %1$d ms	Release duck %1$d ms	Duck release %1$d ms	Спад duck %1$d ms	Zwolnienie duck %1$d ms	Duck release %1$d ms	Lepasan duck %1$d ms	Спад duck %1$d ms
+studio_movie_d7_hint	导出时画中画、分屏或网格。	匯出時子母畫面、分割或網格。	PiP แบ่ง หรือกริด ตอนส่งออก	PiP, chia hoặc lưới khi xuất.	Dışa aktarmada PiP, bölme veya ızgara.	PiP, split или сетка при экспорте.	PiP, podział lub siatka przy eksporcie.	PiP, split, o grid sa export.	PiP, pisah, atau grid semasa eksport.	PiP, split або сітка під час експорту.
+studio_movie_layout	画面布局	畫面版面配置	เลย์เอาต์เฟรม	Bố cục khung	Çerçeve düzeni	Компоновка кадра	Układ klatki	Frame layout	Susun atur bingkai	Компонування кадру
+studio_layout_single	单画面	單一畫面	เดี่ยว	Đơn	Tek	Один	Pojedynczy	Single	Tunggal	Один
+studio_layout_pip	PiP	PiP	PiP	PiP	PiP	PiP	PiP	PiP	PiP	PiP
+studio_layout_split	分屏	分割畫面	แบ่ง chia	Chia	Bölünmüş	Разделение	Podział	Split	Pisah	Розділення
+studio_layout_grid	网格	網格	กริด	Lưới	Izgara	Сетка	Siatka	Grid	Grid	Сітка
+studio_movie_d8_hint	稳定裁剪会放大画面以隐藏边缘；不跟踪运动。	穩定裁剪會放大畫面以隱藏邊緣；不追蹤運動。	ครอปนิ่งซูมเข้าเพื่อซ่อนขอบ ไม่ติดตามโมชัน	Crop ổn định phóng to để che mép; không theo dõi chuyển động.	Sabit crop kenarları gizlemek için yakınlaştırır; hareketi izlemez.	Стабильный кроп увеличивает кадр, скрывая края; не отслеживает движение.	Stabilny kadr powiększa, by ukryć krawędzie; bez śledzenia ruchu.	Steady crop zooms in para itago ang gilid; hindi sumusubaybay sa galaw.	Crop stabil zum masuk untuk sorok tepi; tidak jejak gerakan.	Стабільний кроп збільшує кадр, ховаючи краї; без відстеження руху.
+studio_stabilize	稳定裁剪	穩定裁剪	ครอปนิ่ง	Crop ổn định	Sabit crop	Стабильный кроп	Stabilny kadr	Steady crop	Crop stabil	Стабільний кроп
+studio_stabilize_off	关	關	ปิด	Tắt	Kapalı	Выкл.	Wył.	Off	Mati	Вимк.
+studio_stabilize_light	轻	輕	เบา	Nhẹ	Hafif	Лёгкий	Lekki	Light	Ringan	Легкий
+studio_stabilize_medium	中	中	ปานกลาง	Trung bình	Orta	Средний	Średni	Medium	Sederhana	Помірний
+studio_stabilize_strong	强	強	แรง	Mạnh	Güçlü	Сильный	Mocny	Strong	Kuat	Сильний
+studio_reframe	重新构图	重新構圖	จัดเฟรมใหม่	Tái khung	Yeniden kadraj	Рекадрировка	Przekadrowanie	Reframe	Bingkai semula	Рекадрування
+studio_reframe_original	原始	原始	ต้นฉบับ	Gốc	Orijinal	Исходный	Oryginał	Original	Asal	Оригінал
+studio_reframe_close	近	近	ใกล้	Gần	Yakın	Крупно	Blisko	Close	Dekat	Крупно
+studio_reframe_left	左	左	ซ้าย	Trái	Sol	Влево	W lewo	Left	Kiri	Ліворуч
+studio_reframe_right	右	右	ขวา	Phải	Sağ	Вправо	W prawo	Right	Kanan	Праворуч
+studio_reframe_vertical	竖版	直向	แนวตั้ง	Dọc	Dikey	Вертикально	Pionowo	Vertical	Menegak	Вертикально
+studio_movie_d9_hint	绿幕或蓝幕抠像。	綠幕或藍幕去背。	คีย์สreen เขียวหรือน้ำเงิน	Key màn xanh hoặc xanh dương.	Yeşil veya mavi ekran key.	Ключ по зелёному или синему.	Klucz chroma zielony/niebieski.	Key green o blue screen.	Kunci skrin hijau atau biru.	Ключ за зеленим або синім.
+studio_chroma_key	色度键	色度鍵	คroma key	Chroma key	Chroma key	Хромакей	Klucz chroma	Chroma key	Kunci chroma	Хромаключ
+studio_chroma_off	关	關	ปิด	Tắt	Kapalı	Выкл.	Wył.	Off	Mati	Вимк.
+studio_chroma_green	绿	綠	เขียว	Xanh lá	Yeşil	Зелёный	Zielony	Green	Hijau	Зелений
+studio_chroma_blue	蓝	藍	น้ำเงิน	Xanh dương	Mavi	Синий	Niebieski	Blue	Biru	Синій
+studio_chroma_similarity_preset	键控范围	鍵控範圍	ช่วงคีย์	Phạm vi key	Anahtar aralığı	Диапазон ключа	Zakres klucza	Key range	Julat kunci	Діапазон ключа
+studio_chroma_tight	窄	窄	แคบ	Hẹp	Dar	Узкий	Wąski	Tight	Sempit	Вузький
+studio_chroma_medium	中	中	ปานกลาง	Trung bình	Orta	Средний	Średni	Medium	Sederhana	Помірний
+studio_chroma_wide	宽	寬	กว้าง	Rộng	Geniş	Широкий	Szeroki	Wide	Luas	Широкий
+studio_chroma_softness	边缘柔化 %1$d%%	邊緣柔化 %1$d%%	ขอบนุ่ม %1$d%%	Mềm mép %1$d%%	Kenar yumuşaklığı %1$d%%	Мягкость края %1$d%%	Miękkość krawędzi %1$d%%	Edge soft %1$d%%	Lembut tepi %1$d%%	М’якість краю %1$d%%

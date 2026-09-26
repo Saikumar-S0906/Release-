@@ -1,0 +1,124 @@
+key	zh-rCN	zh-rTW	th	vi	tr	ru	pl	fil	ms	uk
+app_name	PixiJoy	PixiJoy	PixiJoy	PixiJoy	PixiJoy	PixiJoy	PixiJoy	PixiJoy	PixiJoy	PixiJoy
+studio_tagline	随身工作室，不离手机。	隨身工作室，不離手機。	สตูดิโอที่ไม่เคยออกจากมือถือ	Studio luôn ở trong điện thoại.	Telefondan ayrılmayan stüdyo.	Студия, которая не покидает телефон.	Studio, które nie opuszcza telefonu.	Ang studio na hindi umaalis sa telepono.	Studio yang tidak pernah tinggalkan telefon.	Студія, яка не покидає телефон.
+studio_promise	无需上传。无需账号。无水印。无月费。	無需上傳。無需帳號。無浮水印。無月費。	ไม่ต้องอัปโหลด ไม่ต้องมีบัญชี ไม่มีลายน้ำ ไม่มีค่ารายเดือน	Không tải lên. Không tài khoản. Không watermark. Không phí tháng.	Yükleme yok. Hesap yok. Filigran yok. Aylık ücret yok.	Без загрузки. Без аккаунта. Без водяного знака. Без абонплаты.	Bez wysyłania. Bez konta. Bez znaku wodnego. Bez abonamentu.	Walang upload. Walang account. Walang watermark. Walang buwanang bayad.	Tiada muat naik. Tiada akaun. Tiada tera air. Tiada yuran bulanan.	Без завантаження. Без облікового запису. Без водяного знака. Без щомісячної плати.
+studio_privacy_title	您的作品留在这里	您的作品留在這裡	งานของคุณอยู่ที่นี่	Công việc của bạn ở đây	İşiniz burada kalır	Ваши работы остаются здесь	Twoja praca zostaje tutaj	Ang gawa mo ay nandito na	Hasil kerja anda kekal di sini	Ваша робота залишається тут
+studio_privacy_body	PixiJoy 在此设备上编辑照片和视频。您的图片不会上传。可选的本机功能包仅在您点按「下载」后才会下载模型文件。	PixiJoy 在此裝置上編輯照片和影片。您的圖片不會上傳。可選的本機功能包僅在您點按「下載」後才會下載模型檔案。	PixiJoy แก้ไขรูปภาพและวิดีโอบนอุปกรณ์นี้ รูปของคุณจะไม่ถูกอัปโหลด แพ็กบนอุปกรณ์ (ถ้ามี) จะดาวน์โหลดไฟล์โมเดลเมื่อคุณแตะดาวน์โหลดเท่านั้น	PixiJoy chỉnh ảnh và video trên thiết bị này. Ảnh của bạn không được tải lên. Gói trên thiết bị (tùy chọn) chỉ tải tệp mô hình sau khi bạn chạm Tải xuống.	PixiJoy fotoğraf ve videoları bu cihazda düzenler. Görselleriniz yüklenmez. İsteğe bağlı cihaz içi paketler, yalnızca İndir'e dokunduktan sonra model dosyasını indirir.	PixiJoy редактирует фото и видео на этом устройстве. Ваши снимки не загружаются. Необязательные пакеты на устройстве скачивают файл модели только после нажатия «Загрузить».	PixiJoy edytuje zdjęcia i filmy na tym urządzeniu. Twoje zdjęcia nie są wysyłane. Opcjonalne pakiety na urządzeniu pobierają plik modelu dopiero po stuknięciu Pobierz.	Ine-edit ng PixiJoy ang mga larawan at video sa device na ito. Hindi ina-upload ang mga larawan mo. Opsyonal na on-device pack ay nagda-download ng model file pagkatapos mong i-tap ang Download.	PixiJoy menyunting foto dan video pada peranti ini. Gambar anda tidak dimuat naik. Pek pilihan pada peranti hanya memuat turun fail model selepas anda ketik Muat turun.	PixiJoy редагує фото та відео на цьому пристрої. Ваші зображення не завантажуються. Необов’язкові пакети на пристрої завантажують файл моделі лише після натискання «Завантажити».
+studio_accept	继续	繼續	ดำเนินการต่อ	Tiếp tục	Devam et	Продолжить	Kontynuuj	Magpatuloy	Teruskan	Продовжити
+studio_open	打开工作室	開啟工作室	เปิดสตูดิโอ	Mở studio	Stüdyoyu aç	Открыть студию	Otwórz studio	Buksan ang studio	Buka studio	Відкрити студію
+home_create	创建	建立	สร้าง	Tạo	Oluştur	Создать	Utwórz	Gumawa	Cipta	Створити
+home_start_with	从…开始	從…開始	เริ่มด้วย	Bắt đầu với	Şununla başla	Начать с	Zacznij od	Magsimula sa	Mula dengan	Почати з
+home_continue	继续 %1$s	繼續 %1$s	ต่อ %1$s	Tiếp tục %1$s	%1$s ile devam et	Продолжить %1$s	Kontynuuj %1$s	Magpatuloy sa %1$s	Teruskan %1$s	Продовжити %1$s
+create_source_title	创建	建立	สร้าง	Tạo	Oluştur	Создать	Utwórz	Gumawa	Cipta	Створити
+create_source_subtitle	照片或视频 — 编辑仅保存在本机。	照片或影片 — 編輯僅保存在本機。	รูปหรือวิดีโอ — การแก้ไขอยู่บนอุปกรณ์นี้	Ảnh hoặc video — chỉnh sửa ở trên thiết bị.	Foto veya video — düzenlemeler bu cihazda kalır.	Фото или видео — правки остаются на устройстве.	Zdjęcie lub film — edycja zostaje na urządzeniu.	Larawan o video — ang mga edit ay nasa device na ito.	Foto atau video — suntingan kekal pada peranti ini.	Фото чи відео — редагування лишається на пристрої.
+create_source_camera	相机	相機	กล้อง	Máy ảnh	Kamera	Камера	Aparat	Camera	Kamera	Камера
+studio_hub_sub	照片与视频，全在这台手机上。	照片與影片，全在這台手機上。	รูปและวิดีโอ ทั้งหมดบนมือถือเครื่องนี้	Ảnh và video, tất cả trên điện thoại này.	Foto ve video. Hepsi bu telefonda.	Фото и видео — всё на этом телефоне.	Zdjęcia i filmy — wszystko w tym telefonie.	Larawan at video. Lahat sa teleponong ito.	Foto dan video. Semua pada telefon ini.	Фото та відео — усе на цьому телефоні.
+studio_photo	照片	照片	รูป	Ảnh	Foto	Фото	Zdjęcie	Larawan	Foto	Фото
+studio_movie	视频	影片	วิดีโอ	Video	Video	Видео	Wideo	Video	Video	Відео
+studio_photo_caption	本机编辑 · 从不上传	本機編輯 · 從不上傳	บนอุปกรณ์นี้ · ไม่อัปโหลด	Trên thiết bị · không tải lên	Bu cihazda · asla yüklenmez	На устройстве · не загружается	Na urządzeniu · bez wysyłania	Sa device · hindi ina-upload	Pada peranti · tidak dimuat naik	На пристрої · не завантажується
+studio_movie_caption	裁剪、动效、会说话的照片 — 在本机编码。	裁剪、動效、會說話的照片 — 在本機編碼。	ตัด โมชัน ภาพนิ่งพูดได้ — เข้ารหัสบนเครื่องนี้	Cắt, chuyển động, ảnh tĩnh có tiếng — mã hóa tại đây.	Kes, hareket, konuşan kareler — burada kodlanır.	Обрезка, движение, «говорящие» кадры — кодируется здесь.	Przycinanie, ruch, mówiące kadry — kodowane tutaj.	Trim, motion, talking stills — naka-encode dito.	Pangkas, gerakan, still bercakap — dikodkan di sini.	Обрізка, рух, «говорящі» кадри — кодується тут.
+studio_recents_empty	最近项目会显示在这里。	最近專案會顯示在這裡。	รายการล่าสุดจะแสดงที่นี่	Mục gần đây sẽ hiện ở đây.	Son kullanılanlar burada görünür.	Недавние появятся здесь.	Ostatnie pojawią się tutaj.	Lalabas dito ang mga kamakailan.	Terbaru akan muncul di sini.	Нещодавні з’являться тут.
+studio_library_thumb_loading	正在加载预览	正在載入預覽	กำลังโหลดตัวอย่าง	Đang tải xem trước	Önizleme yükleniyor	Загрузка предпросмотра	Ładowanie podglądu	Naglo-load ng preview	Memuatkan pratonton	Завантаження попереднього перегляду
+studio_library_thumb_unavailable	预览不可用	預覽無法使用	ไม่มีตัวอย่าง	Không xem trước được	Önizleme yok	Предпросмотр недоступен	Podgląd niedostępny	Hindi available ang preview	Pratonton tidak tersedia	Попередній перегляд недоступний
+studio_library_empty	还没有项目	還沒有專案	ยังไม่มีโปรเจกต์	Chưa có dự án	Henüz proje yok	Пока нет проектов	Brak projektów	Walang proyekto pa	Belum ada projek	Ще немає проєктів
+studio_library_create_cta	创建	建立	สร้าง	Tạo	Oluştur	Создать	Utwórz	Gumawa	Cipta	Створити
+studio_library_more	项目操作	專案操作	การดำเนินการโปรเจกต์	Thao tác dự án	Proje işlemleri	Действия с проектом	Akcje projektu	Mga aksyon sa proyekto	Tindakan projek	Дії з проєктом
+studio_library_rename	重命名	重新命名	เปลี่ยนชื่อ	Đổi tên	Yeniden adlandır	Переименовать	Zmień nazwę	Palitan ang pangalan	Namakan semula	Перейменувати
+studio_library_deleted	项目已删除	專案已刪除	ลบโปรเจกต์แล้ว	Đã xóa dự án	Proje kaldırıldı	Проект удалён	Usunięto projekt	Tinanggal ang proyekto	Projek dialih keluar	Проєкт видалено
+studio_library_edited_just_now	刚刚保存	剛剛儲存	บันทึกเมื่อสักครู่	Vừa lưu	Az önce kaydedildi	Сохранено только что	Zapisano przed chwilą	Na-save kanina	Disimpan sebentar tadi	Щойно збережено
+studio_library_edited_minutes	%1$d 分钟前保存	%1$d 分鐘前儲存	บันทึกเมื่อ %1$d นาที่แล้ว	Đã lưu %1$d phút trước	%1$d dk önce kaydedildi	Сохранено %1$d мин назад	Zapisano %1$d min temu	Na-save %1$d min ang nakalipas	Disimpan %1$d min lalu	Збережено %1$d хв тому
+studio_library_edited_hours	%1$d 小时前保存	%1$d 小時前儲存	บันทึกเมื่อ %1$d ชม. ที่แล้ว	Đã lưu %1$d giờ trước	%1$d sa önce kaydedildi	Сохранено %1$d ч назад	Zapisano %1$d godz. temu	Na-save %1$d oras ang nakalipas	Disimpan %1$d jam lalu	Збережено %1$d год тому
+studio_library_edited_days	%1$d 天前保存	%1$d 天前儲存	บันทึกเมื่อ %1$d วันที่แล้ว	Đã lưu %1$d ngày trước	%1$d gün önce kaydedildi	Сохранено %1$d дн. назад	Zapisano %1$d dni temu	Na-save %1$d araw ang nakalipas	Disimpan %1$d hari lalu	Збережено %1$d дн. тому
+studio_on_device_badge	编辑保留在本机	編輯保留在本機	แก้ไขอยู่บนอุปกรณ์นี้	Chỉnh sửa ở trên thiết bị	Düzenlemeler bu cihazda kalır	Правки на устройстве	Edycja na urządzeniu	Ang edit ay nasa device	Edit kekal pada peranti	Редагування на пристрої
+studio_open_tools	浏览工具	瀏覽工具	เรียกดูเครื่องมือ	Duyệt công cụ	Araçlara göz at	Обзор инструментов	Przeglądaj narzędzia	Tingnan ang mga tool	Layari alat	Переглянути інструменти
+studio_recommended	推荐	推薦	แนะนำ	Đề xuất	Önerilen	Рекомендуемое	Polecane	Inirerekomenda	Disyorkan	Рекомендовано
+tool_best_for_editor	适合：日常编辑	適合：日常編輯	เหมาะสำหรับ: แก้ไขทั่วไป	Phù hợp: chỉnh hàng ngày	En iyi: günlük düzenleme	Лучше для: повседневных правок	Najlepsze do: codziennych edycji	Pinakamahusay para sa: araw-araw na edit	Terbaik untuk: suntingan harian	Найкраще для: щоденного редагування
+tool_best_for_cutout	简单背景的基础抠图	簡單背景的基礎去背	ตัดพื้นหลังพื้นฐานสำหรับฉากเรียบ	Cắt nền cơ bản cho nền đơn giản	Basit arka planlar için temel kesim	Базовая вырезка для простого фона	Podstawowe wycięcie dla prostego tła	Basic cutout para sa simpleng background	Cutout asas untuk latar mudah	Базове вирізання для простого фону
+tool_best_for_move	适合：把照片变成视频	適合：把照片變成影片	เหมาะสำหรับ: เปลี่ยนรูปเป็นวิดีโอ	Phù hợp: biến ảnh thành video	En iyi: fotoğrafı videoya çevirme	Лучше для: фото в видео	Najlepsze do: zdjęcia na wideo	Pinakamahusay para sa: larawan to video	Terbaik untuk: foto jadi video	Найкраще для: фото у відео
+tool_restore_sub	对比度、色彩与锐化	對比度、色彩與銳化	คอนทราสต์ สี และความคม	Kontrast, màu và độ nét	Kontrast, renk ve keskinlik	Контраст, цвет и резкость	Kontrast, kolor i wyostrzanie	Contrast, color, at sharpening	Kontras, warna, dan ketajaman	Контраст, колір і різкість
+tool_expand_sub	沿照片边缘镜像扩展像素	沿照片邊緣鏡像擴展像素	สะท้อนพิกเซลเลยขอบรูป	Gương pixel qua mép ảnh	Kenarların ötesine ayna pikselleri	Зеркалить пиксели за краями фото	Odbij piksele poza krawędzie zdjęcia	I-mirror ang pixels sa gilid ng larawan	Cermin piksel melampaui tepi foto	Дзеркалити пікселі за краями фото
+tool_cutout_sub	简单背景的基础抠图	簡單背景的基礎去背	ตัดพื้นหลังพื้นฐานสำหรับฉากเรียบ	Cắt nền cơ bản cho nền đơn giản	Basit arka planlar için temel kesim	Базовая вырезка для простого фона	Podstawowe wycięcie dla prostego tła	Basic cutout para sa simpleng background	Cutout asas untuk latar mudah	Базове вирізання для простого фону
+tool_layers_sub	适合：合成照片与文字	適合：合成照片與文字	เหมาะสำหรับ: รวมรูปและข้อความ	Phù hợp: ghép ảnh và chữ	En iyi: fotoğraf ve metin birleştirme	Лучше для: фото и текст	Najlepsze do: zdjęć i tekstu	Pinakamahusay para sa: larawan at text	Terbaik untuk: gabung foto dan teks	Найкраще для: фото та текст
+export_quality_balanced	均衡	均衡	สมดุล	Cân bằng	Dengeli	Сбалансировано	Zrównoważona	Balanse	Seimbang	Збалансовано
+export_quality_high	高	高	สูง	Cao	Yüksek	Высокое	Wysoka	Mataas	Tinggi	Висока
+export_quality_maximum	最高	最高	สูงสุด	Tối đa	Maksimum	Максимум	Maksymalna	Maximum	Maksimum	Максимальна
+export_success_title	导出完成	匯出完成	ส่งออกพร้อมแล้ว	Xuất xong	Dışa aktarma hazır	Экспорт готов	Eksport gotowy	Handa na ang export	Eksport siap	Експорт готовий
+export_view	查看	檢視	ดู	Xem	Görüntüle	Просмотр	Zobacz	Tingnan	Lihat	Переглянути
+export_share	分享	分享	แชร์	Chia sẻ	Paylaş	Поделиться	Udostępnij	Ibahagi	Kongsi	Поділитися
+export_done	完成	完成	เสร็จสิ้น	Xong	Bitti	Готово	Gotowe	Tapos	Selesai	Готово
+export_name_project	为项目命名	為專案命名	ตั้งชื่อโปรเจกต์	Đặt tên dự án	Projeyi adlandır	Назовите проект	Nazwij projekt	Pangalanan ang proyekto	Namakan projek	Назвіть проєкт
+export_leave_safe	可以离开应用 — 导出会在后台继续。	可以離開 App — 匯出會在背景繼續。	ออกจากแอปได้ — การส่งออกทำงานต่อในพื้นหลัง	Bạn có thể rời app — xuất tiếp tục nền.	Uygulamadan çıkabilirsiniz — dışa aktarma arka planda sürer.	Можно выйти — экспорт продолжится в фоне.	Możesz wyjść — eksport trwa w tle.	Pwede kang umalis — export sa background.	Boleh keluar — eksport diteruskan di latar.	Можна вийти — експорт триватиме у фоні.
+studio_export_exif_gps_hint	从导出照片中移除位置信息。GPS 始终会被移除。	從匯出照片移除位置資訊。GPS 一律會移除。	ลบตำแหน่งจากรูปที่ส่งออก GPS จะถูกลบเสมอ	Gỡ vị trí khỏi ảnh xuất. GPS luôn bị xóa.	Dışa aktarılan fotoğraftan konumu kaldır. GPS her zaman silinir.	Удалить геопозицию из экспорта. GPS всегда удаляется.	Usuń lokalizację z eksportu. GPS zawsze usuwany.	Alisin ang lokasyon sa na-export na larawan. GPS laging tinatanggal.	Buang lokasi dari foto dieksport. GPS sentiasa dibuang.	Прибрати GPS з експорту. GPS завжди видаляється.
+nav_home	首页	首頁	หน้าแรก	Trang chủ	Ana sayfa	Главная	Strona główna	Home	Laman utama	Головна
+nav_studio	工作室	工作室	สตูดิโอ	Studio	Stüdyo	Студия	Studio	Studio	Studio	Студія
+nav_library	库	資料庫	คลัง	Thư viện	Kütüphane	Библиотека	Biblioteka	Library	Pustaka	Бібліотека
+tool_editor	编辑器	編輯器	ตัวแก้ไข	Trình chỉnh sửa	Düzenleyici	Редактор	Edytor	Editor	Editor	Редактор
+tool_editor_sub	裁剪、调整、修复、文字	裁剪、調整、修復、文字	ครอบ ปรับ ซ่อม ข้อความ	Cắt, chỉnh, sửa, chữ	Kırp, ayarla, onar, metin	Обрезка, настройка, ретушь, текст	Kadrowanie, korekta, retusz, tekst	Crop, adjust, heal, text	Pangkas, laraskan, baiki, teks	Обрізка, налаштування, ретуш, текст
+tool_restore	快速增强	快速增強	ปรับด่วน	Cải thiện nhanh	Hızlı iyileştirme	Быстрое улучшение	Szybka poprawa	Mabilis na enhance	Peningkatan pantas	Швидке покращення
+tool_expand	镜像扩展	鏡像擴展	ขยายแบบสะท้อน	Mở rộng gương	Ayna genişletme	Зеркальное расширение	Rozszerzenie lustrzane	Mirror expand	Kembangan cermin	Дзеркальне розширення
+tool_cutout	基础抠图	基礎去背	ตัดพื้นหลังพื้นฐาน	Cắt nền cơ bản	Temel kesim	Базовая вырезка	Podstawowe wycięcie	Basic cutout	Cutout asas	Базове вирізання
+tool_stickers	贴纸	貼圖	สติกเกอร์	Nhãn dán	Çıkartmalar	Стикеры	Naklejki	Stickers	Pelekat	Стікери
+tool_stickers_sub	本机基础抠图	本機基礎去背	ตัดพื้นหลังพื้นฐานบนเครื่องนี้	Cắt nền cơ bản trên thiết bị	Bu telefonda temel kesim	Базовая вырезка на устройстве	Podstawowe wycięcie na urządzeniu	Basic cutout sa teleponong ito	Cutout asas pada telefon ini	Базове вирізання на пристрої
+tool_collage	拼图	拼貼	คอลลาจ	Ghép ảnh	Kolaj	Коллаж	Kolaż	Collage	Kolaj	Колаж
+tool_collage_sub	多张照片，一页呈现	多張照片，一頁呈現	หลายรูปในหน้าเดียว	Nhiều ảnh, một trang	Birkaç foto, tek sayfa	Несколько фото на одной странице	Kilka zdjęć, jedna strona	Ilang larawan, isang pahina	Beberapa foto, satu halaman	Кілька фото на одній сторінці
+tool_layers	图层	圖層	เลเยอร์	Lớp	Katmanlar	Слои	Warstwy	Layers	Lapisan	Шари
+tool_move	动感	動感	เคลื่อนไหว	Chuyển động	Hareket	Движение	Ruch	Galaw	Gerak	Рух
+tool_move_sub	让静态照片动起来	讓靜態照片動起來	ทำให้รูปนิ่งเป็นวิดีโอ	Ảnh tĩnh thành video	Duran fotoğrafı videoya	Оживить фото	Foto na wideo	Gawing video ang still photo	Foto pegun jadi video	Оживити фото
+tool_talking	会说话	會說話	พูดได้	Có tiếng	Konuşan	«Говорящее»	Narracja	Talking	Bercakap	«Говорить»
+tool_talking_sub	Ken Burns GIF	Ken Burns GIF	Ken Burns GIF	Ken Burns GIF	Ken Burns GIF	Ken Burns GIF	Ken Burns GIF	Ken Burns GIF	Ken Burns GIF	Ken Burns GIF
+studio_take_photo	拍照	拍照	ถ่ายรูป	Chụp ảnh	Foto çek	Сделать фото	Zrób zdjęcie	Kumuha ng larawan	Ambil foto	Зробити фото
+studio_gallery	相册	相簿	แกลเลอรี	Thư viện ảnh	Galeri	Галерея	Galeria	Gallery	Galeri	Галерея
+studio_use_sample	试用样片	試用樣片	ลองตัวอย่าง	Dùng mẫu	Örnek dene	Попробовать образец	Wypróbuj próbkę	Subukan ang sample	Cuba sampel	Спробувати зразок
+studio_sample_title	样片	樣片	ตัวอย่าง	Mẫu	Örnek	Образец	Próbka	Sample	Sampel	Зразок
+studio_recents	最近	最近	ล่าสุด	Gần đây	Son	Недавние	Ostatnie	Kamakailan	Terbaru	Нещодавні
+studio_pick_body	先选照片，再选工具。内容不会离开本机。	先選照片，再選工具。內容不會離開本機。	เลือกรูปก่อน แล้วเลือกเครื่องมือ ไม่ออกจากเครื่องนี้	Chọn ảnh trước, rồi công cụ. Không rời thiết bị.	Önce foto, sonra araç. Bu telefondan çıkmaz.	Сначала фото, затем инструмент. Не покидает устройство.	Najpierw zdjęcie, potem narzędzie. Nie opuszcza urządzenia.	Larawan muna, tapos tool. Hindi aalis sa phone.	Foto dulu, kemudian alat. Tidak keluar peranti.	Спочатку фото, потім інструмент. Не покидає пристрій.
+studio_pick_body_movie	先选片段，再选工具。内容不会离开本机。	先選片段，再選工具。內容不會離開本機。	เลือกคลิปก่อน แล้วเลือกเครื่องมือ ไม่ออกจากเครื่องนี้	Chọn clip trước, rồi công cụ. Không rời thiết bị.	Önce klip, sonra araç. Bu telefondan çıkmaz.	Сначала клип, затем инструмент. Не покидает устройство.	Najpierw klip, potem narzędzie. Nie opuszcza urządzenia.	Clip muna, tapos tool. Hindi aalis sa phone.	Klip dulu, kemudian alat. Tidak keluar peranti.	Спочатку кліп, потім інструмент. Не покидає пристрій.
+studio_cancel	取消	取消	ยกเลิก	Hủy	İptal	Отмена	Anuluj	Kanselahin	Batal	Скасувати
+studio_back	返回	返回	กลับ	Quay lại	Geri	Назад	Wstecz	Bumalik	Kembali	Назад
+studio_undo	撤销	復原	เลิกทำ	Hoàn tác	Geri al	Отменить	Cofnij	I-undo	Buat asal	Скасувати
+studio_redo	重做	重做	ทำซ้ำ	Làm lại	Yinele	Повторить	Ponów	I-redo	Buat semula	Повторити
+studio_group_crop	裁剪	裁剪	ครอบ	Cắt	Kırp	Обрезка	Kadrowanie	Crop	Pangkas	Обрізка
+studio_group_light	光线	光線	แสง	Ánh sáng	Işık	Свет	Światło	Light	Cahaya	Світло
+studio_group_color	色彩	色彩	สี	Màu	Renk	Цвет	Kolor	Color	Warna	Колір
+studio_group_retouch	修图	修圖	รีทัช	Chỉnh sửa	Retuş	Ретушь	Retusz	Retouch	Retouch	Ретуш
+studio_group_compose	合成	合成	คอมโพส	Compose	Birleştir	Компоновка	Kompozycja	Compose	Komposisi	Компонування
+studio_group_add	添加	新增	เพิ่ม	Thêm	Ekle	Добавить	Dodaj	Magdagdag	Tambah	Додати
+studio_group_edit	编辑	編輯	แก้ไข	Chỉnh sửa	Düzenle	Правка	Edycja	I-edit	Sunting	Редагування
+studio_group_audio	音频	音訊	เสียง	Âm thanh	Ses	Аудио	Dźwięk	Audio	Audio	Аудіо
+studio_group_text	文字	文字	ข้อความ	Văn bản	Metin	Текст	Tekst	Text	Teks	Текст
+studio_group_effects	效果	效果	เอฟเฟกต์	Hiệu ứng	Efektler	Эффекты	Efekty	Effects	Kesan	Ефекти
+studio_group_layout	布局	版面配置	เลย์เอาต์	Bố cục	Düzen	Макет	Układ	Layout	Susun atur	Макет
+studio_layout_export_hint	布局在导出时应用。	版面配置在匯出時套用。	เลย์เอาต์ใช้ตอนส่งออก	Bố cục áp dụng khi xuất.	Düzen dışa aktarmada uygulanır.	Макет применяется при экспорте.	Układ stosowany przy eksporcie.	Layout sa export lang.	Susun atur semasa eksport.	Макет застосовується під час експорту.
+studio_layout_preview_single	单布局实时预览与导出一致。	單一版面即時預覽與匯出一致。	เลย์เอาต์เดียว ดูสดตรงกับส่งออก	Xem trước một bố cục trực tiếp, khớp xuất.	Tek düzen canlı önizleme dışa aktarmayla aynı.	Один макет — живой предпросмотр как экспорт.	Jeden układ — podgląd na żywo jak eksport.	Isang layout — live preview tulad ng export.	Satu susun atur — pratonton langsung sama eksport.	Один макет — живий перегляд як експорт.
+studio_layout_preview_wysiwyg	实时 WYSIWYG 布局预览。多布局时无法拖动进度；请从头播放。	即時 WYSIWYG 版面預覽。多版面時無法拖曳進度；請從頭播放。	ตัวอย่าง WYSIWYG สด หลายเลย์เอาต์เลื่อนไม่ได้ เล่นจากต้น	Xem trước WYSIWYG trực tiếp. Nhiều bố cục không tua; phát từ đầu.	Canlı WYSIWYG düzen. Çoklu düzende sarma yok; baştan oynat.	Живой WYSIWYG. Несколько макетов — без перемотки; с начала.	Podgląd WYSIWYG na żywo. Wiele układów — bez przewijania; od początku.	Live WYSIWYG layout. Multi-layout — walang seek; play mula simula.	Pratonton WYSIWYG langsung. Pelbagai susun atur — tiada seek; main dari awal.	Живий WYSIWYG. Кілька макетів — без перемотки; з початку.
+studio_layout_preview_export_only	此设备不支持实时布局预览。导出仍然正确。	此裝置不支援即時版面預覽。匯出仍然正確。	อุปกรณ์นี้ไม่รองรับตัวอย่างเลย์เอาต์สด การส่งออกยังถูกต้อง	Thiết bị không hỗ trợ xem bố cục trực tiếp. Xuất vẫn đúng.	Bu cihazda canlı düzen yok. Dışa aktarma doğru.	На устройстве нет живого макета. Экспорт корректен.	Brak podglądu układu na żywo. Eksport poprawny.	Walang live layout sa device. Export tama pa rin.	Peranti ini tiada pratonton susun atur langsung. Eksport tetap betul.	На пристрої немає живого макета. Експорт коректний.
+studio_layout_seek_unavailable	多布局预览无法拖动进度。请从头播放；导出仍然正确。	多版面預覽無法拖曳進度。請從頭播放；匯出仍然正確。	หลายเลย์เอาต์เลื่อนไม่ได้ เล่นจากต้น ส่งออกถูกต้อง	Nhiều bố cục không tua. Phát từ đầu; xuất vẫn đúng.	Çoklu düzende sarma yok. Baştan oynat; dışa aktarma doğru.	Несколько макетов — без перемотки. С начала; экспорт верен.	Wiele układów — bez przewijania. Od początku; eksport OK.	Multi-layout — walang seek. Play mula simula; export OK.	Pelbagai susun atur — tiada seek. Main dari awal; eksport betul.	Кілька макетів — без перемотки. З початку; експорт коректний.
+studio_scroll_more	更多 ⌄	更多 ⌄	เพิ่มเติม ⌄	Thêm ⌄	Daha fazla ⌄	Ещё ⌄	Więcej ⌄	Higit pa ⌄	Lagi ⌄	Більше ⌄
+studio_color_tune	微调	微調	ปรับจูน	Tinh chỉnh	Ayarlama	Настройка	Dostrojenie	I-tune	Tala	Налаштування
+studio_crop	裁剪	裁剪	ครอบ	Cắt	Kırp	Обрезка	Kadrowanie	Crop	Pangkas	Обрізка
+studio_rotate	旋转	旋轉	หมุน	Xoay	Döndür	Поворот	Obróć	I-rotate	Putar	Обернути
+studio_flip	翻转	翻轉	พลิก	Lật	Çevir	Отразить	Odbij lustrzanie	I-flip	Balik	Віддзеркалити
+studio_adjust	调整	調整	ปรับ	Điều chỉnh	Ayarla	Настроить	Dostosuj	I-adjust	Laraskan	Налаштувати
+studio_apply	应用	套用	นำไปใช้	Áp dụng	Uygula	Применить	Zastosuj	I-apply	Guna	Застосувати
+studio_export	导出	匯出	ส่งออก	Xuất	Dışa aktar	Экспорт	Eksport	I-export	Eksport	Експорт
+studio_exporting	正在导出…	正在匯出…	กำลังส่งออก…	Đang xuất…	Dışa aktarılıyor…	Экспорт…	Eksportowanie…	Nag-e-export…	Sedang mengeksport…	Експорт…
+studio_export_ok	已保存到 Pictures/PixiJoy。无水印。	已儲存至 Pictures/PixiJoy。無浮水印。	บันทึกที่ Pictures/PixiJoy ไม่มีลายน้ำ	Đã lưu vào Pictures/PixiJoy. Không watermark.	Pictures/PixiJoy'a kaydedildi. Filigran yok.	Сохранено в Pictures/PixiJoy. Без водяного знака.	Zapisano w Pictures/PixiJoy. Bez znaku wodnego.	Na-save sa Pictures/PixiJoy. Walang watermark.	Disimpan ke Pictures/PixiJoy. Tiada tera air.	Збережено в Pictures/PixiJoy. Без водяного знака.
+studio_exposure	曝光	曝光	การเปิดรับแสง	Phơi sáng	Pozlama	Экспозиция	Ekspozycja	Exposure	Dedahan	Експозиція
+studio_contrast	对比度	對比度	คอนทราสต์	Độ tương phản	Kontrast	Контраст	Kontrast	Contrast	Kontras	Контраст
+studio_loading	正在打开…	正在開啟…	กำลังเปิด…	Đang mở…	Açılıyor…	Открытие…	Otwieranie…	Nagbubukas…	Membuka…	Відкриття…
+session_project_missing	此项目已不可用。	此專案已無法使用。	โปรเจกต์นี้ไม่พร้อมใช้งานแล้ว	Dự án không còn khả dụng.	Proje artık yok.	Проект недоступен.	Projekt niedostępny.	Hindi na available ang proyekto.	Projek tidak lagi tersedia.	Проєкт недоступний.
+studio_empty_canvas	选择工具，然后选择照片。	選擇工具，然後選擇照片。	เลือกเครื่องมือ แล้วเลือกรูป	Chọn công cụ, rồi chọn ảnh.	Araç seç, sonra foto.	Выберите инструмент, затем фото.	Wybierz narzędzie, potem zdjęcie.	Pumili ng tool, tapos larawan.	Pilih alat, kemudian foto.	Оберіть інструмент, потім фото.
+studio_movie_placeholder	裁剪、拼接和会说话的照片在视频编辑中。片段已在本机。	裁剪、拼接和會說話的照片在影片編輯中。片段已在本機。	ตัด ต่อ และ still พูดได้ อยู่ในส่วนวิดีโอ คลิปอยู่บนเครื่องนี้	Cắt, nối và ảnh tĩnh có tiếng trong phần video. Clip đã ở trên thiết bị.	Kes, birleştirme ve konuşan kareler video bölümünde. Klip bu telefonda.	Обрезка, склейка и «говорящие» кадры — в видео. Клип на устройстве.	Przycinanie, łączenie i mówiące kadry w wideo. Klip na urządzeniu.	Trim, concat, talking stills sa movie slice. Nasa phone na ang clip.	Pangkas, gabung, still bercakap dalam video. Klip sudah pada peranti.	Обрізка, склеювання та «говорящі» кадри у відео. Кліп на пристрої.
+studio_export_mp4	导出 MP4	匯出 MP4	ส่งออก MP4	Xuất MP4	MP4 dışa aktar	Экспорт MP4	Eksport MP4	I-export ang MP4	Eksport MP4	Експорт MP4
+studio_export_movie_ok	已保存到 Movies/PixiJoy。无水印。	已儲存至 Movies/PixiJoy。無浮水印。	บันทึกที่ Movies/PixiJoy ไม่มีลายน้ำ	Đã lưu vào Movies/PixiJoy. Không watermark.	Movies/PixiJoy'a kaydedildi. Filigran yok.	Сохранено в Movies/PixiJoy. Без водяного знака.	Zapisano w Movies/PixiJoy. Bez znaku wodnego.	Na-save sa Movies/PixiJoy. Walang watermark.	Disimpan ke Movies/PixiJoy. Tiada tera air.	Збережено в Movies/PixiJoy. Без водяного знака.
+studio_export_pct	正在导出 %1$d%%	正在匯出 %1$d%%	กำลังส่งออก %1$d%%	Đang xuất %1$d%%	Dışa aktarılıyor %1$d%%	Экспорт %1$d%%	Eksport %1$d%%	Nag-e-export %1$d%%	Mengeksport %1$d%%	Експорт %1$d%%
+studio_scrub	拖动	拖曳	เลื่อน	Kéo	Sürükle	Перемотка	Przewijanie	Scrub	Seret	Перемотка
+studio_trim_start	起点	起點	จุดเริ่ม	Bắt đầu	Başlangıç	Начало	Początek	Simula	Mula	Початок
+studio_trim_end	终点	終點	จุดจบ	Kết thúc	Bitiş	Конец	Koniec	Wakas	Tamat	Кінець
+studio_play	播放	播放	เล่น	Phát	Oynat	Воспроизвести	Odtwórz	I-play	Main	Відтворити
+studio_frame_prev	上一帧	上一格	เฟรมก่อนหน้า	Khung trước	Önceki kare	Пред. кадр	Poprz. klatka	Prev frame	Bingkai sebelumnya	Попер. кадр
+studio_frame_next	下一帧	下一格	เฟรมถัดไป	Khung sau	Sonraki kare	След. кадр	Nast. klatka	Next frame	Bingkai seterusnya	Наст. кадр
+studio_roll	滚动	滾動	ม้วน	Roll	Rulo	Склейка	Roll	Roll	Gulung	Склейка
+studio_clip_shadows	阴影 %1$.0f%%	陰影 %1$.0f%%	เงา %1$.0f%%	Bóng %1$.0f%%	Gölgeler %1$.0f%%	Тени %1$.0f%%	Cienie %1$.0f%%	Shadows %1$.0f%%	Bayangan %1$.0f%%	Тіні %1$.0f%%
+studio_clip_highlights	高光 %1$.0f%%	高光 %1$.0f%%	ไฮไลต์ %1$.0f%%	Sáng %1$.0f%%	Işıklar %1$.0f%%	Света %1$.0f%%	Światła %1$.0f%%	Highlights %1$.0f%%	Sorotan %1$.0f%%	Світла %1$.0f%%
+studio_pause	暂停	暫停	หยุดชั่วคราว	Tạm dừng	Duraklat	Пауза	Pauza	I-pause	Jeda	Пауза

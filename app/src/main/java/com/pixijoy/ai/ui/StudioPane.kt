@@ -1,7 +1,6 @@
 package com.pixijoy.ai.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,14 +9,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,22 +23,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pixijoy.ai.R
 import com.pixijoy.core.media.MediaKind
-import com.pixijoy.designsystem.PixiAccent
 import com.pixijoy.designsystem.PixiBg
-import com.pixijoy.designsystem.PixiSurface2
+import com.pixijoy.designsystem.PixiSegment
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
 import com.pixijoy.designsystem.PixiToolTile
@@ -176,23 +167,10 @@ fun StudioPane(onPickTool: (StudioTool) -> Unit, modifier: Modifier = Modifier) 
 
 @Composable
 private fun Segment(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .heightIn(min = 48.dp)
-            .clip(RoundedCornerShape(999.dp))
-            .background(if (selected) PixiAccent else PixiSurface2)
-            .clickable(onClick = onClick)
-            .testTag(tag)
-            .semantics {
-                role = Role.Tab
-                this.selected = selected
-            }
-            .padding(horizontal = 20.dp, vertical = 12.dp)
-    ) {
-        Text(
-            label,
-            color = PixiText,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
-        )
-    }
+    PixiSegment(
+        label = label,
+        selected = selected,
+        onClick = onClick,
+        modifier = Modifier.testTag(tag)
+    )
 }

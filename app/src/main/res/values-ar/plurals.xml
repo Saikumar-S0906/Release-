@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PixiJoy ar plurals — machine-assisted; review before store release -->
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">تبقّى استخدام ذكاء اصطناعي واحد اليوم: %s</item>
+        <item quantity="other">تبقّى %s استخدامات ذكاء اصطناعي اليوم</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">تبقّى تصدير HD واحد اليوم: %s</item>
+        <item quantity="other">تبقّى %s تصديرات HD اليوم</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">تبقّى إعلان مكافأة واحد اليوم: %d</item>
+        <item quantity="other">تبقّى %d إعلانات مكافأة اليوم</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">تم حفظ حزمة الملصقات! ملصق %d جاهز لـ WhatsApp</item>
+        <item quantity="other">تم حفظ حزمة الملصقات! %d ملصقات جاهزة لـ WhatsApp</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">تم حفظ ملصق %d لـ WhatsApp!</item>
+        <item quantity="other">تم حفظ %d ملصقات لـ WhatsApp!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">سلسلة %d يوم</item>
+        <item quantity="other">سلسلة %d أيام</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">تم حفظ Viral Pack! %d صور جاهزة للمشاركة 🚀</item>
+    </plurals>
+</resources>

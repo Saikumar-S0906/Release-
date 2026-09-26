@@ -1,0 +1,32 @@
+appId: com.pixijoy.ai
+---
+# Large text (fontScale 1.3). Host must set scale before launch:
+#   adb shell settings put system font_scale 1.3
+# Restore after:
+#   adb shell settings put system font_scale 1.0
+# Asserts session opens and glass chrome stays reachable (Export + Light).
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "home_create"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+- assertVisible:
+    id: "studio_chrome_bar"
+- assertVisible:
+    id: "session_export"
+- assertVisible:
+    id: "session_undo"
+- tapOn:
+    id: "studio_group_light"
+- extendedWaitUntil:
+    visible:
+      id: "session_light_exposure"
+    timeout: 15000
+- assertVisible:
+    id: "photo_session"

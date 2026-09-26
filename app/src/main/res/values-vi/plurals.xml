@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PixiJoy vi plurals — machine-assisted; review before store release -->
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">Còn %s lượt dùng AI hôm nay</item>
+        <item quantity="other">Còn %s lượt dùng AI hôm nay</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">Còn %s lần xuất HD hôm nay</item>
+        <item quantity="other">Còn %s lần xuất HD hôm nay</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">Còn %d quảng cáo thưởng hôm nay</item>
+        <item quantity="other">Còn %d quảng cáo thưởng hôm nay</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">Đã lưu gói sticker! %d sticker sẵn sàng cho WhatsApp</item>
+        <item quantity="other">Đã lưu gói sticker! %d sticker sẵn sàng cho WhatsApp</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">Đã lưu %d sticker cho WhatsApp!</item>
+        <item quantity="other">Đã lưu %d sticker cho WhatsApp!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">Chuỗi %d ngày</item>
+        <item quantity="other">Chuỗi %d ngày</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">Đã lưu Viral Pack! %d ảnh sẵn sàng chia sẻ 🚀</item>
+    </plurals>
+</resources>

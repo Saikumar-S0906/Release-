@@ -1,0 +1,25 @@
+appId: com.pixijoy.ai
+---
+# Multi-window / narrow height simulation. Host sets a short viewport first:
+#   adb shell wm size 1080x1600
+# (portrait phone half-height-ish). Restore with: adb shell wm size reset
+# Glass stays bottom chrome; side dock must NOT appear.
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "home_create"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+- assertVisible:
+    id: "studio_chrome_bar"
+- assertNotVisible:
+    id: "studio_session_side_tools"
+- assertVisible:
+    id: "session_export"
+- assertVisible:
+    id: "photo_session"

@@ -6,8 +6,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -15,6 +19,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -39,6 +44,9 @@ fun CreateSourceSheet(
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val shortHeight = LocalConfiguration.current.screenHeightDp < 560
+    val gap = if (shortHeight) 6.dp else 10.dp
+    val btnMin = if (shortHeight) 44.dp else 48.dp
     // ModalBottomSheet is its own window. MainActivity's testTagsAsResourceId does not apply
     // here, same as ExportSheet and ProjectRenameDialog. Without this, create_source_sheet and
     // source_* never become UIAutomator resource-ids. The flag is not spoken by TalkBack.
@@ -52,61 +60,86 @@ fun CreateSourceSheet(
     ) {
         Column(
             modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 28.dp)
+                .padding(bottom = if (shortHeight) 16.dp else 28.dp)
                 .testTag("create_source_sheet_body"),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(gap)
         ) {
             Text(
                 stringResource(R.string.create_source_title),
                 color = PixiText,
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                stringResource(R.string.create_source_subtitle),
+                color = PixiTextMuted,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier
+                    .padding(bottom = if (shortHeight) 0.dp else 4.dp)
+                    .testTag("create_source_subtitle")
             )
             PixiPrimaryButton(
                 text = stringResource(R.string.studio_photo),
                 onClick = onPhoto,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 48.dp)
+                    .heightIn(min = btnMin)
                     .testTag("source_photo")
             )
+            PixiPrimaryButton(
+                text = stringResource(R.string.studio_movie),
+                onClick = onVideo,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = btnMin)
+                    .testTag("source_video")
+            )
+            // Short landscape: Sample above Files/Camera so it stays on the first screenful.
+            if (shortHeight) {
+                PixiSecondaryButton(
+                    text = stringResource(R.string.studio_use_sample),
+                    onClick = onSample,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = btnMin)
+                        .testTag("source_sample")
+                )
+            }
             PixiSecondaryButton(
                 text = stringResource(R.string.create_source_files),
                 onClick = onOpenFile,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 48.dp)
+                    .heightIn(min = btnMin)
                     .testTag("source_files")
-            )
-            PixiSecondaryButton(
-                text = stringResource(R.string.studio_camera_video),
-                onClick = onVideo,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp)
-                    .testTag("source_video")
             )
             PixiSecondaryButton(
                 text = stringResource(R.string.create_source_camera),
                 onClick = onCamera,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 48.dp)
+                    .heightIn(min = btnMin)
                     .testTag("source_camera")
             )
-            PixiSecondaryButton(
-                text = stringResource(R.string.studio_use_sample),
-                onClick = onSample,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp)
-                    .testTag("source_sample")
-            )
+            if (!shortHeight) {
+                PixiSecondaryButton(
+                    text = stringResource(R.string.studio_use_sample),
+                    onClick = onSample,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = btnMin)
+                        .testTag("source_sample")
+                )
+            }
             TextButton(
                 onClick = onDismiss,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 48.dp)
+                    .heightIn(min = btnMin)
             ) {
                 Text(stringResource(R.string.studio_cancel), color = PixiTextMuted)
             }

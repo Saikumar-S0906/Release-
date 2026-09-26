@@ -1,0 +1,3 @@
+﻿    rate-limited, sleep 30s
+    rate-limited, sleep 60s
+    rate-limited, sleep 90s

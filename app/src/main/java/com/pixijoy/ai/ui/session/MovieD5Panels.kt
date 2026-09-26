@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,6 +31,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pixijoy.ai.R
 import com.pixijoy.designsystem.PixiAccent
+import com.pixijoy.designsystem.PixiAccentSoft
+import com.pixijoy.designsystem.PixiSlider
 import com.pixijoy.designsystem.PixiBg
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
@@ -71,7 +71,7 @@ fun MovieGradePanel(
                     modifier = Modifier
                         .heightIn(min = 48.dp)
                         .clip(RoundedCornerShape(999.dp))
-                        .background(if (selected) PixiAccent else PixiBg)
+                        .background(if (selected) PixiAccentSoft else Color.White.copy(alpha = 0.08f))
                         .clickable { onGrade(g.copy(lookKey = key)); onSettled() }
                         .testTag("movie_look_$key")
                         .semantics {
@@ -86,36 +86,33 @@ fun MovieGradePanel(
             stringResource(R.string.studio_movie_exposure, g.exposure),
             color = PixiTextMuted
         )
-        Slider(
+        PixiSlider(
             value = g.exposure,
             onValueChange = { onGrade(g.copy(exposure = it)) },
             onValueChangeFinished = onSettled,
             valueRange = -2f..2f,
-            colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
             modifier = Modifier.testTag("movie_grade_exposure")
         )
         Text(
             stringResource(R.string.studio_movie_contrast, g.contrast),
             color = PixiTextMuted
         )
-        Slider(
+        PixiSlider(
             value = g.contrast,
             onValueChange = { onGrade(g.copy(contrast = it)) },
             onValueChangeFinished = onSettled,
                 valueRange = 0.5f..1.8f,
-            colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
             modifier = Modifier.testTag("movie_grade_contrast")
         )
         Text(
             stringResource(R.string.studio_movie_saturation, g.saturation),
             color = PixiTextMuted
         )
-        Slider(
+        PixiSlider(
             value = g.saturation,
             onValueChange = { onGrade(g.copy(saturation = it)) },
             onValueChangeFinished = onSettled,
             valueRange = 0f..2f,
-            colors = SliderDefaults.colors(thumbColor = PixiAccent, activeTrackColor = PixiAccent),
             modifier = Modifier.testTag("movie_grade_saturation")
         )
         Text(stringResource(R.string.studio_movie_scopes), color = PixiTextMuted)

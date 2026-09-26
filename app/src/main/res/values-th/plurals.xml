@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PixiJoy th plurals — machine-assisted; review before store release -->
+<resources>
+    <plurals name="ai_credits_remaining">
+        <item quantity="one">เหลือการใช้ AI %s ครั้งวันนี้</item>
+        <item quantity="other">เหลือการใช้ AI %s ครั้งวันนี้</item>
+    </plurals>
+    <plurals name="hd_credits_remaining">
+        <item quantity="one">เหลือการส่งออก HD %s ครั้งวันนี้</item>
+        <item quantity="other">เหลือการส่งออก HD %s ครั้งวันนี้</item>
+    </plurals>
+    <plurals name="rewarded_ads_remaining">
+        <item quantity="one">เหลือโฆษณารับรางวัล %d ครั้งวันนี้</item>
+        <item quantity="other">เหลือโฆษณารับรางวัล %d ครั้งวันนี้</item>
+    </plurals>
+    <plurals name="sticker_pack_saved">
+        <item quantity="one">บันทึกแพ็กสติกเกอร์แล้ว! สติกเกอร์ %d อันพร้อมสำหรับ WhatsApp</item>
+        <item quantity="other">บันทึกแพ็กสติกเกอร์แล้ว! สติกเกอร์ %d อันพร้อมสำหรับ WhatsApp</item>
+    </plurals>
+    <plurals name="stickers_saved">
+        <item quantity="one">บันทึกสติกเกอร์ %d อันสำหรับ WhatsApp แล้ว!</item>
+        <item quantity="other">บันทึกสติกเกอร์ %d อันสำหรับ WhatsApp แล้ว!</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">สตรีค %d วัน</item>
+        <item quantity="other">สตรีค %d วัน</item>
+    </plurals>
+    <plurals name="viral_pack_saved">
+        <item quantity="other">บันทึก Viral Pack แล้ว! รูป %d ภาพพร้อมแชร์ 🚀</item>
+    </plurals>
+</resources>

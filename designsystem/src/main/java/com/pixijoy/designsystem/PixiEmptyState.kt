@@ -1,8 +1,10 @@
 package com.pixijoy.designsystem
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -26,6 +28,7 @@ import androidx.compose.ui.unit.dp
 const val PixiEmptySheenRest = 0.38f
 
 private val EmptyPlate = RoundedCornerShape(22.dp)
+private val GhostThumb = RoundedCornerShape(14.dp)
 
 /**
  * One empty pattern: glass plate, one line, one primary action.
@@ -37,19 +40,25 @@ fun PixiEmptyState(
     icon: Painter,
     modifier: Modifier = Modifier,
     lineModifier: Modifier = Modifier,
+    showGhostThumbs: Boolean = false,
     cta: (@Composable () -> Unit)? = null
 ) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        PixiEmptyMark(icon)
+        if (showGhostThumbs) {
+            PixiGhostThumbs(modifier = Modifier.padding(bottom = 16.dp))
+        } else {
+            PixiEmptyMark(icon)
+        }
         Text(
             text = line,
             color = PixiTextMuted,
+            style = PixiHint,
             textAlign = TextAlign.Center,
             modifier = lineModifier
-                .padding(top = 12.dp)
+                .padding(top = if (showGhostThumbs) 4.dp else 12.dp)
                 .fillMaxWidth()
         )
         if (cta != null) {
@@ -85,6 +94,44 @@ fun PixiEmptyMark(
             tint = PixiText.copy(alpha = 0.9f),
             modifier = Modifier.size(28.dp)
         )
+    }
+}
+
+/** Ghost recent thumbs so empty Home/Library don’t read as dead black. */
+@Composable
+fun PixiGhostThumbs(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)
+    ) {
+        repeat(3) { index ->
+            Box(
+                Modifier
+                    .size(PixiGhostThumbSize)
+                    .clip(GhostThumb)
+                    .drawBehind {
+                        drawRect(PixiSurface2)
+                        drawRect(
+                            brush = Brush.linearGradient(
+                                colors = listOf(
+                                    PixiAccentSoft.copy(alpha = 0.35f - index * 0.08f),
+                                    Color.Transparent,
+                                    Color(0x18FF5AA5)
+                                ),
+                                start = Offset.Zero,
+                                end = Offset(size.width, size.height)
+                            )
+                        )
+                        drawRect(
+                            brush = Brush.verticalGradient(
+                                0f to Color.White.copy(alpha = 0.08f),
+                                1f to Color.Transparent
+                            )
+                        )
+                    }
+                    .border(1.dp, PixiBorder, GhostThumb)
+            )
+        }
     }
 }
 

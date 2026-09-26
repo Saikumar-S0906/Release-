@@ -1,0 +1,433 @@
+app_name	PixiJoy
+studio_tagline	The studio that never leaves the phone.
+studio_promise	No upload. No account. No watermark. No monthly fee.
+studio_privacy_title	Your work stays here
+studio_privacy_body	PixiJoy edits photos and movies on this device. Your pictures are not uploaded. Optional on-device packs download a model file only after you tap Download.
+studio_accept	Continue
+studio_open	Open studio
+home_create	Create
+home_start_with	Start with
+home_continue	Continue %1$s
+create_source_title	Create
+create_source_subtitle	Photo or movie — edits stay on this device.
+create_source_camera	Camera
+studio_hub_sub	Photo and movie. All on this phone.
+studio_photo	Photo
+studio_movie	Movie
+studio_photo_caption	On this device · never uploaded
+studio_movie_caption	Trim, motion, talking stills — encoded here.
+studio_recents_empty	Your recents will show up here.
+studio_library_thumb_loading	Loading preview
+studio_library_thumb_unavailable	Preview unavailable
+studio_library_empty	No projects yet
+studio_library_create_cta	Create
+studio_library_more	Project actions
+studio_library_rename	Rename
+studio_library_deleted	Project removed
+studio_library_edited_just_now	Saved just now
+studio_library_edited_minutes	Saved %1$d min ago
+studio_library_edited_hours	Saved %1$d hours ago
+studio_library_edited_days	Saved %1$d days ago
+studio_on_device_badge	Edits stay on this device
+studio_open_tools	Browse tools
+studio_recommended	Recommended
+tool_best_for_editor	Best for: everyday edits
+tool_best_for_cutout	Basic cutout for simple backgrounds
+tool_best_for_move	Best for: turn a photo into video
+tool_restore_sub	Contrast, color, and sharpening
+tool_expand_sub	Mirror pixels past the photo edges
+tool_cutout_sub	Basic cutout for simple backgrounds
+tool_layers_sub	Best for: combine photos and text
+export_quality_balanced	Balanced
+export_quality_high	High
+export_quality_maximum	Maximum
+export_success_title	Export ready
+export_view	View
+export_share	Share
+export_done	Done
+export_name_project	Name this project
+export_leave_safe	You can leave the app — export continues in the background.
+studio_export_exif_gps_hint	Remove location from exported photo. GPS is always stripped.
+nav_home	Home
+nav_studio	Studio
+nav_library	Library
+tool_editor	Editor
+tool_editor_sub	Crop, adjust, heal, text
+tool_restore	Quick enhance
+tool_expand	Mirror expand
+tool_cutout	Basic cutout
+tool_stickers	Stickers
+tool_stickers_sub	Basic cutout on this phone
+tool_collage	Collage
+tool_collage_sub	Several photos, one page
+tool_layers	Layers
+tool_move	Move
+tool_move_sub	Motion from a still
+tool_talking	Talking
+tool_talking_sub	Ken Burns GIF
+studio_take_photo	Take photo
+studio_gallery	Gallery
+studio_use_sample	Try a sample
+studio_sample_title	Sample
+studio_recents	Recents
+studio_pick_body	Photo first, then the tool. Nothing leaves this phone.
+studio_pick_body_movie	Clip first, then the tool. Nothing leaves this phone.
+studio_cancel	Cancel
+studio_back	Back
+studio_undo	Undo
+studio_redo	Redo
+studio_group_crop	Crop
+studio_group_light	Light
+studio_group_color	Color
+studio_group_retouch	Retouch
+studio_group_compose	Compose
+studio_group_add	Add
+studio_group_edit	Edit
+studio_group_audio	Audio
+studio_group_text	Text
+studio_group_effects	Effects
+studio_group_layout	Layout
+studio_layout_export_hint	Layout is always applied at export.
+studio_layout_preview_single	Single layout previews live and matches export.
+studio_layout_preview_wysiwyg	Live WYSIWYG layout preview. Multi-layout seeking is unavailable; play from the start.
+studio_layout_preview_export_only	Live layout preview is not supported on this device. Export remains correct.
+studio_layout_seek_unavailable	Seeking is unavailable for multi-layout preview. Play from the start; export remains correct.
+studio_scroll_more	More ⌄
+studio_color_tune	Tune
+studio_crop	Crop
+studio_rotate	Rotate
+studio_flip	Flip
+studio_adjust	Adjust
+studio_apply	Apply
+studio_export	Export
+studio_exporting	Exporting…
+studio_export_ok	Saved to Pictures/PixiJoy. No watermark.
+studio_exposure	Exposure
+studio_contrast	Contrast
+studio_loading	Opening…
+session_project_missing	This project is no longer available.
+studio_empty_canvas	Pick a tool, then a photo.
+studio_movie_placeholder	Trim, concat, and talking stills land in the movie slice. The clip is already on this phone.
+studio_export_mp4	Export MP4
+studio_export_movie_ok	Saved to Movies/PixiJoy. No watermark.
+studio_export_pct	Exporting %1$d%%
+studio_scrub	Scrub
+studio_trim_start	Start
+studio_trim_end	End
+studio_play	Play
+studio_frame_prev	Prev frame
+studio_frame_next	Next frame
+studio_roll	Roll
+studio_clip_shadows	Shadows %1$.0f%%
+studio_clip_highlights	Highlights %1$.0f%%
+studio_pause	Pause
+studio_move_hint	Slow zoom and pan, encoded on this phone.
+studio_talking_hint	A gentle pulse on the still, encoded here.
+studio_speed	Speed ×%1$.1f
+studio_movie_d2_hint	Roll, dissolve, or ramp speed.
+studio_roll_left	Roll cut ←
+studio_roll_right	Roll cut →
+studio_transition	Transition
+studio_transition_none	Cut
+studio_transition_soft	Soft
+studio_transition_ms	Dissolve %1$d ms
+studio_speed_ramp	Speed ramp
+studio_speed_ramp_values	Start ×%1$.1f → end ×%2$.1f
+studio_movie_d3_hint	Zoom and pan on this clip.
+studio_motion	Motion
+studio_motion_none	None
+studio_motion_zoom_in	Zoom in
+studio_motion_zoom_out	Zoom out
+studio_motion_pan_left	Pan ←
+studio_motion_pan_right	Pan →
+studio_motion_drift	Drift
+studio_movie_d4_hint	Title or caption on the timeline.
+studio_title_add	Add title
+studio_caption_add	Add caption
+studio_titles_clear	Clear text
+studio_title_chip	Title · %1$s
+studio_caption_chip	Caption · %1$s
+studio_movie_d5_hint	Grade and looks. Scopes follow.
+studio_movie_look	Look
+studio_movie_exposure	Exposure %1$.1f EV
+studio_movie_contrast	Contrast ×%1$.2f
+studio_movie_saturation	Saturation ×%1$.2f
+studio_movie_scopes	Scopes
+studio_movie_d6_hint	Duck music under dialogue.
+studio_movie_d6_vo_active	Voice-over is ducking the music bed.
+studio_duck_preset	Duck under VO
+studio_duck_soft	Soft
+studio_duck_medium	Medium
+studio_duck_hard	Hard
+studio_duck_attack	Duck attack %1$d ms
+studio_duck_release	Duck release %1$d ms
+studio_movie_d7_hint	PiP, split, or grid on export.
+studio_movie_layout	Frame layout
+studio_layout_single	Single
+studio_layout_pip	PiP
+studio_layout_split	Split
+studio_layout_grid	Grid
+studio_movie_d8_hint	Steady crop zooms in to hide frame edges; it does not track motion.
+studio_stabilize	Steady crop
+studio_stabilize_off	Off
+studio_stabilize_light	Light
+studio_stabilize_medium	Medium
+studio_stabilize_strong	Strong
+studio_reframe	Reframe
+studio_reframe_original	Original
+studio_reframe_close	Close
+studio_reframe_left	Left
+studio_reframe_right	Right
+studio_reframe_vertical	Vertical
+studio_movie_d9_hint	Key green or blue screen.
+studio_chroma_key	Chroma key
+studio_chroma_off	Off
+studio_chroma_green	Green
+studio_chroma_blue	Blue
+studio_chroma_similarity_preset	Key range
+studio_chroma_tight	Tight
+studio_chroma_medium	Medium
+studio_chroma_wide	Wide
+studio_chroma_softness	Edge soft %1$d%%
+studio_movie_d10_hint	Slow-mo holds frames until neural frames bind. Download the pack to unlock Neural frames.
+studio_movie_d10_hint_ready	Neural frames are bound. Export synthesizes mid-frames; preview still shows rate/hold.
+studio_movie_d11_hint	HDR intent for export.
+studio_export_hdr_label	HDR
+studio_export_hdr_sdr	SDR
+studio_export_hdr_keep	Keep HDR
+studio_export_hdr_keep_hint	Preserves HDR when supported · tone-maps if not
+studio_slow_mo	Slow-mo
+studio_slowmo_off	Off
+studio_slowmo_half	½×
+studio_slowmo_quarter	¼×
+studio_slowmo_eighth	⅛×
+studio_slowmo_engine	Slow-mo method
+studio_slowmo_heuristic	Frame hold
+studio_slowmo_ml	Neural frames
+studio_hold_coming	Coming with pack
+studio_slowmo_resolved	Export uses %1$s
+studio_add_clip	Add another clip
+studio_clip_count	%1$d clips · joined on export
+studio_export_gif	Export GIF
+studio_export_gif_ok	Saved GIF to Pictures/PixiJoy. No watermark.
+studio_camera_photo	Photo
+studio_camera_video	Video
+studio_camera_flip	Flip
+studio_camera_permission	PixiJoy takes photos and video on this phone. Nothing is uploaded.
+studio_camera_grant	Allow camera
+studio_camera_stop	Stop
+studio_heal	Heal
+studio_erase	Erase
+studio_fill	Fill
+studio_fill_hint	Paint to remove. Nearby-pixel fill is not neural. Neural Apply stays off until a sideloaded model is bound.
+studio_fill_apply_nearby	Apply nearby-pixel fill
+studio_fill_apply_neural	Apply neural
+studio_fill_clear_strokes	Clear strokes
+studio_fill_undo_stroke	Undo stroke
+studio_packs_empty	Download to unlock
+studio_pack_download	Download
+studio_pack_retry	Retry pack download
+studio_pack_remove	Remove pack
+studio_pack_missing	Unavailable until this on-device pack is downloaded. Your photo stays on the phone; only the model file is fetched.
+studio_pack_missing_sideload	This pack is not hosted for download in this build. Use Install from file, or copy the .tflite into the incoming folder. Play Store modules are not shipped yet.
+studio_pack_installing	Downloading on-device pack…
+studio_pack_installing_sideload	Installing on-device pack from file…
+studio_pack_ready_unbound	Downloaded and verified (Ready). The neural engine is not bound, so this tool does not run a model. Nearby-pixel fill is not neural.
+studio_pack_ready_no_litert	Downloaded and verified (Ready). Play services LiteRT is unavailable, so the neural engine cannot start.
+studio_pack_ready_no_engine	Installed and verified (Ready). Coming with pack. Not neural.
+studio_pack_inpaint_ready	Installed and verified (Ready). The neural engine is not bound, so neural inpaint stays off. Nearby-pixel fill is not neural.
+studio_pack_inpaint_ready_no_litert	Installed and verified (Ready). Play services LiteRT is unavailable, so the neural engine cannot start. Nearby-pixel fill is not neural.
+studio_pack_inpaint_engine_ready	Neural ready. The sideloaded inpaint model is bound, so neural Apply can run it. Nearby-pixel fill stays available and is not neural.
+studio_pack_sr_denoise_ready	Downloaded and verified (Ready). The neural engine is not bound, so Apply stays off and the photo is left unchanged.
+studio_pack_sr_denoise_ready_no_litert	Downloaded and verified (Ready). Play services LiteRT is unavailable, so the neural engine cannot start and Apply stays off.
+studio_pack_engine_ready	Neural ready. The on-device model is bound, so Apply can run it. Processing stays on this phone.
+studio_pack_storage	Storage: %1$s
+studio_pack_from_file	Install from file
+studio_pack_file_unreadable	Could not read the selected file.
+studio_super_res	Super-res
+studio_super_res_hint	2× or 4× runs only when the neural engine is bound. Downloaded and verified (Ready) leaves Apply off. Export uses the same op. Large images are tiled.
+studio_super_res_2x	2×
+studio_super_res_4x	4×
+studio_denoise	Denoise
+studio_denoise_hint	Download fetches the pinned on-device UNet. Ready means the file is verified. Apply stays off until the neural engine binds. Preview and export use the same op.
+studio_denoise_amount	Denoise
+studio_track	Track
+studio_track_hint	Point track is coming with the pack. No motion follow in this build.
+studio_track_enable	Enable track
+studio_track_clear	Clear track
+studio_sky	Sky
+studio_sky_hint	Replace sky with a solid color. Background fallback uses a basic corner match.
+studio_sky_target_sky	Sky
+studio_sky_target_background	Background
+studio_warp	Warp
+studio_warp_hint	Perspective or liquify. Apply bakes.
+studio_perspective_h	Perspective horizontal
+studio_perspective_v	Perspective vertical
+studio_apply_perspective	Apply perspective
+studio_liquify_amount	Liquify amount
+studio_liquify_radius	Liquify size
+studio_apply_liquify	Apply liquify
+studio_soften	Soften
+studio_soften_hint	Light skin soften on this device.
+studio_soften_amount	Soften
+studio_presets	Presets
+studio_presets_hint	Save this edit stack as a preset on this phone. Apply later to any photo project.
+studio_preset_save	Save preset
+studio_preset_unreadable	This preset could not be read.
+studio_library_export_photos	Export all photos
+studio_library_export_with_look	Export all photos with a look
+studio_library_pick_look	Choose a saved look
+studio_library_look_recent	%1$s · last saved
+studio_cutout_subject_available	Subject mask is available on this device.
+studio_cutout_corner_fallback	Subject mask is unavailable. Basic cutout removes colors matching the photo corners.
+studio_mask_restore	Restore last mask
+studio_mask_subject_unavailable	Subject fill needs the on-device mask. Paint to refine instead.
+studio_export_color_srgb	sRGB
+studio_export_color_p3	Display P3
+studio_export_color_label	Color
+studio_raw_preview_badge	RAW preview
+studio_open_file	Open file
+create_source_files	Photo or RAW file
+studio_text	Text
+studio_stickers	Stickers
+studio_collage	Collage
+studio_expand_tool	Mirror expand
+studio_brush	Brush
+studio_hue	Hue
+studio_saturation	Saturation
+studio_restore_now	Apply quick enhance
+studio_cutout_now	Apply basic cutout
+studio_tap_place	Tap the photo to place it.
+studio_add_photo	Add another photo
+studio_filter_all	All
+studio_library_delete	Delete
+studio_library_filter_empty	Nothing in this filter yet.
+studio_export_sheet_title	Export
+studio_export_quality	Quality %1$d
+studio_export_quality_label	Quality
+studio_export_destination_pictures	Saves to Pictures/PixiJoy
+studio_export_destination_movies	Saves to Movies/PixiJoy
+studio_export_no_watermark	No watermark. Nothing is uploaded.
+studio_curves	Curves
+studio_looks	Looks
+studio_looks_hint	Tap a look, then Apply. Or import a LUT.
+studio_lut_import	Import LUT
+studio_lut_imported	Imported %1$s
+studio_lut_selected	Using %1$s
+studio_look_original	Original
+studio_look_clean	Clean
+studio_look_warm	Warm
+studio_look_cool	Cool
+studio_look_film	Film
+studio_look_night	Night
+studio_curves_hint	Shape brightness without washing color.
+studio_blur	Blur
+studio_sharpen	Sharpen
+studio_vignette	Vignette
+studio_curve_black	Blacks
+studio_curve_shadow	Shadows
+studio_curve_mid	Midtones
+studio_curve_light	Lights
+studio_curve_white	Whites
+studio_split	Split
+studio_mute	Mute
+studio_unmute	Unmute
+studio_volume	Volume %1$.0f%%
+studio_fade_in	Fade in %1$d ms
+studio_fade_out	Fade out %1$d ms
+studio_add_music	Add music
+studio_replace_music	Replace music
+studio_remove_music	Remove music
+studio_music_volume	Music %1$.0f%%
+studio_add_voice	Add voice-over
+studio_replace_voice	Replace voice-over
+studio_remove_voice	Remove voice-over
+studio_voice_volume	Voice %1$.0f%%
+studio_duck	Under dialogue %1$.0f%%
+studio_add_sfx	Add sound effect
+studio_replace_sfx	Replace sound effect
+studio_remove_sfx	Remove sound effect
+studio_sfx_volume	SFX %1$.0f%%
+studio_master_eq	Master EQ
+studio_eq_low	Low %1$.0f dB
+studio_eq_mid	Mid %1$.0f dB
+studio_eq_high	High %1$.0f dB
+studio_master_dynamics	Dynamics
+studio_comp_threshold	Threshold %1$.0f dB
+studio_comp_ratio	Ratio %1$.1f:1
+studio_limiter_on	Limiter on
+studio_limiter_off	Limiter off
+studio_fx_reset	Reset FX
+studio_export_background	Exporting in the background. You can leave this screen.
+studio_export_failed	Export failed.
+studio_import_failed	Couldn’t import media: %1$s
+studio_import_unknown	No compatible picker is available.
+studio_sample_unavailable	The built-in sample could not be opened.
+studio_photo_render_failed	Couldn’t update the preview. Your previous preview is still available.
+studio_timeline_clips	%1$d clips on the timeline
+studio_track_muted	%1$s (muted)
+studio_layers	Layers
+studio_layer_background	Background
+studio_layers_hint	Tap a layer to fade or blend.
+studio_opacity	Opacity
+studio_hide	Hide
+studio_show	Show
+studio_delete_clip	Delete clip
+studio_mask	Mask
+studio_mask_hide	Hide
+studio_mask_reveal	Reveal
+studio_mask_clear	Clear mask
+studio_mask_subject	Subject
+studio_mask_background	Background
+studio_mask_hint	Subject fills the mask. Paint to refine.
+studio_export_resolution	Resolution
+studio_export_exif_keep	Keep EXIF
+studio_export_exif_strip	Strip EXIF
+studio_collage_2	2-up
+studio_collage_4	4-up
+studio_collage_2_hint	2-photo grid
+studio_collage_4_hint	4-photo grid
+studio_heal_set_source	Set source
+studio_heal_paint	Paint
+studio_heal_source_set	Clone from the source point.
+studio_heal_source_ring	No source — ring heal.
+studio_export_4k_cost	Heavier encode · slower on phone
+studio_mask_protect	Protect
+studio_mask_erase	Erase area
+studio_fade	Fade
+studio_selective_hsl	Color
+studio_selective_hsl_hint	Pick a range, tweak, then Apply.
+studio_selective_light	Brightness
+studio_hsl_reds	Reds
+studio_hsl_oranges	Oranges
+studio_hsl_yellows	Yellows
+studio_hsl_greens	Greens
+studio_hsl_cyans	Cyans
+studio_hsl_blues	Blues
+studio_hsl_magentas	Magentas
+session_compare_hint	Hold to compare.
+session_compare_disabled	Apply an edit to compare.
+session_compare_after_hold	After · hold for Before
+session_compare_before	Before · release for After
+session_compare_state_before	Showing Before
+session_compare_state_after	Showing After
+session_compare_action_before	Show Before
+session_compare_action_after	Show After
+session_save_status_saved	Saved
+session_save_status_saving	Saving…
+session_save_status_unsaved	Not saved
+session_rename_project	Rename project
+a11y_selected	%1$s, selected
+a11y_downloaded	Downloaded
+a11y_ready_to_apply	Ready to apply
+a11y_crop_edge_left	Crop edge, left
+a11y_crop_edge_right	Crop edge, right
+a11y_crop_edge_top	Crop edge, top
+a11y_crop_edge_bottom	Crop edge, bottom
+a11y_trim_in	Trim start
+a11y_trim_out	Trim end
+a11y_slider_value	%1$s, %2$s
+a11y_edit_slider_value	Edit value
+a11y_slider_sign	Change sign
+a11y_reset_value	Reset
+a11y_place	Place

@@ -10,13 +10,24 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-val PixiBg = Color(0xFF0B0B10)
-val PixiSurface = Color(0xFF15151C)
-val PixiSurface2 = Color(0xFF20202A)
+/** Near-black canvas — not pure black, so glass and elev gains depth. */
+val PixiBg = Color(0xFF101014)
+val PixiSurface = Color(0xFF17171E)
+val PixiSurface2 = Color(0xFF22222C)
+/** Raised plates / sheets over surface. */
+val PixiElevated = Color(0xFF2A2A36)
+/** Scrim wash for chrome over media. */
+val PixiScrim = Color(0xCC0C0C10)
 val PixiText = Color(0xFFFFFFFF)
-val PixiTextMuted = Color(0xFFB7B7C7)
-val PixiBorder = Color(0xFF30303A)
-val PixiAccent = Color(0xFF6C4DFF)
+val PixiTextMuted = Color(0xFFA8A8B8)
+/** Hairline outline (~14% white) for quiet chips. */
+val PixiBorder = Color(0x24FFFFFF)
+/** Brand accent — quieter than the old saturated fill. */
+val PixiAccent = Color(0xFF7B6CFF)
+/** Soft selected fill (chips, segments, nav). */
+val PixiAccentSoft = Color(0x337B6CFF)
+/** Muted accent for underlines / secondary state. */
+val PixiAccentMuted = Color(0xFF9B90FF)
 val PixiPink = Color(0xFFFF5AA5)
 val PixiSuccess = Color(0xFF25B878)
 val PixiError = Color(0xFFE94D63)
@@ -51,12 +62,14 @@ private val LightScheme = lightColorScheme(
 
 val PixiCardShape = RoundedCornerShape(20.dp)
 val PixiPillShape = RoundedCornerShape(999.dp)
+val PixiControlShape = RoundedCornerShape(12.dp)
 
 @Composable
 fun PixiTheme(dark: Boolean = true, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalDark provides dark) {
         MaterialTheme(
             colorScheme = if (dark) DarkScheme else LightScheme,
+            typography = PixiTypography,
             content = content
         )
     }

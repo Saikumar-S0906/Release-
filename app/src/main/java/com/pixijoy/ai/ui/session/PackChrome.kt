@@ -219,7 +219,8 @@ private fun packEmptyLine(packId: PackId, state: PackInstallState): String = whe
             R.string.studio_pack_installing_sideload
         }
     )
-    is PackInstallState.Failed -> state.message
+    is PackInstallState.Failed ->
+        state.message + "\n" + stringResource(R.string.studio_pack_failed_help)
     is PackInstallState.StorageError -> stringResource(R.string.studio_pack_storage, state.message)
     is PackInstallState.Ready -> stringResource(
         if (packHasHostedDownload(packId)) {
@@ -255,7 +256,8 @@ private fun packStatusCopy(
         PackId.Inpaint -> inpaintReadyCopy(engineReady)
         PackId.FrameInterp, PackId.Track -> holdReadyCopy(engineReady)
     }
-    is PackInstallState.Failed -> state.message
+    is PackInstallState.Failed ->
+        state.message + "\n" + stringResource(R.string.studio_pack_failed_help)
     is PackInstallState.StorageError -> stringResource(R.string.studio_pack_storage, state.message)
 }
 
