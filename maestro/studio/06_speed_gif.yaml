@@ -21,7 +21,15 @@ appId: com.pixijoy.ai
       id: "movie_speed"
     timeout: 10000
 - tapOn:
-    id: "session_export_gif"
+    id: "session_export"
+- extendedWaitUntil:
+    visible:
+      id: "export_sheet"
+    timeout: 10000
+- tapOn:
+    id: "export_format_gif"
+- tapOn:
+    id: "export_sheet_confirm"
 - extendedWaitUntil:
     visible:
       id: "session_status"

@@ -1,0 +1,49 @@
+appId: com.pixijoy.ai
+---
+# Photo Light slider numeric entry (StudioValueSlider + sign path for ranges below zero).
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "home_create"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+- tapOn:
+    id: "studio_group_light"
+- tapOn:
+    id: "session_light_exposure"
+- repeat:
+    times: 10
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "session_slider_value"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
+      id: "session_slider_value"
+    timeout: 15000
+- tapOn:
+    id: "session_slider_value"
+- extendedWaitUntil:
+    visible:
+      id: "session_slider_value_field"
+    timeout: 15000
+- assertVisible:
+    id: "session_slider_value_sign"
+- eraseText: 8
+- inputText: "0.4"
+- pressKey: Enter
+- assertVisible:
+    id: "session_slider_value"
+- assertVisible:
+    id: "photo_session"

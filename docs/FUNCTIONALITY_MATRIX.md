@@ -80,8 +80,8 @@ Evidence: `movie/ClipFrame.kt`, `ClipSlowMo.kt`, `ClipTrack.kt`, `MovieEngine.kt
 | Neural inpaint | **PACK** | Sideload only. No HTTPS pin and no Download CTA. Ready is the verified file (`InpaintStatus.ReadyFileOnly`). Neural Apply reads `engineReady` after `PackLiteRt` binds FLOAT32 RGB+mask (4-channel or image+mask). A miss leaves Telea. Telea is never labeled neural. |
 | Neural super-res | **PACK** | HTTPS SHA pin → Ready → FLOAT32 `PackModelContract.superResScale` → `PackLiteRt` register. A miss releases the interpreter. Apply reads `engineReady`. Ready alone is not neural. |
 | Neural denoise | **PACK** | HTTPS SHA pin → Ready → FLOAT32 `isDenoiseSameRgb` → `PackLiteRt`. A 2×/4× graph cannot register. Apply reads `engineReady`. |
-| Neural frame interpolation | **UNAVAILABLE** | **HOLD.** `PackLiteRt` leaves `FrameInterp` as `Unit`. No `downloadUrl`, SHA, or shape gate. Slow motion uses frame hold, which is not neural. Unbound chip is disabled: “Coming with pack”. |
-| Point track / roto-lite | **UNAVAILABLE** | **HOLD.** `ClipTrack` persists. `PackLiteRt` leaves `Track` as `Unit`. No `downloadUrl`, SHA, or shape gate. Unbound control is disabled: “Coming with pack”. |
+| Neural frame interpolation | **PACK** | HTTPS FILM TFLite (~67 MB). Ready = verified file. Neural chip + export mux unlock when LiteRT binds the FILM FLOAT32 contract. Export synthesizes mid-frames (`NeuralSlowMoMux`); preview stays Media3 rate/hold. Synth failure falls back to frame-hold. |
+| Point track / roto-lite | **UNAVAILABLE** | **HOLD.** `ClipTrack` persists. No public LiteRT tracker pin. `PackLiteRt` leaves `Track` as `Unit`. Unbound control: “Coming with pack”. |
 | True motion stabilization | **UNAVAILABLE** | No gyro/optical-flow tracking; the available control is named Steady crop. |
 | Generative expand | **UNAVAILABLE** | Mirror expand is the only edge-extension engine. |
 

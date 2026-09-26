@@ -1,6 +1,8 @@
 appId: com.pixijoy.ai
 ---
-# E2/E3 Super-res + Denoise — pack download + Apply gated
+# E2/E3 Super-res + Denoise — pack download + Apply gated.
+# Vertical More scrolls the chip strip away; bounce Light→Retouch to reset scroll.
+# Denoise sits under studio_hscroll_more — nudge until "Denoise, selected".
 - runFlow: ../launch-to-home.yaml
 - tapOn:
     id: "home_create"
@@ -20,6 +22,22 @@ appId: com.pixijoy.ai
     visible:
       id: "session_super_res_hint"
     timeout: 10000
+- repeat:
+    times: 16
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "session_apply_super_res"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
+      id: "session_apply_super_res"
+    timeout: 15000
 - assertVisible:
     id: "session_super_res_pack_status"
 - assertVisible:
@@ -27,11 +45,45 @@ appId: com.pixijoy.ai
 - assertVisible:
     id: "session_apply_super_res"
 - tapOn:
-    id: "session_denoise"
+    id: "studio_group_light"
+- tapOn:
+    id: "studio_group_retouch"
+- repeat:
+    times: 10
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_hscroll_more"
+            notVisible: "Denoise, selected"
+          commands:
+            - tapOn:
+                id: "studio_hscroll_more"
+            - tapOn:
+                id: "session_denoise"
+- extendedWaitUntil:
+    visible: "Denoise, selected"
+    timeout: 15000
 - extendedWaitUntil:
     visible:
       id: "session_denoise_hint"
     timeout: 10000
+- repeat:
+    times: 16
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "session_apply_denoise"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
+      id: "session_denoise_pack_status"
+    timeout: 15000
 - assertVisible:
     id: "session_denoise_pack_status"
 - assertVisible:

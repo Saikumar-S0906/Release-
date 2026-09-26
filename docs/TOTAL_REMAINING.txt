@@ -64,8 +64,8 @@ Pack runtime MET 2026-09-25 (`:ml` checksum, Play+sideload, SplitCompat, unavail
 E1. Inpaint pack CTA + LiteRT RGB+mask bind on sideload (no HTTPS pin); Telea until bound
 E2. Super-resolution graph SR — distilled ESRGAN HTTPS fallback + LiteRT contract bind
 E3. Denoise graph N — Raspberry Pi UNet HTTPS fallback + LiteRT same-size RGB bind
-E4. Frame interp pack → FrameInterp.mlAvailable — wiring MET; runner unbound (no fake frames)
-E5. Size: remeasured tip 03fb2ea minified unsigned APK **54.80 MB** (the 131.11 MB note does not match that artifact). Release ABI filter (arm64-v8a + armeabi-v7a; debug stays multi-ABI) measured **33.08 MB** (−21.72 MB). Phone MediaPipe JNI stays (~20.0 MB). LiteRT client stays. selfie_segmenter ~244 KB stays in base for vision only. `material-icons-extended` was already absent from dex; dependency removed. ~40 MB bar met by this release APK only. Pack **models** stay out. E4/F1 HOLD
+E4. Frame interp pack → FrameInterp.mlAvailable — HTTPS FILM + LiteRT bind + export NeuralSlowMoMux MET; preview rate/hold; F1 still HOLD
+E5. Size: remeasured tip 03fb2ea minified unsigned APK **54.80 MB** (the 131.11 MB note does not match that artifact). Release ABI filter (arm64-v8a + armeabi-v7a; debug stays multi-ABI) measured **33.08 MB** (−21.72 MB). Phone MediaPipe JNI stays (~20.0 MB). LiteRT client stays. selfie_segmenter ~244 KB stays in base for vision only. `material-icons-extended` was already absent from dex; dependency removed. ~40 MB bar met by this release APK only. Pack **models** stay out. F1 HOLD
 
 ================================================================
 F. R6+ AMBITION (opt-in packs, not base APK)
@@ -80,7 +80,7 @@ F6. Smart-object analog; advanced type; print/PDF
 ================================================================
 G. PLATFORM / UX CHROME (ongoing)
 ================================================================
-G1. Tablet / foldable two-pane — catalog|session MET earlier; session preview|tools (`studio_session_side_tools`) MET 2026-09-25 (`isStudioTwoPane` 840×520)
+G1. Tablet / foldable two-pane — catalog|session MET; session preview|tools (`studio_session_side_tools`) MET 2026-09-25/26 (`isStudioTwoPane` width≥800 × height≥480 — Pixel Tablet 800×500 included; phone landscape stays single-pane)
 G2. ViewModel + Hilt for PhotoSessionScreen / MovieSessionScreen — slider/preview extract COMPLETE 2026-09-25 (graph, tool chrome, and preview baking in Hilt VMs; screens observe; movie players stay on the screen; tool chrome soft-resets on entry, rotation, and tool switch; the edit graph stays)
 G3. Consistent Hilt in StudioApp — MET 2026-09-25 (one `StudioGraphModule`; shell navigates and observes injected engines; composition preview and export workers no longer construct engines)
 G4. Accessibility: 48dp chips, announce selected state — exited with B3. Studio TalkBack chrome (short verbs, "Looks, selected", crop edges, View/Share/Done, Downloaded vs Ready to apply) semantics MET 2026-09-25; device TalkBack stays yellow (`.maestro/YELLOW-talkback-studio.md`)

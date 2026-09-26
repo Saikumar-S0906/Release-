@@ -1,0 +1,33 @@
+appId: com.pixijoy.ai
+---
+# Tablet / expanded: preview | tools side dock (studio_session_side_tools).
+# Run on Pixel_Tablet (~800×500 dp) or any width≥800 and height≥480.
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "home_create"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+- assertVisible:
+    id: "studio_session_side_tools"
+- assertNotVisible:
+    id: "studio_chrome_bar"
+- tapOn:
+    id: "studio_group_color"
+- tapOn:
+    id: "session_selective_hsl"
+- extendedWaitUntil:
+    visible:
+      id: "session_tool_scrim"
+    timeout: 15000
+- assertVisible:
+    id: "hsl_range_reds"
+- assertVisible:
+    id: "session_export"
+- assertVisible:
+    id: "photo_session"

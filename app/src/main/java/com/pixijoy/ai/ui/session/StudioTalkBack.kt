@@ -17,7 +17,7 @@ internal enum class PackTalkBackKind {
 
 /**
  * A verified hosted file is "Downloaded". "Ready to apply" only when the engine is bound.
- * E4 / F1 stay "Coming with pack" until that bind. They have no hosted file to call downloaded.
+ * Hold packs without a bound engine still speak "Coming with pack" (Ready file ≠ neural).
  */
 internal fun packTalkBackKind(
     fileReady: Boolean,

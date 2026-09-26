@@ -1,6 +1,8 @@
 appId: com.pixijoy.ai
 ---
-# D10 — slow-mo / frame-interp contract in movie session
+# D10 — slow-mo / frame-interp contract in movie session.
+# Glass chrome is 280dp — prefer studio_scroll_more when scrollUntilVisible stalls.
+# Avoid waitForAnimationToEnd (ExoPlayer keeps the tree animating).
 - runFlow: ../launch-to-home.yaml
 - tapOn:
     id: "home_open_studio"
@@ -28,20 +30,24 @@ appId: com.pixijoy.ai
     id: "studio_group_effects"
 - tapOn:
     id: "movie_effect_slow"
-- scrollUntilVisible:
-    element:
-      id: "movie_d10_hint"
-    direction: DOWN
-    timeout: 40000
-    visibilityPercentage: 40
-    speed: 40
-- scrollUntilVisible:
-    element:
+- repeat:
+    times: 12
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_slowmo_presets"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
       id: "movie_slowmo_presets"
-    direction: DOWN
     timeout: 20000
-    visibilityPercentage: 30
-    speed: 40
+- assertVisible:
+    id: "movie_d10_hint"
 - assertVisible:
     id: "movie_slowmo_off"
 - assertVisible:
@@ -52,28 +58,58 @@ appId: com.pixijoy.ai
     id: "movie_slowmo_eighth"
 - tapOn:
     id: "movie_slowmo_quarter"
-- scrollUntilVisible:
-    element:
+- repeat:
+    times: 12
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_slowmo_engines"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
       id: "movie_slowmo_engines"
-    direction: DOWN
     timeout: 20000
-    visibilityPercentage: 30
-    speed: 40
 - assertVisible:
     id: "movie_slowmo_heuristic"
 - assertVisible:
     id: "movie_slowmo_ml"
-- scrollUntilVisible:
-    element:
+- repeat:
+    times: 8
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_slowmo_resolved"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
       id: "movie_slowmo_resolved"
-    direction: DOWN
-    timeout: 20000
-    visibilityPercentage: 40
-    speed: 40
+    timeout: 15000
 - assertVisible:
     id: "movie_slowmo_resolved"
 - tapOn:
     id: "movie_slowmo_ml"
+- repeat:
+    times: 8
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_slowmo_pack_status"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
 - assertVisible:
     id: "movie_slowmo_pack_status"
 - assertVisible:

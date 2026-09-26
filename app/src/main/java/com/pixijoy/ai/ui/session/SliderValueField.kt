@@ -70,6 +70,9 @@ internal fun SliderValueField(
         // The tap that opened the field can clear focus in this frame. Arm after that settles.
         withFrameNanos { }
         withFrameNanos { }
+        withFrameNanos { }
+        withFrameNanos { }
+        kotlinx.coroutines.delay(120)
         focusRequester.requestFocus()
         keyboard?.show()
         armed = true

@@ -1401,10 +1401,7 @@ private fun ToolBody(
 
             SessionMode.SelectiveHsl -> {
                 StudioHint(stringResource(R.string.studio_selective_hsl_hint), "session_selective_hsl_hint")
-                Row(
-                    modifier = Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
+                StudioHScrollRow {
                     SelectiveHslRange.values().forEach { range ->
                         FormatChip(
                             label = stringResource(
@@ -1731,6 +1728,7 @@ private fun SkyToolPanel(
 
 @Composable
 private fun FormatChip(label: String, selected: Boolean, tag: String, onClick: () -> Unit) {
+    val spoken = talkBackName(label, selected, stringResource(R.string.a11y_selected))
     Text(
         label,
         color = PixiText,
@@ -1742,7 +1740,7 @@ private fun FormatChip(label: String, selected: Boolean, tag: String, onClick: (
             .clickable(onClick = onClick)
             .testTag(tag)
             .semantics {
-                contentDescription = label
+                contentDescription = spoken
                 role = Role.RadioButton
                 this.selected = selected
             }

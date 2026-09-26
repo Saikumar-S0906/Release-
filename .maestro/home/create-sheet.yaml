@@ -1,22 +1,26 @@
 ﻿appId: com.pixijoy.ai
 ---
-# Create → source sheet. The sheet sets testTagsAsResourceId, but this flow stays
-# on visible text until a device hierarchy dump shows the resource-ids.
-# Do not treat the commented id asserts as green.
+# Create → source sheet. Sheet sets testTagsAsResourceId; assert ids + labels.
 - runFlow: ../launch-to-home.yaml
 - assertVisible:
     id: "home_create"
 - tapOn:
     id: "home_create"
 - extendedWaitUntil:
-    visible: "Try a sample"
+    visible:
+      id: "create_source_sheet"
     timeout: 20000
+- assertVisible:
+    id: "create_source_sheet_body"
+- assertVisible:
+    id: "source_photo"
+- assertVisible:
+    id: "source_video"
+- assertVisible:
+    id: "source_camera"
+- assertVisible:
+    id: "source_sample"
 - assertVisible: "Photo"
 - assertVisible: "Video"
 - assertVisible: "Camera"
 - assertVisible: "Try a sample"
-# Soft when Dialog tags merge:
-# - assertVisible:
-#     id: "create_source_sheet"
-# - assertVisible:
-#     id: "source_sample"

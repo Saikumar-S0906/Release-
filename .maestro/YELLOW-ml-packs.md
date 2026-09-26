@@ -1,13 +1,17 @@
 # YELLOW / manual — Play Feature Delivery pack install
 
-Maestro cannot drive Play Store module download or a system file picker sideload. No device or Maestro pass is recorded here.
+Maestro cannot drive Play Store module download or a system file picker sideload. Those stay manual.
 
 Manual:
 
 1. Photo Fill / Super-res / Denoise, or Movie Slow-mo / Track
-2. Super-res and Denoise Missing shows **Download** on `empty_packs`. Fill (Inpaint) has no hosted weight, so Missing shows **Install from file**, not Download. Slow-mo / Track are HOLD and use that same sideload plate.
+2. Super-res, Denoise, and FrameInterp Missing show **Download** on `empty_packs`. Fill (Inpaint) and Track have no hosted weight, so Missing shows **Install from file**, not Download.
 3. On a Play-installed build, confirm a Play module only for packs that ship one. This APK does not ship inpaint, interp, or track weights.
-4. On a sideload APK or emulator, tap **Download** only for Super-res and Denoise. Super-res fetches the pinned distilled ESRGAN; Denoise fetches the pinned Raspberry Pi UNet. Checksum failure stays Failed, not Ready. Inpaint has no HTTPS pin and no Download button: **Install from file** or copy `inpaint.tflite` into `filesDir/ml_incoming/`. Slow-mo / Track have no hosted weight (HOLD). Do not invent a URL or SHA for them.
-5. Super-res / Denoise: status “Downloaded and verified (Ready)” still leaves Apply off. Apply turns on only when the status says “Neural ready” (`PackRuntime.engineReady`). A missing LiteRT init or a contract miss keeps Apply off and does not relabel the photo as bicubic or blur. Fill: “Installed and verified (Ready)” is the sideloaded file only. Nearby-pixel Apply stays on and is not neural. Neural Apply stays off until the status says the sideloaded model is bound (`PackRuntime.engineReady(Inpaint)` after an RGB+mask FLOAT32 bind). Slow-mo / Track controls stay disabled and say “Coming with pack” until `engineReady`. They do not say “Neural ready” or “Downloaded”. Frame hold is not neural. Device steps, with no recorded pass: `docs/R5_ML_PACKS.md`.
+4. On a sideload APK or emulator, tap **Download** for Super-res, Denoise, or Slow-mo (FrameInterp FILM ~67 MB). Checksum failure stays Failed, not Ready. Inpaint and Track have no HTTPS pin: **Install from file** or copy into `filesDir/ml_incoming/`. Do not invent a Track URL.
+5. Super-res / Denoise: status “Downloaded and verified (Ready)” still leaves Apply off until “Neural ready”. FrameInterp: after Download, LiteRT may bind FILM (FLOAT32 512) → neural Slow-mo chip unlocks (`engineReady`). Export with Neural frames synthesizes mid-frames; preview stays rate/hold. Fill neural Apply waits on `engineReady(Inpaint)`. Track stays locked. Device measure: `scripts/measure_pack_memory.ps1`.
 
-Automated: `.maestro/packs/fill-pack-status.yaml` and `.maestro/packs/empty-packs.yaml` assert Fill’s sideload plate (Install from file, no Download) and the nearby-pixel Apply. They do not claim `engineReady`. `.maestro/packs/superres-denoise.yaml` and `.maestro/movie/f1-track-roto.yaml` assert pack chrome. `empty-packs.yaml` checks the `empty_packs` plate while Inpaint is Missing and does not install a model.
+Automated (Pixel_7a `emulator-5556`, 2026-09-25): **green** —
+- `empty-packs`, `fill-pack-status`, `superres-denoise`, `d10-slowmo-interp`, `f1-track-roto`
+- `.maestro/packs/e4-frame-interp-download.yaml` — FILM Download (~67 MB) → `movie_slowmo_pack_status` + `movie_slowmo_ml`
+
+Flows use `studio_scroll_more` / `studio_hscroll_more` under 280dp glass. H-scroll fade is tappable (scrolls chips).

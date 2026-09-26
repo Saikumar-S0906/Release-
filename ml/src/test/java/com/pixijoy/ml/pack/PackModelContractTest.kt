@@ -55,6 +55,35 @@ class PackModelContractTest {
         assertFalse(PackModelContract.isDenoiseSameRgb(intArrayOf(1, 180, 320, 3), intArrayOf(1, 720, 1280, 3)))
         assertNull(PackModelContract.superResScale(intArrayOf(1, 256, 256, 3), intArrayOf(1, 256, 256, 3)))
     }
+
+    @Test
+    fun frameInterp_acceptsFilmStyleGraph() {
+        val time = intArrayOf(1, 1)
+        val a = intArrayOf(1, 512, 512, 3)
+        val b = intArrayOf(1, 512, 512, 3)
+        val outs = listOf(
+            intArrayOf(1, 512, 512, 2),
+            intArrayOf(1, 512, 512, 3)
+        )
+        assertTrue(PackModelContract.isFrameInterpFilm(time, a, b, outs))
+        assertFalse(PackModelContract.isFrameInterpFilm(intArrayOf(1), a, b, outs))
+        assertFalse(
+            PackModelContract.isFrameInterpFilm(
+                time,
+                intArrayOf(1, 256, 256, 3),
+                b,
+                outs
+            )
+        )
+        assertFalse(
+            PackModelContract.isFrameInterpFilm(
+                time,
+                a,
+                b,
+                listOf(intArrayOf(1, 512, 512, 2))
+            )
+        )
+    }
 }
 
 class PackDownloaderTest {

@@ -1,0 +1,44 @@
+appId: com.pixijoy.ai
+---
+# Crop overlay + edge nodes + drag toward right edge (snap math is unit-tested).
+# Asserts chrome/a11y tags; does not claim haptic or pixel snap green from Maestro.
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "home_create"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+- tapOn:
+    id: "studio_group_crop"
+- extendedWaitUntil:
+    visible:
+      id: "session_crop_overlay"
+    timeout: 15000
+- assertVisible: "Crop edge, left"
+- assertVisible: "Crop edge, right"
+- assertVisible: "Crop edge, top"
+- assertVisible: "Crop edge, bottom"
+- assertVisible:
+    id: "crop_edge_right"
+- swipe:
+    from:
+      id: "crop_edge_right"
+    direction: RIGHT
+    duration: 400
+- assertVisible:
+    id: "session_crop_overlay"
+- assertVisible:
+    id: "session_apply_crop"
+- tapOn:
+    id: "session_apply_crop"
+- extendedWaitUntil:
+    visible:
+      id: "session_export"
+    timeout: 30000
+- assertVisible:
+    id: "session_export"

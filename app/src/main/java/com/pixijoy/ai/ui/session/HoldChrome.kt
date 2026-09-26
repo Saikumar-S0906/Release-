@@ -3,8 +3,8 @@ package com.pixijoy.ai.ui.session
 import com.pixijoy.ml.pack.PackId
 
 /**
- * E4 frame-interp and F1 track chrome while [com.pixijoy.ml.PackLiteRt] leaves
- * those engines as Unit. Neural wording is only [HoldControl.NeuralFrames].
+ * E4 frame-interp and F1 track chrome. FrameInterp unlocks when LiteRT binds FILM;
+ * Track stays unbound (no artifact). Neural wording is only [HoldControl.NeuralFrames].
  * Frame hold is a separate control and is never that chip.
  */
 internal sealed class HoldControl {

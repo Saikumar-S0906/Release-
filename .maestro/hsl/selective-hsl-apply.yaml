@@ -1,7 +1,7 @@
 ﻿appId: com.pixijoy.ai
 ---
 # Selective HSL under glass scrim — PhotoOp.SelectiveHsl / graph A
-# Create Dialog: use text (testTags not in a11y). Band row may need horizontal scroll.
+# Band row is StudioHScrollRow — tap studio_hscroll_more for Magentas.
 - runFlow: ../launch-to-home.yaml
 - tapOn:
     id: "home_create"
@@ -24,21 +24,41 @@
 - assertVisible:
     id: "photo_session"
 - assertVisible:
-    id: "session_export"
-- assertVisible:
     id: "hsl_range_reds"
 - assertVisible:
     id: "hsl_range_greens"
-- scrollUntilVisible:
-    element:
+- repeat:
+    times: 12
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_hscroll_more"
+            notVisible:
+              id: "hsl_range_magentas"
+          commands:
+            - tapOn:
+                id: "studio_hscroll_more"
+- extendedWaitUntil:
+    visible:
       id: "hsl_range_magentas"
-    direction: RIGHT
     timeout: 15000
-    visibilityPercentage: 40
 - assertVisible:
     id: "hsl_range_magentas"
 - tapOn:
     id: "hsl_range_greens"
+- repeat:
+    times: 10
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "session_apply_selective_hsl"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
 - assertVisible:
     id: "session_apply_selective_hsl"
 - tapOn:

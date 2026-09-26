@@ -1,6 +1,9 @@
 appId: com.pixijoy.ai
 ---
-# F1 tracking / roto-lite contract in movie session
+# F1 tracking / roto-lite contract in movie session.
+# Track sits under the effects h-scroll fade — tap studio_hscroll_more until the
+# chip speaks "Track, selected", then reveal the locked plate with vertical More.
+# Hint can scroll off after More; assert it before the locked-row scroll.
 - runFlow: ../launch-to-home.yaml
 - tapOn:
     id: "home_open_studio"
@@ -26,15 +29,40 @@ appId: com.pixijoy.ai
     timeout: 90000
 - tapOn:
     id: "studio_group_effects"
-- tapOn:
-    id: "movie_effect_track"
-- scrollUntilVisible:
-    element:
+- repeat:
+    times: 8
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_hscroll_more"
+            notVisible: "Track, selected"
+          commands:
+            - tapOn:
+                id: "studio_hscroll_more"
+            - tapOn:
+                id: "movie_effect_track"
+- extendedWaitUntil:
+    visible: "Track, selected"
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
       id: "movie_f1_hint"
-    direction: DOWN
-    timeout: 40000
-    visibilityPercentage: 40
-    speed: 40
+    timeout: 10000
+- assertVisible:
+    id: "movie_f1_hint"
+- repeat:
+    times: 12
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_track_locked"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
 - assertVisible:
     id: "movie_track_pack_status"
 - assertVisible:

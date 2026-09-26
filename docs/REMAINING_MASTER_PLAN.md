@@ -5,7 +5,7 @@
 **Branch:** land on `origin/next` after review-clear.  
 **Excluded:** Section A (done/exited) — do not reopen.
 
-**Snapshot (2026-09-25):** **Wave B EXITED** · **Wave C EXITED** · **D1–D11 MET** · Wave D EXITED. Live: **E pack runtime + Super-res/Denoise HTTPS LiteRT + inpaint sideload bind**. E4/F1 runners stay unbound pending Architect artifact + SHA. G2 slider/preview extract complete.
+**Snapshot (2026-09-25):** **Wave B EXITED** · **Wave C EXITED** · **D1–D11 MET** · Wave D EXITED. Live: **E pack runtime + Super-res/Denoise HTTPS LiteRT + inpaint sideload bind + E4 FILM bind/export mux**. F1 runner stays unbound pending Architect artifact + SHA. G2 slider/preview extract complete.
 
 ```
 B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5 ML packs) ──▶ F (R6+ opt-in)
@@ -102,7 +102,7 @@ Then:
 | **E1** | Inpaint / generative fill | C3 + pack foundation | Missing CTA is Install from file (no HTTPS pin, no Download). Ready file ≠ neural. Neural Apply uses `engineReady` after RGB+mask FLOAT32 sideload bind. Nearby-pixel Telea stays on and is not neural |
 | **E2** | Super-resolution | Pack runtime | Graph `SR`; HTTPS ESRGAN SHA pin → Ready → FLOAT32 2×/4× NHWC → LiteRT. Apply uses `engineReady` (Ready alone is not neural) |
 | **E3** | Denoise | Same runtime | Graph `N`; HTTPS UNet SHA pin → Ready → FLOAT32 same-size RGB → LiteRT. Apply uses `engineReady` |
-| **E4** | Frame interpolation | D10 + pack runtime | `FrameInterp.mlAvailable` ← pack engine; D10 CTA. **HOLD** — runner not bound; no artifact, URL, or SHA yet |
+| **E4** | Frame interpolation | D10 + pack runtime | `FrameInterp.mlAvailable` ← pack engine; D10 CTA. **MET** — HTTPS FILM pin + LiteRT bind + export `NeuralSlowMoMux`. Preview stays rate/hold. |
 
 ---
 

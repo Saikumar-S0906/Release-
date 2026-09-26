@@ -1,0 +1,45 @@
+appId: com.pixijoy.ai
+---
+# Phone landscape (short height): single-pane glass, not tablet side dock.
+# Drive size from the host before this flow, e.g.:
+#   adb shell wm size 2400x1080
+# Maestro 2.10 on this machine has no setOrientation — restore with wm size reset after.
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "home_create"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 60000
+- assertVisible:
+    id: "studio_chrome_bar"
+- assertNotVisible:
+    id: "studio_session_side_tools"
+- tapOn:
+    id: "studio_group_light"
+- tapOn:
+    id: "session_light_exposure"
+- repeat:
+    times: 10
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "session_slider_value"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
+      id: "session_slider_value"
+    timeout: 15000
+- assertVisible:
+    id: "session_export"
+- assertVisible:
+    id: "photo_session"

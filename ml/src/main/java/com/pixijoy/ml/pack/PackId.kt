@@ -47,6 +47,19 @@ object PackCatalog {
     const val DENOISE_DOWNLOAD_SHA256 =
         "53f0112f248b18ae518af64942ea4741f5b22ccdc4af5aea0ff452875f17fb84"
 
+    /**
+     * FILM style frame-interp TFLite (Apache-2.0 lineage via Google FILM), ~67 MB,
+     * float16-quantized 512 path from the community Unity conversion.
+     * On-demand only — never in the base APK. PackLiteRt binds when LiteRT is up
+     * and [PackModelContract.isFrameInterpFilm] accepts the graph (pinned FILM is
+     * FLOAT32 512×512 despite the float16 filename). Ready alone is not neural.
+     * https://github.com/egemenertugrul/frame-interpolation-tflite-unity
+     */
+    const val FRAME_INTERP_DOWNLOAD_URL =
+        "https://raw.githubusercontent.com/egemenertugrul/frame-interpolation-tflite-unity/main/FILM_TFLite_UnityProject/Assets/StreamingAssets/model_512_quant_float16.tflite"
+    const val FRAME_INTERP_DOWNLOAD_SHA256 =
+        "3a201916658277ed6e7626d93a6ee117a47b04bc1986579600a90feabfe05eb4"
+
     fun spec(id: PackId): PackSpec = when (id) {
         PackId.Inpaint -> PackSpec(id, VERSION, "inpaint.tflite", "ml_inpaint")
         PackId.SuperRes -> PackSpec(
@@ -65,8 +78,16 @@ object PackCatalog {
             downloadUrl = DENOISE_DOWNLOAD_URL,
             downloadSha256 = DENOISE_DOWNLOAD_SHA256
         )
-        // HOLD: no download URL or SHA until Architect publishes a real artifact.
-        PackId.FrameInterp -> PackSpec(id, VERSION, "interp.tflite", "ml_interp")
+        PackId.FrameInterp -> PackSpec(
+            id,
+            VERSION,
+            "interp.tflite",
+            "ml_interp",
+            downloadUrl = FRAME_INTERP_DOWNLOAD_URL,
+            downloadSha256 = FRAME_INTERP_DOWNLOAD_SHA256
+        )
+        // HOLD: no public LiteRT point-tracker TFLite pin yet (GOTURN/RAFT are
+        // Caffe/PyTorch). Sideload Install from file only until Architect publishes.
         PackId.Track -> PackSpec(id, VERSION, "track.tflite", "ml_track")
     }
 

@@ -1,6 +1,6 @@
 ﻿appId: com.pixijoy.ai
 ---
-# Curves grade path — editor rail
+# Curves grade path — editor rail + numeric value entry (StudioValueSlider).
 - runFlow: ../launch-to-home.yaml
 - tapOn:
     id: "nav_create"
@@ -42,6 +42,49 @@
     visibilityPercentage: 40
 - assertVisible:
     id: "curve_4"
+- tapOn:
+    id: "curve_2"
+- repeat:
+    times: 8
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "session_slider_value"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
+      id: "session_slider_value"
+    timeout: 10000
+- tapOn:
+    id: "session_slider_value"
+- extendedWaitUntil:
+    visible:
+      id: "session_slider_value_field"
+    timeout: 15000
+- eraseText: 8
+- inputText: "0.55"
+- pressKey: Enter
+- repeat:
+    times: 10
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "session_apply_curves"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
+      id: "session_apply_curves"
+    timeout: 15000
 - assertVisible:
     id: "session_apply_curves"
 - tapOn:

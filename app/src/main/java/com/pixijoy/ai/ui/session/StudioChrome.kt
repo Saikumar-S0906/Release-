@@ -1,10 +1,9 @@
 package com.pixijoy.ai.ui.session
 
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,12 +33,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -48,6 +52,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -57,11 +63,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pixijoy.ai.R
+import com.pixijoy.ai.ui.studioGlassMaxDp
 import com.pixijoy.designsystem.PixiAccent
 import com.pixijoy.designsystem.PixiBg
 import com.pixijoy.designsystem.PixiError
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
+import kotlinx.coroutines.launch
 
 enum class PhotoGroup(val tag: String) {
     Crop("studio_group_crop"),
@@ -109,6 +117,8 @@ fun StudioChromeBar(
     Column(
         modifier
             .then(if (sideDock) Modifier.width(360.dp).fillMaxHeight() else Modifier.fillMaxWidth())
+            // Edge-to-edge + adjustResize: lift glass above the IME so tap-to-type stays visible.
+            .imePadding()
             .background(
                 if (sideDock) {
                     Brush.horizontalGradient(
@@ -228,8 +238,9 @@ fun StudioTopChrome(
 }
 
 /**
- * Tall enough that common groups fit; when content still overflows, a bottom fade
- * and chevron tell the user to scroll. Glass stays translucent so the picture reads through.
+ * Tall enough that dense groups (Compose / Edit) usually fit without crushing
+ * controls under the rail. When content still overflows, a bottom fade and
+ * tappable “More ⌄” scrolls the panel. Glass stays translucent so the picture reads through.
  */
 @Composable
 fun StudioFrostedPanel(
@@ -240,10 +251,14 @@ fun StudioFrostedPanel(
 ) {
     val scroll = remember(scrollKey) { ScrollState(0) }
     val moreBelow = scroll.maxValue > 0 && scroll.value < scroll.maxValue
+    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val pagePx = with(density) { 96.dp.roundToPx() }
+    val glassMax = studioGlassMaxDp(LocalConfiguration.current.screenHeightDp).dp
     Box(
         modifier
             .fillMaxWidth()
-            .then(if (expanded) Modifier.fillMaxHeight() else Modifier.heightIn(max = 220.dp))
+            .then(if (expanded) Modifier.fillMaxHeight() else Modifier.heightIn(max = glassMax))
             .clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
             .background(Color.Black.copy(alpha = 0.40f))
             .testTag("session_tool_scrim")
@@ -253,7 +268,7 @@ fun StudioFrostedPanel(
                 .fillMaxWidth()
                 .verticalScroll(scroll)
                 .padding(horizontal = 14.dp, vertical = 10.dp)
-                .padding(bottom = if (moreBelow) 18.dp else 0.dp),
+                .padding(bottom = if (moreBelow) 36.dp else 0.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
             content = content
         )
@@ -263,24 +278,36 @@ fun StudioFrostedPanel(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .height(32.dp)
+                    .height(40.dp)
                     .background(
                         Brush.verticalGradient(
                             0f to Color.Transparent,
-                            1f to Color.Black.copy(alpha = 0.72f)
+                            1f to Color.Black.copy(alpha = 0.78f)
                         )
                     )
+                    .clickable(
+                        onClickLabel = more,
+                        onClick = {
+                            scope.launch {
+                                val next = (scroll.value + pagePx).coerceAtMost(scroll.maxValue)
+                                scroll.animateScrollTo(next)
+                            }
+                        }
+                    )
                     .testTag("studio_scroll_more")
-                    .semantics { contentDescription = more },
+                    .semantics {
+                        role = Role.Button
+                        contentDescription = more
+                    },
                 contentAlignment = Alignment.BottomCenter
             ) {
                 Text(
                     more,
-                    color = PixiText.copy(alpha = 0.9f),
+                    color = PixiText.copy(alpha = 0.95f),
                     fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.SemiBold,
                     modifier = Modifier
-                        .padding(bottom = 4.dp)
+                        .padding(bottom = 6.dp)
                         .clearAndSetSemantics { }
                 )
             }
@@ -322,6 +349,9 @@ fun StudioHScrollRow(
         }
         if (moreEnd) {
             val more = stringResource(R.string.studio_scroll_more)
+            val scope = rememberCoroutineScope()
+            val density = LocalDensity.current
+            val pagePx = with(density) { 72.dp.roundToPx() }
             Box(
                 Modifier
                     .align(Alignment.CenterEnd)
@@ -333,8 +363,20 @@ fun StudioHScrollRow(
                             1f to Color.Black.copy(alpha = 0.55f)
                         )
                     )
+                    .clickable(
+                        onClickLabel = more,
+                        onClick = {
+                            scope.launch {
+                                val next = (scroll.value + pagePx).coerceAtMost(scroll.maxValue)
+                                scroll.animateScrollTo(next)
+                            }
+                        }
+                    )
                     .testTag("studio_hscroll_more")
-                    .semantics { contentDescription = more }
+                    .semantics {
+                        role = Role.Button
+                        contentDescription = more
+                    }
             )
         }
     }
@@ -425,7 +467,8 @@ fun StudioChip(label: String, selected: Boolean, tag: String, onClick: () -> Uni
 fun StudioHint(text: String, tag: String? = null) {
     Text(
         text,
-        color = PixiTextMuted,
+        // Slightly brighter than PixiTextMuted so one-line tool hints read on glass.
+        color = PixiText.copy(alpha = 0.78f),
         fontSize = 12.sp,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
@@ -471,7 +514,6 @@ fun StudioApplyButton(
  * Long-press resets to [defaultValue]. A value that does not parse is left unchanged.
  * When [showLabel] is false the chip row already names the control.
  */
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun StudioValueSlider(
     label: String,
@@ -517,17 +559,19 @@ fun StudioValueSlider(
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .heightIn(min = 48.dp)
-                    .combinedClickable(
-                        onClickLabel = editLabel,
-                        onLongClickLabel = resetLabel,
-                        onLongClick = {
+                    .testTag("session_slider_value")
+                    .semantics {
+                        contentDescription = spokenValue
+                        onLongClick(label = resetLabel) {
                             onChange(defaultValue)
                             onSettled()
-                        },
+                            true
+                        }
+                    }
+                    .clickable(
+                        onClickLabel = editLabel,
                         onClick = { editing = true }
                     )
-                    .testTag("session_slider_value")
-                    .semantics { contentDescription = spokenValue }
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             )
         }

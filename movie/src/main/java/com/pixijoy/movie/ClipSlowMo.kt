@@ -10,8 +10,8 @@ import kotlin.math.abs
  *
  * [rate] is playback rate relative to 1× (0.125..1). [engine] selects how in-between
  * frames are produced: [SlowMoEngine.Heuristic] is the D10 default (Media3 speed /
- * frame-hold); [SlowMoEngine.Ml] is reserved for the E4 pack and falls back to
- * heuristic until that pack is installed ([FrameInterp.mlAvailable]).
+ * frame-hold); [SlowMoEngine.Ml] uses the E4 FILM pack when bound (export mux) and
+ * falls back to heuristic when the pack is missing ([FrameInterp.mlAvailable]).
  */
 data class ClipSlowMo(
     val rate: Float = 1f,
@@ -75,7 +75,7 @@ data class ClipSlowMo(
 enum class SlowMoEngine {
     None,
     Heuristic,
-    /** Reserved for E4 ML pack — resolves to Heuristic until pack is available. */
+    /** E4 ML pack — resolves to Heuristic until FILM LiteRT is bound. */
     Ml;
 
     fun encode(): String = name.lowercase()

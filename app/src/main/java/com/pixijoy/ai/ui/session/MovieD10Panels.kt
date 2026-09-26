@@ -48,7 +48,10 @@ fun MovieSlowMoPanel(
     val coming = stringResource(R.string.studio_hold_coming)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            stringResource(R.string.studio_movie_d10_hint),
+            stringResource(
+                if (mlReady) R.string.studio_movie_d10_hint_ready
+                else R.string.studio_movie_d10_hint
+            ),
             color = PixiTextMuted,
             modifier = Modifier.testTag("movie_d10_hint")
         )

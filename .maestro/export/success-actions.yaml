@@ -1,6 +1,7 @@
 ﻿appId: com.pixijoy.ai
 ---
-# R3.1 Export: quality chips + success View/Share/Done (stub until tags land)
+# Export sheet → confirm → success actions (View / Share / Done) + rename affordance.
+# Sample photo export is fast on emu; long timeout for worker.
 - runFlow: ../launch-to-home.yaml
 - tapOn:
     id: "home_create"
@@ -20,20 +21,17 @@
     timeout: 20000
 - assertVisible:
     id: "export_sheet_confirm"
-# - assertVisible:
-#     id: "export_quality_balanced"
-# - assertVisible:
-#     id: "export_quality_high"
-# - assertVisible:
-#     id: "export_quality_maximum"
-# - assertVisible: "Remove location from exported photo"
-# - tapOn:
-#     id: "export_sheet_confirm"
-# - extendedWaitUntil:
-#     visible:
-#       id: "export_done"
-#     timeout: 120000
-# - assertVisible:
-#     id: "export_view"
-# - assertVisible:
-#     id: "export_share"
+- tapOn:
+    id: "export_sheet_confirm"
+- extendedWaitUntil:
+    visible:
+      id: "export_done"
+    timeout: 180000
+- assertVisible:
+    id: "export_view"
+- assertVisible:
+    id: "export_share"
+- assertVisible:
+    id: "export_done"
+- assertVisible:
+    id: "export_rename"

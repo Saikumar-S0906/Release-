@@ -1,6 +1,7 @@
 ﻿appId: com.pixijoy.ai
 ---
-# Seeded Layers hub — panel present without blur seed
+# Seeded Layers hub — panel present without blur seed.
+# Visibility sits under studio_scroll_more in the 280dp glass.
 - runFlow: ../launch-to-home.yaml
 - tapOn:
     id: "nav_create"
@@ -22,6 +23,22 @@
     visible:
       id: "layers_panel"
     timeout: 20000
+- repeat:
+    times: 12
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "layer_visibility"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
+      id: "layer_visibility"
+    timeout: 15000
 - assertVisible:
     id: "layer_visibility"
 - tapOn:

@@ -232,9 +232,172 @@ class Media3MovieEngine : MovieEngine {
         timeline: MultiTrackTimeline,
         cache: File,
         onProgress: (Float) -> Unit
-    ): AppResult<Unit> = withContext(Dispatchers.Main) {
-        startTransformer(context, composition(paths, timeline), cache, onProgress)
+    ): AppResult<Unit> {
+        val prepared = prepareNeuralSlowMo(context, paths, timeline) { p ->
+            onProgress((p * 0.35f).coerceIn(0f, 0.35f))
+        }
+        return try {
+            withContext(Dispatchers.Main) {
+                startTransformer(
+                    context,
+                    composition(prepared.paths, prepared.timeline),
+                    cache
+                ) { p -> onProgress(0.35f + p * 0.65f) }
+            }
+        } finally {
+            prepared.temps.forEach { it.delete() }
+        }
     }
+
+    /**
+     * When a clip requests [SlowMoEngine.Ml] and FILM is bound, synthesize stretched
+     * mid-frames and clear slow-mo so Transformer does not also frame-hold. Failure
+     * leaves the clip unchanged (heuristic Media3 rate path).
+     */
+    private suspend fun prepareNeuralSlowMo(
+        context: Context,
+        paths: List<String>,
+        timeline: MultiTrackTimeline,
+        onProgress: (Float) -> Unit
+    ): NeuralExportPrep = withContext(Dispatchers.Default) {
+        if (!FrameInterp.mlAvailable()) {
+            return@withContext NeuralExportPrep(paths, timeline, emptyList())
+        }
+        val mt = timeline.ensureDefaultTracks()
+        val neuralClips = mt.composedVideoClips().count {
+            it.slowMo.resolvedEngine() == SlowMoEngine.Ml
+        }
+        if (neuralClips == 0) {
+            return@withContext NeuralExportPrep(paths, timeline, emptyList())
+        }
+        val pathList = paths.toMutableList()
+        val temps = ArrayList<File>()
+        var done = 0
+        val nextTracks = mt.tracks.map { track ->
+            if (track.kind != TrackKind.Video) return@map track
+            track.copy(
+                clips = track.clips.map { clip ->
+                    if (clip.slowMo.resolvedEngine() != SlowMoEngine.Ml) return@map clip
+                    val source = paths.getOrElse(clip.mediaIndex) { paths.first() }
+                    val duration = durationMs(source)
+                    val (start, end) = MovieTrim.normalize(clip.inMs, clip.outMs, duration)
+                    val rate = MovieSpeed.normalizeSlowMo(clip.slowMo.rate)
+                    val outMs = MovieSpeed.outputDurationMs((end - start).coerceAtLeast(1), rate)
+                    val silent = File(
+                        context.cacheDir,
+                        "neural-silent-${System.currentTimeMillis()}-${clip.id}.mp4"
+                    )
+                    val mixed = File(
+                        context.cacheDir,
+                        "neural-mix-${System.currentTimeMillis()}-${clip.id}.mp4"
+                    )
+                    val synth = NeuralSlowMoMux.synthesize(
+                        path = source,
+                        startMs = start,
+                        endMs = end,
+                        rate = rate,
+                        output = silent,
+                        height = mt.outputHeight
+                    ) { p ->
+                        onProgress((done + p) / neuralClips.toFloat())
+                    }
+                    if (synth !is AppResult.Ok) {
+                        silent.delete()
+                        done++
+                        onProgress(done / neuralClips.toFloat())
+                        return@map clip
+                    }
+                    temps += silent
+                    val finalFile = if (clip.muted) {
+                        silent
+                    } else {
+                        val remuxed = remuxNeuralAudio(
+                            context = context,
+                            silentVideo = silent,
+                            sourcePath = source,
+                            startMs = start,
+                            endMs = end,
+                            rate = rate,
+                            outputDurationMs = outMs,
+                            output = mixed
+                        )
+                        if (remuxed is AppResult.Ok) {
+                            silent.delete()
+                            temps.remove(silent)
+                            temps += mixed
+                            mixed
+                        } else {
+                            mixed.delete()
+                            silent
+                        }
+                    }
+                    val mediaIndex = pathList.size
+                    pathList += finalFile.absolutePath
+                    done++
+                    onProgress(done / neuralClips.toFloat())
+                    clip.copy(
+                        mediaIndex = mediaIndex,
+                        inMs = 0L,
+                        outMs = outMs,
+                        speed = 1f,
+                        speedEnd = 1f,
+                        slowMo = ClipSlowMo.None,
+                        muted = clip.muted
+                    )
+                }
+            )
+        }
+        NeuralExportPrep(pathList, mt.copy(tracks = nextTracks), temps)
+    }
+
+    private suspend fun remuxNeuralAudio(
+        context: Context,
+        silentVideo: File,
+        sourcePath: String,
+        startMs: Long,
+        endMs: Long,
+        rate: Float,
+        outputDurationMs: Long,
+        output: File
+    ): AppResult<Unit> = withContext(Dispatchers.Main) {
+        val videoItem = EditedMediaItem.Builder(MediaItem.fromUri(Uri.fromFile(silentVideo)))
+            .setDurationUs(outputDurationMs.coerceAtLeast(1) * 1000)
+            .setRemoveAudio(true)
+            .build()
+        val audioMedia = MediaItem.Builder()
+            .setUri(Uri.fromFile(File(sourcePath)))
+            .setClippingConfiguration(
+                MediaItem.ClippingConfiguration.Builder()
+                    .setStartPositionMs(startMs)
+                    .setEndPositionMs(endMs)
+                    .build()
+            )
+            .build()
+        val sonic = SonicAudioProcessor().apply {
+            setSpeed(rate)
+            setPitch(1f)
+        }
+        val audioItem = EditedMediaItem.Builder(audioMedia)
+            .setRemoveVideo(true)
+            .setDurationUs(outputDurationMs.coerceAtLeast(1) * 1000)
+            .setEffects(Effects(listOf(sonic), emptyList()))
+            .build()
+        val composition = Composition.Builder(
+            listOf(
+                EditedMediaItemSequence.Builder(listOf(videoItem)).build(),
+                EditedMediaItemSequence.Builder(listOf(audioItem)).build()
+            )
+        )
+            .experimentalSetForceAudioTrack(true)
+            .build()
+        startTransformer(context, composition, output) { }
+    }
+
+    private data class NeuralExportPrep(
+        val paths: List<String>,
+        val timeline: MultiTrackTimeline,
+        val temps: List<File>
+    )
 
     private fun videoItem(paths: List<String>, clip: TimelineClip): EditedMediaItem {
         val path = paths.getOrElse(clip.mediaIndex) { paths.first() }

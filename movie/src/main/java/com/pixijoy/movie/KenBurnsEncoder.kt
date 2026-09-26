@@ -185,7 +185,7 @@ internal class KenBurnsEncoder {
     }
 }
 
-private fun fillYuv(image: Image, bitmap: Bitmap) {
+internal fun fillYuv(image: Image, bitmap: Bitmap) {
     val width = image.width
     val height = image.height
     val argb = IntArray(width * height)
@@ -224,7 +224,7 @@ private fun fillYuv(image: Image, bitmap: Bitmap) {
     }
 }
 
-private fun bitmapToNv12(bitmap: Bitmap): ByteArray {
+internal fun bitmapToNv12(bitmap: Bitmap): ByteArray {
     val width = bitmap.width
     val height = bitmap.height
     val argb = IntArray(width * height)

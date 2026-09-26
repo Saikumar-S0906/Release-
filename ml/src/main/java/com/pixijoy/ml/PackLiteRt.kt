@@ -21,7 +21,8 @@ import org.tensorflow.lite.InterpreterApi
  * Builds a real Play-services interpreter when a pack file is Ready, the SHA-256
  * matches, and [PackModelContract] accepts the graph. Does not register by itself.
  * [PackFeatureEntry] registers the engine after SplitCompat. A miss releases the
- * capability. Frame-interp and track are not bound. Missing GMS produces no engine.
+ * capability. Track stays unbound until a real tracker artifact exists. Missing
+ * GMS produces no engine.
  */
 object PackLiteRt {
     private const val MAX_WORK_EDGE = 256
@@ -31,6 +32,8 @@ object PackLiteRt {
     private var tfliteReady = false
     private var sink: ((PackId, NeuralEngine?) -> Unit)? = null
     private val engines = mutableMapOf<PackId, InterpreterApi>()
+    /** FILM RGB mid-frame output tensor index while [PackId.FrameInterp] is bound. */
+    private var frameInterpRgbOut: Int = -1
 
     /**
      * After [PackSplits.install]. Listens for verified pack files. [sink] receives
@@ -92,8 +95,8 @@ object PackLiteRt {
     private fun bindSync(id: PackId, file: File) {
         try {
             if (!synchronized(lock) { tfliteReady }) return
-            // E4 / F1: no artifact, pin, or contract. Leave the Unit no-op.
-            if (id == PackId.FrameInterp || id == PackId.Track) return
+            // F1: no public LiteRT tracker pin / contract yet.
+            if (id == PackId.Track) return
             if (!file.isFile || !verifiedModel(id, file)) {
                 releaseEngine(id)
                 return
@@ -102,7 +105,7 @@ object PackLiteRt {
                 PackId.SuperRes -> bindSuperRes(file)
                 PackId.Inpaint -> bindInpaint(file)
                 PackId.Denoise -> bindDenoise(file)
-                PackId.FrameInterp,
+                PackId.FrameInterp -> bindFrameInterp(file)
                 PackId.Track -> Unit
             }
         } finally {
@@ -128,6 +131,7 @@ object PackLiteRt {
                 runCatching { previous.close() }
             }
             opened?.let { runCatching { it.close() } }
+            if (id == PackId.FrameInterp) frameInterpRgbOut = -1
             sink
         }
         notify?.invoke(id, null)
@@ -136,6 +140,132 @@ object PackLiteRt {
     private fun floatIo(interpreter: InterpreterApi): Boolean =
         interpreter.getInputTensor(0).dataType() == DataType.FLOAT32 &&
             interpreter.getOutputTensor(0).dataType() == DataType.FLOAT32
+
+    private fun bindFrameInterp(file: File) {
+        val interpreter = openInterpreter(file) ?: run {
+            releaseEngine(PackId.FrameInterp)
+            return
+        }
+        val accepted = runCatching {
+            if (interpreter.inputTensorCount < 3) return@runCatching false
+            val time = interpreter.getInputTensor(0).shape()
+            val a = interpreter.getInputTensor(1).shape()
+            val b = interpreter.getInputTensor(2).shape()
+            val rgbOuts = (0 until interpreter.outputTensorCount).map {
+                interpreter.getOutputTensor(it).shape()
+            }
+            floatIo(interpreter) &&
+                interpreter.getInputTensor(1).dataType() == DataType.FLOAT32 &&
+                interpreter.getInputTensor(2).dataType() == DataType.FLOAT32 &&
+                PackModelContract.isFrameInterpFilm(time, a, b, rgbOuts)
+        }.getOrDefault(false)
+        val rgbIndex = if (accepted) filmRgbOutputIndex(interpreter) else -1
+        if (!accepted || rgbIndex < 0) {
+            releaseEngine(PackId.FrameInterp, interpreter)
+            return
+        }
+        val engine = NeuralEngine.FrameInterp { before, after, steps ->
+            runCatching { frameInterp(before, after, steps) }.getOrNull()
+        }
+        val notify = synchronized(lock) {
+            engines.remove(PackId.FrameInterp)?.close()
+            engines[PackId.FrameInterp] = interpreter
+            frameInterpRgbOut = rgbIndex
+            sink
+        }
+        notify?.invoke(PackId.FrameInterp, engine)
+    }
+
+    /** Prefer FILM's documented OT[1] (`…:17`); else first same-size NHWC RGB. */
+    private fun filmRgbOutputIndex(interpreter: InterpreterApi): Int {
+        val inShape = interpreter.getInputTensor(1).shape()
+        val h = inShape[1]
+        val w = inShape[2]
+        var fallback = -1
+        for (i in 0 until interpreter.outputTensorCount) {
+            val tensor = interpreter.getOutputTensor(i)
+            val shape = tensor.shape()
+            if (!PackModelContract.isNhwcRgb(shape)) continue
+            if (shape[1] != h || shape[2] != w) continue
+            val name = runCatching { tensor.name() }.getOrNull().orEmpty()
+            if (name.endsWith(":17") || name.contains("PartitionedCall:17")) return i
+            if (fallback < 0) fallback = i
+        }
+        return fallback
+    }
+
+    private fun frameInterp(before: Bitmap, after: Bitmap, steps: Int): List<Bitmap>? {
+        val n = steps.coerceIn(1, 8)
+        val interpreter = synchronized(lock) { engines[PackId.FrameInterp] } ?: return null
+        val rgbOut = synchronized(lock) { frameInterpRgbOut }
+        if (rgbOut < 0) return null
+        val inShape = interpreter.getInputTensor(1).shape()
+        val modelH = inShape[1]
+        val modelW = inShape[2]
+        if (modelH <= 0 || modelW <= 0) return null
+        val left = Bitmap.createScaledBitmap(before, modelW, modelH, true)
+        val right = Bitmap.createScaledBitmap(after, modelW, modelH, true)
+        val out = ArrayList<Bitmap>(n)
+        try {
+            for (i in 1..n) {
+                val t = i / (n + 1f)
+                val mid = inferFilmMid(interpreter, left, right, t, modelH, modelW, rgbOut)
+                    ?: return null
+                val full = if (mid.width == before.width && mid.height == before.height) {
+                    mid
+                } else {
+                    Bitmap.createScaledBitmap(mid, before.width, before.height, true).also {
+                        if (it !== mid) mid.recycle()
+                    }
+                }
+                out += full
+            }
+            return out
+        } catch (_: Exception) {
+            out.forEach { if (!it.isRecycled) it.recycle() }
+            return null
+        } finally {
+            if (left !== before && !left.isRecycled) left.recycle()
+            if (right !== after && !right.isRecycled) right.recycle()
+        }
+    }
+
+    private fun inferFilmMid(
+        interpreter: InterpreterApi,
+        frame0: Bitmap,
+        frame1: Bitmap,
+        time: Float,
+        h: Int,
+        w: Int,
+        rgbOutIndex: Int
+    ): Bitmap? {
+        val timeIn = Array(1) { FloatArray(1) { time.coerceIn(0f, 1f) } }
+        val x1 = Array(1) { Array(h) { Array(w) { FloatArray(3) } } }
+        val x0 = Array(1) { Array(h) { Array(w) { FloatArray(3) } } }
+        fillRgb(frame1, x1[0])
+        fillRgb(frame0, x0[0])
+        val outputs = HashMap<Int, Any>()
+        for (i in 0 until interpreter.outputTensorCount) {
+            val bytes = interpreter.getOutputTensor(i).numBytes()
+            if (bytes <= 0) return null
+            outputs[i] = java.nio.ByteBuffer.allocateDirect(bytes)
+                .order(java.nio.ByteOrder.nativeOrder())
+        }
+        interpreter.runForMultipleInputsOutputs(arrayOf(timeIn, x1, x0), outputs)
+        val buf = outputs[rgbOutIndex] as? java.nio.ByteBuffer ?: return null
+        buf.rewind()
+        val outPx = IntArray(w * h)
+        var i = 0
+        while (i < outPx.size) {
+            val r = (buf.float.coerceIn(0f, 1f) * 255f).toInt()
+            val g = (buf.float.coerceIn(0f, 1f) * 255f).toInt()
+            val b = (buf.float.coerceIn(0f, 1f) * 255f).toInt()
+            outPx[i++] = (0xff shl 24) or (r shl 16) or (g shl 8) or b
+        }
+        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        bmp.setPixels(outPx, 0, w, 0, 0, w, h)
+        return bmp
+    }
 
     private fun bindSuperRes(file: File) {
         val interpreter = openInterpreter(file) ?: run {

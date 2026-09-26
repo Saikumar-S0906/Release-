@@ -25,7 +25,7 @@ Movie shots: `docs/ui_review/r4_baseline/.maestro/tests/2026-09-23_213321/baseli
 Same pattern as Lightroom (one category, a few sliders) and CapCut (one tool group, timeline stays put):
 
 - The photo or video keeps `weight(1f)`.
-- Six groups, one open at a time, in a sheet at most 220 dp.
+- Six groups, one open at a time, in a sheet at most 280 dp.
 - The sheet is `PixiBg` at 72% opacity. Compose blur would smear the controls themselves, so the sheet is translucent and sits under the canvas. Crop handles stay on the photo, not under the sheet.
 - Export is a top-bar button. The full-width Export button is gone.
 - Movie transport (scrub, play, frame step, clip strip) is pinned under the video. It does not scroll away with the tools.
@@ -81,7 +81,7 @@ Honest remaining gaps vs Lightroom / CapCut: true backdrop blur (Compose cannot 
 
 Top and bottom chrome both fade over the picture (`StudioTopChrome` + `StudioChromeBar`, drawn above the canvas). The group rail uses an accent icon and underline instead of a solid purple tile. Light shows a large live value (tap to type, long-press to reset) and a short Apply. Layout keeps one export hint.
 
-Glass panel max height is 220 dp so common groups fit. When content still overflows, a bottom fade with “More ⌄” appears (`studio_scroll_more`). Horizontal chip rows fade at the trailing edge when more chips sit off-screen.
+Glass panel max height is 280 dp so dense groups (Compose / Edit) usually fit. When content still overflows, a bottom fade with a tappable “More ⌄” scrolls the panel (`studio_scroll_more`). Horizontal chip rows fade at the trailing edge when more chips sit off-screen. Still-movie GIF export lives in the Export sheet format chips (not a second top-bar button).
 
 Recapture: movie `docs/ui_review/r4_after/.maestro/tests/2026-09-24_195106/` (shows “More ⌄” on Edit). Photo recapture follows the same build.
 

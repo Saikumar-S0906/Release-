@@ -40,7 +40,7 @@ This matrix compares outcomes, not feature names. Status meanings are defined in
 | Audio finishing | Audio | **LIVE** | Music/voice/SFX, fades, ducking, EQ, dynamics, and limiter. |
 | Green/blue screen | Effects → Chroma key | **LIVE** | Shader key with range and edge softness. |
 | Motion stabilization | Effects → Steady crop | **FALLBACK** | Constant crop/zoom only; no camera-motion estimation. |
-| Optical-flow / neural slow motion | Effects → Slow-mo | **UNAVAILABLE** | Available slow motion changes rate and holds frames; neural frames are locked. |
+| Optical-flow / neural slow motion | Effects → Slow-mo | **PACK** | Neural frames chip when FILM pack binds. Export synthesizes mid-frames; preview / unbound path changes rate and holds frames. |
 | PiP, split, grid preview | Layout | **LIVE** | Uses the export composition with Media3’s multi-input preview graph; unsupported runtime paths are labeled export-only. |
 | HDR preservation | Color → HDR | **FALLBACK** | Keeps HDR only when supported; otherwise tone-maps. |
 

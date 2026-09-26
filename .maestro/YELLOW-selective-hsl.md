@@ -1,6 +1,6 @@
-# Maestro / test_automator — Selective HSL stubs
+# Selective HSL — green (Pixel_7a `emulator-5556`, 2026-09-25)
 
-Tags to wire (mirror Curves / Looks):
+Re-checked after glass h-scroll / More chrome. Flow: `.maestro/hsl/selective-hsl-apply.yaml` — **EXIT=0**.
 
 | Tag | Role |
 |-----|------|
@@ -12,10 +12,4 @@ Tags to wire (mirror Curves / Looks):
 | `session_apply_selective_hsl` | Apply (bakes `PhotoOp.SelectiveHsl`) |
 | `session_selective_hsl_hint` | Hint text |
 
-Suggested flow (YELLOW until device harness picks them up):
-1. Open photo editor session
-2. Tap `session_selective_hsl`
-3. Tap `hsl_range_greens`, drag sliders, tap `session_apply_selective_hsl`
-4. Assert layer / undo stack advanced (no Home/Create/Compare collision)
-
-Export bar stays outside glass scrim (`session_tool_scrim`) — do not assert export inside tool panel.
+Band row is `StudioHScrollRow` — Magentas may need `studio_hscroll_more`. Export bar stays outside glass scrim (`session_tool_scrim`). See also `.maestro/GREEN-selective-hsl-exit.md` (B1 exit).

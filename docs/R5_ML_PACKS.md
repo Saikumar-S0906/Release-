@@ -1,26 +1,27 @@
 # R5 ML packs + F1 track contract
 
-**Status:** Pack runtime + LiteRT bind on matching contracts after SplitCompat. E4 frame-interp and F1 track stay unbound on purpose (no artifact yet).
+**Status:** Pack runtime + LiteRT bind on matching contracts after SplitCompat. E4 FILM HTTPS pin + LiteRT bind when contract matches. F1 track stays unbound with no HTTPS pin.
 **Pairs with:** `docs/REMAINING_MASTER_PLAN.md` Wave E / F1, `docs/FUNCTIONALITY_MATRIX.md`.
 **Hard rule:** pack file + checksum ≠ neural engine. Telea / bicubic / frame-hold are never labeled neural.
 
 ## Runtime (`:ml`)
 
-`:ml` owns install state, `PackSplits` (SplitCompat), and the Hilt singleton `PackEngineHooks`. Play feature modules (`ml_inpaint`, `ml_superres`, `ml_denoise`, `ml_interp`, `ml_track`) own model files only. `:photo` and `:movie` call the facade and do not depend on a pack module or LiteRT. Session UI observes install state and pack CTAs; it does not call `register`. Super-res and Denoise Missing shows Download. Inpaint, FrameInterp, and Track have no hosted URL, so their Missing plate shows **Install from file** and does not show Download.
+`:ml` owns install state, `PackSplits` (SplitCompat), and the Hilt singleton `PackEngineHooks`. Play feature modules (`ml_inpaint`, `ml_superres`, `ml_denoise`, `ml_interp`, `ml_track`) own model files only. `:photo` and `:movie` call the facade and do not depend on a pack module or LiteRT. Session UI observes install state and pack CTAs; it does not call `register`. Super-res, Denoise, and FrameInterp Missing shows Download. Inpaint and Track have no hosted URL, so their Missing plate shows **Install from file** and does not show Download.
 
 - Install state: missing / installing / ready / failed / storage error. **Ready** means the file is on the device and its SHA-256 verified. **Neural** is `PackRuntime.engineReady` (Ready and a bound interpreter). Ready alone does not enable Super-res Apply, Denoise Apply, or neural inpaint Apply
-- SHA-256 sidecar on sideload. Every live `PackSpec.expectedSha256` is null, so **Install from file** records the copied file's own SHA. Super-res and Denoise HTTPS Download still refuse a body that misses `downloadSha256` before Ready. Inpaint, FrameInterp, and Track have no `downloadUrl` and no SHA pin
+- SHA-256 sidecar on sideload. Every live `PackSpec.expectedSha256` is null, so **Install from file** records the copied file's own SHA. Super-res, Denoise, and FrameInterp HTTPS Download refuse a body that misses `downloadSha256` before Ready. Inpaint and Track have no `downloadUrl` and no SHA pin
 - Sideload: **Install from file** (`GetContent`) copies into cache then checksum-installs; fallback folder `filesDir/ml_incoming/{fileName}` (also app external files)
 - HTTPS fallback (user-tapped Download only). Photos are not uploaded. Pins below are the only hosted artifacts.
   - Super-res `superres.tflite` / `ml_superres`: `https://github.com/captain-pool/GSOC/releases/download/2.0.0/compressed_esrgan.tflite` SHA-256 `27ed316318cac65fe350ccdb3c1e19ac08c512f4aa2fc23b1a351ce334809c3f`. Graph is FLOAT32 NHWC `1×180×320×3` → `1×720×1280×3` (4×). `PackModelContract.superResScale` accepts 2× or 4× NHWC RGB.
   - Denoise `denoise.tflite` / `ml_denoise`: `https://raw.githubusercontent.com/raspberrypi/AI_denoise/master/networks/unet_rgb_fast.tflite` SHA-256 `53f0112f248b18ae518af64942ea4741f5b22ccdc4af5aea0ff452875f17fb84`. Graph is FLOAT32 NHWC `1×256×256×3` → same size. `PackModelContract.isDenoiseSameRgb` plus FLOAT32 at bind. A 2×/4× graph cannot register as denoise.
+  - FrameInterp `interp.tflite` / `ml_interp`: FILM community TFLite (~67.29 MB) `…/model_512_quant_float16.tflite` SHA-256 `3a201916658277ed6e7626d93a6ee117a47b04bc1986579600a90feabfe05eb4`. Graph is FLOAT32 (despite the filename): time `(1,1)` + two NHWC RGB `1×512×512×3` → RGB mid-frame. `PackLiteRt.bindFrameInterp` registers when LiteRT + contract match. `FrameInterp.interpolatedFrames` produces mid frames. Export with Neural frames selected runs `NeuralSlowMoMux` (sample → FILM mids → silent AVC → Sonic audio remux) then Transformer; failure falls back to Media3 rate/frame-hold. Preview stays rate/hold. Neural chip unlocks by `engineReady`, not Ready alone.
 - Inpaint has a sideload path only (`inpaint.tflite` / `ml_inpaint`). No HTTPS URL and no invented weights. Missing chrome is **Install from file** (or copy into `filesDir/ml_incoming/`). Ready after that copy is the verified file only (`InpaintStatus.ReadyFileOnly`). Neural Apply stays off until `PackRuntime.engineReady` after an RGB+mask FLOAT32 bind. Nearby-pixel Apply stays on and runs Telea (`PhotoOp.Fill.neural == false`). Telea is never labeled neural.
 - Failed Download for packs without a URL tells the user to **Install from file** (Play modules are not in this APK).
 - `PixiJoyApp.attachBaseContext` calls `PackSplits.install`. `onCreate` binds install state only and registers nothing
 - After SplitCompat, the studio shell calls `PackFeatureEntry.watchVerifiedModels`. `PackLiteRt` opens a file only when LiteRT is up, the pack is Ready, and the bytes match the recorded SHA-256 (and `expectedSha256` when set). It registers only if `PackModelContract` accepts the graph. A miss releases the capability (sink null). Chips read `PackRuntime.engineReady`: Ready alone is not neural
-- `PackLiteRt` builds Super-res (2×/4× FLOAT32 NHWC RGB), Denoise (same-size FLOAT32 RGB), and Inpaint (FLOAT32 RGB+mask) interpreters. Interp / track never bind — frame-hold is not labeled neural
+- `PackLiteRt` builds Super-res (2×/4× FLOAT32 NHWC RGB), Denoise (same-size FLOAT32 RGB), Inpaint (FLOAT32 RGB+mask), and FrameInterp (FILM FLOAT32 time+2×RGB → mid RGB). Track never binds — no artifact.
 - Engines call `PackEnhance` and `TrackFacade.follow` / `FrameInterp.interpolatedFrames`
-- A null try result leaves Telea / bicubic / frame-hold in place, unlabeled as neural
+- A null try result leaves Telea / bicubic / frame-hold in place, unlabeled as neural. Neural slow-mo export falls back to Media3 rate/hold the same way.
 
 ## Photo
 
@@ -34,8 +35,8 @@
 
 | ID | Contract | Engine |
 |----|----------|--------|
-| E4 | `FrameInterp.mlAvailable` ← pack engine | **HOLD.** `PackLiteRt` leaves `FrameInterp` as `Unit`. No `downloadUrl`, no SHA pin, no shape gate, no `interp.tflite` in the repo. Unbound chip is disabled and says “Coming with pack”. Frame hold stays unlabeled as neural |
-| F1 | `ClipTrack` field on `TimelineClip` | **HOLD.** `PackLiteRt` leaves `Track` as `Unit`. No `downloadUrl`, no SHA pin, no shape gate, no `track.tflite` in the repo. Unbound control is disabled and says “Coming with pack”. No motion follow |
+| E4 | `FrameInterp.mlAvailable` ← pack engine | HTTPS FILM pin + LiteRT bind MET when Ready + FLOAT32 film contract (512×512). Export Neural frames → `NeuralSlowMoMux` mid-frame synth + audio remux; preview stays rate/hold; heuristic fallback if synth fails. Maestro download: `.maestro/packs/e4-frame-interp-download.yaml` |
+| F1 | `ClipTrack` field on `TimelineClip` | **HOLD.** No public LiteRT point-tracker `.tflite` pin (GOTURN/RAFT are Caffe/PyTorch). Sideload only. `PackLiteRt` leaves `Track` as `Unit`. Unbound control says “Coming with pack”. No motion follow |
 
 ## E5 size
 
@@ -44,10 +45,10 @@
 - **Baseline, remeasured on tip `03fb2ea` (2026-09-25):** minified `app-release-unsigned.apk` **54.80 MB** (57,457,669 bytes). The earlier **131.11 MB** note does not match this artifact. Nothing in that APK is a pack weight
   - MediaPipe `libmediapipe_tasks_vision_jni.so`, stored uncompressed: x86 **20.30** + arm64-v8a **12.43** + armeabi-v7a **7.61** = **40.34 MB**
   - dex **10.29 MB**. `material-icons-extended` is a ~35 MB Maven AAR, but R8 left **0** `androidx.compose.material.icons` classes in this dex. Studio chrome already uses `pj_ic_*` vectors
-  - Play Services LiteRT client `libtensorflowlite_jni_gms_client.so` **2.11 MB** across x86, x86_64, arm64-v8a, and armeabi-v7a. SuperRes/Denoise bind needs this client. It is not stripped
+  - Play Services LiteRT client `libtensorflowlite_jni_gms_client.so` **2.11 MB** across x86, x86_64, arm64-v8a, and armeabi-v7a. SuperRes/Denoise/FrameInterp bind needs this client. It is not stripped
   - `assets/selfie_segmenter.tflite` **0.24 MB**, vision only
   - Media3 is Java/Kotlin in the dex. This graph ships no Media3 JNI
-- **After:** release `ndk.abiFilters` = `arm64-v8a` + `armeabi-v7a` (debug stays multi-ABI). Same task: **33.08 MB** (34,683,268 bytes), **−21.72 MB**. Phone MediaPipe stays (12.43 + 7.61). LiteRT client stays on those ABIs (0.55 + 0.35). Dex unchanged (7.87 + 2.42). The unused extended-icons dependency is removed so a later keep rule cannot pull the 35 MB AAR back in; that removal did not change the measured dex. x86 and x86_64 `.so` files are absent. No inpaint/SR/denoise/interp/track weights. E4 and F1 stay HOLD
+- **After:** release `ndk.abiFilters` = `arm64-v8a` + `armeabi-v7a` (debug stays multi-ABI). Same task: **33.08 MB** (34,683,268 bytes), **−21.72 MB**. Phone MediaPipe stays (12.43 + 7.61). LiteRT client stays on those ABIs (0.55 + 0.35). Dex unchanged (7.87 + 2.42). The unused extended-icons dependency is removed so a later keep rule cannot pull the 35 MB AAR back in; that removal did not change the measured dex. x86 and x86_64 `.so` files are absent. No inpaint/SR/denoise/interp/track weights. F1 stays HOLD; E4 weights stay off-APK
 - This release APK is under the ~40 MB aspiration. A fat APK that also stores the emulator ABIs is the 54.80 MB baseline. What remains in base is phone MediaPipe JNI (~20.0 MB) plus dex (~10.3 MB)
 - Gate for pack ship: do not add inpaint/SR/denoise/interp/track weights to the base APK
 
@@ -62,7 +63,7 @@ Steps for when a desktop or KVM device is available. Do not record a pass in thi
 5. When LiteRT is up and the FLOAT32 2×/4× NHWC contract accepts the graph, the status changes to “Neural ready” and Apply turns on. That is `PackRuntime.engineReady(SuperRes)`.
 6. Apply 2× once. Export uses the same op. If the interpreter is released, the status returns to Ready-without-neural and Apply turns off. The photo is left unchanged.
 7. Repeat steps 2–6 for Denoise (`session_apply_denoise`). The sidecar is `filesDir/ml_packs/denoise/1/denoise.tflite.sha256` and must equal `PackCatalog.DENOISE_DOWNLOAD_SHA256` (`53f0112f248b18ae518af64942ea4741f5b22ccdc4af5aea0ff452875f17fb84`). The bind is same-size FLOAT32 RGB. A 2×/4× graph must not turn Denoise Apply on.
-8. Do not use this list for FrameInterp, Track, or an Inpaint HTTPS pin. Those packs have no hosted URL or SHA. Inpaint stays sideload-only. E4 and F1 stay HOLD (`PackLiteRt` is `Unit`).
+8. FrameInterp: Missing shows **Download** (HTTPS FILM pin). After Ready + LiteRT bind, neural Slow-mo unlocks. Track and Inpaint stay sideload-only (no hosted URL). E4 export mux is in-app; F1 stays HOLD (`PackLiteRt` Track is `Unit`).
 
 ## Device smoke — Inpaint (sideload only)
 

@@ -1254,9 +1254,10 @@ fun MovieSessionScreen(
                     modifier = Modifier.weight(1f)
                 )
                 val exportLabel = stringResource(R.string.studio_export)
-                val gifLabel = stringResource(R.string.studio_export_gif)
                 TextButton(
                     onClick = {
+                        // GIF stays a format chip inside ExportSheet (still projects),
+                        // so the top bar keeps one Export control.
                         exportGif = false
                         showExport = true
                     },
@@ -1266,18 +1267,6 @@ fun MovieSessionScreen(
                         .semantics { contentDescription = exportLabel }
                 ) {
                     Text(exportLabel, color = PixiText, modifier = Modifier.clearAndSetSemantics { })
-                }
-                if (still) {
-                    TextButton(
-                        onClick = {
-                            if (!exporting) runExport(gif = true)
-                        },
-                        modifier = Modifier
-                            .testTag("session_export_gif")
-                            .semantics { contentDescription = gifLabel }
-                    ) {
-                        Text(gifLabel, color = PixiText, modifier = Modifier.clearAndSetSemantics { })
-                    }
                 }
             }
             Row(

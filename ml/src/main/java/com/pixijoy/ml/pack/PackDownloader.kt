@@ -16,7 +16,8 @@ internal object PackDownloader {
             val conn = (URL(url).openConnection() as HttpURLConnection).apply {
                 instanceFollowRedirects = true
                 connectTimeout = 15_000
-                readTimeout = 120_000
+                // FILM-class packs are ~70 MB; allow a slow mid-range link.
+                readTimeout = 300_000
                 setRequestProperty("User-Agent", "PixiJoy/2.0")
                 setRequestProperty("Accept", "*/*")
             }

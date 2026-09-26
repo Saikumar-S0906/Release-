@@ -189,7 +189,8 @@
     <string name="studio_chroma_medium">Medium</string>
     <string name="studio_chroma_wide">Wide</string>
     <string name="studio_chroma_softness">Edge soft %1$d%%</string>
-    <string name="studio_movie_d10_hint">Slow-mo holds frames. Neural interpolation is coming with the pack.</string>
+    <string name="studio_movie_d10_hint">Slow-mo holds frames until neural frames bind. Download the pack to unlock Neural frames.</string>
+    <string name="studio_movie_d10_hint_ready">Neural frames are bound. Export synthesizes mid-frames; preview still shows rate/hold.</string>
     <string name="studio_movie_d11_hint">HDR intent for export.</string>
     <string name="studio_export_hdr_label">HDR</string>
     <string name="studio_export_hdr_sdr">SDR</string>

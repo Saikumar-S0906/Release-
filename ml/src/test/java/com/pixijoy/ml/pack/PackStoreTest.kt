@@ -88,7 +88,15 @@ class PackStoreTest {
         assertEquals(null, PackCatalog.spec(PackId.Inpaint).downloadUrl)
         assertNull(PackCatalog.spec(PackId.Inpaint).downloadSha256)
         assertNull(PackCatalog.spec(PackId.Inpaint).expectedSha256)
-        assertFalse(PackCatalog.hasHttpsFallback(PackCatalog.spec(PackId.FrameInterp)))
+        assertTrue(PackCatalog.hasHttpsFallback(PackCatalog.spec(PackId.FrameInterp)))
+        assertEquals(
+            PackCatalog.FRAME_INTERP_DOWNLOAD_URL,
+            PackCatalog.spec(PackId.FrameInterp).downloadUrl
+        )
+        assertEquals(
+            PackCatalog.FRAME_INTERP_DOWNLOAD_SHA256,
+            PackCatalog.spec(PackId.FrameInterp).downloadSha256
+        )
         assertFalse(PackCatalog.hasHttpsFallback(PackCatalog.spec(PackId.Track)))
         val sideloadHint = PackCatalog.installUnavailableMessage(
             PackCatalog.spec(PackId.Inpaint),
@@ -117,24 +125,32 @@ class PackStoreTest {
             PackCatalog.DENOISE_DOWNLOAD_SHA256
         )
         assertEquals(
-            setOf(PackId.SuperRes, PackId.Denoise),
+            "https://raw.githubusercontent.com/egemenertugrul/frame-interpolation-tflite-unity/main/FILM_TFLite_UnityProject/Assets/StreamingAssets/model_512_quant_float16.tflite",
+            PackCatalog.FRAME_INTERP_DOWNLOAD_URL
+        )
+        assertEquals(
+            "3a201916658277ed6e7626d93a6ee117a47b04bc1986579600a90feabfe05eb4",
+            PackCatalog.FRAME_INTERP_DOWNLOAD_SHA256
+        )
+        assertEquals(
+            setOf(PackId.SuperRes, PackId.Denoise, PackId.FrameInterp),
             PackId.entries.filter { PackCatalog.hasHttpsFallback(PackCatalog.spec(it)) }.toSet()
         )
     }
 
     @Test
-    fun frameInterpAndTrack_stayUnpinned() {
-        listOf(PackId.FrameInterp, PackId.Track).forEach { id ->
-            val spec = PackCatalog.spec(id)
-            assertNull(spec.downloadUrl)
-            assertNull(spec.downloadSha256)
-            assertNull(spec.expectedSha256)
-            assertFalse(PackCatalog.hasHttpsFallback(spec))
-        }
-        assertEquals("interp.tflite", PackCatalog.spec(PackId.FrameInterp).fileName)
-        assertEquals("ml_interp", PackCatalog.spec(PackId.FrameInterp).playModule)
-        assertEquals("track.tflite", PackCatalog.spec(PackId.Track).fileName)
-        assertEquals("ml_track", PackCatalog.spec(PackId.Track).playModule)
+    fun track_staysUnpinnedUntilArtifactExists() {
+        val track = PackCatalog.spec(PackId.Track)
+        assertNull(track.downloadUrl)
+        assertNull(track.downloadSha256)
+        assertNull(track.expectedSha256)
+        assertFalse(PackCatalog.hasHttpsFallback(track))
+        assertEquals("track.tflite", track.fileName)
+        assertEquals("ml_track", track.playModule)
+        val interp = PackCatalog.spec(PackId.FrameInterp)
+        assertEquals("interp.tflite", interp.fileName)
+        assertEquals("ml_interp", interp.playModule)
+        assertTrue(PackCatalog.hasHttpsFallback(interp))
     }
 
     @Test

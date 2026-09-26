@@ -1,0 +1,79 @@
+appId: com.pixijoy.ai
+---
+# E4 — HTTPS Download of FILM TFLite (~67 MB). Ready file only; neural chip stays locked
+# until LiteRT binds. Does not claim engineReady by itself.
+# Glass chrome is 280dp — tap studio_scroll_more until Download is in view.
+# Avoid waitForAnimationToEnd (ExoPlayer). Pair with scripts/measure_pack_memory.ps1.
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "home_open_studio"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_segment_movie"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_segment_movie"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_move"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_move"
+- extendedWaitUntil:
+    visible: "Try a sample"
+    timeout: 20000
+- tapOn: "Try a sample"
+- extendedWaitUntil:
+    visible:
+      id: "movie_session"
+    timeout: 90000
+- tapOn:
+    id: "studio_group_effects"
+- tapOn:
+    id: "movie_effect_slow"
+- repeat:
+    times: 12
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_slowmo_presets"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
+      id: "movie_slowmo_presets"
+    timeout: 20000
+- tapOn:
+    id: "movie_slowmo_quarter"
+- repeat:
+    times: 14
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_slowmo_pack_download"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
+      id: "movie_slowmo_pack_download"
+    timeout: 20000
+- assertVisible:
+    id: "movie_slowmo_pack_download"
+- tapOn:
+    id: "movie_slowmo_pack_download"
+- extendedWaitUntil:
+    visible:
+      id: "movie_slowmo_pack_status"
+    timeout: 360000
+- assertVisible:
+    id: "movie_slowmo_ml"
+- assertVisible:
+    id: "movie_session"
