@@ -1,9 +1,9 @@
-# G8 rename / empty library — green (Pixel_7a `emulator-5556`, 2026-09-25)
+# G8 rename / empty library / export success — green (Pixel_7a `emulator-5556`, 2026-09-26)
 
-**Library rename:** `.maestro/library/rename-project.yaml` — **green**. Opens overflow via text `Rename` (`DropdownMenu` is a separate popup). Dialog asserts `project_rename_sheet`, `library_rename_field`, `library_rename_dismiss`, confirm → title `RenamedSample`. `session_save_status` asserted once the sample session is open.
+**Library rename:** `.maestro/library/rename-project.yaml` — **green**. Opens overflow via text `Rename`. Dialog asserts `project_rename_sheet`, `library_rename_field`, `library_rename_dismiss`, confirm → title `RenamedSample`. `session_save_status` asserted once the sample session is open.
 
-**Empty library:** `.maestro/library/empty-library.yaml` — **green** after `clearState` (no projects → empty plate).
+**Empty library:** `.maestro/library/empty-library.yaml` — **green** after `clearState`.
 
-**Still deferred / manual-ish:** `export_rename` (“Name this project”) only after a successful export (`successUri != null`). `.maestro/export/success-actions.yaml` still stops before finishing export + system viewer. No Maestro pass claims that path.
+**Export success + rename affordance:** `.maestro/export/success-actions.yaml` — **green**. Confirm sheet → wait for `export_done` / `export_view` / `export_share` / `export_rename`.
 
 `empty_packs` Missing plate stays covered by `.maestro/packs/empty-packs.yaml` (pack suite green separately).

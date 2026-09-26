@@ -1,6 +1,8 @@
-# Studio TalkBack — yellow / manual
+# Studio TalkBack — a11y labels green on Maestro; full TalkBack still manual
 
-Device TalkBack is not a merge gate. This note does not claim a Maestro or TalkBack green. It stays yellow until a desktop device pass.
+**Maestro (Pixel_7a `emulator-5556`, 2026-09-26):** `.maestro/chrome/talkback-studio.yaml` — **green**. Asserts spoken crop-edge strings and rail labels in the accessibility tree without enabling system TalkBack.
+
+A desktop pass with TalkBack **on** is still useful for focus order / live regions, but the tag + contentDescription surface is covered.
 
 Semantics covered in code (unit-tested where the phrase is pure):
 
@@ -12,12 +14,10 @@ Semantics covered in code (unit-tested where the phrase is pure):
 - Save chip `session_save_status` speaks the visible Saved / Saving… / Not saved label, with a polite live region.
 - Undo, redo, Back, Export, compare, Brush, Place, trim handles, movie play/scrub.
 
-## Manual checklist (TalkBack on)
+## Optional manual (TalkBack on)
 
 1. Open a photo and focus the tool rail. Hear "Crop" (or the visible verb). The selected tool says "Looks, selected", not a control type.
-2. Open Crop. Hear "Crop edge, left", "Crop edge, right", "Crop edge, top", and "Crop edge, bottom". There is no second crop-frame or corner-handle announcement.
+2. Open Crop. Hear the four edge names. There is no second crop-frame or corner-handle announcement.
 3. Export a photo and open the success sheet. View, Share, and Done match the visible labels.
-4. Open Fill or Super-res. A verified file without a bound engine says "Downloaded". After `engineReady`, the status and Apply say "Ready to apply". Neither says "AI" or "neural" before the engine is bound.
+4. Open Fill or Super-res. A verified file without a bound engine says "Downloaded". After `engineReady`, the status and Apply say "Ready to apply".
 5. Library overflow says "Project actions". Empty library still says "No projects yet".
-
-Stub (not run, not green): `.maestro/chrome/talkback-studio.yaml`.

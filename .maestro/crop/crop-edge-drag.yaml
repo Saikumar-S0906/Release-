@@ -24,10 +24,10 @@ appId: com.pixijoy.ai
 - assertVisible: "Crop edge, top"
 - assertVisible: "Crop edge, bottom"
 - assertVisible:
-    id: "crop_edge_right"
+    id: "session_crop_edge_right"
 - swipe:
     from:
-      id: "crop_edge_right"
+      id: "session_crop_edge_right"
     direction: RIGHT
     duration: 400
 - assertVisible:
