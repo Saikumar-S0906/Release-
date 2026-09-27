@@ -30,7 +30,9 @@ data class MultiTrackTimeline(
     /** Multi-video frame layout (D7). */
     val layout: VideoLayout = VideoLayout.Single,
     /** HDR export intent (D11). */
-    val hdrMode: MovieHdrMode = MovieHdrMode.Sdr
+    val hdrMode: MovieHdrMode = MovieHdrMode.Sdr,
+    /** Classical particle VFX layers (F2). */
+    val vfx: List<TimelineVfx> = emptyList()
 ) {
     fun videoTracks(): List<TimelineTrack> = tracks.filter { it.kind == TrackKind.Video }
     fun audioTracks(): List<TimelineTrack> = tracks.filter { it.kind == TrackKind.Audio }
@@ -62,7 +64,8 @@ data class MultiTrackTimeline(
             titles = titles,
             grade = grade,
             layout = layout,
-            hdrMode = hdrMode
+            hdrMode = hdrMode,
+            vfx = vfx
         )
     }
 
@@ -83,7 +86,8 @@ data class MultiTrackTimeline(
             titles = flat.titles,
             grade = flat.grade,
             layout = flat.layout,
-            hdrMode = flat.hdrMode
+            hdrMode = flat.hdrMode,
+            vfx = flat.vfx
         )
     }
 
@@ -143,6 +147,7 @@ data class MultiTrackTimeline(
         }
         if (!masterFx.isNeutral()) appendLine(masterFx.encode())
         titles.filter { it.text.isNotBlank() }.forEach { appendLine(it.encodeLine()) }
+        vfx.filter { it.isActive }.forEach { appendLine(it.encodeLine()) }
         if (!grade.isNeutral()) appendLine(grade.encodeLine())
         if (layout != VideoLayout.Single) appendLine("L,${layout.encode()}")
         if (!hdrMode.isDefault()) appendLine("HDR,${hdrMode.encode()}")
@@ -179,7 +184,8 @@ data class MultiTrackTimeline(
                 titles = timeline.titles,
                 grade = timeline.grade,
                 layout = timeline.layout,
-                hdrMode = timeline.hdrMode
+                hdrMode = timeline.hdrMode,
+                vfx = timeline.vfx
             )
         }
 
@@ -196,6 +202,7 @@ data class MultiTrackTimeline(
             val stems = ArrayList<AudioStem>()
             var fx = AudioMasterFx.Neutral
             val titles = ArrayList<TimelineTitle>()
+            val vfx = ArrayList<TimelineVfx>()
             var grade = TimelineGrade.Neutral
             var layout = VideoLayout.Single
             var hdrMode = MovieHdrMode.Sdr
@@ -278,6 +285,7 @@ data class MultiTrackTimeline(
                     }
                     "X" -> AudioMasterFx.decode(parts)?.let { fx = it }
                     "TT" -> TimelineTitle.decodeLine(parts)?.let { titles += it }
+                    "VX" -> TimelineVfx.decodeLine(parts)?.let { vfx += it }
                     "G" -> TimelineGrade.decodeLine(parts)?.let { grade = it }
                     "L" -> if (parts.size >= 2) layout = VideoLayout.parse(parts[1])
                     "HDR" -> if (parts.size >= 2) hdrMode = MovieHdrMode.parse(parts[1])
@@ -294,7 +302,8 @@ data class MultiTrackTimeline(
                 titles = titles,
                 grade = grade,
                 layout = layout,
-                hdrMode = hdrMode
+                hdrMode = hdrMode,
+                vfx = vfx
             )
         }
     }

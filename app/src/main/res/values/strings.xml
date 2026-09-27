@@ -271,6 +271,17 @@
     <string name="studio_track_bundled">Track model included</string>
     <string name="studio_track_enable">Enable track</string>
     <string name="studio_track_clear">Clear track</string>
+    <string name="studio_vfx">VFX</string>
+    <string name="studio_vfx_hint">Particle layers composite over the timeline. Attach to track to follow the F1 seed.</string>
+    <string name="studio_vfx_sparkle">Sparkle</string>
+    <string name="studio_vfx_ember">Ember</string>
+    <string name="studio_vfx_confetti">Confetti</string>
+    <string name="studio_vfx_snow">Snow</string>
+    <string name="studio_vfx_bokeh">Bokeh</string>
+    <string name="studio_vfx_follow_track">Follow track</string>
+    <string name="studio_vfx_unfollow_track">Unpin from track</string>
+    <string name="studio_vfx_clear">Clear VFX</string>
+    <string name="studio_vfx_empty">No particle layers yet</string>
     <string name="studio_sky">Sky</string>
     <string name="studio_sky_hint">Replace sky with a solid color. Background fallback uses a basic corner match.</string>
     <string name="studio_sky_target_sky">Sky</string>

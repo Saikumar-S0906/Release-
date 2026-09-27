@@ -103,7 +103,8 @@ enum class MovieEffectSub(val tag: String) {
     Frame("movie_effect_frame"),
     Chroma("movie_effect_chroma"),
     SlowMo("movie_effect_slow"),
-    Track("movie_effect_track")
+    Track("movie_effect_track"),
+    Vfx("movie_effect_vfx")
 }
 
 data class StudioGroupItem(

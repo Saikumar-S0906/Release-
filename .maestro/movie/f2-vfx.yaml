@@ -1,0 +1,23 @@
+appId: com.pixijoy.ai
+---
+- launchApp
+- tapOn:
+    id: "shell_create"
+- tapOn:
+    id: "create_movie"
+- extendedWaitUntil:
+    visible:
+      id: "movie_timeline"
+    timeout: 20000
+- tapOn:
+    id: "studio_group_effects"
+- tapOn:
+    id: "movie_effect_vfx"
+- assertVisible:
+    id: "movie_f2_hint"
+- assertVisible:
+    id: "movie_vfx_presets"
+- tapOn:
+    id: "movie_vfx_sparkle"
+- assertVisible:
+    id: "movie_vfx_layer_label"

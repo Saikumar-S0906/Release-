@@ -535,6 +535,10 @@ class Media3MovieEngine : MovieEngine {
         val videoEffects = ArrayList<Effect>()
         videoEffects += Presentation.createForHeight(height)
         TitleOverlays.effect(timeline.titles, total)?.let { videoEffects += it }
+        val trackAnchor = timeline.clips.firstOrNull { it.track.isActive }?.track?.let {
+            it.x to it.y
+        }
+        VfxOverlays.effect(timeline.vfx, total, trackAnchor)?.let { videoEffects += it }
         MovieGrade.effect(timeline.grade)?.let { videoEffects += it }
         val audioProcessors = ArrayList<AudioProcessor>()
         val fx = timeline.masterFx

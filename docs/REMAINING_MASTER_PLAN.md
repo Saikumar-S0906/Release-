@@ -5,7 +5,7 @@
 **Branch:** land on `origin/next` after review-clear.  
 **Excluded:** Section A (done/exited) — do not reopen.
 
-**Snapshot (2026-09-27):** **Wave B EXITED** · **Wave C EXITED** · **D1–D11 MET** · Wave D EXITED. Live: **E pack runtime + Super-res/Denoise HTTPS LiteRT + inpaint sideload bind + E4 FILM bind/export mux + F1 Track bundled APK asset + LiteRT bind + TrackPathBake follow**. G2 slider/preview extract complete.
+**Snapshot (2026-09-27):** **Wave B EXITED** · **Wave C EXITED** · **D1–D11 MET** · Wave D EXITED. Live: **E pack runtime + Super-res/Denoise HTTPS LiteRT + inpaint sideload bind + E4 FILM bind/export mux + F1 Track bundled APK asset + LiteRT bind + TrackPathBake follow + F2 classical particle VFX overlays**. G2 slider/preview extract complete.
 
 ```
 B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5 ML packs) ──▶ F (R6+ opt-in)
@@ -111,7 +111,7 @@ Then:
 | ID | Feature | Depends on |
 |----|---------|------------|
 | **F1** | Tracking / roto-lite | D1, D3. Bundled `track.tflite` in APK assets + LiteRT bind + `TrackPathBake` follow when `engineReady` |
-| **F2** | VFX / particles | F1 + compositor/layers |
+| **F2** | VFX / particles | **MET** — classical `TimelineVfx` composition overlays + optional F1 track follow. Not neural. |
 | **F3** | 3D / Filament titles | D4 + keyframe/transform |
 | **F4** | ARCore previz | F1 + 3D primitives + device gates |
 | **F5** | Optional FFmpeg export | Proven Media3 gap; **outside base APK** |

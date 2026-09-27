@@ -140,7 +140,9 @@ data class Timeline(
     /** Multi-video frame layout (D7). */
     val layout: VideoLayout = VideoLayout.Single,
     /** HDR export intent (D11). */
-    val hdrMode: MovieHdrMode = MovieHdrMode.Sdr
+    val hdrMode: MovieHdrMode = MovieHdrMode.Sdr,
+    /** Classical particle VFX layers (F2). */
+    val vfx: List<TimelineVfx> = emptyList()
 ) {
     fun totalMs(): Long = clips.sumOf { it.durationMs }
 
@@ -351,6 +353,11 @@ data class Timeline(
             if (isNotEmpty()) append('\n')
             append(title.encodeLine())
         }
+        for (layer in vfx) {
+            if (!layer.isActive) continue
+            if (isNotEmpty()) append('\n')
+            append(layer.encodeLine())
+        }
         if (!grade.isNeutral()) {
             if (isNotEmpty()) append('\n')
             append(grade.encodeLine())
@@ -463,6 +470,9 @@ data class Timeline(
             val titles = raw.lineSequence().mapNotNull { line ->
                 TimelineTitle.decodeLine(line.trim().split(','))
             }.toList()
+            val vfx = raw.lineSequence().mapNotNull { line ->
+                TimelineVfx.decodeLine(line.trim().split(','))
+            }.toList()
             val grade = raw.lineSequence().mapNotNull { line ->
                 TimelineGrade.decodeLine(line.trim().split(','))
             }.firstOrNull() ?: TimelineGrade.Neutral
@@ -477,7 +487,7 @@ data class Timeline(
                 MovieHdrMode.parse(p[1])
             }.firstOrNull() ?: MovieHdrMode.Sdr
             val clips = if (parsed.isEmpty()) fromMedia(count, durationMs).clips else parsed
-            return Timeline(clips, bed, voice, height, extraStems, masterFx, titles, grade, layout, hdrMode)
+            return Timeline(clips, bed, voice, height, extraStems, masterFx, titles, grade, layout, hdrMode, vfx)
         }
     }
 }

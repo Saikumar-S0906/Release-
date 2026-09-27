@@ -131,6 +131,7 @@ import com.pixijoy.movie.MultiTrackTimeline
 import com.pixijoy.movie.Timeline
 import com.pixijoy.movie.TimelineClip
 import com.pixijoy.movie.TimelineTitle
+import com.pixijoy.movie.TimelineVfx
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -626,6 +627,9 @@ fun MovieSessionScreen(
                 StudioChip(stringResource(R.string.studio_track), effectSub == MovieEffectSub.Track, MovieEffectSub.Track.tag) {
                     effectSub = MovieEffectSub.Track
                 }
+                StudioChip(stringResource(R.string.studio_vfx), effectSub == MovieEffectSub.Vfx, MovieEffectSub.Vfx.tag) {
+                    effectSub = MovieEffectSub.Vfx
+                }
             }
             if (effectSub == MovieEffectSub.Motion) {
             MovieMotionPanel(
@@ -671,6 +675,43 @@ fun MovieSessionScreen(
                     val id = selected?.id ?: return@MovieTrackPanel
                     commitTimeline(timeline.update(id) { it.copy(track = track) })
                 }
+            )
+            }
+            if (effectSub == MovieEffectSub.Vfx) {
+            MovieVfxPanel(
+                layers = multi.vfx,
+                totalMs = multi.totalMs(),
+                onAdd = { preset ->
+                    val total = multi.totalMs()
+                    val next = TimelineVfx(
+                        id = "vx${multi.vfx.size}",
+                        preset = preset,
+                        startMs = 0,
+                        endMs = total.coerceAtLeast(1000),
+                        intensity = 0.7f
+                    )
+                    commitMulti(multi.copy(vfx = multi.vfx + next))
+                },
+                onIntensity = { id, intensity ->
+                    commitMulti(
+                        multi.copy(
+                            vfx = multi.vfx.map {
+                                if (it.id == id) it.copy(intensity = intensity.coerceIn(0.1f, 1f)) else it
+                            }
+                        ),
+                        live = true
+                    )
+                },
+                onFollowTrack = { id, follow ->
+                    commitMulti(
+                        multi.copy(
+                            vfx = multi.vfx.map {
+                                if (it.id == id) it.copy(followTrack = follow) else it
+                            }
+                        )
+                    )
+                },
+                onClear = { commitMulti(multi.copy(vfx = emptyList())) }
             )
             }
             }
