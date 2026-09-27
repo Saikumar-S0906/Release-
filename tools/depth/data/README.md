@@ -4,6 +4,9 @@
 python prepare_quality_data.py
 ```
 
-Pulls **NYU Depth V2** (TFDS) into `rgb/` + `depth/` and writes `READY`. No manual upload.
+Downloads **official NYU Depth V2** labeled `.mat` from NYU (`horatio.cs.nyu.edu`) into `rgb/` + `depth/` and writes `READY`.
+
+- No Hugging Face / ModelScope / TFDS
+- ~2.8 GB one-time download (cached under `data/_dl/`)
 
 Then: `python train.py --quality`

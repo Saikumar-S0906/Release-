@@ -17,11 +17,9 @@ if str(_TOOLS) not in sys.path:
 
 from colab_fetch import download, pip_install
 
+# Official VGG / Oxford only (no Hugging Face).
 IMAGES_URL = "https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz"
 ANNS_URL = "https://www.robots.ox.ac.uk/~vgg/data/pets/data/annotations.tar.gz"
-# HuggingFace mirror of the same VGG tarballs (if OX is blocked)
-IMAGES_HF = "https://huggingface.co/datasets/timm/oxford-iiit-pet/resolve/main/images.tar.gz"
-ANNS_HF = "https://huggingface.co/datasets/timm/oxford-iiit-pet/resolve/main/annotations.tar.gz"
 SIZE = 256
 
 
@@ -48,18 +46,11 @@ def main() -> None:
     tmp = args.data / "_dl"
     tmp.mkdir(parents=True, exist_ok=True)
     img_tar, ann_tar = tmp / "images.tar.gz", tmp / "annotations.tar.gz"
-    err = None
-    for iu, au in ((IMAGES_URL, ANNS_URL), (IMAGES_HF, ANNS_HF)):
-        try:
-            download(iu, img_tar, label="pet images")
-            download(au, ann_tar, label="pet annotations")
-            err = None
-            break
-        except Exception as e:
-            err = e
-            print(f"mirror fail: {e}", flush=True)
-    if err is not None and not img_tar.is_file():
-        raise SystemExit(f"Oxford Pet download failed: {err}")
+    try:
+        download(IMAGES_URL, img_tar, label="pet images (Oxford VGG)")
+        download(ANNS_URL, ann_tar, label="pet annotations (Oxford VGG)")
+    except Exception as e:
+        raise SystemExit(f"Oxford Pet download failed (official VGG only, no HF): {e}") from e
 
     with tarfile.open(img_tar, "r:gz") as t:
         t.extractall(tmp)

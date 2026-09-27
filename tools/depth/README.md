@@ -15,7 +15,7 @@ Law: [`../ML_QUALITY_BAR.md`](../ML_QUALITY_BAR.md)
 ## Colab GPU
 
 1. Open: https://colab.research.google.com/github/Saikumar-S0906/Release-/blob/main/train_depth_colab.ipynb
-2. Runtime → **GPU** → Run all (Drive resume; **auto NYU data** — no upload)
+2. Runtime → **GPU** → Run all (Drive resume; **auto official NYU .mat** — no HF / no upload)
 3. Pin only if verify `--quality` OK
 
 ## Smoke (contract only)

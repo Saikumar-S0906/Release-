@@ -69,7 +69,16 @@ def extract_images_from_zip(zpath: Path, out_dir: Path, *, limit: int | None = N
     return paths
 
 
+# Official / academic mirrors only (no Hugging Face).
 DIV2K_URLS = [
     "http://data.vision.ee.ethz.ch/cvl/DIV2K/DIV2K_valid_HR.zip",
-    "https://huggingface.co/datasets/eugenesiow/div2k/resolve/main/DIV2K_valid_HR.zip",
 ]
+
+# NYU Depth V2 labeled (~2.8 GB). Official Silberman / NYU host.
+NYU_DEPTH_LABELED_URLS = [
+    "http://horatio.cs.nyu.edu/mit/silberman/nyu_depth_v2/nyu_depth_v2_labeled.mat",
+]
+
+# FlyingChairs full zip is ~33 GB — too large for Colab auto-fetch.
+# Prefer DIV2K+exact warp labels; optional local path if already downloaded.
+FLYINGCHAIRS_URL = "https://lmb.informatik.uni-freiburg.de/data/FlyingChairs/FlyingChairs.zip"

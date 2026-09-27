@@ -16,7 +16,7 @@ Law: [`../ML_QUALITY_BAR.md`](../ML_QUALITY_BAR.md)
 ## Colab GPU
 
 1. Open: https://colab.research.google.com/github/Saikumar-S0906/Release-/blob/main/train_flow_colab.ipynb
-2. Runtime → **GPU** → Run all (Drive resume; **auto DIV2K+flow** — no upload)
+2. Runtime → **GPU** → Run all (Drive resume; **auto ETH DIV2K+exact flow** — no HF / no upload)
 3. Pin only if verify quality passes
 
 ## Smoke

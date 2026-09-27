@@ -4,6 +4,9 @@
 python prepare_quality_data.py
 ```
 
-Pulls **Oxford-IIIT Pet** segmentation (TFDS) into `rgb/` + `alpha/` and writes `READY`. No manual upload.
+Downloads **Oxford-IIIT Pet** images + trimaps from official VGG (`robots.ox.ac.uk`) into `rgb/` + `alpha/` and writes `READY`.
+
+- No Hugging Face / TFDS
+- No manual upload
 
 Then: `python train.py --quality`

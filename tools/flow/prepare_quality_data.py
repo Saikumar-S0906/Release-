@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""M4 flow quality data: prefer HF FlyingChairs (real chairs + GT flow); else DIV2K+exact warp labels."""
+"""M4 flow quality data: DIV2K (ETH) + exact warp GT — no Hugging Face.
+
+Official FlyingChairs zip is ~33 GB (Freiburg); too large for Colab auto-fetch.
+If you already have FlyingChairs unpacked locally, pass --chairs-root.
+"""
 
 from __future__ import annotations
 
 import argparse
 import shutil
+import struct
 import sys
 from pathlib import Path
 
@@ -49,57 +54,63 @@ def _make_flow(rng: np.random.Generator) -> np.ndarray:
     return flow
 
 
-def fetch_hf_chairs(data: Path, n: int) -> int:
-    pip_install("datasets", "pillow", "huggingface_hub")
-    from datasets import load_dataset
+def _read_flo(path: Path) -> np.ndarray:
+    """Middlebury .flo → HxWx2 float32."""
+    with open(path, "rb") as f:
+        magic = struct.unpack("<f", f.read(4))[0]
+        if abs(magic - 202021.25) > 1e-3:
+            raise ValueError(f"bad .flo magic in {path}")
+        w, h = struct.unpack("<ii", f.read(8))
+        data = np.frombuffer(f.read(4 * w * h * 2), dtype=np.float32).reshape(h, w, 2)
+    return data.copy()
+
+
+def fetch_local_chairs(data: Path, chairs_root: Path, n: int) -> int:
+    """Optional: convert already-downloaded FlyingChairs (official Freiburg layout)."""
+    pip_install("pillow")
     from PIL import Image
 
+    data_dir = chairs_root / "data" if (chairs_root / "data").is_dir() else chairs_root
+    flows = sorted(data_dir.glob("*_flow.flo"))
+    if not flows:
+        print(f"no *.flo under {data_dir}", flush=True)
+        return 0
     f0, f1, fl = data / "frame0", data / "frame1", data / "flow_npy"
     for d in (f0, f1, fl):
         d.mkdir(parents=True, exist_ok=True)
-    for ds_id in ("matthieumzr/FlyingChairs", "tomg-group-umd/FlyingChairs"):
-        try:
-            print(f"HF: {ds_id}", flush=True)
-            ds = load_dataset(ds_id, split=f"train[:{n}]", trust_remote_code=True)
-        except Exception as e:
-            print(f"  skip: {e}", flush=True)
+    count = 0
+    print(f"local FlyingChairs: {len(flows)} flo files, taking ≤{n}", flush=True)
+    for flo_p in flows:
+        if count >= n:
+            break
+        stem0 = flo_p.name.replace("_flow.flo", "")
+        img1 = data_dir / f"{stem0}_img1.ppm"
+        img2 = data_dir / f"{stem0}_img2.ppm"
+        if not img1.is_file() or not img2.is_file():
             continue
-        count = 0
-        for i, ex in enumerate(ds):
-            # expected keys vary
-            a = ex.get("image1") or ex.get("frame1") or ex.get("img1")
-            b = ex.get("image2") or ex.get("frame2") or ex.get("img2")
-            flow = ex.get("flow") or ex.get("flow_gt")
-            if a is None or b is None or flow is None:
-                continue
-            ia = a.convert("RGB").resize((SIZE, SIZE)) if hasattr(a, "convert") else Image.fromarray(np.asarray(a)).resize((SIZE, SIZE))
-            ib = b.convert("RGB").resize((SIZE, SIZE)) if hasattr(b, "convert") else Image.fromarray(np.asarray(b)).resize((SIZE, SIZE))
-            fl_arr = np.asarray(flow, dtype=np.float32)
-            if fl_arr.ndim != 3 or fl_arr.shape[-1] != 2:
-                continue
-            h0, w0 = fl_arr.shape[:2]
+        try:
+            flow = _read_flo(flo_p)
+            ia = Image.open(img1).convert("RGB").resize((SIZE, SIZE))
+            ib = Image.open(img2).convert("RGB").resize((SIZE, SIZE))
+            h0, w0 = flow.shape[:2]
             ys = np.linspace(0, h0 - 1, SIZE).astype(np.int32)
             xs = np.linspace(0, w0 - 1, SIZE).astype(np.int32)
-            fl_arr = fl_arr[ys][:, xs].copy()
-            # scale pixel flow when resizing
+            fl_arr = flow[ys][:, xs].copy()
             fl_arr[..., 0] *= SIZE / float(w0)
             fl_arr[..., 1] *= SIZE / float(h0)
-            if np.max(np.abs(fl_arr)) > 1.5:
-                fl_arr = fl_arr / float(SIZE)
+            fl_arr = (fl_arr / float(SIZE)).astype(np.float32)
             stem = f"chairs_{count:04d}"
             ia.save(f0 / f"{stem}.png")
             ib.save(f1 / f"{stem}.png")
-            np.save(fl / f"{stem}.npy", fl_arr.astype(np.float32))
+            np.save(fl / f"{stem}.npy", fl_arr)
             count += 1
-            if count >= n:
-                break
-        if count >= 8:
-            return count
-    return _count_trips(data)
+        except Exception as e:
+            print(f"  skip {flo_p.name}: {e}", flush=True)
+    return count
 
 
 def fetch_div2k_labeled(data: Path, n: int) -> int:
-    """Real photos + exact warp flow (research-valid labels on real RGB)."""
+    """Real photos (ETH DIV2K) + exact warp flow labels — primary Colab path."""
     pip_install("pillow")
     from PIL import Image
 
@@ -131,6 +142,12 @@ def main() -> None:
     parser.add_argument("--data", type=Path, default=Path(__file__).parent / "data")
     parser.add_argument("--min", type=int, default=32)
     parser.add_argument("--n", type=int, default=64)
+    parser.add_argument(
+        "--chairs-root",
+        type=Path,
+        default=None,
+        help="Optional local FlyingChairs_release (or .../data) — skips 33GB download",
+    )
     args = parser.parse_args()
     args.data.mkdir(parents=True, exist_ok=True)
     if _count_trips(args.data) >= args.min and (args.data / "READY").is_file():
@@ -139,12 +156,14 @@ def main() -> None:
 
     n = 0
     src = ""
-    try:
-        n = fetch_hf_chairs(args.data, max(args.n, args.min))
-        src = "flyingchairs_hf"
-        print(f"FlyingChairs pairs={n}", flush=True)
-    except Exception as e:
-        print(f"FlyingChairs failed: {e}", flush=True)
+    if args.chairs_root is not None:
+        try:
+            n = fetch_local_chairs(args.data, args.chairs_root, max(args.n, args.min))
+            src = "flyingchairs_local"
+            print(f"local FlyingChairs triplets={n}", flush=True)
+        except Exception as e:
+            print(f"local FlyingChairs failed: {e}", flush=True)
+
     if n < args.min:
         n = fetch_div2k_labeled(args.data, max(args.n, args.min))
         src = "div2k_exact_flow"
@@ -154,7 +173,7 @@ def main() -> None:
     if n < args.min:
         raise SystemExit(f"need ≥{args.min} flow triplets, found {n}")
     (args.data / "READY").write_text(f"{src}\n", encoding="utf-8")
-    print(f"QUALITY ready: {n} flow triplets ({src})", flush=True)
+    print(f"QUALITY ready: {n} flow triplets ({src}, no HF)", flush=True)
 
 
 if __name__ == "__main__":
