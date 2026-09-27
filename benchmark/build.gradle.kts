@@ -11,6 +11,9 @@ android {
         minSdk = 28
         targetSdk = 35
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Lab AVDs only — suppress so we can collect a relative startup number.
+        // Physical-device numbers still required before calling startup “green”.
+        testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] = "EMULATOR"
     }
 
     compileOptions {
@@ -26,7 +29,7 @@ android {
         create("benchmark") {
             isDebuggable = true
             signingConfig = getByName("debug").signingConfig
-            matchingFallbacks += listOf("release")
+            matchingFallbacks += listOf("benchmark", "release")
         }
     }
 
