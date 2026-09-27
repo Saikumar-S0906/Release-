@@ -9,9 +9,38 @@ package com.pixijoy.ml.pack
  * - FrameInterp FILM community TFLite: FLOAT32 time `(1,1)` + two NHWC RGB
  *   `(1,H,W,3)` → at least one NHWC RGB `(1,H,W,3)` (pinned path is 512×512).
  *
- * Track has no shape gate until a real artifact exists.
+ * Track (F1): FLOAT32 template `1×64×64×3` + search `1×128×128×3` → `1×2` xy.
  */
 object PackModelContract {
+    const val TRACK_TEMPLATE = 64
+    const val TRACK_SEARCH = 128
+
+    /**
+     * PixiJoy point-track: template + search NHWC RGB → normalized `(x,y)`.
+     */
+    fun isPointTrack(template: IntArray, search: IntArray, out: IntArray): Boolean {
+        if (!isNhwcRgb(template) || !isNhwcRgb(search)) return false
+        if (template[1] != TRACK_TEMPLATE || template[2] != TRACK_TEMPLATE) return false
+        if (search[1] != TRACK_SEARCH || search[2] != TRACK_SEARCH) return false
+        return out.size == 2 && out[0] == 1 && out[1] == 2
+    }
+
+    /** Resolve template/search input indices by spatial size (LiteRT may reorder names). */
+    fun trackInputIndices(template: IntArray, search: IntArray): Pair<Int, Int>? {
+        // Caller passes shapes at index 0 and 1; return which index is template vs search.
+        val aIsTemplate = isNhwcRgb(template) &&
+            template[1] == TRACK_TEMPLATE && template[2] == TRACK_TEMPLATE
+        val bIsSearch = isNhwcRgb(search) &&
+            search[1] == TRACK_SEARCH && search[2] == TRACK_SEARCH
+        if (aIsTemplate && bIsSearch) return 0 to 1
+        val aIsSearch = isNhwcRgb(template) &&
+            template[1] == TRACK_SEARCH && template[2] == TRACK_SEARCH
+        val bIsTemplate = isNhwcRgb(search) &&
+            search[1] == TRACK_TEMPLATE && search[2] == TRACK_TEMPLATE
+        if (aIsSearch && bIsTemplate) return 1 to 0
+        return null
+    }
+
     /** FILM-style: time + frame0 + frame1 → RGB mid-frame (same H×W). */
     fun isFrameInterpFilm(
         time: IntArray,

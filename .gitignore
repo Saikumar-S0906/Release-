@@ -24,6 +24,14 @@ local.properties
 google-services.json
 maestro/reports/
 
+# F1 track lab — keep exported LiteRT; ignore Keras checkpoints / logs
+tools/track/dist/*.keras
+tools/track/dist/*.ckpt.*
+tools/track/dist/*.npz
+tools/track/dist/train_history.npz
+tools/track/__pycache__/
+tools/track/**/__pycache__/
+
 # Session scratch — never land these
 *.log
 uidump*.xml

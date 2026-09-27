@@ -55,7 +55,7 @@ Evidence: `photo/BitmapPhotoEngine.kt`, `PhotoFilters.kt`, `ContentAwareFill.kt`
 | Chroma key | **LIVE** | Green/blue shader key with range and edge softness. |
 | Steady crop | **LIVE** | Constant digital zoom hides frame edges; there is no motion analysis. |
 | Slow motion | **LIVE** | Playback-rate change with frame hold. Neural frames stay locked until the interp pack engine is bound. |
-| Point track / roto-lite | **UNAVAILABLE** | Timeline contract `ClipTrack` + pack CTA. No motion follow in this build. |
+| Point track / roto-lite | **LIVE** | Bundled `track.tflite` (~2 MB) in APK. Follow bakes pan/zoom when LiteRT binds; unbound shows “Coming with pack”. |
 | PiP, split, grid | **LIVE** | The export composition previews through Media3’s multi-input graph. Multi-sequence seeking stays disabled; unsupported device/runtime paths show an explicit export-only fallback. |
 | Keep HDR | **FALLBACK** | Preserves HDR when the device/export path supports it, otherwise tone-maps safely. |
 | Talking still | **BAKED** | Ken Burns-style GIF encoded on-device. |
@@ -81,7 +81,7 @@ Evidence: `movie/ClipFrame.kt`, `ClipSlowMo.kt`, `ClipTrack.kt`, `MovieEngine.kt
 | Neural super-res | **PACK** | HTTPS SHA pin → Ready → FLOAT32 `PackModelContract.superResScale` → `PackLiteRt` register. A miss releases the interpreter. Apply reads `engineReady`. Ready alone is not neural. |
 | Neural denoise | **PACK** | HTTPS SHA pin → Ready → FLOAT32 `isDenoiseSameRgb` → `PackLiteRt`. A 2×/4× graph cannot register. Apply reads `engineReady`. |
 | Neural frame interpolation | **PACK** | HTTPS FILM TFLite (~67 MB). Ready = verified file. Neural chip + export mux unlock when LiteRT binds the FILM FLOAT32 contract. Export synthesizes mid-frames (`NeuralSlowMoMux`); preview stays Media3 rate/hold. Synth failure falls back to frame-hold. |
-| Point track / roto-lite | **UNAVAILABLE** | **HOLD.** `ClipTrack` persists. No public LiteRT tracker pin. `PackLiteRt` leaves `Track` as `Unit`. Unbound control: “Coming with pack”. |
+| Point track / roto-lite | **LIVE** | Bundled APK asset → Ready → FLOAT32 `PackModelContract.isPointTrack` → `PackLiteRt.bindTrack`. `TrackPathBake` applies follow when `engineReady`. No HTTPS Download. |
 | True motion stabilization | **UNAVAILABLE** | No gyro/optical-flow tracking; the available control is named Steady crop. |
 | Generative expand | **UNAVAILABLE** | Mirror expand is the only edge-extension engine. |
 

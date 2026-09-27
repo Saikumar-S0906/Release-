@@ -1,9 +1,7 @@
 appId: com.pixijoy.ai
 ---
-# F1 tracking / roto-lite contract in movie session.
-# Track sits under the effects h-scroll fade — tap studio_hscroll_more until the
-# chip speaks "Track, selected", then reveal the locked plate with vertical More.
-# Hint can scroll off after More; assert it before the locked-row scroll.
+# F1 tracking — bundled track.tflite in APK. No Download CTA. Toggle unlocks
+# when LiteRT binds (movie_track_locked clears); pack status says included.
 - runFlow: ../launch-to-home.yaml
 - tapOn:
     id: "home_open_studio"
@@ -51,19 +49,9 @@ appId: com.pixijoy.ai
     timeout: 10000
 - assertVisible:
     id: "movie_f1_hint"
-- repeat:
-    times: 12
-    commands:
-      - runFlow:
-          when:
-            visible:
-              id: "studio_scroll_more"
-            notVisible:
-              id: "movie_track_locked"
-          commands:
-            - tapOn:
-                id: "studio_scroll_more"
 - assertVisible:
     id: "movie_track_pack_status"
 - assertVisible:
-    id: "movie_track_locked"
+    id: "movie_track_toggle"
+- assertNotVisible:
+    id: "movie_track_pack_download"

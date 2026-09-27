@@ -5,7 +5,7 @@
 **Branch:** land on `origin/next` after review-clear.  
 **Excluded:** Section A (done/exited) — do not reopen.
 
-**Snapshot (2026-09-25):** **Wave B EXITED** · **Wave C EXITED** · **D1–D11 MET** · Wave D EXITED. Live: **E pack runtime + Super-res/Denoise HTTPS LiteRT + inpaint sideload bind + E4 FILM bind/export mux**. F1 runner stays unbound pending Architect artifact + SHA. G2 slider/preview extract complete.
+**Snapshot (2026-09-27):** **Wave B EXITED** · **Wave C EXITED** · **D1–D11 MET** · Wave D EXITED. Live: **E pack runtime + Super-res/Denoise HTTPS LiteRT + inpaint sideload bind + E4 FILM bind/export mux + F1 Track bundled APK asset + LiteRT bind + TrackPathBake follow**. G2 slider/preview extract complete.
 
 ```
 B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5 ML packs) ──▶ F (R6+ opt-in)
@@ -98,7 +98,7 @@ Then:
 
 | ID | Pack | Prerequisite | Delivery |
 |----|------|--------------|----------|
-| **E5** | Base APK ≤ ~40 MB | With pack foundation | `:ml` pack runtime + `reportApkSize`; `selfie_segmenter` (~244 KB) stays in base for MediaPipe only (not a pack engine). Remeasured tip `03fb2ea` minified unsigned APK **54.80 MB** (131.11 MB does not match). Release arm64+armeabi-v7a filter measured **33.08 MB** (−21.72). Phone MediaPipe JNI and LiteRT client stay. Extended icons were already gone from dex. Pack models stay out. E4/F1 HOLD |
+| **E5** | Base APK ≤ ~40 MB | With pack foundation | `:ml` pack runtime + `reportApkSize`; `selfie_segmenter` (~244 KB) stays in base for MediaPipe only (not a pack engine). Remeasured tip `03fb2ea` minified unsigned APK **54.80 MB** (131.11 MB does not match). Release arm64+armeabi-v7a filter measured **33.08 MB** (−21.72). Phone MediaPipe JNI and LiteRT client stay. Extended icons were already gone from dex. Pack models stay out. E4/F1 weights stay off-APK |
 | **E1** | Inpaint / generative fill | C3 + pack foundation | Missing CTA is Install from file (no HTTPS pin, no Download). Ready file ≠ neural. Neural Apply uses `engineReady` after RGB+mask FLOAT32 sideload bind. Nearby-pixel Telea stays on and is not neural |
 | **E2** | Super-resolution | Pack runtime | Graph `SR`; HTTPS ESRGAN SHA pin → Ready → FLOAT32 2×/4× NHWC → LiteRT. Apply uses `engineReady` (Ready alone is not neural) |
 | **E3** | Denoise | Same runtime | Graph `N`; HTTPS UNet SHA pin → Ready → FLOAT32 same-size RGB → LiteRT. Apply uses `engineReady` |
@@ -110,7 +110,7 @@ Then:
 
 | ID | Feature | Depends on |
 |----|---------|------------|
-| **F1** | Tracking / roto-lite | D1, D3, masks. **Contract MET 2026-09-25** (`ClipTrack` + pack CTA; engine unbound). **HOLD** — no artifact, URL, or SHA yet |
+| **F1** | Tracking / roto-lite | D1, D3. Bundled `track.tflite` in APK assets + LiteRT bind + `TrackPathBake` follow when `engineReady` |
 | **F2** | VFX / particles | F1 + compositor/layers |
 | **F3** | 3D / Filament titles | D4 + keyframe/transform |
 | **F4** | ARCore previz | F1 + 3D primitives + device gates |

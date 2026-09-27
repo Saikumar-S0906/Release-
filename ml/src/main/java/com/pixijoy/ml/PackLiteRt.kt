@@ -21,8 +21,8 @@ import org.tensorflow.lite.InterpreterApi
  * Builds a real Play-services interpreter when a pack file is Ready, the SHA-256
  * matches, and [PackModelContract] accepts the graph. Does not register by itself.
  * [PackFeatureEntry] registers the engine after SplitCompat. A miss releases the
- * capability. Track stays unbound until a real tracker artifact exists. Missing
- * GMS produces no engine.
+ * capability. Track binds when a matching point-track TFLite is Ready.
+ * Missing GMS produces no engine.
  */
 object PackLiteRt {
     private const val MAX_WORK_EDGE = 256
@@ -34,6 +34,11 @@ object PackLiteRt {
     private val engines = mutableMapOf<PackId, InterpreterApi>()
     /** FILM RGB mid-frame output tensor index while [PackId.FrameInterp] is bound. */
     private var frameInterpRgbOut: Int = -1
+    /** Last track template crop for the bound Track interpreter (refreshed each follow). */
+    @Volatile
+    private var trackTemplate: Bitmap? = null
+    @Volatile
+    private var trackHasTemplate: Boolean = false
 
     /**
      * After [PackSplits.install]. Listens for verified pack files. [sink] receives
@@ -95,8 +100,6 @@ object PackLiteRt {
     private fun bindSync(id: PackId, file: File) {
         try {
             if (!synchronized(lock) { tfliteReady }) return
-            // F1: no public LiteRT tracker pin / contract yet.
-            if (id == PackId.Track) return
             if (!file.isFile || !verifiedModel(id, file)) {
                 releaseEngine(id)
                 return
@@ -106,7 +109,7 @@ object PackLiteRt {
                 PackId.Inpaint -> bindInpaint(file)
                 PackId.Denoise -> bindDenoise(file)
                 PackId.FrameInterp -> bindFrameInterp(file)
-                PackId.Track -> Unit
+                PackId.Track -> bindTrack(file)
             }
         } finally {
             PackRuntime.notifyEngineChanged()
@@ -132,6 +135,11 @@ object PackLiteRt {
             }
             opened?.let { runCatching { it.close() } }
             if (id == PackId.FrameInterp) frameInterpRgbOut = -1
+            if (id == PackId.Track) {
+                trackTemplate?.takeIf { !it.isRecycled }?.recycle()
+                trackTemplate = null
+                trackHasTemplate = false
+            }
             sink
         }
         notify?.invoke(id, null)
@@ -174,6 +182,117 @@ object PackLiteRt {
             sink
         }
         notify?.invoke(PackId.FrameInterp, engine)
+    }
+
+    private fun bindTrack(file: File) {
+        val interpreter = openInterpreter(file) ?: run {
+            releaseEngine(PackId.Track)
+            return
+        }
+        val accepted = runCatching {
+            if (interpreter.inputTensorCount < 2 || interpreter.outputTensorCount < 1) {
+                return@runCatching false
+            }
+            val a = interpreter.getInputTensor(0).shape()
+            val b = interpreter.getInputTensor(1).shape()
+            val out = interpreter.getOutputTensor(0).shape()
+            val indices = PackModelContract.trackInputIndices(a, b) ?: return@runCatching false
+            val template = interpreter.getInputTensor(indices.first).shape()
+            val search = interpreter.getInputTensor(indices.second).shape()
+            floatIo(interpreter) &&
+                interpreter.getInputTensor(indices.second).dataType() == DataType.FLOAT32 &&
+                PackModelContract.isPointTrack(template, search, out)
+        }.getOrDefault(false)
+        if (!accepted) {
+            releaseEngine(PackId.Track, interpreter)
+            return
+        }
+        val engine = NeuralEngine.Track { frame, x, y ->
+            runCatching { runTrack(frame, x, y) }.getOrNull()
+        }
+        val notify = synchronized(lock) {
+            engines.remove(PackId.Track)?.close()
+            engines[PackId.Track] = interpreter
+            trackTemplate?.takeIf { !it.isRecycled }?.recycle()
+            trackTemplate = null
+            trackHasTemplate = false
+            sink
+        }
+        notify?.invoke(PackId.Track, engine)
+    }
+
+    /**
+     * Crops template (first call / refresh) and search around [x],[y], runs the
+     * point-track interpreter, returns normalized next point.
+     */
+    private fun runTrack(frame: Bitmap, x: Float, y: Float): Pair<Float, Float>? {
+        val interpreter = synchronized(lock) { engines[PackId.Track] } ?: return null
+        if (frame.isRecycled || frame.width < 8 || frame.height < 8) return null
+        val nx = x.coerceIn(0f, 1f)
+        val ny = y.coerceIn(0f, 1f)
+        val templateSize = PackModelContract.TRACK_TEMPLATE
+        val searchSize = PackModelContract.TRACK_SEARCH
+        val searchCrop = cropAround(frame, nx, ny, searchSize) ?: return null
+        val templateCrop = synchronized(lock) {
+            if (!trackHasTemplate || trackTemplate == null || trackTemplate!!.isRecycled) {
+                trackTemplate?.takeIf { !it.isRecycled }?.recycle()
+                trackTemplate = cropAround(frame, nx, ny, templateSize)
+                trackHasTemplate = trackTemplate != null
+            }
+            trackTemplate
+        } ?: run {
+            if (!searchCrop.isRecycled) searchCrop.recycle()
+            return null
+        }
+        try {
+            val tIn = Array(1) {
+                Array(templateSize) { Array(templateSize) { FloatArray(3) } }
+            }
+            val sIn = Array(1) {
+                Array(searchSize) { Array(searchSize) { FloatArray(3) } }
+            }
+            fillRgb(templateCrop, tIn[0])
+            fillRgb(searchCrop, sIn[0])
+            val out = Array(1) { FloatArray(2) }
+            val a = interpreter.getInputTensor(0).shape()
+            val b = interpreter.getInputTensor(1).shape()
+            val indices = PackModelContract.trackInputIndices(a, b) ?: return null
+            val inputs = arrayOfNulls<Any>(2)
+            inputs[indices.first] = tIn
+            inputs[indices.second] = sIn
+            interpreter.runForMultipleInputsOutputs(inputs, mapOf(0 to out))
+            val px = out[0][0].coerceIn(0f, 1f)
+            val py = out[0][1].coerceIn(0f, 1f)
+            // Refresh template around the new point for the next step.
+            val refreshed = cropAround(frame, px, py, templateSize)
+            if (refreshed != null) {
+                synchronized(lock) {
+                    trackTemplate?.takeIf { !it.isRecycled && it !== refreshed }?.recycle()
+                    trackTemplate = refreshed
+                    trackHasTemplate = true
+                }
+            }
+            return px to py
+        } finally {
+            if (!searchCrop.isRecycled) searchCrop.recycle()
+        }
+    }
+
+    private fun cropAround(src: Bitmap, nx: Float, ny: Float, size: Int): Bitmap? {
+        if (src.isRecycled) return null
+        val cx = (nx.coerceIn(0f, 1f) * (src.width - 1)).toInt()
+        val cy = (ny.coerceIn(0f, 1f) * (src.height - 1)).toInt()
+        val half = size / 2
+        val left = (cx - half).coerceIn(0, (src.width - size).coerceAtLeast(0))
+        val top = (cy - half).coerceIn(0, (src.height - size).coerceAtLeast(0))
+        val w = min(size, src.width - left).coerceAtLeast(1)
+        val h = min(size, src.height - top).coerceAtLeast(1)
+        val patch = Bitmap.createBitmap(src, left, top, w, h)
+        if (w == size && h == size) return patch
+        val padded = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        Canvas(padded).drawBitmap(patch, 0f, 0f, Paint(Paint.FILTER_BITMAP_FLAG))
+        if (!patch.isRecycled) patch.recycle()
+        return padded
     }
 
     /** Prefer FILM's documented OT[1] (`…:17`); else first same-size NHWC RGB. */

@@ -84,6 +84,45 @@ class PackModelContractTest {
             )
         )
     }
+
+    @Test
+    fun pointTrack_accepts64Template128SearchToXy() {
+        assertTrue(
+            PackModelContract.isPointTrack(
+                intArrayOf(1, 64, 64, 3),
+                intArrayOf(1, 128, 128, 3),
+                intArrayOf(1, 2)
+            )
+        )
+        assertFalse(
+            PackModelContract.isPointTrack(
+                intArrayOf(1, 32, 32, 3),
+                intArrayOf(1, 128, 128, 3),
+                intArrayOf(1, 2)
+            )
+        )
+        assertFalse(
+            PackModelContract.isPointTrack(
+                intArrayOf(1, 64, 64, 3),
+                intArrayOf(1, 128, 128, 3),
+                intArrayOf(1, 4)
+            )
+        )
+        assertEquals(
+            0 to 1,
+            PackModelContract.trackInputIndices(
+                intArrayOf(1, 64, 64, 3),
+                intArrayOf(1, 128, 128, 3)
+            )
+        )
+        assertEquals(
+            1 to 0,
+            PackModelContract.trackInputIndices(
+                intArrayOf(1, 128, 128, 3),
+                intArrayOf(1, 64, 64, 3)
+            )
+        )
+    }
 }
 
 class PackDownloaderTest {

@@ -34,6 +34,10 @@ class PackInstallManager internal constructor(
                 return
             }
             emit(id, PackInstallState.Installing(0f))
+            if (!spec.assetPath.isNullOrBlank()) {
+                emitReady(id, seedFromAssetLocked(assetsContext(), spec))
+                return
+            }
             val playResult = play?.install(spec) { progress ->
                 emit(id, PackInstallState.Installing(progress.coerceIn(0f, 1f)))
             }
@@ -120,9 +124,14 @@ class PackInstallManager internal constructor(
 
     suspend fun uninstall(id: PackId) {
         mutex.withLock {
-            store.uninstall(PackCatalog.spec(id))
+            val spec = PackCatalog.spec(id)
+            store.uninstall(spec)
             emit(id, PackInstallState.Missing)
             runCatching { PackRuntime.onPackRemoved?.invoke(id) }
+            // Bundled packs are restored from APK assets — not left Missing.
+            if (!spec.assetPath.isNullOrBlank()) {
+                emitReady(id, seedFromAssetLocked(assetsContext(), spec))
+            }
         }
     }
 
@@ -142,15 +151,64 @@ class PackInstallManager internal constructor(
         }
     }
 
+    private fun assetsContext(): Context =
+        checkNotNull(appContext) { "PackInstallManager has no application context" }
+
+    /**
+     * Copy a bundled asset into the checksumed pack store. Caller holds [mutex]
+     * when invoked from suspend paths; [seedBundledAssets] runs at construction.
+     */
+    private fun seedFromAssetLocked(context: Context, spec: PackSpec): PackInstallState {
+        val asset = spec.assetPath ?: return PackInstallState.Failed("Bundled pack has no asset path.")
+        return try {
+            val tmp = File.createTempFile("pixijoy-asset-${spec.id.name}", ".tflite", context.cacheDir)
+            try {
+                context.assets.open(asset).use { input ->
+                    tmp.outputStream().use { output -> input.copyTo(output) }
+                }
+                if (!PackChecksum.looksLikeTflite(tmp)) {
+                    return PackInstallState.Failed("Bundled asset is not a TFLite pack.")
+                }
+                store.installFrom(spec, tmp)
+            } finally {
+                tmp.delete()
+            }
+        } catch (e: Exception) {
+            PackInstallState.Failed(e.message ?: "Could not install bundled pack.")
+        }
+    }
+
+    private fun seedBundledAssets(context: Context) {
+        PackId.entries.forEach { id ->
+            val spec = PackCatalog.spec(id)
+            if (spec.assetPath.isNullOrBlank()) return@forEach
+            if (store.isReady(spec)) {
+                flows.getValue(id).value = store.readyState(spec)
+                return@forEach
+            }
+            val state = seedFromAssetLocked(context, spec)
+            flows.getValue(id).value = state
+            if (state is PackInstallState.Ready) {
+                runCatching {
+                    PackRuntime.onPackReady?.invoke(id, store.modelFile(spec))
+                }
+            }
+        }
+    }
+
     companion object {
         @Volatile
         private var instance: PackInstallManager? = null
+
+        @Volatile
+        private var appContext: Context? = null
 
         fun get(context: Context): PackInstallManager {
             instance?.let { return it }
             synchronized(this) {
                 instance?.let { return it }
                 val app = context.applicationContext
+                appContext = app
                 val store = PackStore(File(app.filesDir, PackStore.STORE_DIR))
                 val incoming = buildList {
                     add(File(app.filesDir, PackStore.INCOMING_DIR))
@@ -161,6 +219,7 @@ class PackInstallManager internal constructor(
                     incomingRoots = incoming,
                     play = PlayPackInstaller(app)
                 )
+                created.seedBundledAssets(app)
                 instance = created
                 return created
             }
@@ -168,6 +227,7 @@ class PackInstallManager internal constructor(
 
         fun resetForTests() {
             instance = null
+            appContext = null
         }
     }
 }

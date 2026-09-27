@@ -1,9 +1,9 @@
 package com.pixijoy.ml.pack
 
 /**
- * On-demand ML packs. Models are never shipped in the base APK.
- * Play Feature Delivery module names are stable; sideload uses [PackSpec.fileName]
- * under the app incoming folder when Play is unavailable.
+ * On-demand ML packs. Most models stay off the base APK (Download / sideload).
+ * [PackId.Track] ships in `:ml` assets (~2 MB) and is seeded into the pack store
+ * on first use — no HTTPS pin.
  */
 enum class PackId {
     Inpaint,
@@ -23,7 +23,12 @@ data class PackSpec(
     /** HTTPS fallback when Play Feature Delivery is missing (emulator / sideload APK). */
     val downloadUrl: String? = null,
     /** Required when [downloadUrl] is set. Sideload does not use this pin. */
-    val downloadSha256: String? = null
+    val downloadSha256: String? = null,
+    /**
+     * Asset path under the `:ml` module (e.g. `track.tflite`). When set, the pack
+     * is copied from APK assets into the on-device store — no Download CTA.
+     */
+    val assetPath: String? = null
 )
 
 object PackCatalog {
@@ -60,6 +65,15 @@ object PackCatalog {
     const val FRAME_INTERP_DOWNLOAD_SHA256 =
         "3a201916658277ed6e7626d93a6ee117a47b04bc1986579600a90feabfe05eb4"
 
+    /**
+     * PixiJoy F1 point-track TFLite (Apache-2.0), synthetic-trained Siamese,
+     * FLOAT32 template 64×64 + search 128×128 → normalized xy. Shipped in APK
+     * assets (`ml/src/main/assets/track.tflite`), not downloaded.
+     */
+    const val TRACK_ASSET_PATH = "track.tflite"
+    const val TRACK_ASSET_SHA256 =
+        "e2eb42c38ac53b9f708811f2887b53f4eb9774d9cb1bfff058a197d9fe26301f"
+
     fun spec(id: PackId): PackSpec = when (id) {
         PackId.Inpaint -> PackSpec(id, VERSION, "inpaint.tflite", "ml_inpaint")
         PackId.SuperRes -> PackSpec(
@@ -86,15 +100,25 @@ object PackCatalog {
             downloadUrl = FRAME_INTERP_DOWNLOAD_URL,
             downloadSha256 = FRAME_INTERP_DOWNLOAD_SHA256
         )
-        // HOLD: no public LiteRT point-tracker TFLite pin yet (GOTURN/RAFT are
-        // Caffe/PyTorch). Sideload Install from file only until Architect publishes.
-        PackId.Track -> PackSpec(id, VERSION, "track.tflite", "ml_track")
+        PackId.Track -> PackSpec(
+            id,
+            VERSION,
+            "track.tflite",
+            "ml_track",
+            expectedSha256 = TRACK_ASSET_SHA256,
+            assetPath = TRACK_ASSET_PATH
+        )
     }
+
+    fun isBundled(id: PackId): Boolean = !spec(id).assetPath.isNullOrBlank()
 
     fun hasHttpsFallback(spec: PackSpec): Boolean =
         !spec.downloadUrl.isNullOrBlank() && !spec.downloadSha256.isNullOrBlank()
 
     fun installUnavailableMessage(spec: PackSpec, playError: String?): String {
+        if (!spec.assetPath.isNullOrBlank()) {
+            return "This pack ships in the app. Restart Studio if it is not ready."
+        }
         val sideload = "Copy ${spec.fileName} into the incoming folder, or use Install from file."
         return if (!hasHttpsFallback(spec)) {
             buildString {

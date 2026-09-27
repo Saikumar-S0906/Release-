@@ -18,7 +18,7 @@ import com.pixijoy.movie.ClipTrack
 import com.pixijoy.movie.TrackEngine
 import com.pixijoy.movie.TimelineClip
 
-/** F1 tracking / roto-lite contract — outside [MovieSessionScreen] for DEX size. */
+/** F1 tracking / roto-lite — bundled track.tflite in the base APK. */
 @Composable
 fun MovieTrackPanel(
     selected: TimelineClip?,
@@ -28,6 +28,7 @@ fun MovieTrackPanel(
     val ready = rememberPackEngineReady(PackId.Track)
     val toggle = trackToggle(engineReady = ready, trackActive = track.isActive)
     val coming = stringResource(R.string.studio_hold_coming)
+    val bundled = stringResource(R.string.studio_track_bundled)
     val label = when (toggle) {
         HoldControl.ComingWithPack -> coming
         HoldControl.ClearTrack -> stringResource(R.string.studio_track_clear)
@@ -39,10 +40,12 @@ fun MovieTrackPanel(
             color = PixiTextMuted,
             modifier = Modifier.testTag("movie_f1_hint")
         )
-        PackStatusRow(
-            packId = PackId.Track,
-            statusTag = "movie_track_pack_status",
-            downloadTag = "movie_track_pack_download"
+        Text(
+            bundled,
+            color = PixiTextMuted,
+            modifier = Modifier
+                .testTag("movie_track_pack_status")
+                .semantics { contentDescription = bundled }
         )
         PixiPrimaryButton(
             label,

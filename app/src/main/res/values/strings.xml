@@ -267,7 +267,8 @@
     <string name="studio_denoise_hint">Download fetches the pinned on-device UNet. Ready means the file is verified. Apply stays off until the neural engine binds. Preview and export use the same op.</string>
     <string name="studio_denoise_amount">Denoise</string>
     <string name="studio_track">Track</string>
-    <string name="studio_track_hint">Point track is coming with the pack. No motion follow in this build.</string>
+    <string name="studio_track_hint">Point track follows the seed when the neural track engine is ready. The tracker ships in the app — no download.</string>
+    <string name="studio_track_bundled">Track model included</string>
     <string name="studio_track_enable">Enable track</string>
     <string name="studio_track_clear">Clear track</string>
     <string name="studio_sky">Sky</string>

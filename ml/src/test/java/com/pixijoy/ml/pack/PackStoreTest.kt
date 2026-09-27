@@ -98,6 +98,15 @@ class PackStoreTest {
             PackCatalog.spec(PackId.FrameInterp).downloadSha256
         )
         assertFalse(PackCatalog.hasHttpsFallback(PackCatalog.spec(PackId.Track)))
+        assertTrue(PackCatalog.isBundled(PackId.Track))
+        assertEquals(
+            PackCatalog.TRACK_ASSET_PATH,
+            PackCatalog.spec(PackId.Track).assetPath
+        )
+        assertEquals(
+            PackCatalog.TRACK_ASSET_SHA256,
+            PackCatalog.spec(PackId.Track).expectedSha256
+        )
         val sideloadHint = PackCatalog.installUnavailableMessage(
             PackCatalog.spec(PackId.Inpaint),
             "Play is unavailable."
@@ -133,17 +142,23 @@ class PackStoreTest {
             PackCatalog.FRAME_INTERP_DOWNLOAD_SHA256
         )
         assertEquals(
+            "e2eb42c38ac53b9f708811f2887b53f4eb9774d9cb1bfff058a197d9fe26301f",
+            PackCatalog.TRACK_ASSET_SHA256
+        )
+        assertEquals(
             setOf(PackId.SuperRes, PackId.Denoise, PackId.FrameInterp),
             PackId.entries.filter { PackCatalog.hasHttpsFallback(PackCatalog.spec(it)) }.toSet()
         )
     }
 
     @Test
-    fun track_staysUnpinnedUntilArtifactExists() {
+    fun track_isBundledInApkAssets() {
         val track = PackCatalog.spec(PackId.Track)
         assertNull(track.downloadUrl)
         assertNull(track.downloadSha256)
-        assertNull(track.expectedSha256)
+        assertEquals(PackCatalog.TRACK_ASSET_SHA256, track.expectedSha256)
+        assertEquals(PackCatalog.TRACK_ASSET_PATH, track.assetPath)
+        assertTrue(PackCatalog.isBundled(PackId.Track))
         assertFalse(PackCatalog.hasHttpsFallback(track))
         assertEquals("track.tflite", track.fileName)
         assertEquals("ml_track", track.playModule)

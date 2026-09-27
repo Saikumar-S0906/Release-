@@ -414,7 +414,7 @@ class Media3MovieEngine : MovieEngine {
         val edited = EditedMediaItem.Builder(builder.build())
             .setDurationUs(clip.durationMs.coerceAtLeast(1) * 1000)
         if (clip.muted) edited.setRemoveAudio(true)
-        val effects = clipEffects(clip)
+        val effects = clipEffects(clip, path)
         if (effects != null) edited.setEffects(effects)
         return edited.build()
     }
@@ -755,7 +755,7 @@ class Media3MovieEngine : MovieEngine {
         }
     }
 
-    private fun clipEffects(clip: TimelineClip): Effects? {
+    private fun clipEffects(clip: TimelineClip, mediaPath: String? = null): Effects? {
         val speed = MovieSpeed.playbackRate(clip)
         val audio = ArrayList<AudioProcessor>()
         val video = ArrayList<Effect>()
@@ -769,6 +769,13 @@ class Media3MovieEngine : MovieEngine {
         if (clip.hasMotion) {
             val durationUs = clip.durationMs.coerceAtLeast(1) * 1000L
             video += clip.motion.toMatrixTransformation(durationUs)
+        }
+        if (clip.hasTrack && mediaPath != null) {
+            val follow = TrackPathBake.motion(mediaPath, clip.track, clip.durationMs)
+            if (!follow.isIdentity) {
+                val durationUs = clip.durationMs.coerceAtLeast(1) * 1000L
+                video += follow.toMatrixTransformation(durationUs)
+            }
         }
         if (clip.hasFrame) {
             video += clip.frame.toEffects()
