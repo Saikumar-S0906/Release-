@@ -102,7 +102,8 @@ class Media3MovieEngine : MovieEngine {
                 timeline = flat,
                 durationOverrideMs = totalMs,
                 extraAudioSequences = audioTrackSeqs,
-                compositor = layout.compositor()
+                compositor = layout.compositor(),
+                burnInTc = mt.delivery.burnInTc
             )
         }
         val videoSeq = EditedMediaItemSequence.Builder(clips.map { videoItem(paths, it) }).build()
@@ -111,7 +112,8 @@ class Media3MovieEngine : MovieEngine {
             paths = paths,
             timeline = flat,
             durationOverrideMs = null,
-            extraAudioSequences = audioTrackSeqs
+            extraAudioSequences = audioTrackSeqs,
+            burnInTc = mt.delivery.burnInTc
         )
     }
 
@@ -489,28 +491,30 @@ class Media3MovieEngine : MovieEngine {
         timeline: Timeline,
         durationOverrideMs: Long? = null,
         extraAudioSequences: List<EditedMediaItemSequence> = emptyList(),
-        compositor: VideoCompositorSettings = VideoCompositorSettings.DEFAULT
+        compositor: VideoCompositorSettings = VideoCompositorSettings.DEFAULT,
+        burnInTc: Boolean = false
     ): Composition {
-        val total = (durationOverrideMs ?: timeline.totalMs()).coerceAtLeast(250)
+        val mixed = timeline.withStemBusesApplied()
+        val total = (durationOverrideMs ?: mixed.totalMs()).coerceAtLeast(250)
         val sequences = ArrayList<EditedMediaItemSequence>()
         sequences += videoSequences
         sequences += extraAudioSequences
-        val voice = resolveStem(paths, timeline.voice)
+        val voice = resolveStem(paths, mixed.voice)
         val voiceEnd = voice?.let { minOf(durationMs(it.second.absolutePath), total) } ?: 0L
-        val rawWindows = timeline.duckWindows(voiceEnd)
-        val bedMeta = timeline.bed
+        val bedMeta = mixed.bed
+        val rawWindows = mixed.duckWindows(voiceEnd)
         val windows = if (bedMeta != null) {
             AudioFinish.polishWindows(rawWindows, bedMeta.attackMs, bedMeta.releaseMs, total)
         } else {
             rawWindows
         }
-        resolveStem(paths, timeline.bed)?.let { (bed, file) ->
+        resolveStem(paths, mixed.bed)?.let { (bed, file) ->
             sequences += bedSequence(file, bed, total, durationMs(file.absolutePath), windows)
         }
         voice?.let { (stem, file) ->
             sequences += voiceSequence(file, stem, total, durationMs(file.absolutePath))
         }
-        for (stem in timeline.extraStems) {
+        for (stem in mixed.extraStems) {
             if (stem.muted || stem.fileName.isBlank()) continue
             val dir = File(paths.first()).parentFile ?: continue
             val file = File(dir, stem.fileName)
@@ -522,7 +526,8 @@ class Media3MovieEngine : MovieEngine {
                 fadeOutMs = stem.fadeOutMs,
                 muted = false,
                 duck = 0.25f,
-                attackMs = 120
+                attackMs = 120,
+                slipMs = stem.slipMs
             )
             val dur = durationMs(file.absolutePath)
             if (stem.role.equals("music", ignoreCase = true)) {
@@ -531,17 +536,24 @@ class Media3MovieEngine : MovieEngine {
                 sequences += voiceSequence(file, asBed, total, dur)
             }
         }
-        val height = MovieExportSize.normalize(timeline.outputHeight)
+        val height = MovieExportSize.normalize(mixed.outputHeight)
         val videoEffects = ArrayList<Effect>()
         videoEffects += Presentation.createForHeight(height)
-        TitleOverlays.effect(timeline.titles, total)?.let { videoEffects += it }
-        val trackAnchor = timeline.clips.firstOrNull { it.track.isActive }?.track?.let {
+        TitleOverlays.effect(mixed.titles, total)?.let { videoEffects += it }
+        val trackAnchor = mixed.clips.firstOrNull { it.track.isActive }?.track?.let {
             it.x to it.y
         }
-        VfxOverlays.effect(timeline.vfx, total, trackAnchor)?.let { videoEffects += it }
-        MovieGrade.effect(timeline.grade)?.let { videoEffects += it }
+        VfxOverlays.effect(mixed.vfx, total, trackAnchor)?.let { videoEffects += it }
+        Title3dOverlays.effect(mixed.titles3d, total)?.let { videoEffects += it }
+        CgOverlays.effect(mixed.cg, total, trackAnchor)?.let { videoEffects += it }
+        TimecodeOverlays.effect(burnInTc, total)?.let { videoEffects += it }
+        MovieGrade.effect(mixed.grade)?.let { videoEffects += it }
         val audioProcessors = ArrayList<AudioProcessor>()
-        val fx = timeline.masterFx
+        val fx = if (mixed.loudness.isOff()) {
+            mixed.masterFx
+        } else {
+            mixed.loudness.applyMaster(mixed.masterFx)
+        }
         if (!fx.isNeutral()) {
             audioProcessors += EqAudioProcessor(fx.lowGainDb, fx.midGainDb, fx.highGainDb)
             audioProcessors += DynamicsAudioProcessor(
@@ -559,13 +571,13 @@ class Media3MovieEngine : MovieEngine {
         return if (sequences.size == 1 && !multiVideo) {
             Composition.Builder(videoSequences.first())
                 .setEffects(compositionEffects)
-                .applyHdr(timeline.hdrMode)
+                .applyHdr(mixed.hdrMode)
                 .build()
         } else {
             val builder = Composition.Builder(sequences)
                 .experimentalSetForceAudioTrack(true)
                 .setEffects(compositionEffects)
-                .applyHdr(timeline.hdrMode)
+                .applyHdr(mixed.hdrMode)
             if (multiVideo) {
                 builder.setVideoCompositorSettings(compositor)
             }
@@ -618,13 +630,16 @@ class Media3MovieEngine : MovieEngine {
         totalMs: Long,
         sourceMs: Long
     ): EditedMediaItemSequence {
-        val take = minOf(sourceMs.coerceAtLeast(1), totalMs)
+        val slip = AudioSync.clampSlip(stem.slipMs)
+        val advance = (-slip).coerceAtLeast(0L)
+        val delay = slip.coerceAtLeast(0L)
+        val take = minOf((sourceMs - advance).coerceAtLeast(1), totalMs)
         val media = MediaItem.Builder()
             .setUri(Uri.fromFile(file))
             .setClippingConfiguration(
                 MediaItem.ClippingConfiguration.Builder()
-                    .setStartPositionMs(0)
-                    .setEndPositionMs(take)
+                    .setStartPositionMs(advance)
+                    .setEndPositionMs(advance + take)
                     .build()
             )
             .build()
@@ -632,7 +647,8 @@ class Media3MovieEngine : MovieEngine {
             .setRemoveVideo(true)
             .setDurationUs(take * 1000)
         val vol = ClipMix.volume(stem.volume)
-        if (vol != 1f || stem.fadeInMs > 0 || stem.fadeOutMs > 0) {
+        val needsMix = vol != 1f || stem.fadeInMs > 0 || stem.fadeOutMs > 0 || delay > 0
+        if (needsMix) {
             edited.setEffects(
                 Effects(
                     listOf(
@@ -640,7 +656,8 @@ class Media3MovieEngine : MovieEngine {
                             durationMs = take,
                             volume = vol,
                             fadeInMs = stem.fadeInMs,
-                            fadeOutMs = stem.fadeOutMs
+                            fadeOutMs = stem.fadeOutMs,
+                            delayMs = delay
                         )
                     ),
                     emptyList()
@@ -657,7 +674,10 @@ class Media3MovieEngine : MovieEngine {
         bedDur: Long,
         windows: List<ClipMix.Window>
     ): EditedMediaItemSequence {
-        val slice = bedDur.coerceAtLeast(250)
+        val slip = AudioSync.clampSlip(bed.slipMs)
+        val advance = (-slip).coerceAtLeast(0L)
+        val delay = slip.coerceAtLeast(0L)
+        val slice = (bedDur - advance).coerceAtLeast(250)
         val items = ArrayList<EditedMediaItem>()
         var t = 0L
         var index = 0
@@ -669,8 +689,8 @@ class Media3MovieEngine : MovieEngine {
                 .setUri(Uri.fromFile(file))
                 .setClippingConfiguration(
                     MediaItem.ClippingConfiguration.Builder()
-                        .setStartPositionMs(0)
-                        .setEndPositionMs(take)
+                        .setStartPositionMs(advance)
+                        .setEndPositionMs(advance + take)
                         .build()
                 )
                 .build()
@@ -678,7 +698,7 @@ class Media3MovieEngine : MovieEngine {
                 .setRemoveVideo(true)
                 .setDurationUs(take * 1000)
             val needsMix = vol != 1f || bed.fadeInMs > 0 || bed.fadeOutMs > 0 ||
-                (duck < 0.999f && windows.isNotEmpty())
+                (duck < 0.999f && windows.isNotEmpty()) || delay > 0
             if (needsMix) {
                 edited.setEffects(
                     Effects(
@@ -692,7 +712,8 @@ class Media3MovieEngine : MovieEngine {
                                 windows = windows,
                                 duck = duck,
                                 attackMs = bed.attackMs,
-                                releaseMs = bed.releaseMs
+                                releaseMs = bed.releaseMs,
+                                delayMs = if (index == 0) delay else 0L
                             )
                         ),
                         emptyList()

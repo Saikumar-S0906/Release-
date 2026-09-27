@@ -1,8 +1,9 @@
 # PixiJoy north-star feature forecast and development plan
 
-**Spine:** Local-first pro mobile studio - more than Photoshop for stills, cinema-class for movie, no upload / no account / no watermark / no subscription.
+**Spine:** Local-first **director kit** on phone — Photoshop-class stills + cinema cut/look/sound/CG previz — no upload / no account / no watermark / no subscription.
 **Hard rule:** every feature is an edit-graph or timeline op -> engine (`:photo` / `:movie` / `:ml`) -> WorkManager export. UI never owns giant bitmaps.
 **Audience:** Saikumar + team. Aligns with `ARCHITECTURE.md` and `MASTER_PLAN.md`; does not replace shipping focus.
+**Director product shape:** [`docs/DIRECTOR_KIT.md`](DIRECTOR_KIT.md) (pillars + Waves H–L). CG detail: [`docs/R7_CG_EFFECTS.md`](R7_CG_EFFECTS.md).
 
 ---
 
@@ -12,9 +13,11 @@
 |---|---|
 | Photoshop / Lightroom / Snapseed | Full stills craft on device: layers, grade, retouch, RAW, batch |
 | CapCut / VN / Premiere Rush | Multi-track mobile cinema: timeline, grade, audio, titles, 4K/HDR |
-| Avatar-class storytelling | User-facing cinema craft on phone. Full CGI/VFX farm stays out of base APK; advanced packs via Play Feature Delivery |
+| Avid / Premiere / Resolve (first pass) | **Director’s cutting room on phone:** assemblies, markers, look-dev, temp mix, VFX previz, review handoff — then DI/farm when needed |
+| Avatar-class storytelling | Filament CG + depth/matte inserts on device. Full CGI/VFX farm stays out of base APK; advanced packs via Play Feature Delivery |
 
 Constraint: **on-device only on the editor path.** Cloud ML stays out. Optional `:ml-*` and ffmpeg packs are opt-in, never base APK.
+**Honesty:** not a theatrical DI / Atmos / Nuke replacement — a cut a director trusts before the room.
 
 ---
 
@@ -54,6 +57,13 @@ Constraint: **on-device only on the editor path.** Cloud ML stays out. Optional 
 ### Ambition packs (R6+, on-demand)
 - Tracking / roto-lite; VFX packs; 3D/Filament titles; ARCore previz; optional ffmpeg
 
+### Director kit (R7–R9) — see `DIRECTOR_KIT.md`
+- **R7 / Wave H** — On-device CG: Filament compositor, glTF, IBL, GPU particles, depth/matte, set extension (`R7_CG_EFFECTS.md`)
+- **R8 / Waves I–K** — Assembly (markers, bins, versions, proxy); Colorist kit (secondary, shot match, scopes truth); Sound finish (stems, ADR, loudness)
+- **R9 / Wave L** — Delivery & review (notes, EDL/XML-lite handoff, deliverable presets)
+- **Wave M (Colab, your queue)** — Inpaint → Depth → Matting → Flow (`PERFECT_BUILD.md` / `COLAB_ML_RUNBOOK.md`)
+- **Coding now** — [`CODING_PHASES.md`](CODING_PHASES.md): P0–P6 without waiting; P7 binds TFLite when ready
+
 ---
 
 ## 4. Staged plan
@@ -65,6 +75,9 @@ Constraint: **on-device only on the editor path.** Cloud ML stays out. Optional 
 | **R4** | Movie multi-track depth | versioned timeline + export match |
 | **R5** | ML packs on-demand | base APK under 40 MB |
 | **R6+** | Chroma/tracking/HDR/3D/AR packs | isolated modules |
+| **R7** | On-device CG / Filament cinema VFX | hero CG shot; feature module size gate |
+| **R8** | Assembly + colorist + sound finish | markers/versions + secondary grade + stem buses |
+| **R9** | Delivery & review handoff | review package + EDL-lite smoke |
 
 ---
 

@@ -49,6 +49,8 @@ fun MovieEditOpsPanel(
     onRoll: (Long) -> Unit,
     onTransition: (ClipTransition, Long) -> Unit,
     onSpeedRamp: (Float, Float) -> Unit,
+    onJCut: () -> Unit = {},
+    onLCut: () -> Unit = {},
     onSettled: () -> Unit = {}
 ) {
     var focusedMode by remember { mutableStateOf(MovieD2Mode.Transition) }
@@ -75,6 +77,29 @@ fun MovieEditOpsPanel(
                 "movie_d2_speed"
             ) {
                 focusedMode = MovieD2Mode.Speed
+            }
+            StudioChip(
+                stringResource(R.string.studio_jl_cut),
+                false,
+                "movie_d2_jl"
+            ) {
+                focusedMode = MovieD2Mode.Roll
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(
+                onClick = onJCut,
+                enabled = selected != null,
+                modifier = Modifier.testTag("movie_j_cut")
+            ) {
+                Text(stringResource(R.string.studio_j_cut), color = PixiText)
+            }
+            TextButton(
+                onClick = onLCut,
+                enabled = selected != null,
+                modifier = Modifier.testTag("movie_l_cut")
+            ) {
+                Text(stringResource(R.string.studio_l_cut), color = PixiText)
             }
         }
         when (focusedMode) {

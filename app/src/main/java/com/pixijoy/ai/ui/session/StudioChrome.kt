@@ -95,7 +95,11 @@ enum class MovieGroup(val tag: String) {
     Text("studio_group_text"),
     Color("studio_group_color"),
     Effects("studio_group_effects"),
-    Layout("studio_group_layout")
+    /** R7 / CODING_PHASES P1 — Filament CG lane (classical plate until feature_cg). */
+    Cg("studio_group_cg"),
+    Layout("studio_group_layout"),
+    /** R9 delivery placeholders (review / handoff presets land in P6). */
+    Deliver("studio_group_deliver")
 }
 
 enum class MovieEffectSub(val tag: String) {

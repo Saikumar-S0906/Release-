@@ -60,17 +60,19 @@ object PackCatalog {
     const val DENOISE_DOWNLOAD_SHA256 = DENOISE_ASSET_SHA256
 
     /**
-     * FILM style frame-interp TFLite (Apache-2.0 lineage via Google FILM), ~67 MB,
-     * float16-quantized 512 path from the community Unity conversion.
-     * On-demand only — never in the base APK. PackLiteRt binds when LiteRT is up
-     * and [PackModelContract.isFrameInterpFilm] accepts the graph (pinned FILM is
-     * FLOAT32 512×512 despite the float16 filename). Ready alone is not neural.
-     * https://github.com/egemenertugrul/frame-interpolation-tflite-unity
+     * FILM style frame-interp TFLite (Apache-2.0 lineage via Google FILM), ~67 MB.
+     * Live Download is the public [Release-](https://github.com/Saikumar-S0906/Release-)
+     * repo asset (SHA-pinned). Provenance URL retained for attribution only.
      */
     const val FRAME_INTERP_DOWNLOAD_URL =
-        "https://raw.githubusercontent.com/egemenertugrul/frame-interpolation-tflite-unity/main/FILM_TFLite_UnityProject/Assets/StreamingAssets/model_512_quant_float16.tflite"
+        "https://github.com/Saikumar-S0906/Release-/releases/download/ml-packs-v1/interp.tflite"
     const val FRAME_INTERP_DOWNLOAD_SHA256 =
         "3a201916658277ed6e7626d93a6ee117a47b04bc1986579600a90feabfe05eb4"
+    const val FRAME_INTERP_PROVENANCE_URL =
+        "https://raw.githubusercontent.com/egemenertugrul/frame-interpolation-tflite-unity/main/FILM_TFLite_UnityProject/Assets/StreamingAssets/model_512_quant_float16.tflite"
+    /** Public ML artifact host for FILM, inpaint (when large), and future packs. */
+    const val ML_RELEASE_REPO = "https://github.com/Saikumar-S0906/Release-"
+    const val ML_RELEASE_TAG = "ml-packs-v1"
 
     /**
      * PixiJoy F1 point-track TFLite (Apache-2.0), synthetic-trained Siamese,

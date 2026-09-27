@@ -1,5 +1,5 @@
 ﻿PixiJoy — TOTAL remaining (all stages)
-Updated: 2026-09-25
+Updated: 2026-09-27
 Source: room status + docs/NORTH_STAR_ROADMAP.md + UX backlog
 Branch: origin/next (tip moving)
 
@@ -78,6 +78,68 @@ F5. Optional ffmpeg advanced export
 F6. Smart-object analog; advanced type; print/PDF
 
 ================================================================
+H. R7 ON-DEVICE CG (after F foundations) — docs/R7_CG_EFFECTS.md + docs/DIRECTOR_KIT.md
+================================================================
+H1. CG compositor lane (Filament → timeline overlay; preview=export)
+H2. glTF prop library (Release- packs; track-attach)
+H3. Lights + IBL / HDRI
+H4. GPU particles / trails (not sticker sparkle)
+H5. Depth-aware CG insert (monocular depth pack)
+H6. Video matting plates for CG underlays
+H7. CG camera keyframes + motion blur
+H8. Set extension / sky dome + shadow catcher
+H9. Audio-reactive CG (optional)
+H10. :feature_cg on-demand size + mid-range perf gate
+
+================================================================
+I. R8 ASSEMBLY (director editorial) — docs/DIRECTOR_KIT.md
+================================================================
+I1. Markers + notes
+I2. Bins + selects
+I3. Versions / assemblies
+I4. Snap edit polish (magnetic / J-L / ripple)
+I5. Proxy scrub for long 4K
+I6. Multicam polish + sync heuristic
+
+================================================================
+J. R8 COLORIST KIT — docs/DIRECTOR_KIT.md
+================================================================
+J1. Secondary / power windows
+J2. Shot match
+J3. LUT pipeline order (continuity with CG IBL)
+J4. Scopes truth (display-referred; HDR labeled)
+J5. Still lookbook bridge (frame ↔ photo grade)
+
+================================================================
+K. R8 SOUND FINISH — docs/DIRECTOR_KIT.md
+================================================================
+K1. Stem buses (dialogue / music / SFX)
+K2. ADR / VO lane
+K3. Sync tools (slip / waveform / clap)
+K4. Loudness (LUFS target)
+K5. Spot FX to picture
+
+================================================================
+L. R9 DELIVERY & REVIEW — docs/DIRECTOR_KIT.md
+================================================================
+L1. Review package (TC optional; local comments; no default watermark)
+L2. Handoff EDL-lite / FCPXML-lite
+L3. Deliverable presets (social / review proxy / master HDR)
+L4. Export metadata (title, version, LUT)
+
+================================================================
+M. COLAB ML PACKS (parallel — do NOT wait on inpaint) — docs/PERFECT_BUILD.md · tools/COLAB_ML_RUNBOOK.md
+================================================================
+M1. Inpaint — quality finish → Release- pin + E1 Download (tools/inpaint/)
+M2. Depth — QUALITY ONLY to Release- (tools/depth/ --quality + data/READY) → H5
+M3. Video matting — QUALITY ONLY (tools/matting/ --quality) → H6
+M4. Optical flow — QUALITY ONLY (tools/flow/ --quality) → D8/track
+M7. Sky matte — planned with M2–M4 (close C4 heuristic gap) — not deferred as cheap
+Smoke labs = contract only. Law: tools/ML_QUALITY_BAR.md
+Pack zips: .\tools\pack_ml_labs.ps1
+M5–M6 optional. Already shipped: Track, Super-res, Denoise, FILM
+
+================================================================
 G. PLATFORM / UX CHROME (ongoing)
 ================================================================
 G1. Tablet / foldable two-pane — catalog|session MET; session preview|tools (`studio_session_side_tools`) MET 2026-09-25/26 (`isStudioTwoPane` width≥800 × height≥480 — Pixel Tablet 800×500 included; phone landscape stays single-pane)
@@ -91,10 +153,11 @@ G8. Autosave indicator polish; rename after first create/export — MET 2026-09-
 G9. Gradle BuildConfig deprecation cleanup — MET 2026-09-25 (removed `android.defaults.buildfeatures.buildconfig`; `:app` still sets `buildFeatures.buildConfig`)
 
 ================================================================
-H. SUGGESTED PATH (ASAP, no fake greens)
+PATH. SUGGESTED (ASAP, no fake greens)
 ================================================================
-1. Interp / track engines only with real movie inference
-2. Device Maestro / TalkBack / five-user (R5 entry gate)
-3. F2+ only as on-demand modules after F1 engine
+CODING (docs/CODING_PHASES.md) — do NOT wait on Colab:
+  P0 UX · P1 CG classical · P2 Assembly · P3 Colorist · P4 Sound · P6 Delivery LANDED
+  P5 CG polish PARTIAL (Z/matte/cam/dust; Filament GPU later) → P7 ML plugs
+Colab (your queue): M1 → M2 → M3 → M4 quality packs (tools/ML_QUALITY_BAR.md) · M7 sky
 
 Hard rule stays: edit-graph or timeline op → engine → WorkManager export. Local-first. Quality > clock.

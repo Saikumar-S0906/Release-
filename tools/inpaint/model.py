@@ -49,13 +49,14 @@ def build_model() -> tf.keras.Model:
     d1 = _conv_block(u1, 64, "d1")
 
     # Predict residual; blend with known pixels outside the hole.
+    # Prefer Rescaling over Lambda — Lambda without output_shape breaks .keras reload (Colab/Keras 3).
     residual = tf.keras.layers.Conv2D(3, 1, activation="tanh", name="residual")(d1)
-    half = tf.keras.layers.Lambda(lambda r: r * 0.5, name="half_res")(residual)
+    half = tf.keras.layers.Rescaling(0.5, name="half_res")(residual)
     filled = tf.keras.layers.Add(name="filled")([image_in, half])
     filled = tf.keras.layers.Activation("sigmoid", name="filled_clip")(filled)
     # Compose: keep known pixels, use prediction inside the hole (TFLite-friendly).
-    ones = tf.keras.layers.Lambda(lambda m: tf.ones_like(m), name="ones")(mask_in)
-    inv_mask = tf.keras.layers.Subtract(name="inv_mask")([ones, mask_in])
+    # inv_mask = 1 - mask  via Rescaling(scale=-1, offset=1)
+    inv_mask = tf.keras.layers.Rescaling(-1.0, offset=1.0, name="inv_mask")(mask_in)
     known = tf.keras.layers.Multiply(name="known")([image_in, inv_mask])
     hole = tf.keras.layers.Multiply(name="hole")([filled, mask_in])
     out = tf.keras.layers.Add(name="compose")([known, hole])

@@ -131,7 +131,14 @@ import com.pixijoy.movie.MultiTrackTimeline
 import com.pixijoy.movie.Timeline
 import com.pixijoy.movie.TimelineClip
 import com.pixijoy.movie.TimelineTitle
+import com.pixijoy.movie.TimelineTitle3d
 import com.pixijoy.movie.TimelineVfx
+import com.pixijoy.movie.TimelineCgLayer
+import com.pixijoy.movie.CgPreset
+import com.pixijoy.movie.EditSnap
+import com.pixijoy.movie.ArPrevizGate
+import com.pixijoy.movie.OptFeatureModules
+import com.pixijoy.movie.MovieExportBackends
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -473,11 +480,25 @@ fun MovieSessionScreen(
                 CompositionPreviewCapability.ExportOnly,
             onPlayhead = sessionViewModel::setPlayhead,
             onSeek = { ms ->
-                if (seekComposition(ms)) {
+                val snapped = EditSnap.snapPlayhead(
+                    ms,
+                    timeline,
+                    thresholdMs = EditSnap.DEFAULT_THRESHOLD_MS
+                )
+                val markerEdges = multi.markers.map { it.ms }
+                val withMarkers = EditSnap.snapMs(
+                    snapped,
+                    EditSnap.clipEdges(timeline.clips) + markerEdges,
+                    totalMs = timeline.totalMs()
+                )
+                if (seekComposition(withMarkers)) {
+                    sessionViewModel.setPlayhead(
+                        (withMarkers.toFloat() / timeline.totalMs().coerceAtLeast(1)).coerceIn(0f, 1f)
+                    )
                     val bedDur = bedPlayer?.duration ?: 0L
-                    if (bedDur > 0) bedPlayer?.seekTo(ms % bedDur)
+                    if (bedDur > 0) bedPlayer?.seekTo(withMarkers % bedDur)
                     val voiceDur = voicePlayer?.duration ?: 0L
-                    if (voiceDur > 0) voicePlayer?.seekTo(ms.coerceAtMost(voiceDur))
+                    if (voiceDur > 0) voicePlayer?.seekTo(withMarkers.coerceAtMost(voiceDur))
                     true
                 } else {
                     false
@@ -492,11 +513,19 @@ fun MovieSessionScreen(
             onStep = { stepFrame(it) },
             onSelectClip = { selectedId = it },
             onTrimIn = { id, value ->
-                commitTimeline(timeline.rippleTrimIn(id, value), live = true)
+                val edges = EditSnap.clipEdges(timeline.clips)
+                // value is source in-point; magnetize nearby source edges from sibling clips of same media
+                val mediaEdges = timeline.clips.filter { it.mediaIndex == timeline.clips.firstOrNull { c -> c.id == id }?.mediaIndex }
+                    .flatMap { listOf(it.inMs, it.outMs) }
+                val snapped = EditSnap.snapMs(value, mediaEdges + edges, thresholdMs = EditSnap.DEFAULT_THRESHOLD_MS)
+                commitTimeline(timeline.rippleTrimIn(id, snapped), live = true)
             },
             onTrimOut = { id, value, sourceEnd ->
+                val mediaEdges = timeline.clips.filter { it.mediaIndex == timeline.clips.firstOrNull { c -> c.id == id }?.mediaIndex }
+                    .flatMap { listOf(it.inMs, it.outMs) } + listOf(sourceEnd)
+                val snapped = EditSnap.snapMs(value, mediaEdges, thresholdMs = EditSnap.DEFAULT_THRESHOLD_MS, totalMs = sourceEnd)
                 commitTimeline(
-                    timeline.rippleTrimOut(id, value, sourceEnd),
+                    timeline.rippleTrimOut(id, snapped, sourceEnd),
                     live = true
                 )
             },
@@ -517,13 +546,24 @@ fun MovieSessionScreen(
                 null
             },
             rail = {
-                StudioGroupRail(
-                    items = movieGroupItems(),
-                    selectedTag = movieGroup.tag,
-                    onSelect = { tag ->
-                        movieGroup = MovieGroup.entries.first { it.tag == tag }
-                    }
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    MovieToolSearchField(
+                        onJump = { jump ->
+                            movieGroup = MovieGroup.entries.first { it.tag == jump.groupTag }
+                            jump.effectSubTag?.let { sub ->
+                                effectSub = MovieEffectSub.entries.first { it.tag == sub }
+                            }
+                        },
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                    StudioGroupRail(
+                        items = movieGroupItems(),
+                        selectedTag = movieGroup.tag,
+                        onSelect = { tag ->
+                            movieGroup = MovieGroup.entries.first { it.tag == tag }
+                        }
+                    )
+                }
             },
             panel = {
             if (movieGroup == MovieGroup.Layout) {
@@ -606,7 +646,28 @@ fun MovieSessionScreen(
                         live = true
                     )
                 },
+                onJCut = {
+                    val id = selected?.id ?: return@MovieEditOpsPanel
+                    commitTimeline(timeline.applyJLCut(id, jCut = true))
+                },
+                onLCut = {
+                    val id = selected?.id ?: return@MovieEditOpsPanel
+                    commitTimeline(timeline.applyJLCut(id, jCut = false))
+                },
                 onSettled = { settlePreview() }
+            )
+            MovieAssemblyPanel(
+                multi = multi.ensureDefaultBins(),
+                playheadMs = (playhead * timeline.totalMs()).toLong(),
+                mediaCount = paths.size,
+                onMulti = { commitMulti(it) },
+                onJumpMs = { ms ->
+                    val total = timeline.totalMs().coerceAtLeast(1)
+                    val clamped = ms.coerceIn(0L, total)
+                    if (seekComposition(clamped)) {
+                        sessionViewModel.setPlayhead((clamped.toFloat() / total).coerceIn(0f, 1f))
+                    }
+                }
             )
             }
             }
@@ -737,10 +798,50 @@ fun MovieSessionScreen(
                     selectedTitleId = null
                 }
             )
+            Text(
+                stringResource(R.string.studio_title_3d_hint),
+                color = PixiTextMuted,
+                modifier = Modifier.testTag("movie_f3_hint")
+            )
+            PixiPrimaryButton(
+                stringResource(R.string.studio_title_3d),
+                {
+                    OptFeatureModules.tryBindTitles3d()
+                    val total = multi.totalMs()
+                    val next = TimelineTitle3d.default(total, id = "t3${multi.titles3d.size}")
+                    commitMulti(multi.copy(titles3d = multi.titles3d + next))
+                },
+                Modifier.testTag("movie_title_3d_add"),
+                contentDescription = stringResource(R.string.studio_title_3d)
+            )
+            val arLabel = stringResource(R.string.studio_ar_previz)
+            PixiPrimaryButton(
+                arLabel,
+                {
+                    val ctx = context
+                    scope.launch {
+                        OptFeatureModules.ensureInstalled(ctx, OptFeatureModules.AR)
+                        if (!ArPrevizGate.isSupported(ctx)) {
+                            // Still attempt launch; activity handles missing ARCore.
+                        }
+                        if (!ArPrevizGate.launchPreviz(ctx, multi.titles3d.firstOrNull()?.text ?: "PixiJoy")) {
+                            // unsupported — surface via existing empty chrome if needed
+                        }
+                    }
+                },
+                Modifier.testTag("movie_ar_previz"),
+                contentDescription = arLabel
+            )
             }
             if (movieGroup == MovieGroup.Color) {
             MovieGradePanel(
                 grade = multi.grade,
+                onGrade = { next -> commitMulti(multi.copy(grade = next), live = true) },
+                onSettled = { settlePreview() }
+            )
+            MovieColoristPanel(
+                grade = multi.grade,
+                hdrMode = multi.hdrMode,
                 onGrade = { next -> commitMulti(multi.copy(grade = next), live = true) },
                 onSettled = { settlePreview() }
             )
@@ -749,7 +850,62 @@ fun MovieSessionScreen(
                 onHdrMode = { next -> commitMulti(multi.copy(hdrMode = next)) }
             )
             }
+            if (movieGroup == MovieGroup.Cg) {
+            MovieCgPanel(
+                layers = multi.cg,
+                totalMs = multi.totalMs(),
+                onAdd = { preset ->
+                    val total = multi.totalMs()
+                    val next = TimelineCgLayer(
+                        id = "cg${multi.cg.size}",
+                        preset = preset,
+                        endMs = total.coerceAtLeast(1000),
+                        zOrder = when (preset) {
+                            CgPreset.SkyDome -> -2
+                            CgPreset.GroundPlane -> -1
+                            else -> multi.cg.size
+                        }
+                    )
+                    commitMulti(multi.copy(cg = multi.cg + next), live = true)
+                },
+                onUpdate = { layer ->
+                    commitMulti(
+                        multi.copy(cg = multi.cg.map { if (it.id == layer.id) layer else it }),
+                        live = true
+                    )
+                },
+                onClear = { commitMulti(multi.copy(cg = emptyList())) }
+            )
+            }
+            if (movieGroup == MovieGroup.Deliver) {
+            MovieDeliverPanel(
+                multi = multi,
+                playheadMs = (playhead * timeline.totalMs()).toLong(),
+                projectDir = repo.projectDir(project.id),
+                onMulti = { commitMulti(it) },
+                onWriteHandoff = {
+                    runCatching {
+                        com.pixijoy.movie.DeliveryHandoff.writeAll(
+                            projectDir = repo.projectDir(project.id),
+                            projectTitle = project.title,
+                            multi = multi,
+                            mediaNames = paths.map { java.io.File(it).name }
+                        )
+                        status = context.getString(R.string.studio_deliver_handoff_ok)
+                    }.onFailure {
+                        status = context.getString(R.string.studio_export_failed)
+                    }
+                }
+            )
+            }
             if (movieGroup == MovieGroup.Audio) {
+            MovieSoundPanel(
+                timeline = timeline,
+                projectDir = repo.projectDir(project.id),
+                playheadMs = (playhead * timeline.totalMs()).toLong(),
+                onTimeline = { commitTimeline(it) },
+                onSettled = { settlePreview() }
+            )
             MovieAudioFinishPanel(
                 bed = timeline.bed,
                 hasVoice = timeline.voice != null,
@@ -1503,7 +1659,9 @@ private fun movieGroupItems(): List<StudioGroupItem> = listOf(
     StudioGroupItem(MovieGroup.Text.tag, stringResource(R.string.studio_group_text), R.drawable.pj_ic_text),
     StudioGroupItem(MovieGroup.Color.tag, stringResource(R.string.studio_group_color), R.drawable.pj_ic_palette),
     StudioGroupItem(MovieGroup.Effects.tag, stringResource(R.string.studio_group_effects), R.drawable.pj_ic_wave),
-    StudioGroupItem(MovieGroup.Layout.tag, stringResource(R.string.studio_group_layout), R.drawable.pj_ic_grid)
+    StudioGroupItem(MovieGroup.Cg.tag, stringResource(R.string.studio_group_cg), R.drawable.pj_ic_layers),
+    StudioGroupItem(MovieGroup.Layout.tag, stringResource(R.string.studio_group_layout), R.drawable.pj_ic_grid),
+    StudioGroupItem(MovieGroup.Deliver.tag, stringResource(R.string.studio_group_deliver), R.drawable.pj_ic_export)
 )
 
 @Composable

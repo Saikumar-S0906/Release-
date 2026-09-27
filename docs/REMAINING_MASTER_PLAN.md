@@ -8,9 +8,13 @@
 **Snapshot (2026-09-27):** **Wave B EXITED** · **Wave C EXITED** · **D1–D11 MET** · Wave D EXITED. Live: **E pack runtime + Super-res/Denoise HTTPS LiteRT + inpaint sideload bind + E4 FILM bind/export mux + F1 Track bundled APK asset + LiteRT bind + TrackPathBake follow + F2 classical particle VFX overlays**. G2 slider/preview extract complete.
 
 ```
-B (quality + R3.1) ──▶ C (R3 photo) ──▶ D (R4 movie) ──▶ E (R5 ML packs) ──▶ F (R6+ opt-in)
-                              │              │
-                              └──── G parallel (a11y/tablet/refactor/polish; never blocks C/D exits) ────┘
+B → C → D → E → F ──▶ **CODING P0–P6** (docs/CODING_PHASES.md) ──▶ **P7 ML plugs**
+                              │
+         Wave H–L product shape + Wave M Colab (never blocks coding)
+                              │
+                              └──── G parallel (never blocks exits) ────┘
+
+Director kit: docs/DIRECTOR_KIT.md  ·  Perfect: docs/PERFECT_BUILD.md  ·  Coding: docs/CODING_PHASES.md
 ```
 
 ---
@@ -112,12 +116,108 @@ Then:
 |----|---------|------------|
 | **F1** | Tracking / roto-lite | D1, D3. Bundled `track.tflite` in APK assets + LiteRT bind + `TrackPathBake` follow when `engineReady` |
 | **F2** | VFX / particles | **MET** — classical `TimelineVfx` composition overlays + optional F1 track follow. Not neural. |
-| **F3** | 3D / Filament titles | D4 + keyframe/transform |
-| **F4** | ARCore previz | F1 + 3D primitives + device gates |
-| **F5** | Optional FFmpeg export | Proven Media3 gap; **outside base APK** |
-| **F6** | Smart objects, advanced type, print/PDF | Mature layers/type + color/export |
+| **F3** | 3D / Filament titles | **MET** — `TimelineTitle3d` + extruded overlay in base; Filament in on-demand `:feature_titles3d` |
+| **F4** | ARCore previz | **MET** — `ArPrevizGate` + `:feature_ar` plane previz Activity (device-gated) |
+| **F5** | Optional FFmpeg export | **MET** — Media3 default; `:feature_ffmpeg` + `MovieExportBackends` for GIF/WebM gaps |
+| **F6** | Smart objects, advanced type, print/PDF | **MET** — `SmartObject` / `AdvancedType` / `PdfExport` in `:photo` |
 
 Never land F* as isolated effects without listed primitives.
+
+---
+
+## Wave H — R7 on-device CG (after F foundations)
+
+**Plan detail:** [`docs/R7_CG_EFFECTS.md`](R7_CG_EFFECTS.md) · **Director kit:** [`docs/DIRECTOR_KIT.md`](DIRECTOR_KIT.md).  
+Real Filament CG + depth/matte inserts vs CapCut sticker VFX. Not a Hollywood farm; director-grade mobile CG previz.
+
+| ID | Feature | Notes |
+|----|---------|--------|
+| **H1** | CG compositor lane | Filament offscreen → timeline overlay; shared preview/export |
+| **H2** | glTF prop library | Release- asset packs; place / scale / track-attach |
+| **H3** | Lights + IBL | Directional/point + HDRI; grade continuity |
+| **H4** | GPU particles / trails | Replaces cheap sparkle for CG shots |
+| **H5** | Depth-aware insert | Monocular depth ML + soft Z-comp |
+| **H6** | Video matting plates | Temporal subject matte for CG underlays |
+| **H7** | CG camera + motion blur | Keyframed dolly/orbit on CG layer |
+| **H8** | Set extension / sky dome | HDRI dome + shadow catcher |
+| **H9** | Audio-reactive CG (opt) | Local amplitude → lights/particles |
+| **H10** | Perf + size gate | `:feature_cg` on-demand; mid-range budget |
+
+---
+
+## Wave I — R8 assembly (director editorial)
+
+**Plan detail:** [`docs/DIRECTOR_KIT.md`](DIRECTOR_KIT.md) §5. Parallel-safe with early H once D1–D7 stable.
+
+| ID | Feature | Notes |
+|----|---------|--------|
+| **I1** | Markers + notes | Beat / VFX / music markers; jump-to |
+| **I2** | Bins + selects | A/B/selects/VFX plate bins |
+| **I3** | Versions / assemblies | Named cuts; compare flip; tagged export |
+| **I4** | Snap edit polish | Magnetic edges, J/L, ripple defaults |
+| **I5** | Proxy scrub | Half-res scrub; full-res export |
+| **I6** | Multicam polish | Angle switch + clap/waveform sync (honest yellow OK) |
+
+---
+
+## Wave J — R8 colorist kit
+
+**Plan detail:** [`docs/DIRECTOR_KIT.md`](DIRECTOR_KIT.md) §6. Builds on D5 + C1.
+
+| ID | Feature | Notes |
+|----|---------|--------|
+| **J1** | Secondary / power windows | Shape + HSL qualify on timeline |
+| **J2** | Shot match | Copy grade + still-reference assist |
+| **J3** | LUT pipeline order | Show → look → technical; continuity with H3 |
+| **J4** | Scopes truth | Display-referred; HDR path labeled |
+| **J5** | Still lookbook bridge | Frame → photo grade → LUT back |
+
+---
+
+## Wave K — R8 sound finish
+
+**Plan detail:** [`docs/DIRECTOR_KIT.md`](DIRECTOR_KIT.md) §7. Builds on D6.
+
+| ID | Feature | Notes |
+|----|---------|--------|
+| **K1** | Stem buses | Dialogue / music / SFX mute/solo |
+| **K2** | ADR / VO lane | Record into timeline |
+| **K3** | Sync tools | Slip + waveform; clap detect optional |
+| **K4** | Loudness | LUFS target + soft limiter best-effort |
+| **K5** | Spot FX to picture | Marker drop; optional track attach |
+
+---
+
+## Wave L — R9 delivery & review
+
+**Plan detail:** [`docs/DIRECTOR_KIT.md`](DIRECTOR_KIT.md) §9.
+
+| ID | Feature | Notes |
+|----|---------|--------|
+| **L1** | Review package | Optional TC burn-in; local comment JSON; watermark off by default |
+| **L2** | Handoff | EDL-lite / FCPXML-lite + markers; document gaps |
+| **L3** | Deliverable presets | Social / review proxy / master HDR |
+| **L4** | Export metadata | Title, version, LUT embedded |
+
+---
+
+## Wave M — Colab ML packs (parallel; do not serialize on inpaint)
+
+**Plan detail:** [`docs/PERFECT_BUILD.md`](PERFECT_BUILD.md) §1 · runbook [`tools/COLAB_ML_RUNBOOK.md`](../tools/COLAB_ML_RUNBOOK.md). Train on Colab → TFLite → [Release-](https://github.com/Saikumar-S0906/Release-) → LiteRT bind. Labs ready: `tools/inpaint/`, `tools/depth/`, `tools/matting/`, `tools/flow/` (+ `.\tools\pack_ml_labs.ps1`).
+
+| ID | Pack | Unlocks | Notes |
+|----|------|---------|--------|
+| **M1** | Inpaint | E1 neural Apply | Keep Colab running; pin SHA + Download when `inpaint.tflite` lands |
+| **M2** | Depth (monocular) | H5 soft Z-comp | **Start now** — independent of M1 |
+| **M3** | Video matting | H6 plates / set extension | **Start now** — independent of M1 |
+| **M4** | Optical flow / stabilize | D8 beyond crop-zoom; cleaner H2/H4 attach | Parallel, or after M2/M3 if one GPU |
+| **M5** | Roto upgrade (opt) | F1 quality | Only if point-track gaps hurt |
+| **M6** | Portrait heavy (opt) | C8 pack | Keep light Soften |
+| **M7** | Sky matte (opt) | C4 upgrade | If heuristic fails on film |
+
+**Already shipped (no Colab unless upgrade):** Track, Super-res, Denoise, FILM.
+
+**Quota tip:** 2nd Colab for Depth while Inpaint trains; 3rd for Matting if available. App code for H1–H3 can proceed without any of M1–M4.
 
 ---
 
@@ -149,6 +249,11 @@ Never land F* as isolated effects without listed primitives.
 | **P5** | D7–D11 | — |
 | **P6** | ML-pack foundation + E5 size gate → E1 → E2/E3 → E4 | — |
 | **P7** | F1→F6 as opt-in modules | — |
+| **P8** | Wave H / R7 CG (H1→H8) after F foundations | CODING_PHASES P1 + P5 |
+| **P9** | Waves I–K / R8 assembly + color + sound | CODING_PHASES P2–P4 |
+| **P10** | Wave L / R9 delivery & review handoff | CODING_PHASES P6 |
+| **P-ML** | Wave M Colab + CODING_PHASES **P7** bind | never blocks P0–P6 |
+| **P-UX** | CODING_PHASES **P0** tool find + status chips | first coding slice |
 
 ---
 
@@ -159,7 +264,8 @@ Never land F* as isolated effects without listed primitives.
 | Decode / EXIF / color / IO | `:core:media` |
 | Still ops + photo session | `:photo` |
 | Timeline / Media3 / movie export | `:movie` |
-| On-device models + packs | `:ml` (+ `:ml-inpaint`, etc.) |
+| On-device models + packs | `:ml` (+ Release- hosts for large TFLite) |
+| Filament / CG / AR / FFmpeg | on-demand `:feature_*` modules (not base APK) |
 | Adaptive chrome | `:app` + `:designsystem` |
 
 ---
@@ -170,7 +276,7 @@ Never land F* as isolated effects without listed primitives.
 - Do not speculative-optimize Color/Looks without Pixel_7a evidence (B4)  
 - Do not ship generative fill before C3 contract (E1 after C3)  
 - Do not build cinema effects on single-track forever (D2+ after D1 E2E)  
-- Do not put ML/FFmpeg/3D in base APK  
+- Do not put FFmpeg / Filament / ARCore / FILM (~67 MB) in the base APK (on-demand modules or Release Download). Small TFLite packs (Track / Super-res / Denoise / Inpaint-if-≤~3 MB) may ship as assets.  
 - Do not block feature exits on full ViewModel rewrite (G2/G3 parallel)
 
 ---

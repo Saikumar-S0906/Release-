@@ -172,9 +172,3 @@ private class TimedBitmapTitleOverlay(
         return bmp
     }
 }
-
-private fun String.encodeField(): String =
-    replace("%", "%25").replace(",", "%2C").replace("\n", "%0A")
-
-private fun String.decodeField(): String =
-    replace("%0A", "\n").replace("%2C", ",").replace("%25", "%")

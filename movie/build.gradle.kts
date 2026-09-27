@@ -29,5 +29,6 @@ dependencies {
     implementation(libs.androidx.media3.effect)
     implementation(libs.androidx.media3.common)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.play.feature.delivery.ktx)
     testImplementation(libs.junit)
 }

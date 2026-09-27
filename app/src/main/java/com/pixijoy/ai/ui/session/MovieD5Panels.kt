@@ -116,6 +116,11 @@ fun MovieGradePanel(
             modifier = Modifier.testTag("movie_grade_saturation")
         )
         Text(stringResource(R.string.studio_movie_scopes), color = PixiTextMuted)
+        Text(
+            stringResource(R.string.studio_scopes_display_referred),
+            color = PixiTextMuted,
+            modifier = Modifier.testTag("movie_scopes_label")
+        )
         Row(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier

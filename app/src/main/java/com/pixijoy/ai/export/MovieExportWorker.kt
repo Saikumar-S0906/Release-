@@ -9,6 +9,7 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.pixijoy.ai.di.studioGraph
 import com.pixijoy.core.common.AppResult
+import com.pixijoy.movie.DeliveryHandoff
 import com.pixijoy.movie.MultiTrackTimeline
 import com.pixijoy.movie.Timeline
 import kotlinx.coroutines.Dispatchers
@@ -57,7 +58,17 @@ class MovieExportWorker(
                 }
             )
             when (result) {
-                is AppResult.Ok -> Result.success(workDataOf(KEY_URI to result.value, KEY_GIF to gif))
+                is AppResult.Ok -> {
+                    runCatching {
+                        DeliveryHandoff.writeAll(
+                            projectDir = repo.projectDir(projectId),
+                            projectTitle = project.title,
+                            multi = multi,
+                            mediaNames = paths.map { java.io.File(it).name }
+                        )
+                    }
+                    Result.success(workDataOf(KEY_URI to result.value, KEY_GIF to gif))
+                }
                 is AppResult.Err -> Result.failure(workDataOf(KEY_ERROR to result.message))
             }
         }

@@ -40,6 +40,23 @@ tools/inpaint/dist/train_history.npz
 tools/inpaint/__pycache__/
 tools/inpaint/**/__pycache__/
 
+# Wave M labs (depth / matting / flow) — same pattern
+tools/depth/dist/*.keras
+tools/depth/dist/*.ckpt.*
+tools/depth/dist/*.npz
+tools/depth/dist/train_history.npz
+tools/depth/__pycache__/
+tools/matting/dist/*.keras
+tools/matting/dist/*.ckpt.*
+tools/matting/dist/*.npz
+tools/matting/dist/train_history.npz
+tools/matting/__pycache__/
+tools/flow/dist/*.keras
+tools/flow/dist/*.ckpt.*
+tools/flow/dist/*.npz
+tools/flow/dist/train_history.npz
+tools/flow/__pycache__/
+
 # Session scratch — never land these
 *.log
 uidump*.xml
@@ -48,4 +65,12 @@ _hsl_pkg/
 _patch_*.py
 .maestro/_probe*.yaml
 .maestro/**/_probe*.yaml
+
+
+# Release staging (upload via gh; do not commit 67MB+ binaries)
+tools/ml_release/*.tflite
+
+tools/__pycache__/
+tools/_*.txt
+tools/_todo_*.txt
 

@@ -80,9 +80,17 @@ Evidence: `movie/ClipFrame.kt`, `ClipSlowMo.kt`, `ClipTrack.kt`, `MovieEngine.kt
 | Neural inpaint | **PACK** | Sideload only. No HTTPS pin and no Download CTA. Ready is the verified file (`InpaintStatus.ReadyFileOnly`). Neural Apply reads `engineReady` after `PackLiteRt` binds FLOAT32 RGB+mask (4-channel or image+mask). A miss leaves Telea. Telea is never labeled neural. |
 | Neural super-res | **LIVE** | Bundled APK asset → Ready → FLOAT32 `PackModelContract.superResScale` → `PackLiteRt` register. A miss releases the interpreter. Apply reads `engineReady`. Ready alone is not neural. |
 | Neural denoise | **LIVE** | Bundled APK asset → Ready → FLOAT32 `isDenoiseSameRgb` → `PackLiteRt`. A 2×/4× graph cannot register. Apply reads `engineReady`. |
-| Neural frame interpolation | **PACK** | HTTPS FILM TFLite (~67 MB). Ready = verified file. Neural chip + export mux unlock when LiteRT binds the FILM FLOAT32 contract. Export synthesizes mid-frames (`NeuralSlowMoMux`); preview stays Media3 rate/hold. Synth failure falls back to frame-hold. |
+| Neural frame interpolation | **PACK** | HTTPS FILM TFLite (~67 MB) from public [Release-](https://github.com/Saikumar-S0906/Release-) `ml-packs-v1/interp.tflite` + SHA pin. Neural chip + export mux when LiteRT binds FILM FLOAT32. |
 | Point track / roto-lite | **LIVE** | Bundled APK asset → Ready → FLOAT32 `PackModelContract.isPointTrack` → `PackLiteRt.bindTrack`. `TrackPathBake` applies follow when `engineReady`. No HTTPS Download. |
 | Particle VFX | **LIVE** | Classical `TimelineVfx` particle overlays (Sparkle/Ember/Confetti/Snow/Bokeh) on the composition via Media3 `OverlayEffect`. Optional follow of F1 track seed. Not neural. |
+| CG compositor lane | **LIVE** | `TimelineCgLayer` (PropCube / GroundPlane / SkyDome) classical plates via `CgOverlays` — shared preview/export. Filament glTF/IBL bind later via `CgHost`. Not neural. |
+| Tool search (movie) | **LIVE** | Session search jumps to Edit/Color/Track/CG/… in ≤2 taps (`MovieToolSearch`). |
+| Assembly markers / bins / versions | **LIVE** | `TimelineMarker` / `ProjectBin` / `AssemblyVersion` on multi-track graph; Edit panel; magnetic snap + soft J/L cuts. |
+| Colorist secondary / shot match | **LIVE** | Hue+window secondary in grade LUT cube; store/match look ref; pipeline Show→Look→Secondary→Technical; scopes labeled display-referred. |
+| 3D titles | **LIVE** | `TimelineTitle3d` extruded overlay in base; Filament engine loads from on-demand `:feature_titles3d` when installed. |
+| AR previz | **LIVE** | `ArPrevizGate` + on-demand `:feature_ar` (ARCore). Unsupported devices fail gracefully. |
+| FFmpeg gap export | **PACK** | Media3 remains default. `:feature_ffmpeg` registers `MovieExportBackends` for GIF/WebM gaps only. |
+| Smart objects / PDF | **LIVE** | `SmartObject` replace-with-transform, `AdvancedType`, `PdfExport` in `:photo`. |
 | True motion stabilization | **UNAVAILABLE** | No gyro/optical-flow tracking; the available control is named Steady crop. |
 | Generative expand | **UNAVAILABLE** | Mirror expand is the only edge-extension engine. |
 

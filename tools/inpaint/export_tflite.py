@@ -4,29 +4,33 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
 import tensorflow as tf
 
+_TOOLS = Path(__file__).resolve().parents[1]
+if str(_TOOLS) not in sys.path:
+    sys.path.insert(0, str(_TOOLS))
+
 from config import MAX_APK_BUNDLE_BYTES, SIZE
+from ml_ckpt import load_for_export
 from model import build_model
-
-
-def load_trained(keras_path: Path) -> tf.keras.Model:
-    if not (keras_path.is_file() or keras_path.is_dir()):
-        print("no keras checkpoint; exporting untrained graph")
-        return build_model()
-    return tf.keras.models.load_model(keras_path, safe_mode=False)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--keras", type=Path, default=Path(__file__).parent / "dist" / "inpaint.keras")
     parser.add_argument("--out", type=Path, default=Path(__file__).parent / "dist" / "inpaint.tflite")
+    parser.add_argument(
+        "--allow-untrained",
+        action="store_true",
+        help="Smoke only: export random weights if no checkpoint (never for Release-)",
+    )
     args = parser.parse_args()
     args.out.parent.mkdir(parents=True, exist_ok=True)
 
-    trained = load_trained(args.keras)
+    trained = load_for_export(args.keras, build_model, allow_untrained=args.allow_untrained)
     image_in = tf.keras.Input(shape=(SIZE, SIZE, 3), batch_size=1, name="in0_image")
     mask_in = tf.keras.Input(shape=(SIZE, SIZE, 1), batch_size=1, name="in1_mask")
     rgb = trained([image_in, mask_in], training=False)

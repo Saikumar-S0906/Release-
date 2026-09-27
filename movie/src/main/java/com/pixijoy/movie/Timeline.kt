@@ -59,7 +59,9 @@ data class AudioBed(
     /** Duck ramp into dialogue (ms). */
     val attackMs: Long = 120,
     /** Duck ramp out of dialogue (ms). D6 polish — was tied to attack. */
-    val releaseMs: Long = 250
+    val releaseMs: Long = 250,
+    /** Sync slip vs picture (ms). Positive = delay audio; negative = advance into source. */
+    val slipMs: Long = 0
 )
 
 data class AudioStem(
@@ -69,7 +71,9 @@ data class AudioStem(
     val fadeInMs: Long = 0,
     val fadeOutMs: Long = 0,
     val muted: Boolean = false,
-    val role: String = "sfx"
+    val role: String = "sfx",
+    /** Sync slip vs picture (ms). Positive = delay; negative = advance into source. */
+    val slipMs: Long = 0
 )
 
 data class AudioMasterFx(
@@ -142,7 +146,17 @@ data class Timeline(
     /** HDR export intent (D11). */
     val hdrMode: MovieHdrMode = MovieHdrMode.Sdr,
     /** Classical particle VFX layers (F2). */
-    val vfx: List<TimelineVfx> = emptyList()
+    val vfx: List<TimelineVfx> = emptyList(),
+    /** Extruded / Filament 3D titles (F3). */
+    val titles3d: List<TimelineTitle3d> = emptyList(),
+    /** CG compositor layers (R7). */
+    val cg: List<TimelineCgLayer> = emptyList(),
+    val markers: List<TimelineMarker> = emptyList(),
+    val bins: List<ProjectBin> = emptyList(),
+    /** Stem bus mute/solo (P4 / K1). */
+    val stemBuses: StemBuses = StemBuses.Default,
+    /** Loudness target gate (P4 / K4). */
+    val loudness: LoudnessTarget = LoudnessTarget.Off
 ) {
     fun totalMs(): Long = clips.sumOf { it.durationMs }
 
@@ -290,6 +304,36 @@ data class Timeline(
         return copy(clips = copy)
     }
 
+    /**
+     * Soft J/L approximation without split A/V tracks.
+     * J-cut: outgoing picture holds while next audio/transition leads (longer left fadeOut).
+     * L-cut: incoming picture leads (longer right fadeIn).
+     */
+    fun applyJLCut(id: String, jCut: Boolean, leadMs: Long = 400L): Timeline {
+        val i = clips.indexOfFirst { it.id == id }
+        if (i < 0 || i >= clips.lastIndex) return this
+        val left = clips[i]
+        val right = clips[i + 1]
+        val ms = leadMs.coerceIn(80L, minOf(left.durationMs, right.durationMs) / 2)
+        val copy = clips.toMutableList()
+        if (jCut) {
+            copy[i] = left.copy(
+                fadeOutMs = ms,
+                transition = ClipTransition.Soft,
+                transitionMs = ms
+            )
+            copy[i + 1] = right.copy(fadeInMs = (ms / 3).coerceAtLeast(40L))
+        } else {
+            copy[i] = left.copy(
+                fadeOutMs = (ms / 3).coerceAtLeast(40L),
+                transition = ClipTransition.Soft,
+                transitionMs = ms
+            )
+            copy[i + 1] = right.copy(fadeInMs = ms)
+        }
+        return copy(clips = copy)
+    }
+
     /** Apply soft-dissolve pair fades for adjacent clips that declare a transition. */
     fun withTransitionFadesApplied(): Timeline {
         if (clips.size < 2) return this
@@ -325,20 +369,39 @@ data class Timeline(
         val music = bed
         if (music != null) {
             if (isNotEmpty()) append('\n')
-            append("A,${music.fileName},${ClipMix.volume(music.volume)},${music.fadeInMs.coerceAtLeast(0)},${music.fadeOutMs.coerceAtLeast(0)},${if (music.muted) 1 else 0},${ClipMix.volume(music.duck)},${music.attackMs.coerceAtLeast(0)},${music.releaseMs.coerceAtLeast(0)}")
+            append(
+                "A,${music.fileName},${ClipMix.volume(music.volume)},${music.fadeInMs.coerceAtLeast(0)}," +
+                    "${music.fadeOutMs.coerceAtLeast(0)},${if (music.muted) 1 else 0}," +
+                    "${ClipMix.volume(music.duck)},${music.attackMs.coerceAtLeast(0)}," +
+                    "${music.releaseMs.coerceAtLeast(0)},${AudioSync.clampSlip(music.slipMs)}"
+            )
         }
         val vo = voice
         if (vo != null) {
             if (isNotEmpty()) append('\n')
-            append("V,${vo.fileName},${ClipMix.volume(vo.volume)},${vo.fadeInMs.coerceAtLeast(0)},${vo.fadeOutMs.coerceAtLeast(0)},${if (vo.muted) 1 else 0},${ClipMix.volume(vo.duck)},${vo.attackMs.coerceAtLeast(0)},${vo.releaseMs.coerceAtLeast(0)}")
+            append(
+                "V,${vo.fileName},${ClipMix.volume(vo.volume)},${vo.fadeInMs.coerceAtLeast(0)}," +
+                    "${vo.fadeOutMs.coerceAtLeast(0)},${if (vo.muted) 1 else 0}," +
+                    "${ClipMix.volume(vo.duck)},${vo.attackMs.coerceAtLeast(0)}," +
+                    "${vo.releaseMs.coerceAtLeast(0)},${AudioSync.clampSlip(vo.slipMs)}"
+            )
         }
         for (stem in extraStems) {
             if (isNotEmpty()) append('\n')
             append(
                 "S,${stem.id},${stem.fileName},${ClipMix.volume(stem.volume)}," +
                     "${stem.fadeInMs.coerceAtLeast(0)},${stem.fadeOutMs.coerceAtLeast(0)}," +
-                    "${if (stem.muted) 1 else 0},${stem.role.ifBlank { "sfx" }}"
+                    "${if (stem.muted) 1 else 0},${stem.role.ifBlank { "sfx" }}," +
+                    "${AudioSync.clampSlip(stem.slipMs)}"
             )
+        }
+        if (!stemBuses.isDefault()) {
+            if (isNotEmpty()) append('\n')
+            append(stemBuses.encodeLine())
+        }
+        if (!loudness.isOff()) {
+            if (isNotEmpty()) append('\n')
+            append(loudness.encodeLine())
         }
         if (MovieExportSize.normalize(outputHeight) != 720) {
             if (isNotEmpty()) append('\n')
@@ -358,9 +421,32 @@ data class Timeline(
             if (isNotEmpty()) append('\n')
             append(layer.encodeLine())
         }
-        if (!grade.isNeutral()) {
+        for (layer in titles3d) {
+            if (layer.text.isBlank()) continue
             if (isNotEmpty()) append('\n')
-            append(grade.encodeLine())
+            append(layer.encodeLine())
+        }
+        for (layer in cg) {
+            if (!layer.isActive) continue
+            if (isNotEmpty()) append('\n')
+            append(layer.encodeLine())
+        }
+        for (marker in markers) {
+            if (isNotEmpty()) append('\n')
+            append(marker.encodeLine())
+        }
+        for (bin in bins) {
+            if (isNotEmpty()) append('\n')
+            append(bin.encodeLine())
+        }
+        val g = grade.normalized()
+        if (!g.isNeutral() || g.matchRef.isSet() || g.secondary.enabled) {
+            if (isNotEmpty()) append('\n')
+            append(g.encodeLine())
+            for (extra in g.encodeExtraLines()) {
+                append('\n')
+                append(extra)
+            }
         }
         if (layout != VideoLayout.Single) {
             if (isNotEmpty()) append('\n')
@@ -422,7 +508,8 @@ data class Timeline(
                         muted = p[5] == "1",
                         duck = p.getOrNull(6)?.toFloatOrNull()?.let(ClipMix::volume) ?: 0.25f,
                         attackMs = p.getOrNull(7)?.toLongOrNull()?.coerceAtLeast(0) ?: 120L,
-                        releaseMs = p.getOrNull(8)?.toLongOrNull()?.coerceAtLeast(0) ?: 250L
+                        releaseMs = p.getOrNull(8)?.toLongOrNull()?.coerceAtLeast(0) ?: 250L,
+                        slipMs = p.getOrNull(9)?.toLongOrNull()?.let(AudioSync::clampSlip) ?: 0L
                     )
                 }.getOrNull()
             }.firstOrNull()
@@ -438,7 +525,8 @@ data class Timeline(
                         muted = p[5] == "1",
                         duck = p.getOrNull(6)?.toFloatOrNull()?.let(ClipMix::volume) ?: 1f,
                         attackMs = p.getOrNull(7)?.toLongOrNull()?.coerceAtLeast(0) ?: 120L,
-                        releaseMs = p.getOrNull(8)?.toLongOrNull()?.coerceAtLeast(0) ?: 250L
+                        releaseMs = p.getOrNull(8)?.toLongOrNull()?.coerceAtLeast(0) ?: 250L,
+                        slipMs = p.getOrNull(9)?.toLongOrNull()?.let(AudioSync::clampSlip) ?: 0L
                     )
                 }.getOrNull()
             }.firstOrNull()
@@ -458,7 +546,8 @@ data class Timeline(
                         fadeInMs = p[4].toLong().coerceAtLeast(0),
                         fadeOutMs = p[5].toLong().coerceAtLeast(0),
                         muted = p[6] == "1",
-                        role = p.getOrNull(7)?.ifBlank { "sfx" } ?: "sfx"
+                        role = p.getOrNull(7)?.ifBlank { "sfx" } ?: "sfx",
+                        slipMs = p.getOrNull(8)?.toLongOrNull()?.let(AudioSync::clampSlip) ?: 0L
                     )
                 }.getOrNull()
             }.toList()
@@ -467,15 +556,40 @@ data class Timeline(
                 if (p.getOrNull(0) != "X") return@mapNotNull null
                 AudioMasterFx.decode(p)
             }.firstOrNull() ?: AudioMasterFx()
+            val stemBuses = raw.lineSequence().mapNotNull { line ->
+                StemBuses.decodeLine(line.trim().split(','))
+            }.firstOrNull() ?: StemBuses.Default
+            val loudness = raw.lineSequence().mapNotNull { line ->
+                LoudnessTarget.decodeLine(line.trim().split(','))
+            }.firstOrNull() ?: LoudnessTarget.Off
             val titles = raw.lineSequence().mapNotNull { line ->
                 TimelineTitle.decodeLine(line.trim().split(','))
             }.toList()
             val vfx = raw.lineSequence().mapNotNull { line ->
                 TimelineVfx.decodeLine(line.trim().split(','))
             }.toList()
-            val grade = raw.lineSequence().mapNotNull { line ->
+            val titles3d = raw.lineSequence().mapNotNull { line ->
+                TimelineTitle3d.decodeLine(line.trim().split(','))
+            }.toList()
+            val cg = raw.lineSequence().mapNotNull { line ->
+                TimelineCgLayer.decodeLine(line.trim().split(','))
+            }.toList()
+            val markers = raw.lineSequence().mapNotNull { line ->
+                TimelineMarker.decodeLine(line.trim().split(','))
+            }.toList()
+            val bins = raw.lineSequence().mapNotNull { line ->
+                ProjectBin.decodeLine(line.trim().split(','))
+            }.toList()
+            val gradePrimary = raw.lineSequence().mapNotNull { line ->
                 TimelineGrade.decodeLine(line.trim().split(','))
             }.firstOrNull() ?: TimelineGrade.Neutral
+            val secondary = raw.lineSequence().mapNotNull { line ->
+                GradeSecondary.decodeLine(line.trim().split(','))
+            }.firstOrNull() ?: GradeSecondary.Off
+            val matchRef = raw.lineSequence().mapNotNull { line ->
+                GradeMatchRef.decodeLine(line.trim().split(','))
+            }.firstOrNull() ?: GradeMatchRef.Unset
+            val grade = gradePrimary.copy(secondary = secondary, matchRef = matchRef)
             val layout = raw.lineSequence().mapNotNull { line ->
                 val p = line.trim().split(',')
                 if (p.getOrNull(0) != "L" || p.size < 2) return@mapNotNull null
@@ -487,7 +601,10 @@ data class Timeline(
                 MovieHdrMode.parse(p[1])
             }.firstOrNull() ?: MovieHdrMode.Sdr
             val clips = if (parsed.isEmpty()) fromMedia(count, durationMs).clips else parsed
-            return Timeline(clips, bed, voice, height, extraStems, masterFx, titles, grade, layout, hdrMode, vfx)
+            return Timeline(
+                clips, bed, voice, height, extraStems, masterFx, titles, grade, layout, hdrMode,
+                vfx, titles3d, cg, markers, bins, stemBuses, loudness
+            )
         }
     }
 }

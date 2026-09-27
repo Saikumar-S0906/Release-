@@ -14,7 +14,7 @@
 - HTTPS fallback (user-tapped Download only) for packs without `assetPath`. Photos are not uploaded. Pins below are the only hosted artifacts.
   - Super-res `superres.tflite` / `ml_superres`: **ships in** `ml/src/main/assets/superres.tflite` (SHA-256 `27ed316318cac65fe350ccdb3c1e19ac08c512f4aa2fc23b1a351ce334809c3f`). Provenance ESRGAN pin retained as constant only. Graph is FLOAT32 NHWC `1×180×320×3` → `1×720×1280×3` (4×).
   - Denoise `denoise.tflite` / `ml_denoise`: **ships in** `ml/src/main/assets/denoise.tflite` (SHA-256 `53f0112f248b18ae518af64942ea4741f5b22ccdc4af5aea0ff452875f17fb84`). Graph is FLOAT32 NHWC `1×256×256×3` → same size.
-  - FrameInterp `interp.tflite` / `ml_interp`: FILM community TFLite (~67.29 MB) — on-demand HTTPS (mirrored to PixiJoy Release when published). Graph FLOAT32 FILM 512 path.
+  - FrameInterp `interp.tflite` / `ml_interp`: FILM (~67.29 MB) from public [Release-](https://github.com/Saikumar-S0906/Release-) `ml-packs-v1/interp.tflite` SHA-256 `3a201916658277ed6e7626d93a6ee117a47b04bc1986579600a90feabfe05eb4`. Graph FLOAT32 FILM 512 path.
   - Track `track.tflite` / `ml_track`: PixiJoy-trained Siamese (~1.99 MB) **ships in** `ml/src/main/assets/track.tflite`.
   - Inpaint `inpaint.tflite` / `ml_inpaint`: PixiJoy-trained UNet from `tools/inpaint/` (full capacity, no size-driven shrink). Telea Fill always on. Neural Apply after Ready + LiteRT RGB+mask bind. Placement: APK assets if ≤~3 MB else GitHub Release Download.
 - Failed Download for packs without a URL tells the user to **Install from file** (Play modules are not in this APK).

@@ -63,6 +63,7 @@ android {
     packaging {
         resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" }
     }
+    dynamicFeatures += setOf(":feature_titles3d", ":feature_ar", ":feature_ffmpeg")
 }
 
 dependencies {

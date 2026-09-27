@@ -1,0 +1,158 @@
+"""Generate train_colab.ipynb for Wave M — no TFDS, Drive optional, auto real data."""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+BASE = Path(__file__).resolve().parent
+
+
+def make_nb(title: str, root_name: str, zip_name: str, artifact: str, keras_name: str) -> dict:
+    cells = [
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                f"# PixiJoy {title} — Colab GPU (quality)\n",
+                "\n",
+                "Runtime → **GPU** → **Run all**.\n",
+                "\n",
+                "- Auto-fetches **real** training data (no tensorflow_datasets).\n",
+                "- `USE_DRIVE = False` by default (no Google Drive prompt). Set True only to resume after disconnect.\n",
+                "- Pin TFLite only if verify prints **OK**.\n",
+            ],
+        },
+        {
+            "cell_type": "code",
+            "metadata": {},
+            "outputs": [],
+            "execution_count": None,
+            "source": [
+                "!nvidia-smi || true\n",
+                "import tensorflow as tf\n",
+                'print("TF", tf.__version__, "GPUs", tf.config.list_physical_devices("GPU"))\n',
+                "assert tf.config.list_physical_devices('GPU'), 'Select Runtime → GPU before Run all'\n",
+            ],
+        },
+        {
+            "cell_type": "code",
+            "metadata": {},
+            "outputs": [],
+            "execution_count": None,
+            "source": [
+                "USE_DRIVE = False  # optional resume only\n",
+                "\n",
+                "import os, urllib.request, zipfile, shutil\n",
+                "from pathlib import Path\n",
+                "from google.colab import files\n",
+                "\n",
+                f"ROOT = Path('/content/pixijoy_{root_name}')\n",
+                f"DRIVE = Path('/content/drive/MyDrive/pixijoy_ml/{root_name}')\n",
+                "ROOT.mkdir(parents=True, exist_ok=True)\n",
+                "os.chdir(ROOT)\n",
+                "\n",
+                "if USE_DRIVE:\n",
+                "    from google.colab import drive\n",
+                "    drive.mount('/content/drive')\n",
+                "    (DRIVE / 'dist').mkdir(parents=True, exist_ok=True)\n",
+                "\n",
+                f"ZIP_URL = 'https://raw.githubusercontent.com/Saikumar-S0906/Release-/main/{zip_name}'\n",
+                "ok = False\n",
+                "try:\n",
+                f"    urllib.request.urlretrieve(ZIP_URL, '{zip_name}')\n",
+                f"    with zipfile.ZipFile('{zip_name}') as z:\n",
+                "        z.extractall('.')\n",
+                "    ok = Path('train.py').is_file() and Path('prepare_quality_data.py').is_file()\n",
+                "    print('lab zip OK', ok)\n",
+                "except Exception as e:\n",
+                "    print('zip fetch failed:', e)\n",
+                "if not ok:\n",
+                f"    print('Upload {zip_name}')\n",
+                "    up = files.upload()\n",
+                "    name = next(iter(up))\n",
+                "    with zipfile.ZipFile(name) as z:\n",
+                "        z.extractall('.')\n",
+                "    ok = Path('train.py').is_file()\n",
+                "assert ok, 'lab zip missing train.py / prepare_quality_data.py — refresh Runtime and re-fetch'\n",
+                "Path('dist').mkdir(parents=True, exist_ok=True)\n",
+                "if USE_DRIVE:\n",
+                "    d = Path('dist')\n",
+                "    if d.exists() and not d.is_symlink():\n",
+                "        shutil.rmtree(d) if d.is_dir() else d.unlink()\n",
+                "    if not Path('dist').exists():\n",
+                "        Path('dist').symlink_to(DRIVE / 'dist')\n",
+            ],
+        },
+        {
+            "cell_type": "code",
+            "metadata": {},
+            "outputs": [],
+            "execution_count": None,
+            "source": [
+                "print('prepare_quality_data (real data, no TFDS)…')\n",
+                "rc = get_ipython().system('python -u prepare_quality_data.py --data ./data')\n",
+                "assert rc == 0, 'prepare_quality_data failed'\n",
+                "assert (Path('data') / 'READY').is_file()\n",
+            ],
+        },
+        {
+            "cell_type": "code",
+            "metadata": {},
+            "outputs": [],
+            "execution_count": None,
+            "source": [
+                "from pathlib import Path\n",
+                "import hashlib\n",
+                "USE_DRIVE = globals().get('USE_DRIVE', False)\n",
+                f"OUT = Path('/content/drive/MyDrive/pixijoy_ml/{root_name}/dist/{keras_name}') if USE_DRIVE else Path('dist') / '{keras_name}'\n",
+                "OUT.parent.mkdir(parents=True, exist_ok=True)\n",
+                "print('ckpt exists' if OUT.with_suffix('.ckpt.keras').is_file() else 'fresh', OUT)\n",
+                "\n",
+                'cmd = "python -u train.py --quality --out \\"" + str(OUT) + "\\""\n',
+                "print('RUN', cmd)\n",
+                "rc = get_ipython().system(cmd)\n",
+                "assert rc == 0, 'train failed'\n",
+                f'rc = get_ipython().system(\'python -u export_tflite.py --keras "\' + str(OUT) + \'" --out "dist/{artifact}"\')\n',
+                "assert rc == 0, 'export failed (refusing untrained is correct)'\n",
+                "rc = get_ipython().system('python -u verify_contract.py --quality')\n",
+                "assert rc == 0, 'verify --quality failed — do NOT pin'\n",
+                f"p = Path('dist/{artifact}')\n",
+                "assert p.is_file(), p\n",
+                "print('READY', p.stat().st_size, hashlib.sha256(p.read_bytes()).hexdigest())\n",
+            ],
+        },
+        {
+            "cell_type": "code",
+            "metadata": {},
+            "outputs": [],
+            "execution_count": None,
+            "source": [
+                "from google.colab import files\n",
+                f"files.download('dist/{artifact}')\n",
+                f"print('Attach {artifact} to ml-packs-v1 ONLY if verify OK')\n",
+            ],
+        },
+    ]
+    return {
+        "nbformat": 4,
+        "nbformat_minor": 5,
+        "metadata": {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"}},
+        "cells": cells,
+    }
+
+
+def main() -> None:
+    specs = [
+        ("inpaint", "Inpaint (M1)", "inpaint_lab.zip", "inpaint.tflite", "inpaint.keras"),
+        ("depth", "Depth (M2)", "depth_lab.zip", "depth.tflite", "depth.keras"),
+        ("matting", "Matting (M3)", "matting_lab.zip", "matting.tflite", "matting.keras"),
+        ("flow", "Flow (M4)", "flow_lab.zip", "flow.tflite", "flow.keras"),
+    ]
+    for folder, title, zname, art, keras in specs:
+        path = BASE / folder / "train_colab.ipynb"
+        path.write_text(json.dumps(make_nb(title, folder, zname, art, keras), indent=1), encoding="utf-8")
+        print("wrote", path)
+
+
+if __name__ == "__main__":
+    main()

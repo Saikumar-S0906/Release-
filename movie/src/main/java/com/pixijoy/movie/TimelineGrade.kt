@@ -11,13 +11,17 @@ data class TimelineGrade(
     val exposure: Float = 0f,
     val contrast: Float = 1f,
     val saturation: Float = 1f,
-    val lookKey: String = MovieLooks.ORIGINAL
+    val lookKey: String = MovieLooks.ORIGINAL,
+    val secondary: GradeSecondary = GradeSecondary.Off,
+    val matchRef: GradeMatchRef = GradeMatchRef.Unset
 ) {
     fun normalized(): TimelineGrade = copy(
         exposure = exposure.coerceIn(-2f, 2f),
         contrast = contrast.coerceIn(0.5f, 1.8f),
         saturation = saturation.coerceIn(0f, 2f),
-        lookKey = lookKey.ifBlank { MovieLooks.ORIGINAL }
+        lookKey = lookKey.ifBlank { MovieLooks.ORIGINAL },
+        secondary = secondary.normalized(),
+        matchRef = matchRef
     )
 
     fun isNeutral(): Boolean {
@@ -25,12 +29,21 @@ data class TimelineGrade(
         return kotlin.math.abs(n.exposure) < 0.01f &&
             kotlin.math.abs(n.contrast - 1f) < 0.01f &&
             kotlin.math.abs(n.saturation - 1f) < 0.01f &&
-            MovieLooks.isIdentity(n.lookKey)
+            MovieLooks.isIdentity(n.lookKey) &&
+            n.secondary.isIdentity()
     }
 
     fun encodeLine(): String {
         val n = normalized()
         return "G,${fmt(n.exposure)},${fmt(n.contrast)},${fmt(n.saturation)},${n.lookKey}"
+    }
+
+    fun encodeExtraLines(): List<String> {
+        val n = normalized()
+        val out = ArrayList<String>(2)
+        if (!n.secondary.isIdentity() || n.secondary.enabled) out += n.secondary.encodeLine()
+        if (n.matchRef.isSet()) out += n.matchRef.encodeLine()
+        return out
     }
 
     companion object {
@@ -47,10 +60,10 @@ data class TimelineGrade(
                 ).normalized()
             }.getOrNull()
         }
-
-        private fun fmt(v: Float): String =
-            String.format(java.util.Locale.US, "%.3f", v).trimEnd('0').trimEnd('.')
     }
+
+    private fun fmt(v: Float): String =
+        String.format(java.util.Locale.US, "%.3f", v).trimEnd('0').trimEnd('.')
 }
 
 /** Bundled look keys mirrored from photo Looks (movie-local to avoid :photo cycle). */
@@ -114,20 +127,19 @@ object MovieGrade {
         val n = grade.normalized()
         val adjust = adjustMatrix(n.exposure, n.contrast, n.saturation)
         val look = MovieLooks.colorMatrix(n.lookKey)
-        // look applied after adjust (look × adjust)
+        // look applied after adjust (look × adjust) — Show → Look
         return concat(look, adjust)
     }
 
     fun effect(grade: TimelineGrade): Effect? {
         if (grade.isNeutral()) return null
-        val matrix = colorMatrix(grade)
-        val cube = matrixToCube(matrix, size = 17)
+        val cube = gradeToCube(grade, size = 17)
         return SingleColorLut.createFromCube(cube)
     }
 
     /**
      * Scope meters 0..1 for R/G/B/Luma from sampling mid-gray + primaries through the grade.
-     * Lightweight monitoring UI — not a frame parade.
+     * Lightweight monitoring UI — display-referred, not a frame parade.
      */
     fun scopeMeters(grade: TimelineGrade): ScopeMeters {
         val m = colorMatrix(grade)
@@ -135,13 +147,65 @@ object MovieGrade {
         val red = apply(m, 1f, 0f, 0f)
         val green = apply(m, 0f, 1f, 0f)
         val blue = apply(m, 0f, 0f, 1f)
-        val luma = 0.2126f * mid[0] + 0.7152f * mid[1] + 0.0722f * mid[2]
+        // Fold secondary mid-frame weight at center UV
+        val sec = grade.secondary.normalized()
+        val folded = if (sec.isIdentity()) mid else {
+            val w = hueWeight(rgbHue(mid[0], mid[1], mid[2]), sec.hueCenter, sec.hueWidth) *
+                windowWeight(0f, 0f, sec)
+            val secM = adjustMatrix(sec.exposure, 1f, sec.saturation)
+            val secRgb = apply(secM, mid[0], mid[1], mid[2])
+            floatArrayOf(
+                mid[0] * (1f - w) + secRgb[0] * w,
+                mid[1] * (1f - w) + secRgb[1] * w,
+                mid[2] * (1f - w) + secRgb[2] * w
+            )
+        }
+        val luma = 0.2126f * folded[0] + 0.7152f * folded[1] + 0.0722f * folded[2]
         return ScopeMeters(
             red = red[0].coerceIn(0f, 1f),
             green = green[1].coerceIn(0f, 1f),
             blue = blue[2].coerceIn(0f, 1f),
             luma = luma.coerceIn(0f, 1f)
         )
+    }
+
+    /** Build LUT cube: Show→Look primary, then Secondary (hue × soft window at cube UV). */
+    internal fun gradeToCube(grade: TimelineGrade, size: Int): Array<Array<IntArray>> {
+        val n = size.coerceIn(2, 33)
+        val primary = colorMatrix(grade)
+        val sec = grade.secondary.normalized()
+        val secMat = if (sec.isIdentity()) null else adjustMatrix(sec.exposure, 1f, sec.saturation)
+        val cube = Array(n) { Array(n) { IntArray(n) } }
+        val denom = (n - 1).toFloat().coerceAtLeast(1f)
+        for (ri in 0 until n) {
+            for (gi in 0 until n) {
+                for (bi in 0 until n) {
+                    val r0 = ri / denom
+                    val g0 = gi / denom
+                    val b0 = bi / denom
+                    var rgb = apply(primary, r0, g0, b0)
+                    if (secMat != null) {
+                        val u = (ri / denom) * 2f - 1f
+                        val v = (gi / denom) * 2f - 1f
+                        val w = hueWeight(rgbHue(r0, g0, b0), sec.hueCenter, sec.hueWidth) *
+                            windowWeight(u, v, sec)
+                        if (w > 0.001f) {
+                            val secRgb = apply(secMat, rgb[0], rgb[1], rgb[2])
+                            rgb = floatArrayOf(
+                                rgb[0] * (1f - w) + secRgb[0] * w,
+                                rgb[1] * (1f - w) + secRgb[1] * w,
+                                rgb[2] * (1f - w) + secRgb[2] * w
+                            )
+                        }
+                    }
+                    val r = (rgb[0].coerceIn(0f, 1f) * 255f).toInt().coerceIn(0, 255)
+                    val g = (rgb[1].coerceIn(0f, 1f) * 255f).toInt().coerceIn(0, 255)
+                    val b = (rgb[2].coerceIn(0f, 1f) * 255f).toInt().coerceIn(0, 255)
+                    cube[ri][gi][bi] = (0xFF shl 24) or (r shl 16) or (g shl 8) or b
+                }
+            }
+        }
+        return cube
     }
 
     private fun adjustMatrix(exposure: Float, contrast: Float, saturation: Float): FloatArray {
@@ -195,24 +259,6 @@ object MovieGrade {
         val outG = (m[5] * R + m[6] * G + m[7] * B + m[9]) / 255f
         val outB = (m[10] * R + m[11] * G + m[12] * B + m[14]) / 255f
         return floatArrayOf(outR.coerceIn(0f, 1.5f), outG.coerceIn(0f, 1.5f), outB.coerceIn(0f, 1.5f))
-    }
-
-    private fun matrixToCube(matrix: FloatArray, size: Int): Array<Array<IntArray>> {
-        val n = size.coerceIn(2, 33)
-        val cube = Array(n) { Array(n) { IntArray(n) } }
-        val denom = (n - 1).toFloat().coerceAtLeast(1f)
-        for (ri in 0 until n) {
-            for (gi in 0 until n) {
-                for (bi in 0 until n) {
-                    val rgb = apply(matrix, ri / denom, gi / denom, bi / denom)
-                    val r = (rgb[0].coerceIn(0f, 1f) * 255f).toInt().coerceIn(0, 255)
-                    val g = (rgb[1].coerceIn(0f, 1f) * 255f).toInt().coerceIn(0, 255)
-                    val b = (rgb[2].coerceIn(0f, 1f) * 255f).toInt().coerceIn(0, 255)
-                    cube[ri][gi][bi] = (0xFF shl 24) or (r shl 16) or (g shl 8) or b
-                }
-            }
-        }
-        return cube
     }
 }
 

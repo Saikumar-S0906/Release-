@@ -139,7 +139,7 @@ class PackStoreTest {
             PackCatalog.DENOISE_DOWNLOAD_SHA256
         )
         assertEquals(
-            "https://raw.githubusercontent.com/egemenertugrul/frame-interpolation-tflite-unity/main/FILM_TFLite_UnityProject/Assets/StreamingAssets/model_512_quant_float16.tflite",
+            "https://github.com/Saikumar-S0906/Release-/releases/download/ml-packs-v1/interp.tflite",
             PackCatalog.FRAME_INTERP_DOWNLOAD_URL
         )
         assertEquals(
