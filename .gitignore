@@ -32,6 +32,14 @@ tools/track/dist/train_history.npz
 tools/track/__pycache__/
 tools/track/**/__pycache__/
 
+# Neural inpaint lab — keep exported LiteRT; ignore Keras checkpoints / logs
+tools/inpaint/dist/*.keras
+tools/inpaint/dist/*.ckpt.*
+tools/inpaint/dist/*.npz
+tools/inpaint/dist/train_history.npz
+tools/inpaint/__pycache__/
+tools/inpaint/**/__pycache__/
+
 # Session scratch — never land these
 *.log
 uidump*.xml

@@ -76,15 +76,19 @@ class PackStoreTest {
         val sr = PackCatalog.spec(PackId.SuperRes)
         assertEquals("superres.tflite", sr.fileName)
         assertEquals("ml_superres", sr.playModule)
-        assertEquals(PackCatalog.SUPERRES_DOWNLOAD_URL, sr.downloadUrl)
-        assertEquals(PackCatalog.SUPERRES_DOWNLOAD_SHA256, sr.downloadSha256)
-        assertNull(sr.expectedSha256)
+        assertNull(sr.downloadUrl)
+        assertNull(sr.downloadSha256)
+        assertEquals(PackCatalog.SUPERRES_ASSET_SHA256, sr.expectedSha256)
+        assertEquals(PackCatalog.SUPERRES_ASSET_PATH, sr.assetPath)
+        assertTrue(PackCatalog.isBundled(PackId.SuperRes))
         val denoise = PackCatalog.spec(PackId.Denoise)
         assertEquals("denoise.tflite", denoise.fileName)
         assertEquals("ml_denoise", denoise.playModule)
-        assertEquals(PackCatalog.DENOISE_DOWNLOAD_URL, denoise.downloadUrl)
-        assertEquals(PackCatalog.DENOISE_DOWNLOAD_SHA256, denoise.downloadSha256)
-        assertNull(denoise.expectedSha256)
+        assertNull(denoise.downloadUrl)
+        assertNull(denoise.downloadSha256)
+        assertEquals(PackCatalog.DENOISE_ASSET_SHA256, denoise.expectedSha256)
+        assertEquals(PackCatalog.DENOISE_ASSET_PATH, denoise.assetPath)
+        assertTrue(PackCatalog.isBundled(PackId.Denoise))
         assertEquals(null, PackCatalog.spec(PackId.Inpaint).downloadUrl)
         assertNull(PackCatalog.spec(PackId.Inpaint).downloadSha256)
         assertNull(PackCatalog.spec(PackId.Inpaint).expectedSha256)
@@ -146,8 +150,12 @@ class PackStoreTest {
             PackCatalog.TRACK_ASSET_SHA256
         )
         assertEquals(
-            setOf(PackId.SuperRes, PackId.Denoise, PackId.FrameInterp),
+            setOf(PackId.FrameInterp),
             PackId.entries.filter { PackCatalog.hasHttpsFallback(PackCatalog.spec(it)) }.toSet()
+        )
+        assertEquals(
+            setOf(PackId.SuperRes, PackId.Denoise, PackId.Track),
+            PackId.entries.filter { PackCatalog.isBundled(it) }.toSet()
         )
     }
 
@@ -166,6 +174,18 @@ class PackStoreTest {
         assertEquals("interp.tflite", interp.fileName)
         assertEquals("ml_interp", interp.playModule)
         assertTrue(PackCatalog.hasHttpsFallback(interp))
+    }
+
+    @Test
+    fun superResAndDenoise_areBundledInApkAssets() {
+        for (id in listOf(PackId.SuperRes, PackId.Denoise)) {
+            val spec = PackCatalog.spec(id)
+            assertTrue(PackCatalog.isBundled(id))
+            assertFalse(PackCatalog.hasHttpsFallback(spec))
+            assertNull(spec.downloadUrl)
+            assertNotNull(spec.assetPath)
+            assertNotNull(spec.expectedSha256)
+        }
     }
 
     @Test

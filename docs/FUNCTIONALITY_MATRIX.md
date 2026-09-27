@@ -34,9 +34,9 @@ Evidence: `HomePane.kt`, `StudioPane.kt`, `LibraryPane.kt`, and `StudioApp.kt`.
 | Mirror expand | **BAKED** | Extends the canvas with mirrored edge pixels. It is not generative fill. |
 | Basic cutout | **FALLBACK** | Uses the bundled subject mask when available; otherwise removes colors matching sampled corners. |
 | Heal | **BAKED** | Clone/ring-based local repair. |
-| Fill | **BAKED** | Nearby-pixel Telea fill. That Apply stays on and is not neural. Neural Apply stays off until `PackRuntime.engineReady` after a sideloaded RGB+mask FLOAT32 bind. Ready (file verified) is not neural. No HTTPS inpaint pin. |
-| Super-res | **PACK** | Distilled ESRGAN HTTPS pin in `PackCatalog` (`compressed_esrgan.tflite`). Ready is downloaded and SHA-verified only. Apply turns on only for `PackRuntime.engineReady` (FLOAT32 2×/4× NHWC). Ready without that bind leaves the photo unchanged. |
-| Denoise | **PACK** | Raspberry Pi UNet HTTPS pin in `PackCatalog` (`unet_rgb_fast.tflite`). Ready is not neural. Apply turns on only for `engineReady` (FLOAT32 same-size RGB). |
+| Fill | **BAKED** | Nearby-pixel Telea fill. That Apply stays on and is not neural. Neural Apply turns on for `PackRuntime.engineReady` after bundled/sideloaded RGB+mask FLOAT32 bind. Ready (file verified) is not neural. |
+| Super-res | **LIVE** | Distilled ESRGAN ships in APK assets (`superres.tflite`). Seeded like Track. Apply turns on only for `PackRuntime.engineReady` (FLOAT32 2×/4× NHWC). Ready without that bind leaves the photo unchanged. |
+| Denoise | **LIVE** | Raspberry Pi UNet ships in APK assets (`denoise.tflite`). Apply turns on only for `engineReady` (FLOAT32 same-size RGB). |
 | Text, stickers, collage | **BAKED** | Rasterized into the rendered photo. |
 | Layers, blend, opacity, masks | **BAKED** | Evaluated by the local layer renderer. |
 | Presets | **LIVE** | Edit graphs are saved and reapplied on this device. Library can batch-apply a saved look, then export locally. |
@@ -78,8 +78,8 @@ Evidence: `movie/ClipFrame.kt`, `ClipSlowMo.kt`, `ClipTrack.kt`, `MovieEngine.kt
 | Capability | Status | Gate |
 |---|---|---|
 | Neural inpaint | **PACK** | Sideload only. No HTTPS pin and no Download CTA. Ready is the verified file (`InpaintStatus.ReadyFileOnly`). Neural Apply reads `engineReady` after `PackLiteRt` binds FLOAT32 RGB+mask (4-channel or image+mask). A miss leaves Telea. Telea is never labeled neural. |
-| Neural super-res | **PACK** | HTTPS SHA pin → Ready → FLOAT32 `PackModelContract.superResScale` → `PackLiteRt` register. A miss releases the interpreter. Apply reads `engineReady`. Ready alone is not neural. |
-| Neural denoise | **PACK** | HTTPS SHA pin → Ready → FLOAT32 `isDenoiseSameRgb` → `PackLiteRt`. A 2×/4× graph cannot register. Apply reads `engineReady`. |
+| Neural super-res | **LIVE** | Bundled APK asset → Ready → FLOAT32 `PackModelContract.superResScale` → `PackLiteRt` register. A miss releases the interpreter. Apply reads `engineReady`. Ready alone is not neural. |
+| Neural denoise | **LIVE** | Bundled APK asset → Ready → FLOAT32 `isDenoiseSameRgb` → `PackLiteRt`. A 2×/4× graph cannot register. Apply reads `engineReady`. |
 | Neural frame interpolation | **PACK** | HTTPS FILM TFLite (~67 MB). Ready = verified file. Neural chip + export mux unlock when LiteRT binds the FILM FLOAT32 contract. Export synthesizes mid-frames (`NeuralSlowMoMux`); preview stays Media3 rate/hold. Synth failure falls back to frame-hold. |
 | Point track / roto-lite | **LIVE** | Bundled APK asset → Ready → FLOAT32 `PackModelContract.isPointTrack` → `PackLiteRt.bindTrack`. `TrackPathBake` applies follow when `engineReady`. No HTTPS Download. |
 | Particle VFX | **LIVE** | Classical `TimelineVfx` particle overlays (Sparkle/Ember/Confetti/Snow/Bokeh) on the composition via Media3 `OverlayEffect`. Optional follow of F1 track seed. Not neural. |

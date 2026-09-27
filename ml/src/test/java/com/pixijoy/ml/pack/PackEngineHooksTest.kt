@@ -91,8 +91,9 @@ class PackEngineHooksTest {
     fun superResAndDenoise_readyFileIsNotNeural() {
         listOf(PackId.SuperRes, PackId.Denoise).forEach { id ->
             val spec = PackCatalog.spec(id)
-            assertTrue(PackCatalog.hasHttpsFallback(spec))
-            assertNull(spec.expectedSha256)
+            assertTrue(PackCatalog.isBundled(id))
+            assertFalse(PackCatalog.hasHttpsFallback(spec))
+            assertEquals(spec.expectedSha256, PackCatalog.spec(id).expectedSha256)
             assertFalse(PackRuntime.engineReady(id))
             assertEquals(
                 SuperResDenoiseStatus.ReadyFileOnly,
