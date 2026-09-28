@@ -13,8 +13,12 @@ import argparse
 import sys
 from pathlib import Path
 
+print("train.py: starting (before TensorFlow import)", flush=True)
+print("train.py: importing tensorflow — on CPU this can take several minutes with no other logs…", flush=True)
 import numpy as np
 import tensorflow as tf
+
+print(f"train.py: tensorflow {tf.__version__} imported", flush=True)
 
 _TOOLS = Path(__file__).resolve().parents[1]
 if str(_TOOLS) not in sys.path:
@@ -32,6 +36,8 @@ from ml_ckpt import (
 )
 from model import build_model
 from real_data import batch_inpaint, inpaint_images, require_ready
+
+print("train.py: imports done, entering main…", flush=True)
 
 
 def masked_l1(y_true, y_pred, mask):
