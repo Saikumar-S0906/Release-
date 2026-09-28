@@ -91,17 +91,24 @@ def main() -> None:
     train_rng = np.random.default_rng(SEED)
     val_rng = np.random.default_rng(SEED + 1)
 
+    print("building model…", flush=True)
     model = build_model()
+    print(f"model built params={model.count_params()}", flush=True)
     lr0 = 5e-4 if quality else 1e-3
     optimizer = tf.keras.optimizers.Adam(lr0)
     ckpt_path = ckpt_path_for(args.out)
+    print(f"ckpt path={ckpt_path} exists={ckpt_path.is_file()}", flush=True)
+    if ckpt_path.is_file():
+        print(f"ckpt size_mb={ckpt_path.stat().st_size / (1024 * 1024):.1f} (Drive loads can take many minutes on CPU)", flush=True)
 
+    print("resume/load weights…", flush=True)
     _, start_epoch, best_val, bad = maybe_auto_resume(
         model,
         args.out,
         resume=True if args.resume else None,
         no_resume=args.no_resume,
     )
+    print(f"ready to train start_epoch={start_epoch}/{epochs} best_val={best_val}", flush=True)
 
     @tf.function
     def train_step(images_t, masks, targets):
@@ -130,7 +137,10 @@ def main() -> None:
         print(f"already finished epochs ({start_epoch}/{epochs}); skipping train loop", flush=True)
     for epoch in range(start_epoch, epochs):
         losses = []
+        print(f"epoch {epoch + 1}/{epochs} starting ({steps} steps)…", flush=True)
         for step in range(steps):
+            if step == 0:
+                print("  first step: building TF graph (CPU can take 5–20+ min with no other logs)…", flush=True)
             imgs, masks, tgts = next_batch(train_rng)
             loss = train_step(tf.constant(imgs), tf.constant(masks), tf.constant(tgts))
             losses.append(float(loss.numpy()))

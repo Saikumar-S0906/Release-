@@ -41,6 +41,7 @@ def resume_into(
     if not ckpt_path.is_file():
         print(f"resume skipped — no file {ckpt_path}", flush=True)
         return False
+    print(f"loading weights from {ckpt_path} …", flush=True)
     try:
         model.load_weights(ckpt_path)
         print(f"resumed weights from {ckpt_path}", flush=True)
