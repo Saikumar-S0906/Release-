@@ -3,6 +3,7 @@
 
 --smoke (default): synthetic — NOT for Release-
 --quality: real data (--data READY) — only ship path
+Auto-resumes from *.ckpt.keras + train_state.json unless --no-resume.
 See tools/ML_QUALITY_BAR.md
 """
 
@@ -24,7 +25,12 @@ from config import KERAS_NAME, SEED, SIZE, apply_preset, resolved_batch
 from dataset import batch as synth_batch
 from model import build_model
 from real_data import batch_flow, flow_triplets, require_ready
-from ml_ckpt import load_keras_or_weights, resume_into
+from ml_ckpt import (
+    ckpt_path_for,
+    load_keras_or_weights,
+    maybe_auto_resume,
+    save_train_state,
+)
 
 
 def main() -> None:
@@ -36,7 +42,8 @@ def main() -> None:
     parser.add_argument("--steps", type=int, default=None)
     parser.add_argument("--val-steps", type=int, default=None)
     parser.add_argument("--batch", type=int, default=None)
-    parser.add_argument("--resume", action="store_true", help="Continue from dist/*.ckpt.keras if present")
+    parser.add_argument("--resume", action="store_true", help="Force resume (also auto when ckpt exists)")
+    parser.add_argument("--no-resume", action="store_true", help="Ignore existing ckpt and train from scratch")
     args = parser.parse_args()
     quality = bool(args.quality)
     apply_preset(quality)
@@ -79,20 +86,24 @@ def main() -> None:
         pred = model([fa, fb], training=False)
         return tf.reduce_mean(tf.abs(pred - flow))
 
-    best_val = float("inf")
+    ckpt_path = ckpt_path_for(args.out)
+    _, start_epoch, best_val, bad = maybe_auto_resume(
+        model,
+        args.out,
+        resume=True if args.resume else None,
+        no_resume=args.no_resume,
+    )
     patience = 12 if quality else 8
-    bad = 0
-    ckpt_path = args.out.with_suffix(".ckpt.keras")
     history = {"loss": [], "val_loss": []}
-    if args.resume:
-        resume_into(model, ckpt_path)
 
     def next_batch(rng: np.random.Generator):
         if quality:
             return batch_flow(rng, batch_n, trips, SIZE)
         return synth_batch(rng, batch_n)
 
-    for epoch in range(epochs):
+    if start_epoch >= epochs:
+        print(f"already finished epochs ({start_epoch}/{epochs})", flush=True)
+    for epoch in range(start_epoch, epochs):
         losses = []
         for step in range(steps):
             fa, fb, fl = next_batch(train_rng)
@@ -114,9 +125,23 @@ def main() -> None:
             best_val = val_loss_e
             bad = 0
             model.save(ckpt_path)
+            save_train_state(
+                args.out,
+                next_epoch=epoch + 1,
+                best_val=best_val,
+                bad=bad,
+                mode="QUALITY" if quality else "SMOKE",
+            )
             print(f"  saved best -> {ckpt_path}", flush=True)
         else:
             bad += 1
+            save_train_state(
+                args.out,
+                next_epoch=epoch + 1,
+                best_val=best_val,
+                bad=bad,
+                mode="QUALITY" if quality else "SMOKE",
+            )
             if bad >= patience:
                 print("early stopping", flush=True)
                 break
