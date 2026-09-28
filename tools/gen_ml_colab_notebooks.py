@@ -1,4 +1,4 @@
-"""Generate train_colab.ipynb for Wave M — Drive ON by default, auto-resume, no TFDS."""
+"""Generate train_colab.ipynb for Wave M — Drive ON, GPU preferred, CPU High-RAM allowed."""
 from __future__ import annotations
 
 import json
@@ -13,17 +13,18 @@ def make_nb(title: str, root_name: str, zip_name: str, artifact: str, keras_name
             "cell_type": "markdown",
             "metadata": {},
             "source": [
-                f"# PixiJoy {title} — Colab GPU (quality)\n",
+                f"# PixiJoy {title} — Colab quality train\n",
                 "\n",
-                "Runtime → **GPU** → **Run all**.\n",
+                "**Preferred:** Runtime → **GPU** → Run all.\n",
                 "\n",
-                "- **Google Drive is ON** — checkpoints + quality data live under "
-                f"`MyDrive/pixijoy_ml/{root_name}/` so disconnects do **not** force a full restart.\n",
-                "- Auto-fetches real training data (no tensorflow_datasets / no HF).\n",
-                "- Reconnect → Run all again: skips finished data prep, **auto-resumes** from "
-                "`*.ckpt.keras` + `train_state.json`.\n",
-                "- Pin TFLite only if verify prints **OK**.\n",
-                "- Set `USE_DRIVE = False` only if you refuse Drive (ephemeral `/content`).\n",
+                "**If GPU quota is blocked:** Runtime → Change runtime type → Hardware accelerator "
+                "**None** + **High-RAM** → Save → Run all.\n",
+                "\n",
+                "- CPU is **much slower** (hours–days vs GPU minutes–hours) but still **quality** "
+                "(same data + gates). Drive resume keeps progress across disconnects.\n",
+                "- Checkpoints + data: "
+                f"`MyDrive/pixijoy_ml/{root_name}/`\n",
+                "- Pin TFLite only if verify prints **OK** / **SHIP_OK**.\n",
             ],
         },
         {
@@ -34,8 +35,15 @@ def make_nb(title: str, root_name: str, zip_name: str, artifact: str, keras_name
             "source": [
                 "!nvidia-smi || true\n",
                 "import tensorflow as tf\n",
-                'print("TF", tf.__version__, "GPUs", tf.config.list_physical_devices("GPU"))\n',
-                "assert tf.config.list_physical_devices('GPU'), 'Select Runtime → GPU before Run all'\n",
+                "gpus = tf.config.list_physical_devices('GPU')\n",
+                'print("TF", tf.__version__, "GPUs", gpus)\n',
+                "ALLOW_CPU = True  # set False to require GPU\n",
+                "if gpus:\n",
+                "    print('accelerator=GPU')\n",
+                "elif ALLOW_CPU:\n",
+                "    print('accelerator=CPU — use Runtime → High-RAM if available; expect slow train')\n",
+                "else:\n",
+                "    raise SystemExit('No GPU — select GPU runtime, or set ALLOW_CPU=True')\n",
             ],
         },
         {
@@ -133,6 +141,7 @@ def make_nb(title: str, root_name: str, zip_name: str, artifact: str, keras_name
             "source": [
                 "from pathlib import Path\n",
                 "import hashlib\n",
+                "import tensorflow as tf\n",
                 "USE_DRIVE = globals().get('USE_DRIVE', True)\n",
                 f"OUT = Path('/content/drive/MyDrive/pixijoy_ml/{root_name}/dist/{keras_name}') if USE_DRIVE else Path('dist') / '{keras_name}'\n",
                 "OUT.parent.mkdir(parents=True, exist_ok=True)\n",
@@ -140,7 +149,13 @@ def make_nb(title: str, root_name: str, zip_name: str, artifact: str, keras_name
                 "print('ckpt exists' if ckpt.is_file() else 'fresh train', OUT)\n",
                 "print('state', OUT.parent / 'train_state.json', (OUT.parent / 'train_state.json').is_file())\n",
                 "\n",
-                'cmd = "python -u train.py --quality --out \\"" + str(OUT) + "\\""\n',
+                "gpus = tf.config.list_physical_devices('GPU')\n",
+                "# CPU High-RAM: smaller batch to stay under memory; quality unchanged.\n",
+                "batch_flag = '' if gpus else ' --batch 4'\n",
+                "if not gpus:\n",
+                "    print('CPU mode: batch=4 (High-RAM recommended). Leave the tab open; resume after disconnect.')\n",
+                "\n",
+                'cmd = "python -u train.py --quality --out \\"" + str(OUT) + "\\"" + batch_flag\n',
                 "if ckpt.is_file():\n",
                 '    cmd += " --resume"\n',
                 "    print('will resume from checkpoint')\n",
