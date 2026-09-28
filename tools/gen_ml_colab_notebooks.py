@@ -145,6 +145,7 @@ def make_nb(title: str, root_name: str, zip_name: str, artifact: str, keras_name
             "metadata": {},
             "outputs": [],
             "execution_count": None,
+            "source": [
                 "from pathlib import Path\n",
                 "import hashlib\n",
                 "import shutil\n",
