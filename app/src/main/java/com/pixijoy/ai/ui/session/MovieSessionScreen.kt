@@ -135,6 +135,8 @@ import com.pixijoy.movie.TimelineTitle3d
 import com.pixijoy.movie.TimelineVfx
 import com.pixijoy.movie.TimelineCgLayer
 import com.pixijoy.movie.CgPreset
+import com.pixijoy.movie.GltfProp
+import com.pixijoy.movie.GltfParseResult
 import com.pixijoy.movie.EditSnap
 import com.pixijoy.movie.ArPrevizGate
 import com.pixijoy.movie.OptFeatureModules
@@ -269,6 +271,40 @@ fun MovieSessionScreen(
                         commitTimeline(timeline.copy(voice = voice, bed = bed))
                     }
                     is AppResult.Err -> status = result.message
+                }
+            }
+        }
+    }
+    val pickGltf = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val rawName = uri.lastPathSegment?.substringAfterLast(':')?.substringAfterLast('/')
+                ?: "prop.glb"
+            when (val copied = repo.importGltfProp(project.id, uri, rawName)) {
+                is AppResult.Err -> status = copied.message
+                is AppResult.Ok -> {
+                    val parsed = withContext(Dispatchers.IO) { GltfProp.parseFile(copied.value) }
+                    when (parsed) {
+                        is GltfParseResult.Err -> {
+                            copied.value.delete()
+                            status = parsed.message
+                        }
+                        is GltfParseResult.Ok -> {
+                            val current = sessionViewModel.state.value.multi
+                            val total = current.totalMs()
+                            val next = TimelineCgLayer(
+                                id = "cg${current.cg.size}",
+                                preset = CgPreset.PropGltf,
+                                endMs = total.coerceAtLeast(1000),
+                                scale = 1.1f,
+                                yaw = 28f,
+                                zOrder = current.cg.size,
+                                propFile = copied.value.name
+                            )
+                            commitMulti(current.copy(cg = current.cg + next), live = true)
+                            status = context.getString(R.string.studio_cg_prop_loaded, copied.value.name)
+                        }
+                    }
                 }
             }
         }
@@ -867,6 +903,17 @@ fun MovieSessionScreen(
                         }
                     )
                     commitMulti(multi.copy(cg = multi.cg + next), live = true)
+                },
+                onLoadProp = {
+                    pickGltf.launch(
+                        arrayOf(
+                            "model/gltf-binary",
+                            "model/gltf+json",
+                            "application/octet-stream",
+                            "application/json",
+                            "*/*"
+                        )
+                    )
                 },
                 onUpdate = { layer ->
                     commitMulti(

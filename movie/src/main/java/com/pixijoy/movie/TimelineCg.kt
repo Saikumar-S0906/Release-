@@ -18,19 +18,22 @@ import androidx.media3.effect.TextureOverlay
 /**
  * R7 / coding P1+P5 — CG compositor lane on the timeline.
  *
- * Heavy Filament / glTF lives in on-demand `:feature_cg` later. Until that
- * module binds a [CgSceneRenderer], [ClassicalCgRenderer] draws lit props
- * so preview and export share one overlay path (not a sticker emoji).
+ * Heavy Filament lives in on-demand `:feature_cg` later. Until that module
+ * binds a [CgSceneRenderer], [ClassicalCgRenderer] draws lit props so preview
+ * and export share one overlay path. User glTF/GLB props ([CgPreset.PropGltf])
+ * rasterize on that same path — classical lighting, not Filament, not neural.
  *
  * P5 classical: Z-order + track-plane insert, matte modes, camera keyframes.
  *
  * Encode (v1): `CG,<id>,<preset>,<startMs>,<endMs>,<x>,<y>,<scale>,<yaw>,<zOrder>,<followTrack>`
- * Encode (v2+): `...,<matte>,<pitch>,<endYaw>,<endScale>`
+ * Encode (v2+): `...,<matte>,<pitch>,<endYaw>,<endScale>,<propFile>`
  */
 enum class CgPreset {
     None,
-    /** Soft-lit cube prop — classical stand-in for a glTF mesh. */
+    /** Soft-lit cube prop — classical stand-in when no mesh is loaded. */
     PropCube,
+    /** User glTF/GLB mesh, classical raster. Not a Filament material. */
+    PropGltf,
     /** Ground plane + shadow catcher sketch for set extension previz. */
     GroundPlane,
     /** Sky dome gradient plate (classical; HDRI later). */
@@ -92,18 +95,25 @@ object ClassicalCgRenderer : CgSceneRenderer {
         yaw: Float,
         pitch: Float,
         ox: Float,
-        oy: Float
+        oy: Float,
+        mesh: GltfMesh? = null
     ): Bitmap {
         val w = width.coerceAtLeast(2)
         val h = height.coerceAtLeast(2)
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bmp)
-        val dx = ox * w * 0.45f
-        val dy = -oy * h * 0.45f
+        val (dx, dy) = cgPlateOffset(ox, oy, w, h)
         canvas.translate(dx, dy)
         when (preset) {
             CgPreset.None -> Unit
             CgPreset.PropCube -> drawCube(canvas, w, h, scale, yaw, pitch)
+            CgPreset.PropGltf -> {
+                if (mesh != null) {
+                    drawClassicalPropMesh(canvas, w, h, scale, yaw, pitch, mesh)
+                } else {
+                    drawCube(canvas, w, h, scale, yaw, pitch)
+                }
+            }
             CgPreset.GroundPlane -> drawGround(canvas, w, h, scale)
             CgPreset.SkyDome -> drawSky(canvas, w, h)
             CgPreset.DustTrail -> drawDust(canvas, w, h, scale, yaw)
@@ -260,7 +270,9 @@ data class TimelineCgLayer(
     /** End-of-span yaw for simple camera keyframe (interpolated). */
     val endYaw: Float = Float.NaN,
     /** End-of-span scale for dolly keyframe. */
-    val endScale: Float = Float.NaN
+    val endScale: Float = Float.NaN,
+    /** File name under `{project}/props/`. Empty unless [CgPreset.PropGltf]. */
+    val propFile: String = ""
 ) {
     val isActive: Boolean get() = preset != CgPreset.None
 
@@ -293,7 +305,8 @@ data class TimelineCgLayer(
         pitch = pitch.coerceIn(-60f, 60f),
         endYaw = if (endYaw.isNaN()) endYaw else endYaw.coerceIn(-180f, 180f),
         endScale = if (endScale.isNaN()) endScale else endScale.coerceIn(0.35f, 2.5f),
-        zOrder = zOrder.coerceIn(-8, 8)
+        zOrder = zOrder.coerceIn(-8, 8),
+        propFile = if (GltfProp.isSafePropFileName(propFile)) propFile else ""
     )
 
     fun encodeLine(): String {
@@ -302,7 +315,7 @@ data class TimelineCgLayer(
         val es = if (n.endScale.isNaN()) "nan" else fmt(n.endScale)
         return "CG,${n.id},${n.preset.name},${n.startMs},${n.endMs}," +
             "${fmt(n.x)},${fmt(n.y)},${fmt(n.scale)},${fmt(n.yaw)},${n.zOrder}," +
-            "${if (n.followTrack) 1 else 0},${n.matte.name},${fmt(n.pitch)},$ey,$es"
+            "${if (n.followTrack) 1 else 0},${n.matte.name},${fmt(n.pitch)},$ey,$es,${n.propFile}"
     }
 
     companion object {
@@ -325,7 +338,8 @@ data class TimelineCgLayer(
                     endYaw = parts.getOrNull(13)?.let { if (it == "nan") Float.NaN else it.toFloat() }
                         ?: Float.NaN,
                     endScale = parts.getOrNull(14)?.let { if (it == "nan") Float.NaN else it.toFloat() }
-                        ?: Float.NaN
+                        ?: Float.NaN,
+                    propFile = parts.getOrNull(15).orEmpty()
                 ).normalized()
             }.getOrNull()
         }
@@ -348,13 +362,14 @@ object CgOverlays {
     fun effect(
         layers: List<TimelineCgLayer>,
         totalMs: Long,
-        trackAnchor: Pair<Float, Float>? = null
+        trackAnchor: Pair<Float, Float>? = null,
+        projectDir: java.io.File? = null
     ): Effect? {
         val active = layers.filter { it.isActive }.sortedBy { it.zOrder }
         if (active.isEmpty()) return null
         val overlays = ArrayList<TextureOverlay>(active.size)
         for (layer in active) {
-            overlays += TimedCgOverlay(layer, totalMs.coerceAtLeast(1), trackAnchor)
+            overlays += TimedCgOverlay(layer, totalMs.coerceAtLeast(1), trackAnchor, projectDir)
         }
         return OverlayEffect(overlays)
     }
@@ -363,7 +378,8 @@ object CgOverlays {
 private class TimedCgOverlay(
     private val layer: TimelineCgLayer,
     private val totalMs: Long,
-    private val trackAnchor: Pair<Float, Float>?
+    private val trackAnchor: Pair<Float, Float>?,
+    private val projectDir: java.io.File?
 ) : BitmapOverlay() {
     private val endMs = layer.resolvedEnd(totalMs)
     private var frameW = 1280
@@ -409,11 +425,18 @@ private class TimedCgOverlay(
         val yaw = layer.yawAt(ms, totalMs)
         val scale = layer.scaleAt(ms, totalMs)
         val host = CgHost.active()
-        val raw = if (host is ClassicalCgRenderer) {
-            host.renderFull(layer.preset, frameW, frameH, scale, yaw, layer.pitch, ox, oy)
+        val mesh = if (layer.preset == CgPreset.PropGltf) {
+            CgPropMeshes.get(projectDir, layer.propFile)
+        } else {
+            null
+        }
+        // Prop meshes stay on the classical raster until Filament binds a real material.
+        val raw = if (host is ClassicalCgRenderer || mesh != null) {
+            ClassicalCgRenderer.renderFull(
+                layer.preset, frameW, frameH, scale, yaw, layer.pitch, ox, oy, mesh
+            )
         } else {
             val base = host.render(layer.preset, frameW, frameH, scale, yaw)
-            // Bake NDC offset for non-classical renderers
             if (ox == 0f && oy == 0f) base else offsetBitmap(base, ox, oy)
         }
         return ClassicalCgRenderer.applyMatte(raw, layer.matte)
@@ -422,7 +445,8 @@ private class TimedCgOverlay(
     private fun offsetBitmap(src: Bitmap, ox: Float, oy: Float): Bitmap {
         val out = Bitmap.createBitmap(frameW, frameH, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(out)
-        canvas.translate(ox * frameW * 0.45f, -oy * frameH * 0.45f)
+        val (dx, dy) = cgPlateOffset(ox, oy, frameW, frameH)
+        canvas.translate(dx, dy)
         canvas.drawBitmap(src, 0f, 0f, null)
         if (src !== out) src.recycle()
         return out

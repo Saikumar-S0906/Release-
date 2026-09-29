@@ -37,6 +37,28 @@ class TimelineCgTest {
         assertEquals(12f, decoded.pitch, 0.001f)
         assertEquals(80f, decoded.endYaw, 0.001f)
         assertEquals(1.6f, decoded.endScale, 0.001f)
+        assertEquals("", decoded.propFile)
+    }
+
+    @Test
+    fun propFile_roundTrip_andRejectsPathEscape() {
+        val layer = TimelineCgLayer(
+            id = "cg2",
+            preset = CgPreset.PropGltf,
+            endMs = 1500,
+            x = 0.2f,
+            y = -0.1f,
+            scale = 1.4f,
+            propFile = "chair.glb"
+        )
+        val decoded = TimelineCgLayer.decodeLine(layer.encodeLine().split(','))!!
+        assertEquals(CgPreset.PropGltf, decoded.preset)
+        assertEquals("chair.glb", decoded.propFile)
+        assertEquals(1.4f, decoded.scale, 0.001f)
+        assertEquals(0.2f, decoded.x, 0.001f)
+        val escaped = "CG,cg0,PropGltf,0,2000,0,0,1,0,0,0,None,0,nan,nan,../a.glb"
+        val blocked = TimelineCgLayer.decodeLine(escaped.split(','))!!
+        assertEquals("", blocked.propFile)
     }
 
     @Test
@@ -45,6 +67,7 @@ class TimelineCgTest {
         val decoded = TimelineCgLayer.decodeLine(legacy.split(','))!!
         assertEquals(CgMatte.None, decoded.matte)
         assertTrue(decoded.endYaw.isNaN())
+        assertEquals("", decoded.propFile)
     }
 
     @Test

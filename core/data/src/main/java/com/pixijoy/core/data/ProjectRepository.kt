@@ -240,6 +240,66 @@ class ProjectRepository(
             )
         }
 
+    /**
+     * Copies a `.gltf` or `.glb` into `{project}/props/` (same folder the CG plate reads).
+     * Caller validates the mesh before keeping the file.
+     */
+    suspend fun importGltfProp(projectId: String, uri: Uri, suggestedName: String): AppResult<File> =
+        withContext(dispatchers.io) {
+            runCatching {
+                dao.get(projectId) ?: return@withContext AppResult.Err("Project missing.")
+                val name = sanitizePropFileName(suggestedName)
+                if (name.isEmpty()) return@withContext AppResult.Err("Use a .gltf or .glb file.")
+                val dir = File(projectDir(projectId), "props").apply { mkdirs() }
+                val dest = uniquePropFile(dir, name)
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    dest.outputStream().use { output -> input.copyTo(output) }
+                } ?: return@withContext AppResult.Err("Could not read prop.")
+                if (dest.length() < 20L) {
+                    dest.delete()
+                    return@withContext AppResult.Err("Prop file is empty.")
+                }
+                if (dest.length() > 8L * 1024L * 1024L) {
+                    dest.delete()
+                    return@withContext AppResult.Err("Prop file is too large.")
+                }
+                AppResult.Ok(dest)
+            }.fold(
+                onSuccess = { it },
+                onFailure = { AppResult.Err("Could not import prop.", it) }
+            )
+        }
+
+    private fun uniquePropFile(dir: File, name: String): File {
+        var dest = File(dir, name)
+        if (!dest.exists()) return dest
+        val stem = name.substringBeforeLast('.')
+        val ext = name.substringAfterLast('.')
+        var i = 2
+        while (dest.exists() && i < 100) {
+            dest = File(dir, "${stem}_$i.$ext")
+            i++
+        }
+        return dest
+    }
+
+    private fun sanitizePropFileName(raw: String): String {
+        val base = raw.substringAfterLast('/').substringAfterLast('\\').substringAfterLast(':')
+        val cleaned = buildString {
+            for (ch in base) {
+                append(
+                    when {
+                        ch.isLetterOrDigit() || ch == '.' || ch == '_' || ch == '-' -> ch
+                        else -> '_'
+                    }
+                )
+            }
+        }.trim('.').ifBlank { "" }
+        val lower = cleaned.lowercase()
+        if (!lower.endsWith(".gltf") && !lower.endsWith(".glb")) return ""
+        return cleaned.take(120)
+    }
+
     private fun sanitizeLutFileName(raw: String): String {
         val base = raw.substringAfterLast('/').substringAfterLast('\\')
         val cleaned = buildString {

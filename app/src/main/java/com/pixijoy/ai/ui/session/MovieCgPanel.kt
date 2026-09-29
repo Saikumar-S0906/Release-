@@ -26,12 +26,13 @@ import com.pixijoy.movie.CgMatte
 import com.pixijoy.movie.CgPreset
 import com.pixijoy.movie.TimelineCgLayer
 
-/** R7 / P1+P5 — CG lane: classical plates, Z/matte/camera until Filament binds. */
+/** R7 / P1+P5 — CG lane: classical plates plus glTF load/place/scale until Filament binds. */
 @Composable
 fun MovieCgPanel(
     layers: List<TimelineCgLayer>,
     @Suppress("UNUSED_PARAMETER") totalMs: Long,
     onAdd: (CgPreset) -> Unit,
+    onLoadProp: () -> Unit,
     onUpdate: (TimelineCgLayer) -> Unit,
     onClear: () -> Unit
 ) {
@@ -73,6 +74,13 @@ fun MovieCgPanel(
                     contentDescription = label
                 )
             }
+            val loadLabel = stringResource(R.string.studio_cg_load_gltf)
+            PixiPrimaryButton(
+                loadLabel,
+                onLoadProp,
+                Modifier.testTag("movie_cg_load_gltf"),
+                contentDescription = loadLabel
+            )
         }
         if (layers.isNotEmpty()) {
             layers.forEach { layer ->
@@ -80,8 +88,13 @@ fun MovieCgPanel(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier.testTag("movie_cg_layer_${layer.id}")
                 ) {
+                    val layerTitle = if (layer.propFile.isBlank()) {
+                        "${layer.preset.name} · z ${layer.zOrder} · ${layer.matte.name}"
+                    } else {
+                        "${layer.propFile} · z ${layer.zOrder} · ${layer.matte.name}"
+                    }
                     Text(
-                        "${layer.preset.name} · z ${layer.zOrder} · ${layer.matte.name}",
+                        layerTitle,
                         color = PixiText,
                         modifier = Modifier.testTag("movie_cg_layer_label")
                     )

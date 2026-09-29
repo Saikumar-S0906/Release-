@@ -39,7 +39,7 @@ M2→M3→M4 one-by-one      ──▶  Phases 1–6 full product
 | Phase | Name | ML wait? | Exit | Status |
 |-------|------|----------|------|--------|
 | **P0** | UX spine + honesty chips | No | Tools ≤2 taps; Live/Pack/Export-only | **LANDED** — search + CG/Deliver + capability chip |
-| **P1** | CG foundation H1–H3 | No | Filament lane + glTF + IBL; preview≈export | **PARTIAL** — classical `TimelineCgLayer` LIVE; Filament/glTF next |
+| **P1** | CG foundation H1–H3 | No | Filament lane + glTF + IBL; preview≈export | **PARTIAL** — classical lane LIVE; user glTF/GLB load, place, and scale LIVE (classical raster); Filament/IBL still next |
 | **P2** | Assembly I1–I4 | No | Markers, bins, versions, snap | **LANDED** — markers/bins/versions/J-L/snap |
 | **P3** | Color J1–J4 | No | Secondary, shot match, scopes truth | **LANDED** — secondary + match + pipeline/scopes labels |
 | **P4** | Sound K1–K4 | No | Stems, ADR, sync, LUFS | **LANDED** — buses + ADR + slip + LUFS gate |

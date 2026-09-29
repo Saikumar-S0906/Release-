@@ -545,7 +545,8 @@ class Media3MovieEngine : MovieEngine {
         }
         VfxOverlays.effect(mixed.vfx, total, trackAnchor)?.let { videoEffects += it }
         Title3dOverlays.effect(mixed.titles3d, total)?.let { videoEffects += it }
-        CgOverlays.effect(mixed.cg, total, trackAnchor)?.let { videoEffects += it }
+        val projectDir = paths.firstOrNull()?.let { File(it).parentFile }
+        CgOverlays.effect(mixed.cg, total, trackAnchor, projectDir)?.let { videoEffects += it }
         TimecodeOverlays.effect(burnInTc, total)?.let { videoEffects += it }
         MovieGrade.effect(mixed.grade)?.let { videoEffects += it }
         val audioProcessors = ArrayList<AudioProcessor>()
