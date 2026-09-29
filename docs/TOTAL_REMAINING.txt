@@ -157,7 +157,7 @@ PATH. SUGGESTED (ASAP, no fake greens)
 ================================================================
 CODING (docs/CODING_PHASES.md) — do NOT wait on Colab:
   P0 UX · P1 CG classical · P2 Assembly · P3 Colorist · P4 Sound · P6 Delivery LANDED
-  P5 CG polish PARTIAL (Z/matte/cam/dust; Filament GPU later) → P7 ML plugs
+  P5 CG polish PARTIAL (Z/matte/cam/dust drift; Filament GPU later) → P7 ML plugs
 Colab (your queue): M1 → M2 → M3 → M4 quality packs (tools/ML_QUALITY_BAR.md) · M7 sky
 
 Hard rule stays: edit-graph or timeline op → engine → WorkManager export. Local-first. Quality > clock.

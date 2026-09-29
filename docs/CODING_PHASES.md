@@ -43,7 +43,7 @@ M2→M3→M4 one-by-one      ──▶  Phases 1–6 full product
 | **P2** | Assembly I1–I4 | No | Markers, bins, versions, snap | **LANDED** — markers/bins/versions/J-L/snap |
 | **P3** | Color J1–J4 | No | Secondary, shot match, scopes truth | **LANDED** — secondary + match + pipeline/scopes labels |
 | **P4** | Sound K1–K4 | No | Stems, ADR, sync, LUFS | **LANDED** — buses + ADR + slip + LUFS gate |
-| **P5** | CG polish H4,H7,H8 + classical H5/H6 fallbacks | No* | GPU particles, camera, set ext; flat Z/matte until ML | **PARTIAL** — Z/matte/cam keys + dust; Filament GPU later |
+| **P5** | CG polish H4,H7,H8 + classical H5/H6 fallbacks | No* | GPU particles, camera, set ext; flat Z/matte until ML | **PARTIAL** — Z/matte/cam keys + dust drift; Filament GPU later |
 | **P6** | Delivery L1–L4 | No | Review package + EDL-lite + presets | **LANDED** — presets · TC · notes · EDL/FCPXML · meta sidecar |
 | **P7** | ML bind plugs | **Yes — only this phase** | Pin M1–M4 when files exist; swap fallbacks | Planned |
 

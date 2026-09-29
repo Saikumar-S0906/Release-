@@ -71,6 +71,28 @@ class TimelineCgTest {
     }
 
     @Test
+    fun dustTrail_driftsWithProgress_andFollowsYaw() {
+        val start = dustMote(3, 1280, 720, 1f, 0f, 0f)
+        val mid = dustMote(3, 1280, 720, 1f, 0f, 0.5f)
+        val again = dustMote(3, 1280, 720, 1f, 0f, 0f)
+        assertEquals(start.x, again.x, 0.01f)
+        assertEquals(start.y, again.y, 0.01f)
+        val dx = mid.x - start.x
+        val dy = mid.y - start.y
+        assertTrue(kotlin.math.abs(dx) > 20f)
+        assertTrue(kotlin.math.abs(dx) > kotlin.math.abs(dy) * 2f)
+
+        val yawStart = dustMote(3, 1280, 720, 1f, 90f, 0f)
+        val yawMid = dustMote(3, 1280, 720, 1f, 90f, 0.5f)
+        val yawDx = yawMid.x - yawStart.x
+        val yawDy = yawMid.y - yawStart.y
+        assertTrue(kotlin.math.abs(yawDy) > 20f)
+        assertTrue(kotlin.math.abs(yawDy) > kotlin.math.abs(yawDx) * 2f)
+        assertTrue(mid.x in 0f..1280f && mid.y in 0f..720f)
+        assertTrue(yawMid.x in 0f..1280f && yawMid.y in 0f..720f)
+    }
+
+    @Test
     fun cameraKeys_interpolate() {
         val layer = TimelineCgLayer(
             id = "cg0",

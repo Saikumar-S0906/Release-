@@ -38,7 +38,7 @@ enum class CgPreset {
     GroundPlane,
     /** Sky dome gradient plate (classical; HDRI later). */
     SkyDome,
-    /** Soft dust / atmosphere particles (classical compute stand-in). */
+    /** Soft dust that drifts over the shot (classical; not a Filament sim). */
     DustTrail;
 
     companion object {
@@ -96,7 +96,8 @@ object ClassicalCgRenderer : CgSceneRenderer {
         pitch: Float,
         ox: Float,
         oy: Float,
-        mesh: GltfMesh? = null
+        mesh: GltfMesh? = null,
+        progress: Float = 0f
     ): Bitmap {
         val w = width.coerceAtLeast(2)
         val h = height.coerceAtLeast(2)
@@ -116,7 +117,7 @@ object ClassicalCgRenderer : CgSceneRenderer {
             }
             CgPreset.GroundPlane -> drawGround(canvas, w, h, scale)
             CgPreset.SkyDome -> drawSky(canvas, w, h)
-            CgPreset.DustTrail -> drawDust(canvas, w, h, scale, yaw)
+            CgPreset.DustTrail -> drawDust(canvas, w, h, scale, yaw, progress)
         }
         return bmp
     }
@@ -154,18 +155,13 @@ object ClassicalCgRenderer : CgSceneRenderer {
         )
     }
 
-    private fun drawDust(canvas: Canvas, w: Int, h: Int, scale: Float, yaw: Float) {
+    private fun drawDust(canvas: Canvas, w: Int, h: Int, scale: Float, yaw: Float, progress: Float) {
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-        val count = (36 + scale * 40).toInt().coerceIn(24, 96)
-        val yawRad = Math.toRadians(yaw.toDouble())
-        val drift = kotlin.math.cos(yawRad).toFloat()
+        val count = dustCount(scale)
         for (i in 0 until count) {
-            val t = i / count.toFloat()
-            val x = w * (0.15f + t * 0.7f + drift * 0.05f)
-            val y = h * (0.2f + ((i * 37) % 100) / 100f * 0.55f)
-            val r = (2f + (i % 5)) * scale
-            paint.color = Color.argb(40 + (i % 50), 220, 230, 240)
-            canvas.drawCircle(x, y, r, paint)
+            val mote = dustMote(i, w, h, scale, yaw, progress)
+            paint.color = Color.argb(mote.alpha, 220, 230, 240)
+            canvas.drawCircle(mote.x, mote.y, mote.radius, paint)
         }
     }
 
@@ -249,6 +245,49 @@ object ClassicalCgRenderer : CgSceneRenderer {
         if (src !== out) src.recycle()
         return out
     }
+}
+
+/**
+ * One classical dust mote. Position is a pure function of index, yaw, and
+ * progress so preview and export match. Not a Filament particle sim.
+ */
+internal data class DustMote(
+    val x: Float,
+    val y: Float,
+    val radius: Float,
+    val alpha: Int
+)
+
+internal fun dustCount(scale: Float): Int =
+    (36f + scale.coerceIn(0.35f, 2.5f) * 28f).toInt().coerceIn(24, 96)
+
+internal fun dustMote(
+    index: Int,
+    width: Int,
+    height: Int,
+    scale: Float,
+    yawDeg: Float,
+    progress: Float
+): DustMote {
+    val w = width.coerceAtLeast(1)
+    val h = height.coerceAtLeast(1)
+    val s = scale.coerceIn(0.35f, 2.5f)
+    val u = progress.coerceIn(0f, 1f)
+    val yawRad = Math.toRadians(yawDeg.toDouble())
+    val dirX = kotlin.math.cos(yawRad).toFloat()
+    val dirY = kotlin.math.sin(yawRad).toFloat() * 0.35f
+    val column = index % 7
+    val row = (index * 3) % 11
+    val baseX = 0.22f + column * 0.09f
+    val baseY = 0.20f + row * 0.055f
+    val speed = 0.55f + s * 0.12f
+    val shift = (u - 0.5f) * speed
+    val xNorm = (baseX + dirX * shift * 0.5f).coerceIn(0.04f, 0.96f)
+    val yNorm = (baseY - dirY * shift * 0.5f - u * 0.06f).coerceIn(0.04f, 0.96f)
+    val radius = (2f + (index % 5)) * s
+    val twinkle = kotlin.math.sin(u * 6.283185f + index * 0.65f)
+    val alpha = (48f + twinkle * 28f).toInt().coerceIn(20, 90)
+    return DustMote(xNorm * w, yNorm * h, radius, alpha)
 }
 
 data class TimelineCgLayer(
@@ -424,16 +463,17 @@ private class TimedCgOverlay(
         }
         val yaw = layer.yawAt(ms, totalMs)
         val scale = layer.scaleAt(ms, totalMs)
+        val progress = layer.progress(ms, totalMs)
         val host = CgHost.active()
         val mesh = if (layer.preset == CgPreset.PropGltf) {
             CgPropMeshes.get(projectDir, layer.propFile)
         } else {
             null
         }
-        // Prop meshes stay on the classical raster until Filament binds a real material.
-        val raw = if (host is ClassicalCgRenderer || mesh != null) {
+        // Meshes stay classical until Filament materials bind. Dust stays this trail until GPU particles.
+        val raw = if (host is ClassicalCgRenderer || mesh != null || layer.preset == CgPreset.DustTrail) {
             ClassicalCgRenderer.renderFull(
-                layer.preset, frameW, frameH, scale, yaw, layer.pitch, ox, oy, mesh
+                layer.preset, frameW, frameH, scale, yaw, layer.pitch, ox, oy, mesh, progress
             )
         } else {
             val base = host.render(layer.preset, frameW, frameH, scale, yaw)
