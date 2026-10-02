@@ -1,8 +1,8 @@
-﻿# PixiJoy — Hands-off operating guide
+﻿# PixiJoy - Hands-off operating guide
 
 Saikumar acts as **client**. Day-to-day ownership sits with **ProjectManager** and the team. Do not wait on him for routine decisions. Ask only when a true client approval or product call is required.
 
-Last updated: 2026-09-25 (IST)
+Last updated: 2026-10-02 ~19:40 IST
 
 ## North star
 
@@ -16,16 +16,16 @@ Last updated: 2026-09-25 (IST)
 |------|------|
 | ProjectManager | Status cadence, slice exits, lane assignment, swarm on blockers |
 | Architect | Op shapes, sequencing, docs (`NORTH_STAR_ROADMAP.md`, `R3_LAYER_OP_SHAPES.md`) |
-| UX/UI designer | Self-explain copy/tags, studio chrome rules, R3.1 specs |
+| UX/UI designer | Self-explain copy/tags, studio chrome rules, R3.1 / polish specs |
 | developer (+ peers) | Lands on `origin/next`; feature + UX tracks in parallel |
 | Reviwer | In-room clear / blocked; must-clear bugs |
 | test_automator | Maestro + units on Pixel_7a; honest green / yellow-manual |
 
 ## Landing rule
 
-After **Reviwer** clears in-room → **push straight to `origin/next`**. No PR gate.
+Path on GitHub: **draft PR → both CI green (`static-and-unit` + `instrumented-smoke`) → undraft → Reviwer CLEAR in-room → developer squash-lands to `origin/next`**. Soft Maestro **YELLOW** (documented) does not block that land when the locked bar is met. No idle once CI is green.
 
-Branch: `next` (remote integration).
+Branch: `next` (remote integration). Local checkout: `C:\Users\andro\PixiJoy\PixiJoy` on DESKTOP-CB6KOBT (prefer local over cloud agents).
 
 ## Studio chrome rule (all tools)
 
@@ -33,13 +33,16 @@ Branch: `next` (remote integration).
 - Controls on frosted / scrimmed sheet (`session_tool_scrim`); live preview while adjusting.
 - **Apply** bakes the op; sticky **Export** stays opaque outside the glass.
 - No opaque per-tool panels.
+- Medium+ two-pane: `tablet_preview_pane` | `tablet_tools_pane` when `isStudioTwoPane`.
+- Pack honesty: Download / Installing… / Ready / Failed; never "AI/neural" until `engineReady`; chips gated on `engineReady`.
+- Unbound Slow-mo / Track chrome: disabled **"Coming with pack"** (not "Downloaded").
 
 ## Quality exit (slice)
 
 A slice exits when **all** hold:
 
 1. Review-clear (Reviwer)
-2. Units green (`:photo` / `:app` as needed)
+2. Units / CI green as required for that PR
 3. Honest Maestro green on Pixel_7a — or **yellow/manual** with a short doc (no fake greens)
 
 Then ProjectManager **calls the exit** in the group and the team rolls forward.
@@ -48,88 +51,51 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 
 - ProjectManager posts a **fresh** ~15 min pulse in the project group (what flipped, in progress, who, blockers).
 - Never paste the previous pulse. If cadence slips, apologize once and resume.
-- Blockers, progress, and concerns stay **in the group** — help each other; swarm, don’t serial-wait.
+- Blockers, progress, and concerns stay **in the group** — help each other; swarm, don't serial-wait.
 
 ## Agile rules
 
-- Parallelize: feature track + R3.1 UX can move together.
+- Parallelize: feature track + UX polish can move together when DESKTOP is free.
 - Timebox Maestro flakes; yellow/manual with docs beats freezing the whole team.
 - Soft nits do not block exits.
-- ViewModel / Hilt split and BuildConfig hygiene = **named follow-up epic**, not a gate on features.
+- ViewModel / Hilt / BuildConfig hygiene are **exited** (G2/G3/G9); do not re-open as feature gates.
 
-## Status snapshot (2026-09-23 IST)
+## Status snapshot (2026-10-02 ~19:40 IST)
 
-### Group pulse — Phase 0 land / Wave B exit (2026-09-23)
+### Tip / live train
 
-**Flipped:** Wave **B exited**. Landed B2+B3+C1–C3 foundations + B5 docs on `next`.
+- **Tip `origin/next`:** `d53bae5` — squash-landed [PR #30](https://github.com/Saikumar-S0906/PixiJoy/pull/30) Track-ML F1 fixlet (`inMs`/`outMs` source window + cache key; `mapThroughDisplay` pan/zoom; seed-only unbound unchanged).
+- **Live gate:** draft [PR #31](https://github.com/Saikumar-S0906/PixiJoy/pull/31) **H10 gate honesty** head `2cd0d5d` (base `d53bae5`) — DEX class scan (not ZIP-path-only) + release shrinking / mapping residuals; fold P2 on-demand delivery assert. Reviwer **pre-CLEAR**; still **HOLD** until undraft + both CI green. Local OptFeatureModulesH10Test + reportH10SizeGate PASS. Soft Maestro / P7 / HDRI HOLD non-blocking for this bar.
+- **DESKTOP:** developer exclusive on `cursor/classical-h10-dex-zip-honesty-d53bae5` @ `2cd0d5d` for the land path. Soft dumps may run off tip while CI runs; do not divert #31.
+- **Soft Maestro (tip `d53bae5`, Pixel_7a):** still **not device-green**. Slider and curves left the editor because IME dismiss arrives as Back. Rename's `hideKeyboard` dismissed the dialog the same way. Create sheet failed on the label "Video" while the button reads "Movie" (`source_video` id unchanged). Code for those four is on `cursor/soft-maestro-editor-back-2cd0d5d` (does not move #31). Unit policy tests only — device flows not re-run. PASS on that dump: layers, fill-pack, talkback. YELLOW: glTF + dust. **P7 HOLD**. Artifacts: `artifacts/dumps/d53bae5/`.
 
-- **B1 Selective HSL** — Maestro **green** on Pixel_7a (upgraded from yellow/manual).
-- **B2 Compare** — live peel + pre-bake; `compare-hold.yaml` **green** Pixel_7a.
-- **B3 R3.1 UX** — Library deferred delete+Undo, Export View/Share/Done, Recommended/Best-for, Create sheet, movie glass; Maestro green (create / best-for / library-delete-undo / export sheet).
-- **B4** — measure-deferred (`PHASE3_LIVE_PREVIEW_MEASURE.md`); no downscale without jank evidence.
-- **C1 LUT import** — wired (`CubeLutParser`, `lut:` keys, Looks Import); picker yellow/manual; chip Maestro green.
-- **C2 RAW/DNG** — open + Exif + `preview.jpg` sidecar + RAW badge.
-- **C3–C8 Wave C** — Fill undo · Warp · Presets/batch · ColorIntent · Soften (light). See exit note.
-- **D1** — `MultiTrackTimeline` composition E2E (preview+export from MT; track mute).
-- **D2** — ripple/roll + Soft transition fades + speed ramps; Maestro `d2-transition-speed` **green** Pixel_7a.
-- **D3** — keyframed ClipMotion (zoom/pan/drift) via MatrixTransformation; Maestro `d3-keyframed-motion` **green** Pixel_7a.
-- **D4** — TimelineTitle layers + OverlayEffect; Maestro `d4-titles-captions` **green** Pixel_7a.
-- **D5** — TimelineGrade + bundled looks + scopes meters; Maestro `d5-grade-scopes` **green** Pixel_7a.
-- **D6** — duck Soft/Med/Hard + separate attack/release; Maestro `d6-audio-finish` **green** Pixel_7a.
-- **D7** — PiP / Split / Grid via `VideoLayout` + `VideoCompositorSettings`; Maestro `d7-pip-layout` **green** Pixel_7a.
-- **D8** — ClipFrame stabilize zoom-crop + reframe Crop; Maestro `d8-stabilize-reframe` **green** Pixel_7a.
-- **D9** — ClipChroma green/blue key + GlEffect; Maestro `d9-chroma-key` **green** Pixel_7a.
-- **D10** — ClipSlowMo + FrameInterp contract (heuristic now; ML for E4); Maestro `d10-slowmo-interp` **green** Pixel_7a.
-- **D11** — MovieHdrMode + Composition.setHdrMode (+ Ultra HDR gain-map retain API 34+); Maestro `d11-hdr-export` **green** Pixel_7a.
-- **E pack runtime** — Super-res and Denoise: HTTPS+SHA → Ready → FLOAT32 contract → LiteRT. Ready alone is not neural (`engineReady`). Inpaint is sideload-only (Install from file, no HTTPS pin); neural Apply waits on `engineReady`. E4/F1 stay HOLD (`PackLiteRt` `Unit`, no URL or SHA). Unbound Slow-mo / Track chrome is a disabled “Coming with pack”. See `docs/R5_ML_PACKS.md`.
-- **F1** — `ClipTrack` timeline contract + pack CTA. **HOLD** — no artifact, URL, or SHA; engine unbound. The control says “Coming with pack” until a real bind.
-- **G1** — hub catalog\|canvas on `isStudioTwoPane` (tablet); session side tools on `isStudioSessionSideTools` (tablet + phone landscape full-bleed).
-- **G4** — Studio TalkBack chrome: short verbs, "Looks, selected", crop edges, export View/Share/Done, and "Downloaded" vs "Ready to apply". E4/F1 unbound status speaks "Coming with pack", not "Downloaded". Device TalkBack is yellow (`.maestro/YELLOW-talkback-studio.md`).
-- **G5** — haptic on crop Apply, movie split, and crop-handle edge snap (device drag yellow).
-- **G6** — Library cover thumbs sheen while Coil decodes; a missing file stays a static surface.
-- **G7** — One empty plate: Library “No projects yet” + Create (`empty_library`); hosted packs use “Download to unlock” + Download (`empty_packs`). Sideload-only packs (Inpaint, and HOLD interp/track) use Install from file on that plate. Neural wording stays off until `engineReady`. Ready is the verified file only.
-- **G9** — removed deprecated global BuildConfig default.
-**In progress:** R5 device gate (Maestro/TalkBack/five-user). Studio chrome descriptions are in code; TalkBack on device is yellow-manual.
+### UX locks (still true)
 
-**Blockers:** None.
+- Glass studio: preview under frosted scrim; Apply bakes; sticky Export outside glass.
+- G6/G7 empty + skeleton plates; G8 quiet save / rename tags as shipped.
+- Export success: View / Share / Done.
+- TalkBack: short verbs; "Looks, selected"; Downloaded vs Ready to apply; crop edges by side. Device TalkBack remains yellow (`.maestro/YELLOW-talkback-studio.md`).
+- Pack Ready ≠ neural until `engineReady`.
 
----
+### Soft polish queue (not on #31 train)
 
-### MET / exited
+1. **Compare** — already gated in `PhotoSessionPreview.canCompare` (live delta, or a baked layer plus a snapshot). Not a new slice.
+2. **Gallery / create picker** — still yellow-manual; first-session impression. System picker. Do not fake a green.
+3. Device TalkBack pass when DESKTOP free after #31.
+4. Slow-mo / Track pack-sheet final strings only after real pack bind (E4 FILM needs User **go FILM**; F1 Track stays honesty-chrome until engine).
 
-- **R2** — Heal/Stamp, HD–4K export, collage, export %, rail, brush, sticky Export, Ken Burns encode fix; Maestro launch/heal/collage/export (+ progress); Gallery picker **yellow/manual**
-- **Layers first-slice** — seed, Fade/vis/Protect–Erase/Blend, Maestro green
-- **Curves** — polish + Maestro green
-- **Looks / Lut** — `PhotoOp.Lut` bundled Clean/Warm/Cool/Film/Night/Original; Maestro green
-- **Glass scrim** — `session_tool_scrim`
-- **Export hotfixes** — abandon pending MediaStore URIs; no `runBlocking` in movie progress
-- **Selective HSL** — product + units + Maestro **green** Pixel_7a (`PhotoOp.SelectiveHsl` graph `A`)
-- **R3.1 Create** — `home_create` → `create_source_sheet` (Maestro green)
-- **R3.1 Compare** — live peel + pre-bake; identity gating; Maestro `compare-hold` green
-- **R3.1 Library / Export / Recommended** — B3 MET
-- **Wave B** — quality gates + R3.1 UX **exited** 2026-09-23
-- **C4 Sky / background replace** — `PhotoOp.SkyReplace` graph `H`; heuristic sky/backdrop matte; Maestro green
-- **Wave C** — C3 Fill undo/clear · C5 Perspective/Liquify · C6 presets + batch export · C7 export color intent · C8 light Soften (model-heavy → R5)
-- **D1 multi-track composition** — MT preview/export parity; track mute; Maestro `multitrack-lanes`
-- **D2 ripple/roll + transitions + speed ramps** — `rollCut`, Soft fade pair, `MovieSpeed.expandRamp`; Maestro `d2-transition-speed` green Pixel_7a
-- **D3 keyframed transform / motion** — `ClipMotion` keyframes + Media3 `MatrixTransformation`; Maestro `d3-keyframed-motion` green Pixel_7a
-- **D4 titles + captions** — `TimelineTitle` layers + `OverlayEffect`; Maestro `d4-titles-captions` green Pixel_7a
-- **D5 grade + LUT + scopes** — `TimelineGrade` + `SingleColorLut` + scope meters; Maestro `d5-grade-scopes` green Pixel_7a
-- **D6 audio finish** — duck Soft/Med/Hard + `releaseMs`; Maestro `d6-audio-finish` green Pixel_7a
-- **D7 PiP / multicam** — `VideoLayout` + parallel sequences + compositor; Maestro `d7-pip-layout` green Pixel_7a
-- **D8 stabilize + reframe** — `ClipFrame` + Media3 `Crop`/zoom; Maestro `d8-stabilize-reframe` green Pixel_7a
-- **D9 chroma key** — `ClipChroma` + `ChromaKeyEffect` GlEffect; Maestro `d9-chroma-key` green Pixel_7a
-- **D10 slow-mo / frame-interp contract** — `ClipSlowMo` + `FrameInterp` (heuristic; ML→E4); Maestro `d10-slowmo-interp` green Pixel_7a
-- **D11 HDR export** — `MovieHdrMode` + `Composition.setHdrMode` / Ultra HDR retain; Maestro `d11-hdr-export` green Pixel_7a
-- **Wave D** — R4 cinema depth **exited** 2026-09-23 (D1–D11)
+### MET / exited (high level)
 
-### Live gate
+- Waves B–D (R3.1 UX, Wave C photo, R4 D1–D11 cinema) exited 2026-09-23+.
+- R5 pack runtime + E1–E3 / E5 size bar; E4/F1 engines still HOLD until licensed `.tflite` + URL/SHA (F1 **contract** + #30 Track-ML fixlet MET; seed-only unbound unchanged).
+- G1–G9 platform/UX chrome MET (device TalkBack / some Maestro soft yellow).
+- H10 size gate MET earlier; **honesty (DEX class scan)** is the live #31 fixlet.
 
-R5 device acceptance (Maestro/TalkBack/five-user). Interp/track inference still opt-in. F2+ after F1 engine.
+### Follow-up (not a feature gate)
 
-### Follow-up epic (not a feature gate)
-
-G2 slider/preview extract complete: Hilt session ViewModels own graph, tool chrome, and preview baking. Screens observe that state. Movie players stay on the screen. Tool chrome soft-resets on entry, rotation, and tool switch (frosted scroll and mode-local drafts); the edit graph stays. G3 Hilt consistency: one `StudioGraphModule`; the shell navigates and observes injected engines; composition preview and export workers take those bindings instead of constructing engines. Remaining: downscaled live preview on Color drag if janky (B4). Pack registration stays `PackFeatureEntry` after SplitCompat; the base application registers nothing.
+- Gallery picker stays yellow-manual (system sheet).
+- Post-#31: any residual H10 docs only if Architect asks. Re-run slider, curves, rename, and create-sheet on Pixel_7a before calling those four green.
+- B4 downscaled live preview on Color drag only with jank evidence.
 
 ## Docs on `next`
 
@@ -139,6 +105,8 @@ G2 slider/preview extract complete: Hilt session ViewModels own graph, tool chro
 - `docs/REMAINING_MASTER_PLAN.md`
 - `docs/HANDS_OFF.md` (this file)
 - `docs/R5_ML_PACKS.md`
+- `docs/H10_PERF_SIZE_GATE.md`
+- `docs/R4_STUDIO_UX.md`
 - `docs/FUNCTIONALITY_MATRIX.md`
 
 ## When Saikumar returns

@@ -1,7 +1,7 @@
 ﻿PixiJoy — TOTAL remaining (all stages)
-Updated: 2026-09-27
+Updated: 2026-10-02 ~19:40 IST
 Source: room status + docs/NORTH_STAR_ROADMAP.md + UX backlog
-Branch: origin/next (tip moving)
+Branch: origin/next tip d53bae5 (PR #30 landed); live draft PR #31 H10 honesty 2cd0d5d
 
 ================================================================
 A. DONE / EXITED (do not re-open)
@@ -161,3 +161,12 @@ CODING (docs/CODING_PHASES.md) — do NOT wait on Colab:
 Colab (your queue): M1 → M2 → M3 → M4 quality packs (tools/ML_QUALITY_BAR.md) · M7 sky
 
 Hard rule stays: edit-graph or timeline op → engine → WorkManager export. Local-first. Quality > clock.
+
+================================================================
+UX soft polish (2026-10-02) - not on #31 land path
+================================================================
+Compare: already gated (PhotoSessionPreview.canCompare). Not open.
+Gallery/create picker: yellow-manual (first-session impression). System picker. Do not fake a green.
+Soft Maestro tip d53bae5 device dump: slider + curves FAIL (IME dismiss delivered as Back, session popped); rename FAIL (hideKeyboard dismissed the dialog); create-sheet FAIL (label is Movie, flow said Video). Code fix on cursor/soft-maestro-editor-back-2cd0d5d. Device flows NOT re-run. PASS: layers, fill-pack, talkback. YELLOW: glTF + dust. P7 HOLD
+Device TalkBack: yellow until DESKTOP free after #31
+Slow-mo/Track chrome: Coming with pack until real pack bind

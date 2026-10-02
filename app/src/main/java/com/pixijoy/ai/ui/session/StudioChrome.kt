@@ -1,5 +1,6 @@
 package com.pixijoy.ai.ui.session
 
+import android.os.SystemClock
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -558,6 +559,8 @@ fun StudioValueSlider(
                 allowNegative = range.start < 0f,
                 onCommit = { raw ->
                     if (editing) {
+                        // Arm before hide: IME dismiss is delivered as Back and must not pop the session.
+                        SliderImeDismiss.arm(SystemClock.elapsedRealtime())
                         editing = false
                         keyboard?.hide()
                         val parsed = parseSliderTypedValue(raw, range)
