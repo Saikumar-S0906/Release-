@@ -217,7 +217,8 @@ Previz only.
 
 | Deliverable | Target |
 |---|---|
-| Base APK | < 40 MB |
+| Base APK | < 40 MB (E5 + H10; `reportApkSize` / `reportH10SizeGate`) |
+| `:feature_cg` / `:feature_titles3d` | on-demand only — Filament never in base (H10) |
 | Each AI feature module | 20–200 MB user download |
 | Enhance video pack | up to ~400 MB |
 | ffmpeg module if any | on-demand, not base |

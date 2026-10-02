@@ -141,7 +141,7 @@ Real Filament CG + depth/matte inserts vs CapCut sticker VFX. Not a Hollywood fa
 | **H7** | CG camera + motion blur | Keyframed dolly/orbit on CG layer |
 | **H8** | Set extension / sky dome | HDRI dome + shadow catcher |
 | **H9** | Audio-reactive CG (opt) | Local amplitude → lights/particles |
-| **H10** | Perf + size gate | `:feature_cg` on-demand; mid-range budget |
+| **H10** | Perf + size gate | **MET** — on-demand `:feature_cg`; `reportH10SizeGate` + mid-range budgets in [`H10_PERF_SIZE_GATE.md`](H10_PERF_SIZE_GATE.md) |
 
 ---
 

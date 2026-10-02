@@ -9,7 +9,9 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
 /**
- * On-demand feature modules kept out of the base APK (F3 Filament, F4 ARCore, F5 FFmpeg).
+ * On-demand feature modules kept out of the base APK
+ * (F3 Filament titles, H1/H10 `:feature_cg`, F4 ARCore, F5 FFmpeg).
+ * H10: `./gradlew :app:reportH10SizeGate` asserts Filament/CG stay out of base.
  */
 object OptFeatureModules {
     const val TITLES3D = "feature_titles3d"

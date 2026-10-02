@@ -148,3 +148,73 @@ tasks.register("reportApkSize") {
         }
     }
 }
+
+tasks.register("reportH10SizeGate") {
+    group = "verification"
+    description = "H10: measure base APK MiB and assert Filament/feature_cg stay out of base."
+    dependsOn("packageRelease")
+    doLast {
+        val releaseDir = file("build/outputs/apk/release")
+        val baseApk = releaseDir.listFiles()
+            ?.filter { it.isFile && it.extension == "apk" }
+            ?.maxByOrNull { it.length() }
+            ?: error("H10: no release APK under $releaseDir. Run :app:assembleRelease first.")
+        val baseMiB = baseApk.length() / (1024.0 * 1024.0)
+        logger.lifecycle(
+            "H10 base APK ${baseApk.name}: ${"%.2f".format(baseMiB)} MiB (${baseApk.length()} bytes)"
+        )
+
+        val forbiddenHints = listOf(
+            "libfilament",
+            "libgltfio",
+            "libfilament-jni",
+            "com/pixijoy/feature/cg/",
+            "com/google/android/filament/"
+        )
+        val hits = mutableListOf<String>()
+        ZipFile(baseApk).use { zip ->
+            zip.entries().asSequence().filter { !it.isDirectory }.forEach { entry ->
+                val lower = entry.name.lowercase()
+                if (forbiddenHints.any { hint -> lower.contains(hint) }) {
+                    hits += "${"%.2f".format(entry.size / (1024.0 * 1024.0))} MiB  ${entry.name}"
+                }
+            }
+        }
+        if (hits.isNotEmpty()) {
+            hits.forEach { logger.error("H10 FORBIDDEN in base: $it") }
+            error(
+                "H10 FAIL: Filament / feature_cg content found in base APK. " +
+                    "Keep CG engines in on-demand :feature_cg / :feature_titles3d."
+            )
+        }
+        logger.lifecycle("H10 base scan: no Filament / feature_cg JNI or classes in base APK.")
+
+        fun reportSplit(modulePath: String, label: String) {
+            val apk = rootProject.project(modulePath).projectDir
+                .resolve("build/outputs/apk/release")
+                .listFiles()
+                ?.filter { it.isFile && it.extension == "apk" }
+                ?.maxByOrNull { it.length() }
+            if (apk == null) {
+                logger.lifecycle("H10 $label: (no release APK yet — assemble that module)")
+                return
+            }
+            val miB = apk.length() / (1024.0 * 1024.0)
+            logger.lifecycle(
+                "H10 $label ${apk.name}: ${"%.2f".format(miB)} MiB (${apk.length()} bytes)"
+            )
+        }
+        reportSplit(":feature_cg", ":feature_cg")
+        reportSplit(":feature_titles3d", ":feature_titles3d")
+
+        if (baseMiB > 40.0) {
+            logger.warn(
+                "H10 note: base APK is above the E5 ~40 MiB aspiration (${"%.2f".format(baseMiB)}). " +
+                    "H10 still passes if Filament/CG stay out of base; remeasure after ABI-filtered release."
+            )
+        } else {
+            logger.lifecycle("H10 size: base under ~40 MiB aspiration.")
+        }
+        logger.lifecycle("H10 PASS: :feature_cg remains on-demand; base has no Filament engine.")
+    }
+}

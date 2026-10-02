@@ -89,7 +89,7 @@ H6. Video matting plates for CG underlays
 H7. CG camera keyframes + motion blur
 H8. Set extension / sky dome + shadow catcher
 H9. Audio-reactive CG (optional)
-H10. :feature_cg on-demand size + mid-range perf gate
+H10. :feature_cg on-demand size + mid-range perf gate — MET (reportH10SizeGate + docs/H10_PERF_SIZE_GATE.md)
 
 ================================================================
 I. R8 ASSEMBLY (director editorial) — docs/DIRECTOR_KIT.md

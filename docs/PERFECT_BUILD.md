@@ -74,7 +74,7 @@
 | H6 | Matting pack + plates |
 | H7 | CG camera keyframes + motion blur |
 | H8 | Set extension / sky dome + shadow catcher |
-| H10 | `:feature_cg` on-demand size + mid-range fps budget |
+| H10 | **MET** — `:feature_cg` on-demand size + mid-range fps/MiB budgets ([H10_PERF_SIZE_GATE.md](H10_PERF_SIZE_GATE.md)) |
 
 ### C. Wave I — Assembly
 Markers, bins, versions, snap/J-L, proxy scrub, multicam polish

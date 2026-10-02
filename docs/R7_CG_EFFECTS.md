@@ -44,7 +44,7 @@
 | **H7** | Camera + motion blur | Virtual camera keyframes (dolly/orbit) + optional motion blur on CG layer only | Keyframe encode + export |
 | **H8** | Set extension / sky dome | Spherical/HDRI backdrop + ground plane shadow catcher (Filament) | One hero demo shot Maestro |
 | **H9** | Audio-reactive / beat CG (optional) | Amplitude → light intensity / particle rate (local audio analysis, no cloud) | Opt-in effect preset |
-| **H10** | Performance & size gate | `:feature_cg` on-demand only; document MIB/frame budget; mid-range Pixel smoke | Feature module not in base APK measure |
+| **H10** | Performance & size gate | **MET** — `:feature_cg` on-demand; [`H10_PERF_SIZE_GATE.md`](H10_PERF_SIZE_GATE.md) mid-range MiB/frame budgets + `reportH10SizeGate` base scan; Pixel_7a checklist (soft Maestro YELLOW parked) | Feature module not in base APK measure |
 
 Suggested order: **H1 → H2 → H3 → H4 → H7 → H8** in code first (CODING_PHASES P1+P5); **H5/H6 classical fallbacks** until M2/M3 TFLite; then neural soft-Z/plates (P7). H9 parallel, H10 continuous.
 

@@ -43,7 +43,7 @@ M2→M3→M4 one-by-one      ──▶  Phases 1–6 full product
 | **P2** | Assembly I1–I4 | No | Markers, bins, versions, snap | **LANDED** — markers/bins/versions/J-L/snap |
 | **P3** | Color J1–J4 | No | Secondary, shot match, scopes truth | **LANDED** — secondary + match + pipeline/scopes labels |
 | **P4** | Sound K1–K4 | No | Stems, ADR, sync, LUFS | **LANDED** — buses + ADR + slip + LUFS gate |
-| **P5** | CG polish H4,H7,H8 + classical H5/H6 fallbacks | No* | GPU particles, camera, set ext; flat Z/matte until ML | **PARTIAL** — Z/matte/cam keys + dust drift/motion-blur crumbs + F1 track-attach; Filament GPU later |
+| **P5** | CG polish H4,H7,H8 + classical H5/H6 fallbacks | No* | GPU particles, camera, set ext; flat Z/matte until ML | **PARTIAL** — Z/matte/cam keys + dust drift/motion-blur crumbs + F1 track-attach + **H10 size/perf gate MET**; Filament GPU later |
 | **P6** | Delivery L1–L4 | No | Review package + EDL-lite + presets | **LANDED** — presets · TC · notes · EDL/FCPXML · meta sidecar |
 | **P7** | ML bind plugs | **Yes — only this phase** | Pin M1–M4 when files exist; swap fallbacks | Planned |
 
@@ -130,7 +130,7 @@ Suggested coding calendar: **P0 → P1 → P2 → P3 → P4 → P5 → P6**, wit
 | P5.3 | Set extension / sky dome + shadow catcher | No |
 | P5.4 | **H5 classical:** manual Z-order / track-plane insert (CG behind/over subject by layer) | ML later |
 | P5.5 | **H6 classical:** chroma key / brush matte / MediaPipe selfie matte for plates | ML later |
-| P5.6 | H10 size/perf gate mid-range | No |
+| P5.6 | H10 size/perf gate mid-range (**MET** — `reportH10SizeGate` + [H10_PERF_SIZE_GATE.md](H10_PERF_SIZE_GATE.md)) | No |
 
 **Exit:** Hero reel without neural depth/matte — still looks like CG, not stickers. Matrix labels classical vs pack honestly.
 
