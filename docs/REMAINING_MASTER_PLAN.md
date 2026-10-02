@@ -132,9 +132,9 @@ Real Filament CG + depth/matte inserts vs CapCut sticker VFX. Not a Hollywood fa
 
 | ID | Feature | Notes |
 |----|---------|--------|
-| **H1** | CG compositor lane | **PARTIAL** — PropGltf offscreen Filament in on-demand `:feature_cg` (one directional light, no IBL). Other plates stay classical. Preview and export share `CgOverlays`. |
+| **H1** | CG compositor lane | **PARTIAL** — PropGltf offscreen Filament in on-demand `:feature_cg` (directional + procedural IBL). Other plates stay classical. Preview and export share `CgOverlays`. |
 | **H2** | glTF prop library | Release- asset packs; place / scale / track-attach |
-| **H3** | Lights + IBL | Directional/point + HDRI; grade continuity |
+| **H3** | Lights + IBL | **PARTIAL** — procedural IBL on PropGltf; point + Release- HDRI + grade continuity open |
 | **H4** | GPU particles / trails | Replaces cheap sparkle for CG shots |
 | **H5** | Depth-aware insert | Monocular depth ML + soft Z-comp |
 | **H6** | Video matting plates | Temporal subject matte for CG underlays |

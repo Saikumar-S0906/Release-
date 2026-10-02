@@ -80,9 +80,9 @@ F6. Smart-object analog; advanced type; print/PDF
 ================================================================
 H. R7 ON-DEVICE CG (after F foundations) — docs/R7_CG_EFFECTS.md + docs/DIRECTOR_KIT.md
 ================================================================
-H1. CG compositor lane PARTIAL — :feature_cg PropGltf Filament offscreen (one directional light, no IBL); other plates classical
+H1. CG compositor lane PARTIAL — :feature_cg PropGltf Filament offscreen (directional + procedural IBL); other plates classical
 H2. glTF prop library (Release- packs; track-attach)
-H3. Lights + IBL / HDRI
+H3. Lights + IBL / HDRI PARTIAL — procedural IBL on PropGltf; Release- HDRI + point lights + grade continuity open
 H4. GPU particles / trails (not sticker sparkle)
 H5. Depth-aware CG insert (monocular depth pack)
 H6. Video matting plates for CG underlays

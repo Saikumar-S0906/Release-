@@ -98,7 +98,8 @@ internal fun isSafePropResourceUri(uri: String): Boolean {
  * Column-major root transform for a Filament prop.
  *
  * The mesh is centered, fit to a unit box, then scaled. Yaw is about Y and
- * pitch about X. No image-based light is baked into this matrix.
+ * pitch about X. Environment lighting lives on the Filament scene (IBL), not
+ * in this matrix.
  */
 fun cgFilamentPropTransform(
     yawDeg: Float,

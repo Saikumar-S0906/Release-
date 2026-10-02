@@ -488,7 +488,7 @@
     <string name="capability_needs_pack">Needs pack</string>
     <string name="capability_export_only">Export-only</string>
     <string name="studio_cg_hint">CG plates composite on the timeline. Load a glTF or GLB prop, then place and scale it. Lighting is classical until the CG module installs.</string>
-    <string name="studio_cg_hint_filament">Prop glTF renders in Filament with one directional light. Cube, ground, sky, and dust stay classical. No image-based lighting.</string>
+    <string name="studio_cg_hint_filament">Prop glTF renders in Filament with a directional key and studio IBL. Cube, ground, sky, and dust stay classical. HDRI packs come later.</string>
     <string name="studio_cg_prop_cube">Prop cube</string>
     <string name="studio_cg_load_gltf">Load glTF</string>
     <string name="studio_cg_prop_loaded">Loaded %1$s</string>

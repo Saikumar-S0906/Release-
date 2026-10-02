@@ -18,8 +18,8 @@ import androidx.media3.effect.TextureOverlay
 /**
  * R7 / coding P1+P5 — CG compositor lane on the timeline.
  *
- * Prop glTF can render through on-demand `:feature_cg` (one directional light,
- * no IBL). Until that split binds, and whenever it fails, [ClassicalCgRenderer]
+ * Prop glTF can render through on-demand `:feature_cg` (directional key +
+ * procedural IBL). Until that split binds, and whenever it fails, [ClassicalCgRenderer]
  * draws the plate. Preview and export share [CgOverlays]. Cube, ground, sky,
  * and dust stay classical. This is not neural.
  *

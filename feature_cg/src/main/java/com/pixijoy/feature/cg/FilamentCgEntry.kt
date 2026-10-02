@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import com.google.android.filament.Camera
 import com.google.android.filament.Engine
 import com.google.android.filament.EntityManager
+import com.google.android.filament.IndirectLight
 import com.google.android.filament.LightManager
 import com.google.android.filament.Renderer
 import com.google.android.filament.Scene
@@ -36,8 +37,10 @@ import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 
 /**
- * On-demand Filament entry. JNI stays in this split. [install] binds [CgHost]
- * only after a headless clear can be read back. Otherwise the classical raster stays.
+ * On-demand Filament entry for PropGltf. Filament JNI is [compileOnly] here and
+ * ships in on-demand `:feature_titles3d` — never in the base APK. [install] binds
+ * [CgHost] only after a headless clear can be read back. Otherwise the classical
+ * raster stays.
  */
 object FilamentCgEntry {
     @JvmStatic
@@ -50,7 +53,9 @@ object FilamentCgEntry {
 }
 
 /**
- * PropGltf plate. One directional light, no IBL. Any miss returns the classical plate.
+ * PropGltf plate. Directional key + procedural IBL (SH + tiny reflections cubemap).
+ * No HDRI asset in this split — Release- HDRI is a later cut. Any miss returns the
+ * classical plate.
  */
 object FilamentPropRenderer : FilamentPropCgRenderer {
     override fun renderPlate(request: CgPlateRequest): Bitmap {
@@ -66,8 +71,29 @@ private const val READBACK_TIMEOUT_SEC = 2L
 private const val MIN_VISIBLE_ALPHA = 8
 private const val MAX_EDGE = 4096
 private const val DIRECTIONAL_INTENSITY = 3.2f
+/** Soft studio IBL intensity, matched to the low directional key on this plate. */
+private const val IBL_INTENSITY = 2.4f
 private const val NEAR_PLANE = 0.05
 private const val FAR_PLANE = 50.0
+
+/**
+ * 3-band radiance SH for a soft studio fill (9 float3 = 27 floats).
+ * Procedural — no KTX/HDRI in the feature APK. HDRI from Release- comes later.
+ */
+private val STUDIO_IBL_RADIANCE_SH = floatArrayOf(
+    // L00
+    1.00f, 0.98f, 0.95f,
+    // L1-1, L10, L11
+    0.02f, 0.02f, 0.03f,
+    0.35f, 0.38f, 0.42f,
+    0.05f, 0.04f, 0.03f,
+    // L2-2 .. L22
+    0.02f, 0.02f, 0.02f,
+    -0.04f, -0.04f, -0.03f,
+    0.08f, 0.08f, 0.09f,
+    -0.04f, -0.03f, -0.03f,
+    0.01f, 0.01f, 0.01f
+)
 
 private val filamentPropGpu = FilamentPropGpu()
 
@@ -87,6 +113,8 @@ private class FilamentPropGpu {
     private var camera: Camera? = null
     private var swapChain: SwapChain? = null
     private var light: Int = 0
+    private var indirectLight: IndirectLight? = null
+    private var iblReflections: Texture? = null
     private var targetW = 0
     private var targetH = 0
     private var materials: UbershaderProvider? = null
@@ -142,6 +170,7 @@ private class FilamentPropGpu {
             .castShadows(false)
             .build(created, light)
         createdScene.addEntity(light)
+        installIbl(created, createdScene)
         val provider = UbershaderProvider(created)
         materials = provider
         assetLoader = AssetLoader(created, provider, EntityManager.get())
@@ -305,6 +334,51 @@ private class FilamentPropGpu {
         return out
     }
 
+
+    private fun installIbl(created: Engine, createdScene: Scene) {
+        val reflections = createStudioReflections(created)
+        iblReflections = reflections
+        val ibl = IndirectLight.Builder()
+            .reflections(reflections)
+            .radiance(3, STUDIO_IBL_RADIANCE_SH)
+            .intensity(IBL_INTENSITY)
+            .build(created)
+        indirectLight = ibl
+        createdScene.indirectLight = ibl
+    }
+
+    /**
+     * 1×1 RGB cubemap so specular IBL has a bound reflections texture (avoids
+     * stale GL cubemap state). Constant soft studio tint — not an HDRI asset.
+     */
+    private fun createStudioReflections(created: Engine): Texture {
+        val texture = Texture.Builder()
+            .width(1)
+            .height(1)
+            .levels(1)
+            .sampler(Texture.Sampler.SAMPLER_CUBEMAP)
+            .format(Texture.InternalFormat.RGB8)
+            .build(created)
+        val faceBytes = 3
+        val buffer = ByteBuffer.allocateDirect(6 * faceBytes).order(ByteOrder.nativeOrder())
+        // Soft warm gray on every face.
+        repeat(6) {
+            buffer.put(0xD8.toByte())
+            buffer.put(0xD4.toByte())
+            buffer.put(0xCC.toByte())
+        }
+        buffer.flip()
+        val offsets = IntArray(6) { it * faceBytes }
+        val descriptor = Texture.PixelBufferDescriptor(
+            buffer,
+            Texture.Format.RGB,
+            Texture.Type.UBYTE
+        )
+        @Suppress("DEPRECATION")
+        texture.setImage(created, 0, descriptor, offsets)
+        return texture
+    }
+
     private fun releaseAsset() {
         val current = asset ?: return
         scene?.removeEntities(current.entities)
@@ -327,6 +401,7 @@ private class FilamentPropGpu {
         runCatching { materials?.destroy() }
         val created = engine
         if (created != null) {
+            destroyIbl(created)
             destroyLight(created)
             destroyCamera(created)
             runCatching { view?.let { created.destroyView(it) } }
@@ -342,12 +417,22 @@ private class FilamentPropGpu {
         camera = null
         swapChain = null
         light = 0
+        indirectLight = null
+        iblReflections = null
         targetW = 0
         targetH = 0
         materials = null
         assetLoader = null
         resourceLoader = null
         ready = false
+    }
+
+    private fun destroyIbl(created: Engine) {
+        runCatching { scene?.indirectLight = null }
+        runCatching { indirectLight?.let { created.destroyIndirectLight(it) } }
+        runCatching { iblReflections?.let { created.destroyTexture(it) } }
+        indirectLight = null
+        iblReflections = null
     }
 
     private fun destroyLight(created: Engine) {

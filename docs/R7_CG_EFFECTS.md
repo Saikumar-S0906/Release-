@@ -37,7 +37,7 @@
 |----|-------|-------------|------|
 | **H1** | CG compositor lane | `TimelineCgLayer` (world, camera, lights) composed under/over Media3 video via Filament offscreen → `BitmapOverlay` / Texture; export uses same bake | Unit round-trip + Maestro “add CG plate” |
 | **H2** | glTF prop library | Ship 5–10 licensed/CC0 props (vehicles, set dressing) on Release-; import + place + scale + yaw; track-attach optional | Preview + export match; pack download CTA |
-| **H3** | Lights + IBL | Directional + point lights; one HDRI environment from Release-; exposure matches timeline grade | Side-by-side grade continuity |
+| **H3** | Lights + IBL | **PARTIAL** — directional + procedural SH/cubemap IBL on PropGltf in `:feature_cg`. Point lights + Release- HDRI + grade continuity still open | Side-by-side grade continuity |
 | **H4** | GPU particles / trails | Filament or compute particles (ember, sparks, dust, magic) driven by F1 track or null; replaces “sticker sparkle” for CG shots | 30 fps mid-range device budget doc |
 | **H5** | Depth-aware insert | Monocular depth ML pack → soft Z-composite of CG behind/in front of subject | Contract + LiteRT bind; fallback flat insert |
 | **H6** | Video matting for CG plates | Temporal subject matte pack → clean plate under CG / sky / set extension | Better than selfie segmenter for movie |
@@ -48,7 +48,7 @@
 
 Suggested order: **H1 → H2 → H3 → H4 → H7 → H8** in code first (CODING_PHASES P1+P5); **H5/H6 classical fallbacks** until M2/M3 TFLite; then neural soft-Z/plates (P7). H9 parallel, H10 continuous.
 
-**PropGltf slice:** `:feature_cg` is on-demand and renders a user glTF with one directional light through `CgHost` when the split loads. Filament JNI stays in on-demand `:feature_titles3d` (AGP will not package that AAR in a second split) and is not in the base APK. `:feature_cg` does not embed JNI or an IBL asset. Cube, ground, sky, and dust stay classical, and PropGltf falls back to that raster when the split is missing or a frame fails.
+**PropGltf + IBL slice:** `:feature_cg` is on-demand and renders a user glTF with a directional key and procedural IBL (SH radiance + 1×1 reflections cubemap) through `CgHost` when the split loads. Filament JNI stays in on-demand `:feature_titles3d` (AGP will not package that AAR in a second split) and is not in the base APK. `:feature_cg` uses compileOnly Filament APIs and does not embed JNI or an HDRI asset. Cube, ground, sky, and dust stay classical, and PropGltf falls back to that raster when the split is missing or a frame fails.
 
 ---
 
