@@ -540,13 +540,11 @@ class Media3MovieEngine : MovieEngine {
         val videoEffects = ArrayList<Effect>()
         videoEffects += Presentation.createForHeight(height)
         TitleOverlays.effect(mixed.titles, total)?.let { videoEffects += it }
-        val trackAnchor = mixed.clips.firstOrNull { it.track.isActive }?.track?.let {
-            it.x to it.y
-        }
-        VfxOverlays.effect(mixed.vfx, total, trackAnchor)?.let { videoEffects += it }
+        val trackAnchors = TrackAnchorResolver.forTimeline(paths, mixed)
+        VfxOverlays.effect(mixed.vfx, total, trackAnchors)?.let { videoEffects += it }
         Title3dOverlays.effect(mixed.titles3d, total)?.let { videoEffects += it }
         val projectDir = paths.firstOrNull()?.let { File(it).parentFile }
-        CgOverlays.effect(mixed.cg, total, trackAnchor, projectDir)?.let { videoEffects += it }
+        CgOverlays.effect(mixed.cg, total, trackAnchors, projectDir)?.let { videoEffects += it }
         TimecodeOverlays.effect(burnInTc, total)?.let { videoEffects += it }
         MovieGrade.effect(mixed.grade)?.let { videoEffects += it }
         val audioProcessors = ArrayList<AudioProcessor>()

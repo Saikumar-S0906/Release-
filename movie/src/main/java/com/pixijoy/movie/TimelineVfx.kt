@@ -14,8 +14,8 @@ import kotlin.random.Random
 
 /**
  * F2 classical particle VFX on the composition. Not neural. Optional [followTrack]
- * steers the emitter toward the active clip's F1 track seed (center follow when
- * track is enabled on the primary video clip).
+ * steers the emitter toward the active clip's F1 track anchors along the shot
+ * (seed-only when Track ML is unbound).
  */
 enum class VfxPreset {
     None,
@@ -93,19 +93,19 @@ data class TimelineVfx(
 
 object VfxOverlays {
     /**
-     * @param trackAnchor optional normalized 0..1 point from F1 (image space).
+     * @param trackAnchors optional F1 image-space anchors over composition time.
      * Converted to NDC-ish overlay coords when [TimelineVfx.followTrack] is set.
      */
     fun effect(
         layers: List<TimelineVfx>,
         totalMs: Long,
-        trackAnchor: Pair<Float, Float>? = null
+        trackAnchors: TrackAnchorResolver = TrackAnchorResolver.None
     ): Effect? {
         val active = layers.filter { it.isActive }
         if (active.isEmpty()) return null
         val overlays = ArrayList<TextureOverlay>(active.size)
         for (layer in active) {
-            overlays += ParticleVfxOverlay(layer, totalMs.coerceAtLeast(1), trackAnchor)
+            overlays += ParticleVfxOverlay(layer, totalMs.coerceAtLeast(1), trackAnchors)
         }
         return OverlayEffect(overlays)
     }
@@ -114,7 +114,7 @@ object VfxOverlays {
 private class ParticleVfxOverlay(
     private val layer: TimelineVfx,
     totalMs: Long,
-    private val trackAnchor: Pair<Float, Float>?
+    private val trackAnchors: TrackAnchorResolver
 ) : BitmapOverlay() {
     private val endMs = layer.resolvedEnd(totalMs)
     private var frameW = 1280
@@ -123,6 +123,8 @@ private class ParticleVfxOverlay(
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val particles = ArrayList<Particle>()
     private var seeded = false
+    private var lastEx = 0f
+    private var lastEy = 0f
 
     private data class Particle(
         var x: Float,
@@ -151,10 +153,10 @@ private class ParticleVfxOverlay(
             return clear ?: Bitmap.createBitmap(frameW, frameH, Bitmap.Config.ARGB_8888)
                 .also { clear = it }
         }
-        ensureSeeded()
+        ensureSeeded(ms)
         val localT = ((ms - layer.startMs).toFloat() / (endMs - layer.startMs).coerceAtLeast(1))
             .coerceIn(0f, 1f)
-        step(localT)
+        step(localT, ms)
         val out = Bitmap.createBitmap(frameW, frameH, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(out)
         for (p in particles) {
@@ -171,24 +173,45 @@ private class ParticleVfxOverlay(
         return out
     }
 
-    private fun ensureSeeded() {
-        if (seeded) return
-        seeded = true
-        val count = (48 + layer.intensity * 80).toInt().coerceIn(24, 160)
-        val rng = Random(layer.id.hashCode() xor layer.preset.hashCode())
-        val (cx, cy) = emitterPx()
-        repeat(count) {
-            particles += spawn(rng, cx, cy)
+    private fun ensureSeeded(compositionMs: Long) {
+        if (!seeded) {
+            seeded = true
+            val count = (48 + layer.intensity * 80).toInt().coerceIn(24, 160)
+            val rng = Random(layer.id.hashCode() xor layer.preset.hashCode())
+            val (cx, cy) = emitterPx(compositionMs)
+            lastEx = cx
+            lastEy = cy
+            repeat(count) {
+                particles += spawn(rng, cx, cy)
+            }
+            return
+        }
+        if (!layer.followTrack) return
+        val (cx, cy) = emitterPx(compositionMs)
+        val dx = cx - lastEx
+        val dy = cy - lastEy
+        if (dx == 0f && dy == 0f) return
+        lastEx = cx
+        lastEy = cy
+        for (p in particles) {
+            p.x += dx
+            p.y += dy
         }
     }
 
-    private fun emitterPx(): Pair<Float, Float> {
+    private fun emitterPx(compositionMs: Long = 0L): Pair<Float, Float> {
         val nx: Float
         val ny: Float
-        if (layer.followTrack && trackAnchor != null) {
-            // Image 0..1 → pixel; track bake uses same normalized space.
-            nx = (trackAnchor.first * 2f - 1f).coerceIn(-0.95f, 0.95f)
-            ny = (1f - trackAnchor.second * 2f).coerceIn(-0.95f, 0.95f)
+        if (layer.followTrack) {
+            val anchor = trackAnchors.at(compositionMs)
+            if (anchor != null) {
+                val ndc = TrackAttach.vfxNdc(anchor.first, anchor.second)
+                nx = ndc.first
+                ny = ndc.second
+            } else {
+                nx = layer.anchorX
+                ny = layer.anchorY
+            }
         } else {
             nx = layer.anchorX
             ny = layer.anchorY
@@ -270,8 +293,8 @@ private class ParticleVfxOverlay(
         }
     }
 
-    private fun step(t: Float) {
-        val (cx, cy) = emitterPx()
+    private fun step(t: Float, compositionMs: Long) {
+        val (cx, cy) = emitterPx(compositionMs)
         val rng = Random((t * 10_000).toInt() xor layer.id.hashCode())
         val gravity = when (layer.preset) {
             VfxPreset.Ember -> -0.08f

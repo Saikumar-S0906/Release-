@@ -23,7 +23,7 @@ import androidx.media3.effect.TextureOverlay
  * draws the plate. Preview and export share [CgOverlays]. Cube, ground, sky,
  * and dust stay classical. This is not neural.
  *
- * P5 classical: Z-order + track-plane insert, matte modes, camera keyframes,
+ * P5 classical: Z-order + F1 track-attach, matte modes, camera keyframes,
  * dust drift + motion-blur crumbs. Cube/ground/sky/dust stay off Filament.
  *
  * Encode (v1): `CG,<id>,<preset>,<startMs>,<endMs>,<x>,<y>,<scale>,<yaw>,<zOrder>,<followTrack>`
@@ -356,7 +356,7 @@ data class TimelineCgLayer(
     val yaw: Float = 25f,
     /** Higher draws later (over video / other CG). Negative = behind props / under titles. */
     val zOrder: Int = 0,
-    /** When true, x/y follow active clip track bake (P5.4 track-plane). */
+    /** When true, x/y follow F1 track anchors along the shot (classical attach). */
     val followTrack: Boolean = false,
     val matte: CgMatte = CgMatte.None,
     /** Camera pitch degrees (P5.2). */
@@ -456,7 +456,7 @@ object CgOverlays {
     fun effect(
         layers: List<TimelineCgLayer>,
         totalMs: Long,
-        trackAnchor: Pair<Float, Float>? = null,
+        trackAnchors: TrackAnchorResolver = TrackAnchorResolver.None,
         projectDir: java.io.File? = null
     ): Effect? {
         val active = layers.filter { it.isActive }.sortedBy { it.zOrder }
@@ -464,7 +464,7 @@ object CgOverlays {
         OptFeatureModules.tryBindCg()
         val overlays = ArrayList<TextureOverlay>(active.size)
         for (layer in active) {
-            overlays += TimedCgOverlay(layer, totalMs.coerceAtLeast(1), trackAnchor, projectDir)
+            overlays += TimedCgOverlay(layer, totalMs.coerceAtLeast(1), trackAnchors, projectDir)
         }
         return OverlayEffect(overlays)
     }
@@ -473,7 +473,7 @@ object CgOverlays {
 private class TimedCgOverlay(
     private val layer: TimelineCgLayer,
     private val totalMs: Long,
-    private val trackAnchor: Pair<Float, Float>?,
+    private val trackAnchors: TrackAnchorResolver,
     private val projectDir: java.io.File?
 ) : BitmapOverlay() {
     private val endMs = layer.resolvedEnd(totalMs)
@@ -510,10 +510,13 @@ private class TimedCgOverlay(
     }
 
     private fun renderAt(ms: Long): Bitmap {
-        val (ox, oy) = if (layer.followTrack && trackAnchor != null) {
-            val nx = (trackAnchor.first * 2f - 1f).coerceIn(-0.95f, 0.95f)
-            val ny = (1f - trackAnchor.second * 2f).coerceIn(-0.95f, 0.95f)
-            (layer.x + nx * 0.35f) to (layer.y + ny * 0.35f)
+        val (ox, oy) = if (layer.followTrack) {
+            val anchor = trackAnchors.at(ms)
+            if (anchor != null) {
+                TrackAttach.cgOffset(layer.x, layer.y, anchor.first, anchor.second)
+            } else {
+                layer.x to layer.y
+            }
         } else {
             layer.x to layer.y
         }

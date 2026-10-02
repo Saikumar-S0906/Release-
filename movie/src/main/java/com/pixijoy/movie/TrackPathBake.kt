@@ -8,8 +8,10 @@ import kotlin.math.max
 import kotlin.math.roundToInt
 
 /**
- * Bakes F1 track follow into a [ClipMotion] pan/zoom curve when the Track pack
- * engine is bound. Does not invent a path when [TrackFacade] is unavailable.
+ * Bakes F1 track follow into a [ClipMotion] pan/zoom curve and a matching
+ * [TrackAnchorPath] for CG / VFX attach when the Track pack engine is bound.
+ * Does not invent a path when [TrackFacade] is unavailable — anchors fall back
+ * to the seed point so classical follow stays honest.
  */
 object TrackPathBake {
     private const val SAMPLES = 10
@@ -23,32 +25,19 @@ object TrackPathBake {
         val durationMs: Long
     )
 
-    private val lock = Any()
-    private val cache = LruCache<Key, ClipMotion>(12)
+    private data class BakeResult(
+        val motion: ClipMotion,
+        val anchors: TrackAnchorPath
+    )
 
-    fun motion(path: String, track: ClipTrack, durationMs: Long): ClipMotion {
-        if (!track.isActive || track.resolvedEngine() != TrackEngine.Ml) {
-            return ClipMotion.None
-        }
-        if (!TrackFacade.mlAvailable()) return ClipMotion.None
-        val file = File(path)
-        if (!file.isFile || durationMs < 200L) return ClipMotion.None
-        val key = Key(
-            path = file.absolutePath,
-            modifiedMs = file.lastModified(),
-            sizeBytes = file.length(),
-            trackEncode = track.encode(),
-            durationMs = durationMs
-        )
-        synchronized(lock) {
-            cache.get(key)?.let { return it }
-        }
-        val baked = bake(file.absolutePath, track.normalized(), durationMs)
-        synchronized(lock) {
-            cache.put(key, baked)
-        }
-        return baked
-    }
+    private val lock = Any()
+    private val cache = LruCache<Key, BakeResult>(12)
+
+    fun motion(path: String, track: ClipTrack, durationMs: Long): ClipMotion =
+        bakeCached(path, track, durationMs).motion
+
+    fun anchors(path: String, track: ClipTrack, durationMs: Long): TrackAnchorPath =
+        bakeCached(path, track, durationMs).anchors
 
     fun clearCache() {
         synchronized(lock) { cache.evictAll() }
@@ -61,41 +50,82 @@ object TrackPathBake {
     private fun followZoom(radius: Float): Float =
         (1.08f + (0.12f - radius).coerceIn(0f, 0.1f)).coerceIn(1.05f, 1.25f)
 
-    private fun bake(path: String, track: ClipTrack, durationMs: Long): ClipMotion {
-        val frames = sampleFrames(path, SAMPLES, durationMs) ?: return ClipMotion.None
+    private fun bakeCached(path: String, track: ClipTrack, durationMs: Long): BakeResult {
+        val seed = TrackAnchorPath.seed(track.x, track.y)
+        if (!track.isActive || track.resolvedEngine() != TrackEngine.Ml) {
+            return BakeResult(ClipMotion.None, seed)
+        }
+        if (!TrackFacade.mlAvailable()) {
+            return BakeResult(ClipMotion.None, seed)
+        }
+        val file = File(path)
+        if (!file.isFile || durationMs < 200L) {
+            return BakeResult(ClipMotion.None, seed)
+        }
+        val key = Key(
+            path = file.absolutePath,
+            modifiedMs = file.lastModified(),
+            sizeBytes = file.length(),
+            trackEncode = track.encode(),
+            durationMs = durationMs
+        )
+        synchronized(lock) {
+            cache.get(key)?.let { return it }
+        }
+        val baked = bake(file.absolutePath, track.normalized(), durationMs, seed)
+        synchronized(lock) {
+            cache.put(key, baked)
+        }
+        return baked
+    }
+
+    private fun bake(
+        path: String,
+        track: ClipTrack,
+        durationMs: Long,
+        seed: TrackAnchorPath
+    ): BakeResult {
+        val frames = sampleFrames(path, SAMPLES, durationMs)
+            ?: return BakeResult(ClipMotion.None, seed)
         try {
-            if (frames.isEmpty()) return ClipMotion.None
+            if (frames.isEmpty()) return BakeResult(ClipMotion.None, seed)
             var x = track.x
             var y = track.y
-            val keys = ArrayList<TransformKeyframe>(frames.size)
-            keys += TransformKeyframe(
+            val motionKeys = ArrayList<TransformKeyframe>(frames.size)
+            val anchorKeys = ArrayList<TrackAnchorKeyframe>(frames.size)
+            motionKeys += TransformKeyframe(
                 0f,
                 scale = followZoom(track.radius),
                 tx = panX(x),
                 ty = panY(y)
             )
+            anchorKeys += TrackAnchorKeyframe(0f, x, y)
             for (i in frames.indices) {
                 val next = TrackFacade.follow(frames[i], x, y) ?: continue
                 x = next.first
                 y = next.second
                 val t = if (frames.size <= 1) 1f else i / (frames.size - 1).toFloat()
                 if (i == 0) {
-                    keys[0] = TransformKeyframe(
+                    motionKeys[0] = TransformKeyframe(
                         0f,
                         scale = followZoom(track.radius),
                         tx = panX(x),
                         ty = panY(y)
                     )
+                    anchorKeys[0] = TrackAnchorKeyframe(0f, x, y)
                 } else {
-                    keys += TransformKeyframe(
+                    motionKeys += TransformKeyframe(
                         t = t,
                         scale = followZoom(track.radius),
                         tx = panX(x),
                         ty = panY(y)
                     )
+                    anchorKeys += TrackAnchorKeyframe(t, x, y)
                 }
             }
-            return if (keys.size < 2) ClipMotion.None else ClipMotion(keys)
+            val motion = if (motionKeys.size < 2) ClipMotion.None else ClipMotion(motionKeys)
+            val anchors = if (anchorKeys.isEmpty()) seed else TrackAnchorPath(anchorKeys)
+            return BakeResult(motion, anchors)
         } finally {
             frames.forEach { if (!it.isRecycled) it.recycle() }
         }
