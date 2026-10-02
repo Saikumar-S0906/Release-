@@ -93,6 +93,26 @@ class TimelineCgTest {
     }
 
     @Test
+    fun dustCrumb_motionBlurStreak_followsDrift() {
+        val mid = dustMote(3, 1280, 720, 1f, 0f, 0.5f)
+        val behind = dustMote(3, 1280, 720, 1f, 0f, 0.5f - DUST_MOTION_SHUTTER)
+        assertEquals(behind.x, mid.trailX, 0.01f)
+        assertEquals(behind.y, mid.trailY, 0.01f)
+        // Streak points opposite the drift (tail behind the head).
+        assertTrue(mid.x > mid.trailX)
+        val streak = kotlin.math.hypot((mid.x - mid.trailX).toDouble(), (mid.y - mid.trailY).toDouble())
+        assertTrue(streak > 1.0)
+
+        val atStart = dustMote(3, 1280, 720, 1f, 0f, 0f)
+        assertEquals(atStart.x, atStart.trailX, 0.01f)
+        assertEquals(atStart.y, atStart.trailY, 0.01f)
+
+        val yawMid = dustMote(3, 1280, 720, 1f, 90f, 0.5f)
+        // Yaw 90deg drifts mostly vertical; trail should lag that axis.
+        assertTrue(kotlin.math.abs(yawMid.y - yawMid.trailY) > kotlin.math.abs(yawMid.x - yawMid.trailX))
+    }
+
+    @Test
     fun cameraKeys_interpolate() {
         val layer = TimelineCgLayer(
             id = "cg0",

@@ -23,7 +23,8 @@ import androidx.media3.effect.TextureOverlay
  * draws the plate. Preview and export share [CgOverlays]. Cube, ground, sky,
  * and dust stay classical. This is not neural.
  *
- * P5 classical: Z-order + track-plane insert, matte modes, camera keyframes.
+ * P5 classical: Z-order + track-plane insert, matte modes, camera keyframes,
+ * dust drift + motion-blur crumbs. Cube/ground/sky/dust stay off Filament.
  *
  * Encode (v1): `CG,<id>,<preset>,<startMs>,<endMs>,<x>,<y>,<scale>,<yaw>,<zOrder>,<followTrack>`
  * Encode (v2+): `...,<matte>,<pitch>,<endYaw>,<endScale>,<propFile>`
@@ -38,7 +39,7 @@ enum class CgPreset {
     GroundPlane,
     /** Sky dome gradient plate (classical; HDRI later). */
     SkyDome,
-    /** Soft dust that drifts over the shot (classical; not a Filament sim). */
+    /** Soft dust crumbs that drift and streak over the shot (classical; not Filament). */
     DustTrail;
 
     companion object {
@@ -174,9 +175,21 @@ object ClassicalCgRenderer : CgSceneRenderer {
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         val count = dustCount(scale)
         for (i in 0 until count) {
-            val mote = dustMote(i, w, h, scale, yaw, progress)
-            paint.color = Color.argb(mote.alpha, 220, 230, 240)
-            canvas.drawCircle(mote.x, mote.y, mote.radius, paint)
+            val crumb = dustMote(i, w, h, scale, yaw, progress)
+            // Classical motion-blur crumb: soft streak along drift, then a brighter head.
+            paint.style = Paint.Style.STROKE
+            paint.strokeCap = Paint.Cap.ROUND
+            paint.strokeWidth = crumb.radius * 2f
+            paint.color = Color.argb(
+                (crumb.alpha * 0.55f).toInt().coerceIn(12, 70),
+                220,
+                230,
+                240
+            )
+            canvas.drawLine(crumb.trailX, crumb.trailY, crumb.x, crumb.y, paint)
+            paint.style = Paint.Style.FILL
+            paint.color = Color.argb(crumb.alpha, 220, 230, 240)
+            canvas.drawCircle(crumb.x, crumb.y, crumb.radius, paint)
         }
     }
 
@@ -263,15 +276,21 @@ object ClassicalCgRenderer : CgSceneRenderer {
 }
 
 /**
- * One classical dust mote. Position is a pure function of index, yaw, and
- * progress so preview and export match. Not a Filament particle sim.
+ * One classical dust crumb. Head is at [progress]; [trailX]/[trailY] sample a
+ * short shutter behind so preview and export share the same motion-blur streak.
+ * Not a Filament particle sim.
  */
 internal data class DustMote(
     val x: Float,
     val y: Float,
     val radius: Float,
-    val alpha: Int
+    val alpha: Int,
+    val trailX: Float,
+    val trailY: Float
 )
+
+/** Fraction of the shot used as classical shutter for dust crumb streaks. */
+internal const val DUST_MOTION_SHUTTER = 1f / 24f
 
 internal fun dustCount(scale: Float): Int =
     (36f + scale.coerceIn(0.35f, 2.5f) * 28f).toInt().coerceIn(24, 96)
@@ -288,6 +307,27 @@ internal fun dustMote(
     val h = height.coerceAtLeast(1)
     val s = scale.coerceIn(0.35f, 2.5f)
     val u = progress.coerceIn(0f, 1f)
+    val head = dustPos(index, s, yawDeg, u)
+    val tail = dustPos(index, s, yawDeg, (u - DUST_MOTION_SHUTTER).coerceAtLeast(0f))
+    return DustMote(
+        x = head.xNorm * w,
+        y = head.yNorm * h,
+        radius = head.radius,
+        alpha = head.alpha,
+        trailX = tail.xNorm * w,
+        trailY = tail.yNorm * h
+    )
+}
+
+private data class DustPos(
+    val xNorm: Float,
+    val yNorm: Float,
+    val radius: Float,
+    val alpha: Int
+)
+
+private fun dustPos(index: Int, scale: Float, yawDeg: Float, progress: Float): DustPos {
+    val u = progress.coerceIn(0f, 1f)
     val yawRad = Math.toRadians(yawDeg.toDouble())
     val dirX = kotlin.math.cos(yawRad).toFloat()
     val dirY = kotlin.math.sin(yawRad).toFloat() * 0.35f
@@ -295,14 +335,14 @@ internal fun dustMote(
     val row = (index * 3) % 11
     val baseX = 0.22f + column * 0.09f
     val baseY = 0.20f + row * 0.055f
-    val speed = 0.55f + s * 0.12f
+    val speed = 0.55f + scale * 0.12f
     val shift = (u - 0.5f) * speed
     val xNorm = (baseX + dirX * shift * 0.5f).coerceIn(0.04f, 0.96f)
     val yNorm = (baseY - dirY * shift * 0.5f - u * 0.06f).coerceIn(0.04f, 0.96f)
-    val radius = (2f + (index % 5)) * s
+    val radius = (2f + (index % 5)) * scale
     val twinkle = kotlin.math.sin(u * 6.283185f + index * 0.65f)
     val alpha = (48f + twinkle * 28f).toInt().coerceIn(20, 90)
-    return DustMote(xNorm * w, yNorm * h, radius, alpha)
+    return DustPos(xNorm, yNorm, radius, alpha)
 }
 
 data class TimelineCgLayer(
