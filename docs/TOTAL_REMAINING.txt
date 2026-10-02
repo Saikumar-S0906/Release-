@@ -80,7 +80,7 @@ F6. Smart-object analog; advanced type; print/PDF
 ================================================================
 H. R7 ON-DEVICE CG (after F foundations) — docs/R7_CG_EFFECTS.md + docs/DIRECTOR_KIT.md
 ================================================================
-H1. CG compositor lane (Filament → timeline overlay; preview=export)
+H1. CG compositor lane PARTIAL — :feature_cg PropGltf Filament offscreen (one directional light, no IBL); other plates classical
 H2. glTF prop library (Release- packs; track-attach)
 H3. Lights + IBL / HDRI
 H4. GPU particles / trails (not sticker sparkle)

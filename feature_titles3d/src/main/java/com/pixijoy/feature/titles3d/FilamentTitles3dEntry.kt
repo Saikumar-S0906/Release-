@@ -53,11 +53,11 @@ object FilamentTitles3dRenderer : Titles3dRenderer {
             view.scene = scene
             view.viewport = Viewport(0, 0, plate.width, plate.height)
             camera.setProjection(
-                Camera.Projection.PERSPECTIVE,
                 45.0,
                 plate.width.toDouble() / plate.height,
                 0.1,
-                100.0
+                100.0,
+                Camera.Fov.VERTICAL
             )
             camera.lookAt(0.0, 0.0, 2.2 + depth, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0)
 

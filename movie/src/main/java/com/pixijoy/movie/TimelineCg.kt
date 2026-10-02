@@ -18,10 +18,10 @@ import androidx.media3.effect.TextureOverlay
 /**
  * R7 / coding P1+P5 — CG compositor lane on the timeline.
  *
- * Heavy Filament lives in on-demand `:feature_cg` later. Until that module
- * binds a [CgSceneRenderer], [ClassicalCgRenderer] draws lit props so preview
- * and export share one overlay path. User glTF/GLB props ([CgPreset.PropGltf])
- * rasterize on that same path — classical lighting, not Filament, not neural.
+ * Prop glTF can render through on-demand `:feature_cg` (one directional light,
+ * no IBL). Until that split binds, and whenever it fails, [ClassicalCgRenderer]
+ * draws the plate. Preview and export share [CgOverlays]. Cube, ground, sky,
+ * and dust stay classical. This is not neural.
  *
  * P5 classical: Z-order + track-plane insert, matte modes, camera keyframes.
  *
@@ -63,14 +63,8 @@ enum class CgMatte {
     }
 }
 
-fun interface CgSceneRenderer {
-    fun render(
-        preset: CgPreset,
-        width: Int,
-        height: Int,
-        scale: Float,
-        yaw: Float
-    ): Bitmap
+interface CgSceneRenderer {
+    fun renderPlate(request: CgPlateRequest): Bitmap
 }
 
 object CgHost {
@@ -79,13 +73,34 @@ object CgHost {
 
     fun active(): CgSceneRenderer = renderer ?: ClassicalCgRenderer
 
-    fun filamentAvailable(): Boolean = renderer != null && renderer !is ClassicalCgRenderer
+    /** True only after the on-demand Filament prop renderer has bound. */
+    fun filamentAvailable(): Boolean = renderer is FilamentPropCgRenderer
 }
 
 /** Base-APK CG plate — materials via gradient/lighting cue, not Filament JNI. */
 object ClassicalCgRenderer : CgSceneRenderer {
-    override fun render(preset: CgPreset, width: Int, height: Int, scale: Float, yaw: Float): Bitmap =
-        renderFull(preset, width, height, scale, yaw, pitch = 0f, ox = 0f, oy = 0f)
+    override fun renderPlate(request: CgPlateRequest): Bitmap {
+        val mesh = classicalPropMesh(request)
+        return renderFull(
+            request.preset,
+            request.width,
+            request.height,
+            request.scale,
+            request.yaw,
+            request.pitch,
+            request.ox,
+            request.oy,
+            mesh,
+            request.progress
+        )
+    }
+
+    private fun classicalPropMesh(request: CgPlateRequest): GltfMesh? {
+        if (request.preset != CgPreset.PropGltf) return null
+        val file = request.propFile ?: return null
+        val projectDir = file.parentFile?.parentFile ?: return null
+        return CgPropMeshes.get(projectDir, file.name)
+    }
 
     fun renderFull(
         preset: CgPreset,
@@ -406,6 +421,7 @@ object CgOverlays {
     ): Effect? {
         val active = layers.filter { it.isActive }.sortedBy { it.zOrder }
         if (active.isEmpty()) return null
+        OptFeatureModules.tryBindCg()
         val overlays = ArrayList<TextureOverlay>(active.size)
         for (layer in active) {
             overlays += TimedCgOverlay(layer, totalMs.coerceAtLeast(1), trackAnchor, projectDir)
@@ -465,30 +481,29 @@ private class TimedCgOverlay(
         val scale = layer.scaleAt(ms, totalMs)
         val progress = layer.progress(ms, totalMs)
         val host = CgHost.active()
-        val mesh = if (layer.preset == CgPreset.PropGltf) {
-            CgPropMeshes.get(projectDir, layer.propFile)
-        } else {
-            null
-        }
-        // Meshes stay classical until Filament materials bind. Dust stays this trail until GPU particles.
-        val raw = if (host is ClassicalCgRenderer || mesh != null || layer.preset == CgPreset.DustTrail) {
-            ClassicalCgRenderer.renderFull(
-                layer.preset, frameW, frameH, scale, yaw, layer.pitch, ox, oy, mesh, progress
-            )
-        } else {
-            val base = host.render(layer.preset, frameW, frameH, scale, yaw)
-            if (ox == 0f && oy == 0f) base else offsetBitmap(base, ox, oy)
-        }
+        val propFile = cgPropFile(projectDir, layer.propFile)
+        val request = CgPlateRequest(
+            preset = layer.preset,
+            width = frameW,
+            height = frameH,
+            scale = scale,
+            yaw = yaw,
+            pitch = layer.pitch,
+            ox = ox,
+            oy = oy,
+            progress = progress,
+            propFile = propFile
+        )
+        // PropGltf uses Filament when the split is bound. Other plates stay classical.
+        val raw = cgRenderPropOrClassical(
+            path = cgPropDrawPath(
+                layer.preset,
+                host is FilamentPropCgRenderer,
+                propFile != null
+            ),
+            filament = { host.renderPlate(request) },
+            classical = { ClassicalCgRenderer.renderPlate(request) }
+        )
         return ClassicalCgRenderer.applyMatte(raw, layer.matte)
-    }
-
-    private fun offsetBitmap(src: Bitmap, ox: Float, oy: Float): Bitmap {
-        val out = Bitmap.createBitmap(frameW, frameH, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(out)
-        val (dx, dy) = cgPlateOffset(ox, oy, frameW, frameH)
-        canvas.translate(dx, dy)
-        canvas.drawBitmap(src, 0f, 0f, null)
-        if (src !== out) src.recycle()
-        return out
     }
 }

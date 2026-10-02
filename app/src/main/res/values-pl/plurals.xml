@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- PixiJoy pl plurals — machine-assisted; review before store release -->
 <resources>
-    <plurals name="ai_credits_remaining">
+        <plurals name="ai_credits_remaining">
         <item quantity="one">Pozostało %s użycie AI dziś</item>
         <item quantity="few">Pozostały %s użycia AI dziś</item>
         <item quantity="many">Pozostało %s użyć AI dziś</item>
@@ -38,6 +38,9 @@
         <item quantity="other">Seria %d dni</item>
     </plurals>
     <plurals name="viral_pack_saved">
+        <item quantity="one">Zapisano Viral Pack! %d obrazów gotowych do udostępnienia 🚀</item>
+        <item quantity="few">Zapisano Viral Pack! %d obrazów gotowych do udostępnienia 🚀</item>
+        <item quantity="many">Zapisano Viral Pack! %d obrazów gotowych do udostępnienia 🚀</item>
         <item quantity="other">Zapisano Viral Pack! %d obrazów gotowych do udostępnienia 🚀</item>
     </plurals>
 </resources>

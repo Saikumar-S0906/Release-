@@ -21,8 +21,8 @@ internal class ProjPt(
     val rz: Float
 )
 
-/** Same plate offset the cube prop uses for X/Y place. */
-internal fun cgPlateOffset(ox: Float, oy: Float, width: Int, height: Int): Pair<Float, Float> {
+/** Same plate offset the cube prop uses for X/Y place. Shared with the Filament prop plate. */
+fun cgPlateOffset(ox: Float, oy: Float, width: Int, height: Int): Pair<Float, Float> {
     val w = width.coerceAtLeast(2)
     val h = height.coerceAtLeast(2)
     return (ox * w * 0.45f) to (-oy * h * 0.45f)

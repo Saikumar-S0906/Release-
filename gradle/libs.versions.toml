@@ -112,6 +112,7 @@ androidx-media3-effect = { group = "androidx.media3", name = "media3-effect", ve
 androidx-media3-common = { group = "androidx.media3", name = "media3-common", version.ref = "media3" }
 filament-android = { group = "com.google.android.filament", name = "filament-android", version.ref = "filament" }
 filament-utils = { group = "com.google.android.filament", name = "filament-utils-android", version.ref = "filament" }
+filament-gltfio = { group = "com.google.android.filament", name = "gltfio-android", version.ref = "filament" }
 arcore = { group = "com.google.ar", name = "core", version.ref = "arcore" }
 ffmpeg-kit-min = { group = "com.arthenica", name = "ffmpeg-kit-min", version.ref = "ffmpegKit" }
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }

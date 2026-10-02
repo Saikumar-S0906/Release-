@@ -12,6 +12,9 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
@@ -21,4 +24,6 @@ dependencies {
     implementation(libs.androidx.exifinterface)
     implementation(libs.androidx.heifwriter)
     testImplementation(libs.junit)
+    // SmartObjectsTest needs Bitmap; JVM stubs throw "not mocked".
+    testImplementation("org.robolectric:robolectric:4.14.1")
 }

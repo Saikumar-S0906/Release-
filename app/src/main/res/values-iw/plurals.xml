@@ -1,31 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- PixiJoy iw plurals — machine-assisted; review before store release -->
 <resources>
-    <plurals name="ai_credits_remaining">
+        <plurals name="ai_credits_remaining">
         <item quantity="one">נותר שימוש AI אחד היום: %s</item>
+        <item quantity="two">נותרו %s שימושי AI היום</item>
         <item quantity="other">נותרו %s שימושי AI היום</item>
     </plurals>
     <plurals name="hd_credits_remaining">
         <item quantity="one">נותר ייצוא HD אחד היום: %s</item>
+        <item quantity="two">נותרו %s ייצואי HD היום</item>
         <item quantity="other">נותרו %s ייצואי HD היום</item>
     </plurals>
     <plurals name="rewarded_ads_remaining">
         <item quantity="one">נותרה מודעת תגמול אחת היום: %d</item>
+        <item quantity="two">נותרו %d מודעות תגמול היום</item>
         <item quantity="other">נותרו %d מודעות תגמול היום</item>
     </plurals>
     <plurals name="sticker_pack_saved">
         <item quantity="one">חבילת מדבקות נשמרה! מדבקה %d מוכנה ל-WhatsApp</item>
+        <item quantity="two">חבילת מדבקות נשמרה! %d מדבקות מוכנות ל-WhatsApp</item>
         <item quantity="other">חבילת מדבקות נשמרה! %d מדבקות מוכנות ל-WhatsApp</item>
     </plurals>
     <plurals name="stickers_saved">
         <item quantity="one">נשמרה מדבקה %d ל-WhatsApp!</item>
+        <item quantity="two">נשמרו %d מדבקות ל-WhatsApp!</item>
         <item quantity="other">נשמרו %d מדבקות ל-WhatsApp!</item>
     </plurals>
     <plurals name="streak_days">
         <item quantity="one">רצף של %d יום</item>
+        <item quantity="two">רצף של %d ימים</item>
         <item quantity="other">רצף של %d ימים</item>
     </plurals>
     <plurals name="viral_pack_saved">
+        <item quantity="one">Viral Pack נשמר! %d תמונות מוכנות לשיתוף 🚀</item>
+        <item quantity="two">Viral Pack נשמר! %d תמונות מוכנות לשיתוף 🚀</item>
         <item quantity="other">Viral Pack נשמר! %d תמונות מוכנות לשיתוף 🚀</item>
     </plurals>
 </resources>

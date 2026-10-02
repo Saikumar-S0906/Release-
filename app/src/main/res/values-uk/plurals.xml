@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- PixiJoy uk plurals — machine-assisted; review before store release -->
 <resources>
-    <plurals name="ai_credits_remaining">
+        <plurals name="ai_credits_remaining">
         <item quantity="one">Сьогодні залишилось %s використання ШІ</item>
         <item quantity="few">Сьогодні залишилось %s використання ШІ</item>
         <item quantity="many">Сьогодні залишилось %s використань ШІ</item>
@@ -38,6 +38,9 @@
         <item quantity="other">Серія %d днів</item>
     </plurals>
     <plurals name="viral_pack_saved">
+        <item quantity="one">Viral Pack збережено! %d зображень готові до поширення 🚀</item>
+        <item quantity="few">Viral Pack збережено! %d зображень готові до поширення 🚀</item>
+        <item quantity="many">Viral Pack збережено! %d зображень готові до поширення 🚀</item>
         <item quantity="other">Viral Pack збережено! %d зображень готові до поширення 🚀</item>
     </plurals>
 </resources>

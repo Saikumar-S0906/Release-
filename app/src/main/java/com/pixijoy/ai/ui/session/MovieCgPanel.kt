@@ -9,7 +9,13 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -24,9 +30,10 @@ import com.pixijoy.designsystem.PixiTextMuted
 import com.pixijoy.movie.CgHost
 import com.pixijoy.movie.CgMatte
 import com.pixijoy.movie.CgPreset
+import com.pixijoy.movie.OptFeatureModules
 import com.pixijoy.movie.TimelineCgLayer
 
-/** R7 / P1+P5 — CG lane: classical plates plus glTF load/place/scale until Filament binds. */
+/** R7 / P1 — classical plates, plus Filament prop lighting when `:feature_cg` is installed. */
 @Composable
 fun MovieCgPanel(
     layers: List<TimelineCgLayer>,
@@ -36,9 +43,16 @@ fun MovieCgPanel(
     onUpdate: (TimelineCgLayer) -> Unit,
     onClear: () -> Unit
 ) {
-    val filament = CgHost.filamentAvailable()
+    val context = LocalContext.current
+    var filament by remember { mutableStateOf(CgHost.filamentAvailable()) }
+    LaunchedEffect(Unit) {
+        OptFeatureModules.ensureInstalled(context, OptFeatureModules.TITLES3D)
+        OptFeatureModules.ensureInstalled(context, OptFeatureModules.CG)
+        OptFeatureModules.tryBindCg()
+        filament = CgHost.filamentAvailable()
+    }
     val capLabel = stringResource(
-        if (filament) R.string.capability_live else R.string.capability_live_classical
+        if (filament) R.string.capability_live_filament else R.string.capability_live_classical
     )
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         PixiCapabilityChip(
@@ -46,7 +60,9 @@ fun MovieCgPanel(
             label = capLabel,
             testTag = "movie_cg_capability"
         )
-        val hint = stringResource(R.string.studio_cg_hint)
+        val hint = stringResource(
+            if (filament) R.string.studio_cg_hint_filament else R.string.studio_cg_hint
+        )
         Text(
             hint,
             color = PixiTextMuted,

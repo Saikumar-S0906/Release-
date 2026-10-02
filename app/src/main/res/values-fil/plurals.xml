@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- PixiJoy fil plurals — machine-assisted; review before store release -->
 <resources>
-    <plurals name="ai_credits_remaining">
+        <plurals name="ai_credits_remaining">
         <item quantity="one">%s AI use ang natitira ngayon</item>
         <item quantity="other">%s AI uses ang natitira ngayon</item>
     </plurals>
@@ -26,6 +26,7 @@
         <item quantity="other">%d araw na streak</item>
     </plurals>
     <plurals name="viral_pack_saved">
+        <item quantity="one">Na-save ang Viral Pack! %d images handa nang i-share 🚀</item>
         <item quantity="other">Na-save ang Viral Pack! %d images handa nang i-share 🚀</item>
     </plurals>
 </resources>

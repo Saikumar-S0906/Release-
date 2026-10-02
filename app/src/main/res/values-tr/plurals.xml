@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- PixiJoy tr plurals — machine-assisted; review before store release -->
 <resources>
-    <plurals name="ai_credits_remaining">
+        <plurals name="ai_credits_remaining">
         <item quantity="one">Bugün %s YZ kullanımı kaldı</item>
         <item quantity="other">Bugün %s YZ kullanımı kaldı</item>
     </plurals>
@@ -26,6 +26,7 @@
         <item quantity="other">%d günlük seri</item>
     </plurals>
     <plurals name="viral_pack_saved">
+        <item quantity="one">Viral Pack kaydedildi! Paylaşmaya hazır %d görsel 🚀</item>
         <item quantity="other">Viral Pack kaydedildi! Paylaşmaya hazır %d görsel 🚀</item>
     </plurals>
 </resources>

@@ -15,6 +15,7 @@ object OptFeatureModules {
     const val TITLES3D = "feature_titles3d"
     const val AR = "feature_ar"
     const val FFMPEG = "feature_ffmpeg"
+    const val CG = "feature_cg"
 
     fun isInstalled(context: Context, module: String): Boolean =
         runCatching {
@@ -62,6 +63,16 @@ object OptFeatureModules {
     fun tryBindTitles3d() {
         runCatching {
             Class.forName("com.pixijoy.feature.titles3d.FilamentTitles3dEntry")
+                .getMethod("install")
+                .invoke(null)
+        }
+    }
+
+    /** Binds Filament prop rendering when `:feature_cg` is installed. A miss leaves the classical raster. */
+    fun tryBindCg() {
+        if (CgHost.filamentAvailable()) return
+        runCatching {
+            Class.forName("com.pixijoy.feature.cg.FilamentCgEntry")
                 .getMethod("install")
                 .invoke(null)
         }

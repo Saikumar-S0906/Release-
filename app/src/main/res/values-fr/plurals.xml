@@ -1,31 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- PixiJoy fr plurals — machine-assisted; review before store release -->
 <resources>
-    <plurals name="ai_credits_remaining">
+        <plurals name="ai_credits_remaining">
         <item quantity="one">%s utilisation IA restante aujourd’hui</item>
+        <item quantity="many">%s utilisations IA restantes aujourd’hui</item>
         <item quantity="other">%s utilisations IA restantes aujourd’hui</item>
     </plurals>
     <plurals name="hd_credits_remaining">
         <item quantity="one">%s export HD restant aujourd’hui</item>
+        <item quantity="many">%s exports HD restants aujourd’hui</item>
         <item quantity="other">%s exports HD restants aujourd’hui</item>
     </plurals>
     <plurals name="rewarded_ads_remaining">
         <item quantity="one">%d pub récompensée restante aujourd’hui</item>
+        <item quantity="many">%d pubs récompensées restantes aujourd’hui</item>
         <item quantity="other">%d pubs récompensées restantes aujourd’hui</item>
     </plurals>
     <plurals name="sticker_pack_saved">
         <item quantity="one">Pack de stickers enregistré ! %d sticker prêt pour WhatsApp</item>
+        <item quantity="many">Pack de stickers enregistré ! %d stickers prêts pour WhatsApp</item>
         <item quantity="other">Pack de stickers enregistré ! %d stickers prêts pour WhatsApp</item>
     </plurals>
     <plurals name="stickers_saved">
         <item quantity="one">%d sticker enregistré pour WhatsApp !</item>
+        <item quantity="many">%d stickers enregistrés pour WhatsApp !</item>
         <item quantity="other">%d stickers enregistrés pour WhatsApp !</item>
     </plurals>
     <plurals name="streak_days">
         <item quantity="one">Série de %d jour</item>
+        <item quantity="many">Série de %d jours</item>
         <item quantity="other">Série de %d jours</item>
     </plurals>
     <plurals name="viral_pack_saved">
+        <item quantity="one">Viral Pack enregistré ! %d images prêtes à partager 🚀</item>
+        <item quantity="many">Viral Pack enregistré ! %d images prêtes à partager 🚀</item>
         <item quantity="other">Viral Pack enregistré ! %d images prêtes à partager 🚀</item>
     </plurals>
 </resources>

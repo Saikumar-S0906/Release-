@@ -48,6 +48,8 @@
 
 Suggested order: **H1 → H2 → H3 → H4 → H7 → H8** in code first (CODING_PHASES P1+P5); **H5/H6 classical fallbacks** until M2/M3 TFLite; then neural soft-Z/plates (P7). H9 parallel, H10 continuous.
 
+**PropGltf slice:** `:feature_cg` is on-demand and renders a user glTF with one directional light through `CgHost` when the split loads. Filament JNI stays in on-demand `:feature_titles3d` (AGP will not package that AAR in a second split) and is not in the base APK. `:feature_cg` does not embed JNI or an IBL asset. Cube, ground, sky, and dust stay classical, and PropGltf falls back to that raster when the split is missing or a frame fails.
+
 ---
 
 ## ML packs R7 may need (Wave M — Colab; Release- if large)

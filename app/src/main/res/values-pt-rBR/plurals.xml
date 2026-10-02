@@ -1,31 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- PixiJoy pt-rBR plurals — machine-assisted; review before store release -->
 <resources>
-    <plurals name="ai_credits_remaining">
+        <plurals name="ai_credits_remaining">
         <item quantity="one">%s uso de IA restante hoje</item>
+        <item quantity="many">%s usos de IA restantes hoje</item>
         <item quantity="other">%s usos de IA restantes hoje</item>
     </plurals>
     <plurals name="hd_credits_remaining">
         <item quantity="one">%s exportação HD restante hoje</item>
+        <item quantity="many">%s exportações HD restantes hoje</item>
         <item quantity="other">%s exportações HD restantes hoje</item>
     </plurals>
     <plurals name="rewarded_ads_remaining">
         <item quantity="one">%d anúncio premiado restante hoje</item>
+        <item quantity="many">%d anúncios premiados restantes hoje</item>
         <item quantity="other">%d anúncios premiados restantes hoje</item>
     </plurals>
     <plurals name="sticker_pack_saved">
         <item quantity="one">Pacote de figurinhas salvo! %d figurinha pronta para o WhatsApp</item>
+        <item quantity="many">Pacote de figurinhas salvo! %d figurinhas prontas para o WhatsApp</item>
         <item quantity="other">Pacote de figurinhas salvo! %d figurinhas prontas para o WhatsApp</item>
     </plurals>
     <plurals name="stickers_saved">
         <item quantity="one">%d figurinha salva para o WhatsApp!</item>
+        <item quantity="many">%d figurinhas salvas para o WhatsApp!</item>
         <item quantity="other">%d figurinhas salvas para o WhatsApp!</item>
     </plurals>
     <plurals name="streak_days">
         <item quantity="one">Sequência de %d dia</item>
+        <item quantity="many">Sequência de %d dias</item>
         <item quantity="other">Sequência de %d dias</item>
     </plurals>
     <plurals name="viral_pack_saved">
+        <item quantity="one">Viral Pack salvo! %d imagens prontas para compartilhar 🚀</item>
+        <item quantity="many">Viral Pack salvo! %d imagens prontas para compartilhar 🚀</item>
         <item quantity="other">Viral Pack salvo! %d imagens prontas para compartilhar 🚀</item>
     </plurals>
 </resources>

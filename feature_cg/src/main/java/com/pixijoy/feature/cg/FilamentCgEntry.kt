@@ -1,0 +1,371 @@
+package com.pixijoy.feature.cg
+
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import com.google.android.filament.Camera
+import com.google.android.filament.Engine
+import com.google.android.filament.EntityManager
+import com.google.android.filament.LightManager
+import com.google.android.filament.Renderer
+import com.google.android.filament.Scene
+import com.google.android.filament.SwapChain
+import com.google.android.filament.SwapChainFlags
+import com.google.android.filament.Texture
+import com.google.android.filament.View
+import com.google.android.filament.Viewport
+import com.google.android.filament.gltfio.AssetLoader
+import com.google.android.filament.gltfio.FilamentAsset
+import com.google.android.filament.gltfio.Gltfio
+import com.google.android.filament.gltfio.ResourceLoader
+import com.google.android.filament.gltfio.UbershaderProvider
+import com.pixijoy.movie.CgHost
+import com.pixijoy.movie.CgPlateRequest
+import com.pixijoy.movie.CgPreset
+import com.pixijoy.movie.ClassicalCgRenderer
+import com.pixijoy.movie.FilamentPropCgRenderer
+import com.pixijoy.movie.GLTF_MAX_BYTES
+import com.pixijoy.movie.cgFilamentCameraDistance
+import com.pixijoy.movie.cgFilamentPropTransform
+import com.pixijoy.movie.cgPlateOffset
+import com.pixijoy.movie.cgPropResourceFile
+import java.io.File
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executor
+import java.util.concurrent.TimeUnit
+
+/**
+ * On-demand Filament entry. JNI stays in this split. [install] binds [CgHost]
+ * only after a headless clear can be read back. Otherwise the classical raster stays.
+ */
+object FilamentCgEntry {
+    @JvmStatic
+    fun install() {
+        if (CgHost.filamentAvailable()) return
+        if (FilamentPropSession.probe()) {
+            CgHost.renderer = FilamentPropRenderer
+        }
+    }
+}
+
+/**
+ * PropGltf plate. One directional light, no IBL. Any miss returns the classical plate.
+ */
+object FilamentPropRenderer : FilamentPropCgRenderer {
+    override fun renderPlate(request: CgPlateRequest): Bitmap {
+        if (request.preset != CgPreset.PropGltf || request.propFile == null) {
+            return ClassicalCgRenderer.renderPlate(request)
+        }
+        return FilamentPropSession.renderProp(request) ?: ClassicalCgRenderer.renderPlate(request)
+    }
+}
+
+private const val CLEAR_SIZE = 4
+private const val READBACK_TIMEOUT_SEC = 2L
+private const val MIN_VISIBLE_ALPHA = 8
+private const val MAX_EDGE = 4096
+private const val DIRECTIONAL_INTENSITY = 3.2f
+private const val NEAR_PLANE = 0.05
+private const val FAR_PLANE = 50.0
+
+private val filamentPropGpu = FilamentPropGpu()
+
+internal object FilamentPropSession {
+    fun probe(): Boolean = filamentPropGpu.probe()
+
+    fun renderProp(request: CgPlateRequest): Bitmap? = filamentPropGpu.renderProp(request)
+}
+
+private class FilamentPropGpu {
+    private val lock = Any()
+    private var ready = false
+    private var engine: Engine? = null
+    private var renderer: Renderer? = null
+    private var scene: Scene? = null
+    private var view: View? = null
+    private var camera: Camera? = null
+    private var swapChain: SwapChain? = null
+    private var light: Int = 0
+    private var targetW = 0
+    private var targetH = 0
+    private var materials: UbershaderProvider? = null
+    private var assetLoader: AssetLoader? = null
+    private var resourceLoader: ResourceLoader? = null
+    private var asset: FilamentAsset? = null
+    private var loadedKey: String? = null
+
+    fun probe(): Boolean = synchronized(lock) {
+        if (ready) return true
+        val ok = runCatching {
+            boot()
+            smoke()
+        }.getOrDefault(false)
+        if (!ok) shutdown()
+        ready = ok
+        ok
+    }
+
+    fun renderProp(request: CgPlateRequest): Bitmap? = synchronized(lock) {
+        val file = request.propFile ?: return null
+        if (!ready && !probe()) return null
+        runCatching { draw(request, file) }.getOrNull()
+    }
+
+    private fun boot() {
+        Gltfio.init()
+        val created = Engine.create(Engine.Backend.OPENGL)
+        engine = created
+        renderer = created.createRenderer()
+        scene = created.createScene()
+        view = created.createView()
+        val cameraEntity = EntityManager.get().create()
+        val createdCamera = created.createCamera(cameraEntity)
+        camera = createdCamera
+        val createdView = view ?: error("view")
+        val createdScene = scene ?: error("scene")
+        createdView.setCamera(createdCamera)
+        createdView.setScene(createdScene)
+        createdView.setBlendMode(View.BlendMode.TRANSLUCENT)
+        createdView.setPostProcessingEnabled(false)
+        val clear = Renderer.ClearOptions()
+        clear.clearColor = floatArrayOf(0f, 0f, 0f, 0f)
+        clear.clear = true
+        renderer?.setClearOptions(clear)
+        val distance = cgFilamentCameraDistance()
+        createdCamera.lookAt(0.0, distance * 0.08, distance, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0)
+        light = EntityManager.get().create()
+        LightManager.Builder(LightManager.Type.DIRECTIONAL)
+            .color(1f, 0.97f, 0.92f)
+            .intensity(DIRECTIONAL_INTENSITY)
+            .direction(0.35f, -1f, -0.25f)
+            .castShadows(false)
+            .build(created, light)
+        createdScene.addEntity(light)
+        val provider = UbershaderProvider(created)
+        materials = provider
+        assetLoader = AssetLoader(created, provider, EntityManager.get())
+        resourceLoader = ResourceLoader(created, false)
+    }
+
+    private fun smoke(): Boolean {
+        ensureTarget(CLEAR_SIZE, CLEAR_SIZE)
+        val buffer = readFrame() ?: return false
+        return buffer.capacity() >= CLEAR_SIZE * CLEAR_SIZE * 4
+    }
+
+    private fun draw(request: CgPlateRequest, file: File): Bitmap? {
+        val width = request.width.coerceIn(2, MAX_EDGE)
+        val height = request.height.coerceIn(2, MAX_EDGE)
+        ensureTarget(width, height)
+        ensureAsset(file)
+        applyTransform(request)
+        val buffer = readFrame() ?: return null
+        val decoded = rgbaToBitmap(buffer, width, height)
+        if (decoded.second < MIN_VISIBLE_ALPHA) {
+            decoded.first.recycle()
+            return null
+        }
+        return placePlate(decoded.first, request)
+    }
+
+    private fun ensureTarget(width: Int, height: Int) {
+        val created = engine ?: error("engine")
+        val createdView = view ?: error("view")
+        val createdCamera = camera ?: error("camera")
+        if (swapChain != null && targetW == width && targetH == height) return
+        swapChain?.let { created.destroySwapChain(it) }
+        val flags = SwapChainFlags.CONFIG_READABLE or SwapChainFlags.CONFIG_TRANSPARENT
+        swapChain = created.createSwapChain(width, height, flags)
+        targetW = width
+        targetH = height
+        createdView.setViewport(Viewport(0, 0, width, height))
+        val aspect = width.toDouble() / height.toDouble()
+        createdCamera.setProjection(45.0, aspect, NEAR_PLANE, FAR_PLANE, Camera.Fov.VERTICAL)
+    }
+
+    private fun ensureAsset(file: File) {
+        val key = file.absolutePath + ":" + file.length() + ":" + file.lastModified()
+        if (key == loadedKey && asset != null) return
+        releaseAsset()
+        val created = loadAsset(file)
+        scene?.addEntities(created.entities)
+        asset = created
+        loadedKey = key
+    }
+
+    private fun loadAsset(file: File): FilamentAsset {
+        if (file.length() > GLTF_MAX_BYTES) error("Prop file is too large.")
+        val loader = assetLoader ?: error("asset loader")
+        val resources = resourceLoader ?: error("resource loader")
+        val created = loader.createAsset(directCopy(file.readBytes())) ?: error("glTF was not accepted.")
+        val loaded = runCatching {
+            attachResources(file, created, resources)
+            resources.loadResources(created)
+            created.releaseSourceData()
+            created
+        }
+        if (loaded.isFailure) loader.destroyAsset(created)
+        return loaded.getOrThrow()
+    }
+
+    private fun attachResources(file: File, created: FilamentAsset, resources: ResourceLoader) {
+        for (uri in created.resourceUris) {
+            val sibling = cgPropResourceFile(file, uri) ?: error("Missing glTF resource.")
+            if (sibling.length() > GLTF_MAX_BYTES) error("glTF resource is too large.")
+            resources.addResourceData(uri, directCopy(sibling.readBytes()))
+        }
+    }
+
+    private fun applyTransform(request: CgPlateRequest) {
+        val current = asset ?: error("asset")
+        val created = engine ?: error("engine")
+        val box = current.boundingBox
+        val tm = created.transformManager
+        val instance = tm.getInstance(current.root)
+        if (instance == 0) error("prop root has no transform")
+        tm.setTransform(
+            instance,
+            cgFilamentPropTransform(
+                yawDeg = request.yaw,
+                pitchDeg = request.pitch,
+                userScale = request.scale,
+                center = box.center,
+                halfExtent = box.halfExtent
+            )
+        )
+    }
+
+    private fun readFrame(): ByteBuffer? {
+        val created = engine
+        val createdRenderer = renderer
+        val createdView = view
+        val chain = swapChain
+        if (created == null || createdRenderer == null || createdView == null || chain == null) {
+            return null
+        }
+        if (!createdRenderer.beginFrame(chain, 0L)) return null
+        return readPixels(created, createdRenderer, createdView)
+    }
+
+    private fun readPixels(created: Engine, createdRenderer: Renderer, createdView: View): ByteBuffer? {
+        val bytes = targetW * targetH * 4
+        val buffer = ByteBuffer.allocateDirect(bytes).order(ByteOrder.nativeOrder())
+        val latch = CountDownLatch(1)
+        val descriptor = Texture.PixelBufferDescriptor(
+            buffer,
+            Texture.Format.RGBA,
+            Texture.Type.UBYTE
+        )
+        descriptor.setCallback(Executor { command -> command.run() }, Runnable { latch.countDown() })
+        val read = runCatching {
+            createdRenderer.render(createdView)
+            createdRenderer.readPixels(0, 0, targetW, targetH, descriptor)
+            createdRenderer.endFrame()
+            created.flushAndWait()
+            if (latch.await(READBACK_TIMEOUT_SEC, TimeUnit.SECONDS)) {
+                buffer.rewind()
+                buffer
+            } else {
+                null
+            }
+        }
+        if (read.isFailure) runCatching { createdRenderer.endFrame() }
+        return read.getOrThrow()
+    }
+
+    private fun rgbaToBitmap(buffer: ByteBuffer, width: Int, height: Int): Pair<Bitmap, Int> {
+        val pixels = IntArray(width * height)
+        var maxAlpha = 0
+        buffer.rewind()
+        for (y in 0 until height) {
+            val row = (height - 1 - y) * width
+            for (x in 0 until width) {
+                val red = buffer.get().toInt() and 0xff
+                val green = buffer.get().toInt() and 0xff
+                val blue = buffer.get().toInt() and 0xff
+                val alpha = buffer.get().toInt() and 0xff
+                if (alpha > maxAlpha) maxAlpha = alpha
+                pixels[row + x] = (alpha shl 24) or (red shl 16) or (green shl 8) or blue
+            }
+        }
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
+        return bitmap to maxAlpha
+    }
+
+    private fun placePlate(centered: Bitmap, request: CgPlateRequest): Bitmap {
+        if (request.ox == 0f && request.oy == 0f) return centered
+        val out = Bitmap.createBitmap(centered.width, centered.height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(out)
+        val (dx, dy) = cgPlateOffset(request.ox, request.oy, centered.width, centered.height)
+        canvas.translate(dx, dy)
+        canvas.drawBitmap(centered, 0f, 0f, null)
+        centered.recycle()
+        return out
+    }
+
+    private fun releaseAsset() {
+        val current = asset ?: return
+        scene?.removeEntities(current.entities)
+        assetLoader?.destroyAsset(current)
+        asset = null
+        loadedKey = null
+    }
+
+    private fun directCopy(bytes: ByteArray): ByteBuffer {
+        val buffer = ByteBuffer.allocateDirect(bytes.size).order(ByteOrder.nativeOrder())
+        buffer.put(bytes)
+        buffer.flip()
+        return buffer
+    }
+
+    private fun shutdown() {
+        runCatching { releaseAsset() }
+        runCatching { resourceLoader?.destroy() }
+        runCatching { assetLoader?.destroy() }
+        runCatching { materials?.destroy() }
+        val created = engine
+        if (created != null) {
+            destroyLight(created)
+            destroyCamera(created)
+            runCatching { view?.let { created.destroyView(it) } }
+            runCatching { scene?.let { created.destroyScene(it) } }
+            runCatching { renderer?.let { created.destroyRenderer(it) } }
+            runCatching { swapChain?.let { created.destroySwapChain(it) } }
+            runCatching { created.destroy() }
+        }
+        engine = null
+        renderer = null
+        scene = null
+        view = null
+        camera = null
+        swapChain = null
+        light = 0
+        targetW = 0
+        targetH = 0
+        materials = null
+        assetLoader = null
+        resourceLoader = null
+        ready = false
+    }
+
+    private fun destroyLight(created: Engine) {
+        if (light == 0) return
+        runCatching {
+            scene?.removeEntity(light)
+            created.destroyEntity(light)
+            EntityManager.get().destroy(light)
+        }
+        light = 0
+    }
+
+    private fun destroyCamera(created: Engine) {
+        val current = camera ?: return
+        runCatching {
+            created.destroyCameraComponent(current.entity)
+            EntityManager.get().destroy(current.entity)
+        }
+        camera = null
+    }
+}

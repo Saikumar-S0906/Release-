@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- PixiJoy ur plurals — machine-assisted; review before store release -->
 <resources>
-    <plurals name="ai_credits_remaining">
+        <plurals name="ai_credits_remaining">
         <item quantity="one">آج %s AI استعمال باقی</item>
         <item quantity="other">آج %s AI استعمالات باقی</item>
     </plurals>
@@ -26,6 +26,7 @@
         <item quantity="other">%d دن کی اسٹریک</item>
     </plurals>
     <plurals name="viral_pack_saved">
+        <item quantity="one">Viral Pack محفوظ! شیئر کے لیے %d تصاویر تیار 🚀</item>
         <item quantity="other">Viral Pack محفوظ! شیئر کے لیے %d تصاویر تیار 🚀</item>
     </plurals>
 </resources>

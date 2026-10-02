@@ -1,31 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- PixiJoy ar plurals — machine-assisted; review before store release -->
 <resources>
-    <plurals name="ai_credits_remaining">
+        <plurals name="ai_credits_remaining">
+        <item quantity="zero">تبقّى %s استخدامات ذكاء اصطناعي اليوم</item>
         <item quantity="one">تبقّى استخدام ذكاء اصطناعي واحد اليوم: %s</item>
+        <item quantity="two">تبقّى %s استخدامات ذكاء اصطناعي اليوم</item>
+        <item quantity="few">تبقّى %s استخدامات ذكاء اصطناعي اليوم</item>
+        <item quantity="many">تبقّى %s استخدامات ذكاء اصطناعي اليوم</item>
         <item quantity="other">تبقّى %s استخدامات ذكاء اصطناعي اليوم</item>
     </plurals>
     <plurals name="hd_credits_remaining">
+        <item quantity="zero">تبقّى %s تصديرات HD اليوم</item>
         <item quantity="one">تبقّى تصدير HD واحد اليوم: %s</item>
+        <item quantity="two">تبقّى %s تصديرات HD اليوم</item>
+        <item quantity="few">تبقّى %s تصديرات HD اليوم</item>
+        <item quantity="many">تبقّى %s تصديرات HD اليوم</item>
         <item quantity="other">تبقّى %s تصديرات HD اليوم</item>
     </plurals>
     <plurals name="rewarded_ads_remaining">
+        <item quantity="zero">تبقّى %d إعلانات مكافأة اليوم</item>
         <item quantity="one">تبقّى إعلان مكافأة واحد اليوم: %d</item>
+        <item quantity="two">تبقّى %d إعلانات مكافأة اليوم</item>
+        <item quantity="few">تبقّى %d إعلانات مكافأة اليوم</item>
+        <item quantity="many">تبقّى %d إعلانات مكافأة اليوم</item>
         <item quantity="other">تبقّى %d إعلانات مكافأة اليوم</item>
     </plurals>
     <plurals name="sticker_pack_saved">
+        <item quantity="zero">تم حفظ حزمة الملصقات! %d ملصقات جاهزة لـ WhatsApp</item>
         <item quantity="one">تم حفظ حزمة الملصقات! ملصق %d جاهز لـ WhatsApp</item>
+        <item quantity="two">تم حفظ حزمة الملصقات! %d ملصقات جاهزة لـ WhatsApp</item>
+        <item quantity="few">تم حفظ حزمة الملصقات! %d ملصقات جاهزة لـ WhatsApp</item>
+        <item quantity="many">تم حفظ حزمة الملصقات! %d ملصقات جاهزة لـ WhatsApp</item>
         <item quantity="other">تم حفظ حزمة الملصقات! %d ملصقات جاهزة لـ WhatsApp</item>
     </plurals>
     <plurals name="stickers_saved">
+        <item quantity="zero">تم حفظ %d ملصقات لـ WhatsApp!</item>
         <item quantity="one">تم حفظ ملصق %d لـ WhatsApp!</item>
+        <item quantity="two">تم حفظ %d ملصقات لـ WhatsApp!</item>
+        <item quantity="few">تم حفظ %d ملصقات لـ WhatsApp!</item>
+        <item quantity="many">تم حفظ %d ملصقات لـ WhatsApp!</item>
         <item quantity="other">تم حفظ %d ملصقات لـ WhatsApp!</item>
     </plurals>
     <plurals name="streak_days">
+        <item quantity="zero">سلسلة %d أيام</item>
         <item quantity="one">سلسلة %d يوم</item>
+        <item quantity="two">سلسلة %d أيام</item>
+        <item quantity="few">سلسلة %d أيام</item>
+        <item quantity="many">سلسلة %d أيام</item>
         <item quantity="other">سلسلة %d أيام</item>
     </plurals>
     <plurals name="viral_pack_saved">
+        <item quantity="zero">تم حفظ Viral Pack! %d صور جاهزة للمشاركة 🚀</item>
+        <item quantity="one">تم حفظ Viral Pack! %d صور جاهزة للمشاركة 🚀</item>
+        <item quantity="two">تم حفظ Viral Pack! %d صور جاهزة للمشاركة 🚀</item>
+        <item quantity="few">تم حفظ Viral Pack! %d صور جاهزة للمشاركة 🚀</item>
+        <item quantity="many">تم حفظ Viral Pack! %d صور جاهزة للمشاركة 🚀</item>
         <item quantity="other">تم حفظ Viral Pack! %d صور جاهزة للمشاركة 🚀</item>
     </plurals>
 </resources>
