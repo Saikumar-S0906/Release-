@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  H10 classical CG size gate: assemble release APKs and assert Filament stays out of base.
+  H10 classical CG size gate: assemble release APKs; DEX+ZIP+mapping scan + on-demand delivery assert.
 
 .EXAMPLE
   .\scripts\run_h10_size_gate.ps1

@@ -1,6 +1,6 @@
 # H10 — Classical CG perf + size gate
 
-**Status:** **MET** (gate docs + base-APK measure wiring) on tip after classical F1 track-attach (`3fbc1da`).
+**Status:** **MET** (gate docs + base-APK measure wiring + DEX/mapping honesty) — honesty fixlet off tip `d53bae5` (post-#30).
 **Pairs with:** [`R7_CG_EFFECTS.md`](R7_CG_EFFECTS.md) H10 · [`CODING_PHASES.md`](CODING_PHASES.md) P5.6 · E5 size in [`R5_ML_PACKS.md`](R5_ML_PACKS.md)
 **Honesty bar:** classical plates + on-demand Filament only. Never label classical CG as neural / Ready / `engineReady`.
 
@@ -11,7 +11,8 @@
 | Check | Rule | How |
 |-------|------|-----|
 | **On-demand only** | `:feature_cg` is a Play Feature Delivery dynamic module; Filament JNI stays in on-demand `:feature_titles3d` (`compileOnly` in `:feature_cg`) | `app/build.gradle.kts` `dynamicFeatures`; `feature_cg/build.gradle.kts` |
-| **Base APK clean** | Base release APK must **not** contain Filament / gltfio JNI or `com.pixijoy.feature.cg` / `com.google.android.filament` classes | `./gradlew :app:reportH10SizeGate` |
+| **On-demand delivery assert** | `feature_cg` + `feature_titles3d` manifests must declare `<dist:on-demand>` (not install-time) | Gate task + `OptFeatureModulesH10Test` |
+| **Base APK clean** | Base release APK must **not** contain Filament / gltfio JNI **or** `com.pixijoy.feature.cg` / `com.google.android.filament` **DEX classes** (not ZIP-path-only). Release shrinking: R8 `mapping.txt` residuals checked against base DEX | `./gradlew :app:reportH10SizeGate` |
 | **Base size** | Same E5 aspiration: release phone-ABI base **≤ ~40 MiB** (warn above; FAIL only on Filament-in-base) | Task print + E5 `reportApkSize` |
 | **Feature split size** | Report `:feature_cg` and `:feature_titles3d` release APK MiB (informational; no hard fail yet) | Same task |
 | **Mid-range frame / MiB** | Honest classical budgets below — not a Filament GPU particle claim | This doc |
@@ -51,7 +52,7 @@ Target device class: **Pixel 7a** (and similar mid-range phones). Budgets are fo
 .\scripts\run_h10_size_gate.ps1
 ```
 
-PASS = no Filament/`feature_cg` content in base + task exits 0.  
+PASS = no Filament/`feature_cg` **natives or DEX classes** in base (ZIP natives + DEX class scan + mapping residuals) + on-demand delivery manifests OK + task exits 0.  
 A base size over ~40 MiB prints a **warn** (same honesty as E5 fat vs phone-ABI notes) but does not FAIL H10 if the engine stays out of base.
 
 ---
@@ -91,3 +92,4 @@ No Pixel result is claimed in this file until a dated tip dump is pasted by test
 - E5 `reportApkSize` remains for `.so` breakdown
 
 H10 adds the **explicit base scan + budget doc + script**, and flips plan rows to MET.
+Honesty fixlet (post-#30 / Greptile #29): DEX class definitions + R8 mapping residuals (not ZIP package-path hints alone); on-demand delivery asserted from feature manifests.
