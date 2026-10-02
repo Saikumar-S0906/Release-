@@ -90,6 +90,19 @@ object PackRuntime {
     fun inpaintNeuralApplyEnabled(packReady: Boolean, engineBound: Boolean): Boolean =
         inpaintStatus(packReady, engineBound) == InpaintStatus.EngineReady
 
+    /**
+     * Depth user status. [DepthStatus.ReadyFileOnly] is a sideloaded file whose
+     * SHA was recorded. [DepthStatus.EngineReady] is the bound interpreter.
+     * Manual Z-order never counts as [engineBound]. A file on disk is not a
+     * quality certificate.
+     */
+    fun depthStatus(packReady: Boolean, engineBound: Boolean): DepthStatus =
+        when {
+            isEngineReady(packReady, engineBound) -> DepthStatus.EngineReady
+            packReady -> DepthStatus.ReadyFileOnly
+            else -> DepthStatus.NotReady
+        }
+
     fun incomingDir(): File? {
         val ctx = appContext ?: return null
         return File(ctx.filesDir, PackStore.INCOMING_DIR)
@@ -105,6 +118,13 @@ enum class SuperResDenoiseStatus {
 
 /** Inpaint: sideload file Ready versus a bound neural engine. */
 enum class InpaintStatus {
+    NotReady,
+    ReadyFileOnly,
+    EngineReady
+}
+
+/** Depth: sideload file Ready versus a bound interpreter. Not a quality score. */
+enum class DepthStatus {
     NotReady,
     ReadyFileOnly,
     EngineReady

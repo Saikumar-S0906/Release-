@@ -142,6 +142,32 @@ class PackEngineHooksTest {
     }
 
     @Test
+    fun depth_readyFileIsNotNeuralAndHasNoPin() {
+        val spec = PackCatalog.spec(PackId.Depth)
+        assertNull(spec.downloadUrl)
+        assertNull(spec.downloadSha256)
+        assertNull(spec.expectedSha256)
+        assertNull(spec.assetPath)
+        assertFalse(PackCatalog.isBundled(PackId.Depth))
+        assertFalse(PackCatalog.hasHttpsFallback(spec))
+        assertEquals("depth.tflite", spec.fileName)
+        assertEquals("ml_depth", spec.playModule)
+        assertEquals(
+            DepthStatus.ReadyFileOnly,
+            PackRuntime.depthStatus(packReady = true, engineBound = false)
+        )
+        assertEquals(
+            DepthStatus.EngineReady,
+            PackRuntime.depthStatus(packReady = true, engineBound = true)
+        )
+        assertEquals(
+            DepthStatus.NotReady,
+            PackRuntime.depthStatus(packReady = false, engineBound = true)
+        )
+        assertFalse(PackRuntime.engineReady(PackId.Depth))
+    }
+
+    @Test
     fun modelFile_mustMatchRecordedShaBeforeBind() {
         val file = File.createTempFile("pack-gate", ".bin")
         try {

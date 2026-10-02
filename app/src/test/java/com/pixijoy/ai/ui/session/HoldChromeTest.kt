@@ -56,6 +56,7 @@ class HoldChromeTest {
         assertTrue(isHoldPack(PackId.Track))
         assertFalse(isHoldPack(PackId.Inpaint))
         assertFalse(isHoldPack(PackId.SuperRes))
+        assertFalse(isHoldPack(PackId.Depth))
         assertEquals(HoldReadyLine.ComingWithPack, holdReadyLine(engineReady = false))
         assertEquals(HoldReadyLine.NeuralReady, holdReadyLine(engineReady = true))
 

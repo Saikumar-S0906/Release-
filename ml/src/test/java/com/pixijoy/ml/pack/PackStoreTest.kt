@@ -71,7 +71,12 @@ class PackStoreTest {
 
     @Test
     fun catalog_coversAllPacks() {
-        assertEquals(5, PackCatalog.all().size)
+        assertEquals(6, PackCatalog.all().size)
+        val depth = PackCatalog.spec(PackId.Depth)
+        assertEquals("depth.tflite", depth.fileName)
+        assertNull(depth.expectedSha256)
+        assertNull(depth.assetPath)
+        assertNull(depth.downloadUrl)
         assertEquals("ml_inpaint", PackCatalog.spec(PackId.Inpaint).playModule)
         assertEquals("ml_track", PackCatalog.spec(PackId.Track).playModule)
         val sr = PackCatalog.spec(PackId.SuperRes)

@@ -2,16 +2,19 @@ package com.pixijoy.ml.pack
 
 /**
  * On-demand ML packs. Small TFLite packs may ship in `:ml` assets and seed into
- * the pack store on first use. Large packs (FILM, oversized inpaint) use HTTPS
- * Download or sideload — never invent weights.
+ * the pack store on first use. Large packs (FILM, oversized inpaint, depth)
+ * use HTTPS Download or sideload — never invent weights, and never put a graph
+ * over the asset budget into the base APK.
  * [PackId.Track], [PackId.SuperRes], and [PackId.Denoise] ship in APK assets.
+ * [PackId.Depth] is sideload-only until a quality pin exists. No SHA here.
  */
 enum class PackId {
     Inpaint,
     SuperRes,
     Denoise,
     FrameInterp,
-    Track
+    Track,
+    Depth
 }
 
 data class PackSpec(
@@ -117,6 +120,8 @@ object PackCatalog {
             expectedSha256 = TRACK_ASSET_SHA256,
             assetPath = TRACK_ASSET_PATH
         )
+        // Sideload only. No expected SHA and no asset path until verify --quality.
+        PackId.Depth -> PackSpec(id, VERSION, "depth.tflite", "ml_depth")
     }
 
     fun isBundled(id: PackId): Boolean = !spec(id).assetPath.isNullOrBlank()

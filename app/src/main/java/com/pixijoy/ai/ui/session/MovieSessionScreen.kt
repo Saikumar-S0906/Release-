@@ -109,6 +109,7 @@ import com.pixijoy.designsystem.PixiSuccess
 import com.pixijoy.designsystem.PixiSurface
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
+import com.pixijoy.ml.pack.PackRuntime
 import com.pixijoy.movie.AudioBed
 import com.pixijoy.movie.AudioMasterFx
 import com.pixijoy.movie.AudioStem
@@ -206,6 +207,7 @@ fun MovieSessionScreen(
     val multi = sessionState.multi
     val timeline = sessionState.timeline
     val previewEpoch = sessionState.previewEpoch
+    val packEpoch by PackRuntime.observeEngineEpoch().collectAsState()
     FlushSessionOnStop(sessionViewModel::flushInBackground)
     PredictiveBackHandler {
         it.collect { }
@@ -399,7 +401,7 @@ fun MovieSessionScreen(
             selectedId = next.clips.firstOrNull()?.id
         }
     }
-    LaunchedEffect(paths.joinToString(), previewEpoch, compositionPreview) {
+    LaunchedEffect(paths.joinToString(), previewEpoch, compositionPreview, packEpoch) {
         compositionPreview?.bind(paths, multi, playing)
     }
     LaunchedEffect(player) {

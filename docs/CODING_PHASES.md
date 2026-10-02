@@ -155,8 +155,8 @@ Do **not** block Phases 0–6. Each plug is a thin bind:
 
 | When file lands | Code work |
 |-----------------|-----------|
-| `inpaint.tflite` | E1 HTTPS/SHA pin + Download CTA (Telea stays fallback) |
-| `depth.tflite` | PackId.Depth + LiteRT + soft Z replace P5.4 |
+| `inpaint.tflite` | Sideload bind accepts image+mask in either input order (Telea stays fallback). HTTPS/SHA pin still waits on `verify_contract.py --quality` and a Release- URL. Not an APK asset. |
+| `depth.tflite` | `PackId.Depth` sideload + LiteRT. Soft Z runs only when `engineReady`; manual Z stays the fallback. No SHA pin until `--quality`. Not an APK asset. |
 | `matting.tflite` | PackId.Matting + LiteRT + plates replace P5.5 |
 | `flow.tflite` | PackId.Flow + LiteRT + stabilize/attach assist |
 

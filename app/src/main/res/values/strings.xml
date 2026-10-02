@@ -357,6 +357,9 @@
     <string name="studio_pack_inpaint_ready">Installed and verified (Ready). The neural engine is not bound, so neural inpaint stays off. Nearby-pixel fill is not neural.</string>
     <string name="studio_pack_inpaint_ready_no_litert">Installed and verified (Ready). Play services LiteRT is unavailable, so the neural engine cannot start. Nearby-pixel fill is not neural.</string>
     <string name="studio_pack_inpaint_engine_ready">Neural ready. The sideloaded inpaint model is bound, so neural Apply can run it. Nearby-pixel fill stays available and is not neural.</string>
+    <string name="studio_pack_depth_ready">Installed and verified (Ready). The depth engine is not bound, so CG stays on manual Z-order. This is not neural depth.</string>
+    <string name="studio_pack_depth_ready_no_litert">Installed and verified (Ready). Play services LiteRT is unavailable, so the depth engine cannot start. CG stays on manual Z-order.</string>
+    <string name="studio_pack_depth_engine_ready">Neural ready. The sideloaded depth model is bound, so CG plates hide where the scene is nearer. Manual Z still sets how close the plate sits. This is not a quality certificate.</string>
     <string name="studio_pack_sr_denoise_ready">Downloaded and verified (Ready). The neural engine is not bound, so Apply stays off and the photo is left unchanged.</string>
     <string name="studio_pack_sr_denoise_ready_no_litert">Downloaded and verified (Ready). Play services LiteRT is unavailable, so the neural engine cannot start and Apply stays off.</string>
     <string name="studio_pack_engine_ready">Neural ready. The on-device model is bound, so Apply can run it. Processing stays on this phone.</string>

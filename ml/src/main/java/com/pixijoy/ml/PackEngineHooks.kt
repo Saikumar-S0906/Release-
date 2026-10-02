@@ -54,6 +54,17 @@ sealed interface NeuralEngine {
         override val capability: PackId = PackId.Track
         fun run(frame: Bitmap, x: Float, y: Float): Pair<Float, Float>? = invoke(frame, x, y)
     }
+
+    /**
+     * Relative depth, length [com.pixijoy.ml.pack.PackModelContract.DEPTH_EDGE] squared,
+     * row-major, 0 near → 1 far. Null when the interpreter misses.
+     */
+    class Depth(
+        private val invoke: (Bitmap) -> FloatArray?
+    ) : NeuralEngine {
+        override val capability: PackId = PackId.Depth
+        fun run(frame: Bitmap): FloatArray? = invoke(frame)
+    }
 }
 
 /** Install + checksum gate. True only for a ready pack whose file hash matches. */
@@ -176,6 +187,9 @@ class PackEngineHooks @Inject constructor(
     fun track(frame: Bitmap, x: Float, y: Float): Pair<Float, Float>? =
         (boundEngine(PackId.Track) as? NeuralEngine.Track)?.run(frame, x, y)
 
+    fun depth(frame: Bitmap): FloatArray? =
+        (boundEngine(PackId.Depth) as? NeuralEngine.Depth)?.run(frame)
+
     fun clear() {
         bound.clear()
     }
@@ -205,6 +219,9 @@ class PackEngineHooks @Inject constructor(
 
         fun tryTrack(frame: Bitmap, x: Float, y: Float): Pair<Float, Float>? =
             active?.track(frame, x, y)
+
+        /** Null unless a depth interpreter is bound. Classical Z stays in that case. */
+        fun tryDepth(frame: Bitmap): FloatArray? = active?.depth(frame)
 
         fun hasEngine(id: PackId): Boolean = active?.isBound(id) == true
 

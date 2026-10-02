@@ -28,6 +28,7 @@ import com.pixijoy.ai.R
 import com.pixijoy.designsystem.PixiEmptyState
 import com.pixijoy.designsystem.PixiPrimaryButton
 import com.pixijoy.designsystem.PixiTextMuted
+import com.pixijoy.ml.pack.DepthStatus
 import com.pixijoy.ml.pack.InpaintStatus
 import com.pixijoy.ml.pack.PackCatalog
 import com.pixijoy.ml.pack.PackId
@@ -254,6 +255,7 @@ private fun packStatusCopy(
     is PackInstallState.Ready -> when (packId) {
         PackId.SuperRes, PackId.Denoise -> superResDenoiseReadyCopy(engineReady)
         PackId.Inpaint -> inpaintReadyCopy(engineReady)
+        PackId.Depth -> depthReadyCopy(engineReady)
         PackId.FrameInterp, PackId.Track -> holdReadyCopy(engineReady)
     }
     is PackInstallState.Failed ->
@@ -307,5 +309,25 @@ private fun inpaintReadyCopy(engineReady: Boolean): String =
             }
         InpaintStatus.NotReady ->
             stringResource(R.string.studio_pack_inpaint_ready)
+    }
+
+/**
+ * Depth. [DepthStatus.ReadyFileOnly] is a sideloaded file that verified.
+ * [DepthStatus.EngineReady] is the bound interpreter. Manual Z-order is neither,
+ * and a file on disk is not a quality certificate.
+ */
+@Composable
+private fun depthReadyCopy(engineReady: Boolean): String =
+    when (PackRuntime.depthStatus(packReady = true, engineBound = engineReady)) {
+        DepthStatus.EngineReady ->
+            stringResource(R.string.studio_pack_depth_engine_ready)
+        DepthStatus.ReadyFileOnly ->
+            if (PackRuntime.liteRtReady) {
+                stringResource(R.string.studio_pack_depth_ready)
+            } else {
+                stringResource(R.string.studio_pack_depth_ready_no_litert)
+            }
+        DepthStatus.NotReady ->
+            stringResource(R.string.studio_pack_depth_ready)
     }
 

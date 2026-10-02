@@ -26,6 +26,8 @@ import androidx.media3.transformer.ProgressHolder
 import androidx.media3.transformer.Transformer
 import com.pixijoy.core.common.AppResult
 import com.pixijoy.core.media.MediaProbe
+import com.pixijoy.ml.PackEngineHooks
+import com.pixijoy.ml.pack.PackId
 import java.io.File
 import kotlin.coroutines.resume
 import kotlinx.coroutines.Dispatchers
@@ -544,7 +546,16 @@ class Media3MovieEngine : MovieEngine {
         VfxOverlays.effect(mixed.vfx, total, trackAnchors)?.let { videoEffects += it }
         Title3dOverlays.effect(mixed.titles3d, total)?.let { videoEffects += it }
         val projectDir = paths.firstOrNull()?.let { File(it).parentFile }
-        CgOverlays.effect(mixed.cg, total, trackAnchors, projectDir)?.let { videoEffects += it }
+        val cg = CgOverlays.effect(mixed.cg, total, trackAnchors, projectDir)
+        // Depth sampling reads the frame on the CPU. That effect rejects HDR,
+        // so Keep HDR stays on manual Z-order. No engine means no extra pass.
+        if (cg != null &&
+            mixed.hdrMode != MovieHdrMode.KeepHdr &&
+            PackEngineHooks.hasEngine(PackId.Depth)
+        ) {
+            videoEffects += depthSampleEffect()
+        }
+        cg?.let { videoEffects += it }
         TimecodeOverlays.effect(burnInTc, total)?.let { videoEffects += it }
         MovieGrade.effect(mixed.grade)?.let { videoEffects += it }
         val audioProcessors = ArrayList<AudioProcessor>()

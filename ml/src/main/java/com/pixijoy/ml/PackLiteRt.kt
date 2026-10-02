@@ -110,6 +110,7 @@ object PackLiteRt {
                 PackId.Denoise -> bindDenoise(file)
                 PackId.FrameInterp -> bindFrameInterp(file)
                 PackId.Track -> bindTrack(file)
+                PackId.Depth -> bindDepth(file)
             }
         } finally {
             PackRuntime.notifyEngineChanged()
@@ -442,6 +443,69 @@ object PackLiteRt {
         notify?.invoke(PackId.Inpaint, engine)
     }
 
+    private fun bindDepth(file: File) {
+        val interpreter = openInterpreter(file) ?: run {
+            releaseEngine(PackId.Depth)
+            return
+        }
+        val accepted = runCatching {
+            prepareDepthShape(interpreter)
+            floatIo(interpreter) &&
+                PackModelContract.isMonocularDepth(
+                    interpreter.getInputTensor(0).shape(),
+                    interpreter.getOutputTensor(0).shape()
+                )
+        }.getOrDefault(false)
+        if (!accepted) {
+            releaseEngine(PackId.Depth, interpreter)
+            return
+        }
+        val engine = NeuralEngine.Depth { bitmap ->
+            runCatching { depthMap(bitmap) }.getOrNull()
+        }
+        val notify = synchronized(lock) {
+            engines.remove(PackId.Depth)?.close()
+            engines[PackId.Depth] = interpreter
+            sink
+        }
+        notify?.invoke(PackId.Depth, engine)
+    }
+
+    private fun prepareDepthShape(interpreter: InterpreterApi) {
+        val shape = interpreter.getInputTensor(0).shape()
+        if ((shape.getOrNull(1) ?: 0) > 0 && (shape.getOrNull(2) ?: 0) > 0) return
+        val edge = PackModelContract.DEPTH_EDGE
+        interpreter.resizeInput(0, intArrayOf(1, edge, edge, 3))
+        interpreter.allocateTensors()
+    }
+
+    /** Relative depth, row 0 at the top, values coerced to 0..1 (near → far). */
+    private fun depthMap(src: Bitmap): FloatArray? {
+        val interpreter = synchronized(lock) { engines[PackId.Depth] } ?: return null
+        val edge = PackModelContract.DEPTH_EDGE
+        val sized = if (src.width == edge && src.height == edge) {
+            src
+        } else {
+            Bitmap.createScaledBitmap(src, edge, edge, true)
+        }
+        try {
+            val input = Array(1) { Array(edge) { Array(edge) { FloatArray(3) } } }
+            fillRgb(sized, input[0])
+            val output = Array(1) { Array(edge) { Array(edge) { FloatArray(1) } } }
+            interpreter.run(input, output)
+            val values = FloatArray(edge * edge)
+            var i = 0
+            for (row in 0 until edge) {
+                for (col in 0 until edge) {
+                    values[i++] = output[0][row][col][0].coerceIn(0f, 1f)
+                }
+            }
+            return values
+        } finally {
+            if (sized !== src && !sized.isRecycled) sized.recycle()
+        }
+    }
+
     private fun bindDenoise(file: File) {
         val interpreter = openInterpreter(file) ?: run {
             releaseEngine(PackId.Denoise)
@@ -471,16 +535,30 @@ object PackLiteRt {
     }
 
     private fun inpaintContractMatches(interpreter: InterpreterApi): Boolean {
+        if (interpreter.getOutputTensor(0).dataType() != DataType.FLOAT32) return false
         val out = interpreter.getOutputTensor(0).shape()
         return when (interpreter.inputTensorCount) {
-            1 -> PackModelContract.isInpaintRgbMask(interpreter.getInputTensor(0).shape(), out)
-            2 -> PackModelContract.isInpaintRgbAndMask(
-                interpreter.getInputTensor(0).shape(),
-                interpreter.getInputTensor(1).shape(),
-                out
-            )
+            1 -> interpreter.getInputTensor(0).dataType() == DataType.FLOAT32 &&
+                PackModelContract.isInpaintRgbMask(interpreter.getInputTensor(0).shape(), out)
+            2 -> dualInpaintContract(interpreter, out)
             else -> false
         }
+    }
+
+    /** Image and mask may be swapped. The on-disk graph is mask, then image. */
+    private fun dualInpaintContract(interpreter: InterpreterApi, out: IntArray): Boolean {
+        val first = interpreter.getInputTensor(0)
+        val second = interpreter.getInputTensor(1)
+        if (first.dataType() != DataType.FLOAT32 || second.dataType() != DataType.FLOAT32) {
+            return false
+        }
+        val indices = PackModelContract.inpaintInputIndices(first.shape(), second.shape())
+            ?: return false
+        return PackModelContract.isInpaintRgbAndMask(
+            interpreter.getInputTensor(indices.first).shape(),
+            interpreter.getInputTensor(indices.second).shape(),
+            out
+        )
     }
 
     private fun prepareInpaintShapes(interpreter: InterpreterApi) {
@@ -492,20 +570,28 @@ object PackLiteRt {
                     interpreter.allocateTensors()
                 }
             }
-            2 -> {
-                val image = interpreter.getInputTensor(0).shape()
-                if ((image.getOrNull(1) ?: 0) <= 0 || (image.getOrNull(2) ?: 0) <= 0) {
-                    interpreter.resizeInput(0, intArrayOf(1, MAX_WORK_EDGE, MAX_WORK_EDGE, 3))
-                    val mask = interpreter.getInputTensor(1).shape()
-                    if (mask.size == 3) {
-                        interpreter.resizeInput(1, intArrayOf(1, MAX_WORK_EDGE, MAX_WORK_EDGE))
-                    } else {
-                        interpreter.resizeInput(1, intArrayOf(1, MAX_WORK_EDGE, MAX_WORK_EDGE, 1))
-                    }
-                    interpreter.allocateTensors()
-                }
-            }
+            2 -> prepareDualInpaintShapes(interpreter)
         }
+    }
+
+    private fun prepareDualInpaintShapes(interpreter: InterpreterApi) {
+        val resolved = PackModelContract.inpaintInputIndices(
+            interpreter.getInputTensor(0).shape(),
+            interpreter.getInputTensor(1).shape()
+        )
+        // Concrete mask-first or image-first graphs are already sized. Do not
+        // resize input 0 as if it were RGB — that input may be the mask.
+        if (resolved != null) return
+        val image = interpreter.getInputTensor(0).shape()
+        if ((image.getOrNull(1) ?: 0) > 0 && (image.getOrNull(2) ?: 0) > 0) return
+        interpreter.resizeInput(0, intArrayOf(1, MAX_WORK_EDGE, MAX_WORK_EDGE, 3))
+        val mask = interpreter.getInputTensor(1).shape()
+        if (mask.size == 3) {
+            interpreter.resizeInput(1, intArrayOf(1, MAX_WORK_EDGE, MAX_WORK_EDGE))
+        } else {
+            interpreter.resizeInput(1, intArrayOf(1, MAX_WORK_EDGE, MAX_WORK_EDGE, 1))
+        }
+        interpreter.allocateTensors()
     }
 
     private fun prepareDenoiseShape(interpreter: InterpreterApi) {
@@ -590,9 +676,13 @@ object PackLiteRt {
         h: Int,
         w: Int
     ): Bitmap {
+        val indices = PackModelContract.inpaintInputIndices(
+            interpreter.getInputTensor(0).shape(),
+            interpreter.getInputTensor(1).shape()
+        ) ?: error("inpaint inputs are not RGB plus a same-size mask")
         val rgb = Array(1) { Array(h) { Array(w) { FloatArray(3) } } }
         fillRgb(tile, rgb[0])
-        val maskShape = interpreter.getInputTensor(1).shape()
+        val maskShape = interpreter.getInputTensor(indices.second).shape()
         val maskInput: Any = if (maskShape.size == 3) {
             Array(1) { Array(h) { FloatArray(w) } }.also { plane ->
                 var i = 0
@@ -615,9 +705,10 @@ object PackLiteRt {
             }
         }
         val output = Array(1) { Array(h) { Array(w) { FloatArray(3) } } }
-        val outputs = HashMap<Int, Any>()
-        outputs[0] = output
-        interpreter.runForMultipleInputsOutputs(arrayOf(rgb, maskInput), outputs)
+        val inputs = arrayOfNulls<Any>(2)
+        inputs[indices.first] = rgb
+        inputs[indices.second] = maskInput
+        interpreter.runForMultipleInputsOutputs(inputs, mapOf(0 to output))
         return bitmapFromRgb(output[0], h, w)
     }
 

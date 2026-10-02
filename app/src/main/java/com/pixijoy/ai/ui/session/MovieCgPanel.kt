@@ -27,6 +27,7 @@ import com.pixijoy.designsystem.PixiCapabilityKind
 import com.pixijoy.designsystem.PixiPrimaryButton
 import com.pixijoy.designsystem.PixiText
 import com.pixijoy.designsystem.PixiTextMuted
+import com.pixijoy.ml.pack.PackId
 import com.pixijoy.movie.CgHost
 import com.pixijoy.movie.CgMatte
 import com.pixijoy.movie.CgPreset
@@ -69,6 +70,11 @@ fun MovieCgPanel(
             modifier = Modifier
                 .testTag("movie_cg_hint")
                 .semantics { contentDescription = hint }
+        )
+        PackStatusRow(
+            packId = PackId.Depth,
+            statusTag = "movie_cg_depth_status",
+            downloadTag = "movie_cg_depth_download"
         )
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
