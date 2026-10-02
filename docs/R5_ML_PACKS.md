@@ -37,7 +37,7 @@
 | ID | Contract | Engine |
 |----|----------|--------|
 | E4 | `FrameInterp.mlAvailable` ← pack engine | HTTPS FILM pin + LiteRT bind MET when Ready + FLOAT32 film contract (512×512). Export Neural frames → `NeuralSlowMoMux` mid-frame synth + audio remux; preview stays rate/hold; heuristic fallback if synth fails. Maestro download: `.maestro/packs/e4-frame-interp-download.yaml` |
-| F1 | `ClipTrack` + `TrackPathBake` | Bundled `track.tflite` in APK assets + LiteRT bind when Ready + FLOAT32 point-track contract. Enable Track unlocks on `engineReady`; bake applies follow pan/zoom. Maestro: `.maestro/movie/f1-track-roto.yaml` |
+| F1 | `ClipTrack` + `TrackPathBake` | Bundled `track.tflite` in APK assets + LiteRT bind when Ready + FLOAT32 point-track contract. Enable Track unlocks on `engineReady`; bake samples the clip source window (trim/speed) and maps pan/zoom into CG/VFX attach so overlays do not drift. Seed-only when unbound. Maestro: `.maestro/movie/f1-track-roto.yaml` |
 
 ## E5 size
 

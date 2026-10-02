@@ -19,7 +19,7 @@ class TrackPathBakeTest {
     @Test
     fun anchors_seedWhenEngineOff() {
         val track = ClipTrack(0.35f, 0.65f, 0.1f, TrackEngine.Off)
-        val path = TrackPathBake.anchors("/missing.mp4", track, 2_000)
+        val path = TrackPathBake.anchors("/missing.mp4", track, 0L, 2_000L)
         assertFalse(path.isEmpty)
         assertEquals(0.35f, path.sample(0.25f)!!.first, 0.001f)
         assertEquals(0.65f, path.sample(0.75f)!!.second, 0.001f)
@@ -31,12 +31,26 @@ class TrackPathBakeTest {
         try {
             TrackFacade.mlAvailableOverride = false
             val track = ClipTrack(0.2f, 0.8f, 0.08f, TrackEngine.Ml)
-            val path = TrackPathBake.anchors("/missing.mp4", track, 2_000)
+            val path = TrackPathBake.anchors("/missing.mp4", track, 0L, 2_000L)
             assertEquals(0.2f, path.sample(0.5f)!!.first, 0.001f)
             assertEquals(0.8f, path.sample(0.5f)!!.second, 0.001f)
-            assertTrue(TrackPathBake.motion("/missing.mp4", track, 2_000).isIdentity)
+            assertTrue(TrackPathBake.motion("/missing.mp4", track, 0L, 2_000L).isIdentity)
         } finally {
             TrackFacade.mlAvailableOverride = prev
         }
+    }
+
+    @Test
+    fun sourceSampleMs_usesTrimWindowNotOutputDuration() {
+        // Trimmed 10s–12s: samples must land in that source window, not 0–2s.
+        assertEquals(10_000L, TrackPathBake.sourceSampleMs(0, 5, 10_000L, 12_000L))
+        assertEquals(12_000L, TrackPathBake.sourceSampleMs(4, 5, 10_000L, 12_000L))
+        assertEquals(11_000L, TrackPathBake.sourceSampleMs(2, 5, 10_000L, 12_000L))
+    }
+
+    @Test
+    fun sourceSampleMs_coversFullSpanAtEnds() {
+        assertEquals(0L, TrackPathBake.sourceSampleMs(0, 10, 0L, 5_000L))
+        assertEquals(5_000L, TrackPathBake.sourceSampleMs(9, 10, 0L, 5_000L))
     }
 }

@@ -1,5 +1,9 @@
 package com.pixijoy.movie
 
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
+
 /**
  * F1 classical track-attach: normalized image-space anchors (0..1) sampled over a
  * clip's local 0..1 timeline. Preview and export share the same sampler.
@@ -55,7 +59,9 @@ data class TrackAnchorPath(
 
 /**
  * Resolves an F1 image-space anchor at composition time for CG / VFX follow.
- * Shared by preview and export overlays.
+ * Shared by preview and export overlays. When Track ML is bound, samples the
+ * clip source window and maps through the same pan/zoom the video receives so
+ * attach does not drift from the subject.
  */
 fun interface TrackAnchorResolver {
     fun at(compositionMs: Long): Pair<Float, Float>?
@@ -80,12 +86,32 @@ fun interface TrackAnchorResolver {
                     val local = (ms - start).coerceAtLeast(0L)
                     val localT = local.toFloat() / clip.durationMs.coerceAtLeast(1L).toFloat()
                     val mediaPath = paths.getOrNull(clip.mediaIndex)
-                    if (mediaPath != null) {
-                        TrackPathBake.anchors(mediaPath, clip.track, clip.durationMs)
+                    val src = if (mediaPath != null) {
+                        TrackPathBake.anchors(mediaPath, clip.track, clip.inMs, clip.outMs)
                             .sample(localT)
                             ?: (clip.track.x to clip.track.y)
                     } else {
                         clip.track.x to clip.track.y
+                    }
+                    val transforms = ArrayList<TransformKeyframe>(2)
+                    if (clip.hasMotion) {
+                        transforms += clip.motion.sample(localT)
+                    }
+                    if (mediaPath != null && clip.hasTrack) {
+                        val follow = TrackPathBake.motion(
+                            mediaPath,
+                            clip.track,
+                            clip.inMs,
+                            clip.outMs
+                        )
+                        if (!follow.isIdentity) {
+                            transforms += follow.sample(localT)
+                        }
+                    }
+                    if (transforms.isEmpty()) {
+                        src
+                    } else {
+                        TrackAttach.mapThroughDisplay(src.first, src.second, transforms)
                     }
                 } else {
                     seedFallback
@@ -118,5 +144,44 @@ object TrackAttach {
         val nx = (imageX * 2f - 1f).coerceIn(-0.95f, 0.95f)
         val ny = (1f - imageY * 2f).coerceIn(-0.95f, 0.95f)
         return nx to ny
+    }
+
+    /**
+     * Map a source-image point (0..1) through the same NDC scale/rotate/translate
+     * chain [ClipMotion.toMatrixTransformation] applies to the video, so overlays
+     * land where the subject appears after pan/zoom. Identity transforms leave
+     * the point unchanged (seed-only / unbound Track ML).
+     */
+    fun mapThroughDisplay(
+        imageX: Float,
+        imageY: Float,
+        transforms: List<TransformKeyframe>
+    ): Pair<Float, Float> {
+        if (transforms.isEmpty()) {
+            return imageX.coerceIn(0f, 1f) to imageY.coerceIn(0f, 1f)
+        }
+        var x = imageX * 2f - 1f
+        var y = 1f - imageY * 2f
+        for (raw in transforms) {
+            val s = raw.normalized()
+            if (abs(s.scale - 1f) > 0.001f) {
+                x *= s.scale
+                y *= s.scale
+            }
+            if (abs(s.rotationDeg) > 0.01f) {
+                val rad = Math.toRadians(s.rotationDeg.toDouble())
+                val c = cos(rad).toFloat()
+                val sn = sin(rad).toFloat()
+                val nx = x * c - y * sn
+                val ny = x * sn + y * c
+                x = nx
+                y = ny
+            }
+            x += s.tx
+            y += s.ty
+        }
+        val outX = ((x + 1f) / 2f).coerceIn(0f, 1f)
+        val outY = ((1f - y) / 2f).coerceIn(0f, 1f)
+        return outX to outY
     }
 }

@@ -5,6 +5,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.math.abs
 
 class TrackAttachTest {
     @Test
@@ -81,5 +82,62 @@ class TrackAttachTest {
         val start = TrackAttach.cgOffset(0f, 0f, path.sample(0f)!!.first, path.sample(0f)!!.second)
         val end = TrackAttach.cgOffset(0f, 0f, path.sample(1f)!!.first, path.sample(1f)!!.second)
         assertTrue(end.first > start.first)
+    }
+
+    @Test
+    fun mapThroughDisplay_identityLeavesPoint() {
+        val p = TrackAttach.mapThroughDisplay(0.7f, 0.3f, emptyList())
+        assertEquals(0.7f, p.first, 0.001f)
+        assertEquals(0.3f, p.second, 0.001f)
+        val id = TrackAttach.mapThroughDisplay(
+            0.7f,
+            0.3f,
+            listOf(TransformKeyframe(0f, scale = 1f, tx = 0f, ty = 0f))
+        )
+        assertEquals(0.7f, id.first, 0.001f)
+        assertEquals(0.3f, id.second, 0.001f)
+    }
+
+    @Test
+    fun mapThroughDisplay_followPanPullsTowardCenter() {
+        // Same pan the bake applies for a point on the right.
+        val nx = 0.75f
+        val ny = 0.5f
+        val follow = TransformKeyframe(
+            0f,
+            scale = 1.08f,
+            tx = TrackPathBake.panX(nx),
+            ty = TrackPathBake.panY(ny)
+        )
+        val displayed = TrackAttach.mapThroughDisplay(nx, ny, listOf(follow))
+        assertTrue(
+            "display x=${displayed.first} should move toward 0.5 from $nx",
+            abs(displayed.first - 0.5f) < abs(nx - 0.5f)
+        )
+        assertEquals(0.5f, displayed.second, 0.05f)
+    }
+
+    @Test
+    fun resolver_trimmedClipStillUsesSeedWhenMlUnbound() {
+        val prev = TrackFacade.mlAvailableOverride
+        try {
+            TrackFacade.mlAvailableOverride = false
+            val clip = TimelineClip(
+                id = "c0",
+                mediaIndex = 0,
+                inMs = 10_000,
+                outMs = 12_000,
+                speed = 2f,
+                track = ClipTrack(0.4f, 0.6f, 0.08f, TrackEngine.Ml)
+            )
+            val timeline = Timeline(listOf(clip))
+            val resolver = TrackAnchorResolver.forTimeline(listOf("/missing.mp4"), timeline)
+            val at = resolver.at(100)
+            assertNotNull(at)
+            assertEquals(0.4f, at!!.first, 0.001f)
+            assertEquals(0.6f, at.second, 0.001f)
+        } finally {
+            TrackFacade.mlAvailableOverride = prev
+        }
     }
 }
