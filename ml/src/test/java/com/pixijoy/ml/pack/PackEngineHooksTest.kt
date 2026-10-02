@@ -111,12 +111,14 @@ class PackEngineHooksTest {
     }
 
     @Test
-    fun inpaint_readyFileIsNotNeuralAndHasNoHttpsPin() {
+    fun inpaint_readyFileIsNotNeural() {
         val spec = PackCatalog.spec(PackId.Inpaint)
-        assertNull(spec.downloadUrl)
-        assertNull(spec.downloadSha256)
+        assertEquals(PackCatalog.INPAINT_DOWNLOAD_URL, spec.downloadUrl)
+        assertEquals(PackCatalog.INPAINT_DOWNLOAD_SHA256, spec.downloadSha256)
         assertNull(spec.expectedSha256)
-        assertFalse(PackCatalog.hasHttpsFallback(spec))
+        assertNull(spec.assetPath)
+        assertTrue(PackCatalog.hasHttpsFallback(spec))
+        assertFalse(PackCatalog.isBundled(PackId.Inpaint))
         assertEquals("inpaint.tflite", spec.fileName)
         assertFalse(PackRuntime.engineReady(PackId.Inpaint))
         assertEquals(
@@ -142,14 +144,14 @@ class PackEngineHooksTest {
     }
 
     @Test
-    fun depth_readyFileIsNotNeuralAndHasNoPin() {
+    fun depth_readyFileIsNotNeural() {
         val spec = PackCatalog.spec(PackId.Depth)
-        assertNull(spec.downloadUrl)
-        assertNull(spec.downloadSha256)
+        assertEquals(PackCatalog.DEPTH_DOWNLOAD_URL, spec.downloadUrl)
+        assertEquals(PackCatalog.DEPTH_DOWNLOAD_SHA256, spec.downloadSha256)
         assertNull(spec.expectedSha256)
         assertNull(spec.assetPath)
         assertFalse(PackCatalog.isBundled(PackId.Depth))
-        assertFalse(PackCatalog.hasHttpsFallback(spec))
+        assertTrue(PackCatalog.hasHttpsFallback(spec))
         assertEquals("depth.tflite", spec.fileName)
         assertEquals("ml_depth", spec.playModule)
         assertEquals(

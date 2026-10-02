@@ -76,7 +76,8 @@ class PackStoreTest {
         assertEquals("depth.tflite", depth.fileName)
         assertNull(depth.expectedSha256)
         assertNull(depth.assetPath)
-        assertNull(depth.downloadUrl)
+        assertEquals(PackCatalog.DEPTH_DOWNLOAD_URL, depth.downloadUrl)
+        assertEquals(PackCatalog.DEPTH_DOWNLOAD_SHA256, depth.downloadSha256)
         assertEquals("ml_inpaint", PackCatalog.spec(PackId.Inpaint).playModule)
         assertEquals("ml_track", PackCatalog.spec(PackId.Track).playModule)
         val sr = PackCatalog.spec(PackId.SuperRes)
@@ -95,9 +96,16 @@ class PackStoreTest {
         assertEquals(PackCatalog.DENOISE_ASSET_SHA256, denoise.expectedSha256)
         assertEquals(PackCatalog.DENOISE_ASSET_PATH, denoise.assetPath)
         assertTrue(PackCatalog.isBundled(PackId.Denoise))
-        assertEquals(null, PackCatalog.spec(PackId.Inpaint).downloadUrl)
-        assertNull(PackCatalog.spec(PackId.Inpaint).downloadSha256)
+        assertEquals(
+            PackCatalog.INPAINT_DOWNLOAD_URL,
+            PackCatalog.spec(PackId.Inpaint).downloadUrl
+        )
+        assertEquals(
+            PackCatalog.INPAINT_DOWNLOAD_SHA256,
+            PackCatalog.spec(PackId.Inpaint).downloadSha256
+        )
         assertNull(PackCatalog.spec(PackId.Inpaint).expectedSha256)
+        assertNull(PackCatalog.spec(PackId.Inpaint).assetPath)
         assertTrue(PackCatalog.hasHttpsFallback(PackCatalog.spec(PackId.FrameInterp)))
         assertEquals(
             PackCatalog.FRAME_INTERP_DOWNLOAD_URL,
@@ -117,12 +125,13 @@ class PackStoreTest {
             PackCatalog.TRACK_ASSET_SHA256,
             PackCatalog.spec(PackId.Track).expectedSha256
         )
-        val sideloadHint = PackCatalog.installUnavailableMessage(
+        assertTrue(PackCatalog.hasHttpsFallback(PackCatalog.spec(PackId.Inpaint)))
+        assertTrue(PackCatalog.hasHttpsFallback(PackCatalog.spec(PackId.Depth)))
+        val hostedHint = PackCatalog.installUnavailableMessage(
             PackCatalog.spec(PackId.Inpaint),
             "Play is unavailable."
         )
-        assertTrue(sideloadHint.contains("inpaint.tflite"))
-        assertTrue(sideloadHint.contains("not hosted for download"))
+        assertEquals("Play is unavailable.", hostedHint)
     }
 
     @Test
@@ -152,11 +161,27 @@ class PackStoreTest {
             PackCatalog.FRAME_INTERP_DOWNLOAD_SHA256
         )
         assertEquals(
+            "https://github.com/Saikumar-S0906/Release-/releases/download/ml-packs-v1/inpaint.tflite",
+            PackCatalog.INPAINT_DOWNLOAD_URL
+        )
+        assertEquals(
+            "6ca50eaad897f046245d956c1e4c77d12b885e61fa93a953c48967ecc1afb73c",
+            PackCatalog.INPAINT_DOWNLOAD_SHA256
+        )
+        assertEquals(
+            "https://github.com/Saikumar-S0906/Release-/releases/download/ml-packs-v1/depth.tflite",
+            PackCatalog.DEPTH_DOWNLOAD_URL
+        )
+        assertEquals(
+            "a6b296193d7497ded445a1c257a08d4a9d49faad2a8a728767e9d1402287db1f",
+            PackCatalog.DEPTH_DOWNLOAD_SHA256
+        )
+        assertEquals(
             "e2eb42c38ac53b9f708811f2887b53f4eb9774d9cb1bfff058a197d9fe26301f",
             PackCatalog.TRACK_ASSET_SHA256
         )
         assertEquals(
-            setOf(PackId.FrameInterp),
+            setOf(PackId.FrameInterp, PackId.Inpaint, PackId.Depth),
             PackId.entries.filter { PackCatalog.hasHttpsFallback(PackCatalog.spec(it)) }.toSet()
         )
         assertEquals(

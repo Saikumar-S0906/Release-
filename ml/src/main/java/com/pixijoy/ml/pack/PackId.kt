@@ -6,7 +6,8 @@ package com.pixijoy.ml.pack
  * use HTTPS Download or sideload — never invent weights, and never put a graph
  * over the asset budget into the base APK.
  * [PackId.Track], [PackId.SuperRes], and [PackId.Denoise] ship in APK assets.
- * [PackId.Depth] is sideload-only until a quality pin exists. No SHA here.
+ * [PackId.Inpaint] and [PackId.Depth] download from Release- (SHA-pinned). They
+ * are not APK assets. Install from file still accepts a local copy.
  */
 enum class PackId {
     Inpaint,
@@ -73,9 +74,27 @@ object PackCatalog {
         "3a201916658277ed6e7626d93a6ee117a47b04bc1986579600a90feabfe05eb4"
     const val FRAME_INTERP_PROVENANCE_URL =
         "https://raw.githubusercontent.com/egemenertugrul/frame-interpolation-tflite-unity/main/FILM_TFLite_UnityProject/Assets/StreamingAssets/model_512_quant_float16.tflite"
-    /** Public ML artifact host for FILM, inpaint (when large), and future packs. */
+    /** Public ML artifact host. Asset URLs use /releases/download/, not /releases/tag/. */
     const val ML_RELEASE_REPO = "https://github.com/Saikumar-S0906/Release-"
     const val ML_RELEASE_TAG = "ml-packs-v1"
+
+    /**
+     * PixiJoy inpaint UNet, ~75 MB, FLOAT32 image+mask 256 → RGB.
+     * Release- asset. Not an APK asset. Telea stays the fallback.
+     */
+    const val INPAINT_DOWNLOAD_URL =
+        "https://github.com/Saikumar-S0906/Release-/releases/download/ml-packs-v1/inpaint.tflite"
+    const val INPAINT_DOWNLOAD_SHA256 =
+        "6ca50eaad897f046245d956c1e4c77d12b885e61fa93a953c48967ecc1afb73c"
+
+    /**
+     * PixiJoy monocular depth UNet, ~75 MB, FLOAT32 RGB 256 → depth 256.
+     * Release- asset. Not an APK asset. Manual Z stays the fallback.
+     */
+    const val DEPTH_DOWNLOAD_URL =
+        "https://github.com/Saikumar-S0906/Release-/releases/download/ml-packs-v1/depth.tflite"
+    const val DEPTH_DOWNLOAD_SHA256 =
+        "a6b296193d7497ded445a1c257a08d4a9d49faad2a8a728767e9d1402287db1f"
 
     /**
      * PixiJoy F1 point-track TFLite (Apache-2.0), synthetic-trained Siamese,
@@ -87,7 +106,14 @@ object PackCatalog {
         "e2eb42c38ac53b9f708811f2887b53f4eb9774d9cb1bfff058a197d9fe26301f"
 
     fun spec(id: PackId): PackSpec = when (id) {
-        PackId.Inpaint -> PackSpec(id, VERSION, "inpaint.tflite", "ml_inpaint")
+        PackId.Inpaint -> PackSpec(
+            id,
+            VERSION,
+            "inpaint.tflite",
+            "ml_inpaint",
+            downloadUrl = INPAINT_DOWNLOAD_URL,
+            downloadSha256 = INPAINT_DOWNLOAD_SHA256
+        )
         PackId.SuperRes -> PackSpec(
             id,
             VERSION,
@@ -120,8 +146,14 @@ object PackCatalog {
             expectedSha256 = TRACK_ASSET_SHA256,
             assetPath = TRACK_ASSET_PATH
         )
-        // Sideload only. No expected SHA and no asset path until verify --quality.
-        PackId.Depth -> PackSpec(id, VERSION, "depth.tflite", "ml_depth")
+        PackId.Depth -> PackSpec(
+            id,
+            VERSION,
+            "depth.tflite",
+            "ml_depth",
+            downloadUrl = DEPTH_DOWNLOAD_URL,
+            downloadSha256 = DEPTH_DOWNLOAD_SHA256
+        )
     }
 
     fun isBundled(id: PackId): Boolean = !spec(id).assetPath.isNullOrBlank()
