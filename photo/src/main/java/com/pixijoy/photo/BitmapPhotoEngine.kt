@@ -10,6 +10,7 @@ import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import androidx.heifwriter.HeifWriter
 import com.pixijoy.core.common.AppResult
+import com.pixijoy.core.common.StudioDiagnostics
 import com.pixijoy.core.media.RawPreview
 import java.io.File
 import java.io.FileInputStream
@@ -81,6 +82,7 @@ class BitmapPhotoEngine(
             rendered.withColorIntent(colorIntent)
         } catch (t: Throwable) {
             recycleExportBitmaps(rendered, rendered)
+            StudioDiagnostics.note("export", "Export failed.")
             return AppResult.Err("Export failed.", t)
         }
         val requested = format
@@ -105,7 +107,7 @@ class BitmapPhotoEngine(
                 put(MediaStore.Images.Media.IS_PENDING, 1)
             }
             val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
-                ?: return AppResult.Err("Could not create a Pictures file.")
+                ?: return exportErr("Could not create a Pictures file.")
             pendingUri = uri
             var finalFormat = effective
             var wrote = writeEncoded(resolver, uri, bitmap, finalFormat, q, context)
@@ -122,7 +124,7 @@ class BitmapPhotoEngine(
             if (!wrote) {
                 resolver.delete(uri, null, null)
                 pendingUri = null
-                return AppResult.Err("Could not write ${finalFormat.extension}.")
+                return exportErr("Could not write the picture.")
             }
             // EXIF: JPEG/WebP/HEIC support rewrite; PNG typically has none - still try strip GPS.
             if (finalFormat != ExportFormat.PNG) {
@@ -136,7 +138,7 @@ class BitmapPhotoEngine(
             pendingUri = null
             AppResult.Ok(uri.toString())
         } catch (t: Throwable) {
-            AppResult.Err("Export failed.", t)
+            exportErr("Export failed.")
         } finally {
             pendingUri?.let { orphan ->
                 try {
@@ -148,6 +150,12 @@ class BitmapPhotoEngine(
         }
     }
 
+
+
+    private fun exportErr(message: String): AppResult<String> {
+        StudioDiagnostics.note("export", message)
+        return AppResult.Err(message)
+    }
 
     private fun writeEncoded(
         resolver: android.content.ContentResolver,

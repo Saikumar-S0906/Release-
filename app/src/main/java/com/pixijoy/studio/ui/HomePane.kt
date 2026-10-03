@@ -38,8 +38,10 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.pixijoy.core.common.StudioDiagnostics
 import com.pixijoy.studio.R
 import com.pixijoy.core.data.Project
 import com.pixijoy.designsystem.PixiBg
@@ -183,6 +185,18 @@ private fun HomeIntro(
                 .padding(top = 4.dp, bottom = 16.dp)
                 .testTag("home_on_device_badge")
         )
+        StudioDiagnostics.latest()?.let { line ->
+            Text(
+                line,
+                style = MaterialTheme.typography.bodySmall,
+                color = PixiTextMuted,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .testTag("home_last_diagnostic")
+            )
+        }
         PixiPrimaryButton(
             text = stringResource(R.string.home_create),
             onClick = onCreate,

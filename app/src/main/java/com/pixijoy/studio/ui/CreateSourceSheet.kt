@@ -46,7 +46,7 @@ fun CreateSourceSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val shortHeight = LocalConfiguration.current.screenHeightDp < 560
     val gap = if (shortHeight) 6.dp else 10.dp
-    val btnMin = if (shortHeight) 44.dp else 48.dp
+    val btnMin = 48.dp
     // ModalBottomSheet is its own window. MainActivity's testTagsAsResourceId does not apply
     // here, same as ExportSheet and ProjectRenameDialog. Without this, create_source_sheet and
     // source_* never become UIAutomator resource-ids. The flag is not spoken by TalkBack.

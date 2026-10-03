@@ -2,6 +2,7 @@ package com.pixijoy.movie
 
 import android.content.Context
 import android.util.Log
+import com.pixijoy.core.common.StudioDiagnostics
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.effect.MultipleInputVideoGraph
@@ -209,6 +210,7 @@ class CompositionPreview(
     }
 
     private fun publishExportOnly(detail: String): CompositionPreviewResult {
+        StudioDiagnostics.note("preview", detail)
         val result = CompositionPreviewResult(
             capability = CompositionPreviewCapability.ExportOnly,
             detail = detail

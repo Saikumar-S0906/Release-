@@ -1,5 +1,6 @@
 package com.pixijoy.movie
 
+import com.pixijoy.core.common.StudioDiagnostics
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -39,6 +40,33 @@ class MultiTrackTimelineTest {
         assertEquals(TrackKind.Audio, decoded.tracks[1].kind)
         assertEquals(1, decoded.tracks[0].clips.size)
         assertEquals(2000, decoded.tracks[0].clips[0].outMs)
+    }
+
+    @Test
+    fun corruptNumericLines_areSkipped_andTheRestOpens() {
+        StudioDiagnostics.clearForTest()
+        val raw = """
+            MT,1,1080
+            TK,V1,Video,Video 1,0
+            TC,V1,bad,nope,0,2000,1,0,1,0,0
+            TC,V1,c2,0,0,1500,1,0,1,0,0
+            B,bed.wav,loud,0,0,0,0.2,40
+            V,voice.wav,1,0,0,0,0,40
+            S,s1,stem.wav,nope,0,0,0,Music
+        """.trimIndent()
+        val decoded = MultiTrackTimeline.decode(raw)
+        assertNotNull(decoded)
+        assertEquals(1, decoded!!.tracks.single().clips.size)
+        assertEquals("c2", decoded.tracks.single().clips.single().id)
+        assertEquals(1500, decoded.tracks.single().clips.single().outMs)
+        assertEquals(null, decoded.bed)
+        assertNotNull(decoded.voice)
+        assertTrue(decoded.extraStems.isEmpty())
+        val notes = StudioDiagnostics.snapshot()
+        assertTrue(notes.any { it == "timeline: rejected TC line" })
+        assertTrue(notes.any { it == "timeline: rejected B line" })
+        assertTrue(notes.any { it == "timeline: rejected S line" })
+        StudioDiagnostics.clearForTest()
     }
 
     @Test

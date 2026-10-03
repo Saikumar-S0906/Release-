@@ -1,11 +1,16 @@
 package com.pixijoy.studio
 
 import android.content.pm.ActivityInfo
+import android.content.res.Configuration
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -48,14 +53,34 @@ class StudioAppSmokeTest {
         composeRule.onNodeWithTag("studio_use_sample").performClick()
 
         waitForTag("photo_session", timeoutMillis = 60_000)
+        waitForTag("session_project_title")
+        val sampleTitle = sessionTitle()
+        val sampleLabel = composeRule.activity.getString(R.string.studio_sample_title)
+        assertTrue(sampleTitle.contains(sampleLabel))
 
-        val beforeRotation = composeRule.activity
-        beforeRotation.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        composeRule.waitUntil(timeoutMillis = 60_000) {
-            composeRule.activity !== beforeRotation
+        // MainActivity handles orientation in configChanges, so the same
+        // activity stays up. The sample title must still be on screen.
+        val activity = composeRule.activity
+        val before = activity.resources.configuration.orientation
+        val target = if (before == Configuration.ORIENTATION_LANDSCAPE) {
+            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         }
-        waitForTag("photo_session", timeoutMillis = 60_000)
+        val expected = if (target == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
+            Configuration.ORIENTATION_LANDSCAPE
+        } else {
+            Configuration.ORIENTATION_PORTRAIT
+        }
+        activity.requestedOrientation = target
+        composeRule.waitUntil(timeoutMillis = 30_000) {
+            composeRule.activity === activity &&
+                activity.resources.configuration.orientation == expected
+        }
+        composeRule.waitForIdle()
+        waitForTag("photo_session", timeoutMillis = 30_000)
         waitForTag("session_back")
+        assertEquals(sampleTitle, sessionTitle())
     }
 
     @Test
@@ -70,6 +95,12 @@ class StudioAppSmokeTest {
 
         waitForTag("movie_session", timeoutMillis = 90_000)
         waitForTag("movie_timeline", timeoutMillis = 30_000)
+    }
+
+    private fun sessionTitle(): String {
+        val node = composeRule.onNodeWithTag("session_project_title").fetchSemanticsNode()
+        val text = node.config.getOrNull(SemanticsProperties.Text).orEmpty()
+        return text.joinToString(separator = "") { it.text }
     }
 
     private fun waitForTag(tag: String, timeoutMillis: Long = 30_000) {

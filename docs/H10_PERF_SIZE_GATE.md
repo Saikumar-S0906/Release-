@@ -1,6 +1,6 @@
 # H10 — Classical CG perf + size gate
 
-**Status:** **MET** (gate docs + base-APK measure wiring + DEX/mapping honesty) — honesty fixlet off tip `d53bae5` (post-#30).
+**Status:** **MET** for the on-demand scan (`reportH10SizeGate`). Filament or `feature_cg` in the base APK fails the task. The ~40 MiB line only warns. The MiB table below is a local measure off `3fbc1da` (2026-10-02), not a remeasure of tip `fe89f5d`. Pixel_7a fps, Maestro, and battery are not green.
 **Pairs with:** [`R7_CG_EFFECTS.md`](R7_CG_EFFECTS.md) H10 · [`CODING_PHASES.md`](CODING_PHASES.md) P5.6 · E5 size in [`R5_ML_PACKS.md`](R5_ML_PACKS.md)
 **Honesty bar:** classical plates + on-demand Filament only. Never label classical CG as neural / Ready / `engineReady`.
 

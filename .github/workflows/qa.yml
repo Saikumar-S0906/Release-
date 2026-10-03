@@ -2,7 +2,7 @@ name: PixiJoy QA
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [main, master, develop, next]
   pull_request:
   workflow_dispatch:
     inputs:
@@ -37,6 +37,9 @@ jobs:
 
       - name: Assemble release
         run: ./gradlew :app:assembleRelease --console=plain
+
+      - name: H10 size gate
+        run: ./gradlew :app:reportH10SizeGate --console=plain
 
       - name: Upload reports
         if: always()

@@ -1,9 +1,12 @@
 package com.pixijoy.movie
 
+import com.pixijoy.core.common.StudioDiagnostics
+
 /**
- * R4 D1 foundation: multi-track timeline model (V + A lanes).
- * Existing single-list [Timeline] remains the R2/R3 encode path; this type is additive
- * until preview/export consume tracks.
+ * Multi-track timeline (V + A lanes plus assembly, grade, sound, and delivery lines).
+ * Preview and export read this model. A flat [Timeline] is projected where one
+ * composition is required. Encode is versioned (MT,<version>,<height>).
+ * A bad number on a TC, B, V, or S line is skipped so the rest of the project opens.
  */
 enum class TrackKind { Video, Audio }
 
@@ -318,67 +321,37 @@ data class MultiTrackTimeline(
                         )
                     }
                     "TC" -> if (parts.size >= 11) {
-                        val trackId = parts[1]
-                        val speed = parts[6].toFloat()
-                        val clip = TimelineClip(
-                            id = parts[2],
-                            mediaIndex = parts[3].toInt(),
-                            inMs = parts[4].toLong(),
-                            outMs = parts[5].toLong(),
-                            speed = speed,
-                            muted = parts[7] == "1",
-                            volume = parts[8].toFloat(),
-                            fadeInMs = parts[9].toLong(),
-                            fadeOutMs = parts[10].toLong(),
-                            transition = ClipTransition.parse(parts.getOrNull(11)),
-                            transitionMs = parts.getOrNull(12)?.toLongOrNull() ?: 0L,
-                            speedEnd = parts.getOrNull(13)?.toFloatOrNull() ?: speed,
-                            motion = ClipMotion.decode(parts.getOrNull(14)),
-                            frame = ClipFrame.decode(parts.getOrNull(15)),
-                            chroma = ClipChroma.decode(parts.getOrNull(16)),
-                            slowMo = ClipSlowMo.decode(parts.getOrNull(17)),
-                            track = ClipTrack.decode(parts.getOrNull(18))
-                        )
-                        val track = trackMap[trackId] ?: return@forEach
-                        trackMap[trackId] = track.copy(clips = track.clips + clip)
+                        val clip = parseClip(parts)
+                        if (clip == null) {
+                            StudioDiagnostics.note("timeline", "rejected TC line")
+                            return@forEach
+                        }
+                        val track = trackMap[parts[1]] ?: return@forEach
+                        trackMap[parts[1]] = track.copy(clips = track.clips + clip)
                     }
                     "B" -> if (parts.size >= 8) {
-                        bed = AudioBed(
-                            fileName = parts[1],
-                            volume = parts[2].toFloat(),
-                            fadeInMs = parts[3].toLong(),
-                            fadeOutMs = parts[4].toLong(),
-                            muted = parts[5] == "1",
-                            duck = parts[6].toFloat(),
-                            attackMs = parts[7].toLong(),
-                            releaseMs = parts.getOrNull(8)?.toLongOrNull() ?: 250L,
-                            slipMs = parts.getOrNull(9)?.toLongOrNull()?.let(AudioSync::clampSlip) ?: 0L
-                        )
+                        val parsed = parseBed(parts)
+                        if (parsed == null) {
+                            StudioDiagnostics.note("timeline", "rejected B line")
+                            return@forEach
+                        }
+                        bed = parsed
                     }
                     "V" -> if (parts.size >= 8) {
-                        voice = AudioBed(
-                            fileName = parts[1],
-                            volume = parts[2].toFloat(),
-                            fadeInMs = parts[3].toLong(),
-                            fadeOutMs = parts[4].toLong(),
-                            muted = parts[5] == "1",
-                            duck = parts[6].toFloat(),
-                            attackMs = parts[7].toLong(),
-                            releaseMs = parts.getOrNull(8)?.toLongOrNull() ?: 250L,
-                            slipMs = parts.getOrNull(9)?.toLongOrNull()?.let(AudioSync::clampSlip) ?: 0L
-                        )
+                        val parsed = parseBed(parts)
+                        if (parsed == null) {
+                            StudioDiagnostics.note("timeline", "rejected V line")
+                            return@forEach
+                        }
+                        voice = parsed
                     }
                     "S" -> if (parts.size >= 8) {
-                        stems += AudioStem(
-                            id = parts[1],
-                            fileName = parts[2],
-                            volume = parts[3].toFloat(),
-                            fadeInMs = parts[4].toLong(),
-                            fadeOutMs = parts[5].toLong(),
-                            muted = parts[6] == "1",
-                            role = parts[7].decodeTrack(),
-                            slipMs = parts.getOrNull(8)?.toLongOrNull()?.let(AudioSync::clampSlip) ?: 0L
-                        )
+                        val parsed = parseStem(parts)
+                        if (parsed == null) {
+                            StudioDiagnostics.note("timeline", "rejected S line")
+                            return@forEach
+                        }
+                        stems += parsed
                     }
                     "SB" -> StemBuses.decodeLine(parts)?.let { stemBuses = it }
                     "LU" -> LoudnessTarget.decodeLine(parts)?.let { loudness = it }
@@ -423,6 +396,70 @@ data class MultiTrackTimeline(
                 stemBuses = stemBuses,
                 loudness = loudness,
                 delivery = delivery.copy(notes = reviewNotes)
+            )
+        }
+
+        private fun parseClip(parts: List<String>): TimelineClip? {
+            val speed = parts.getOrNull(6)?.toFloatOrNull() ?: return null
+            val mediaIndex = parts.getOrNull(3)?.toIntOrNull() ?: return null
+            val inMs = parts.getOrNull(4)?.toLongOrNull() ?: return null
+            val outMs = parts.getOrNull(5)?.toLongOrNull() ?: return null
+            val volume = parts.getOrNull(8)?.toFloatOrNull() ?: return null
+            val fadeInMs = parts.getOrNull(9)?.toLongOrNull() ?: return null
+            val fadeOutMs = parts.getOrNull(10)?.toLongOrNull() ?: return null
+            return TimelineClip(
+                id = parts[2],
+                mediaIndex = mediaIndex,
+                inMs = inMs,
+                outMs = outMs,
+                speed = speed,
+                muted = parts[7] == "1",
+                volume = volume,
+                fadeInMs = fadeInMs,
+                fadeOutMs = fadeOutMs,
+                transition = ClipTransition.parse(parts.getOrNull(11)),
+                transitionMs = parts.getOrNull(12)?.toLongOrNull() ?: 0L,
+                speedEnd = parts.getOrNull(13)?.toFloatOrNull() ?: speed,
+                motion = ClipMotion.decode(parts.getOrNull(14)),
+                frame = ClipFrame.decode(parts.getOrNull(15)),
+                chroma = ClipChroma.decode(parts.getOrNull(16)),
+                slowMo = ClipSlowMo.decode(parts.getOrNull(17)),
+                track = ClipTrack.decode(parts.getOrNull(18))
+            )
+        }
+
+        private fun parseBed(parts: List<String>): AudioBed? {
+            val volume = parts.getOrNull(2)?.toFloatOrNull() ?: return null
+            val fadeInMs = parts.getOrNull(3)?.toLongOrNull() ?: return null
+            val fadeOutMs = parts.getOrNull(4)?.toLongOrNull() ?: return null
+            val duck = parts.getOrNull(6)?.toFloatOrNull() ?: return null
+            val attackMs = parts.getOrNull(7)?.toLongOrNull() ?: return null
+            return AudioBed(
+                fileName = parts[1],
+                volume = volume,
+                fadeInMs = fadeInMs,
+                fadeOutMs = fadeOutMs,
+                muted = parts[5] == "1",
+                duck = duck,
+                attackMs = attackMs,
+                releaseMs = parts.getOrNull(8)?.toLongOrNull() ?: 250L,
+                slipMs = parts.getOrNull(9)?.toLongOrNull()?.let(AudioSync::clampSlip) ?: 0L
+            )
+        }
+
+        private fun parseStem(parts: List<String>): AudioStem? {
+            val volume = parts.getOrNull(3)?.toFloatOrNull() ?: return null
+            val fadeInMs = parts.getOrNull(4)?.toLongOrNull() ?: return null
+            val fadeOutMs = parts.getOrNull(5)?.toLongOrNull() ?: return null
+            return AudioStem(
+                id = parts[1],
+                fileName = parts[2],
+                volume = volume,
+                fadeInMs = fadeInMs,
+                fadeOutMs = fadeOutMs,
+                muted = parts[6] == "1",
+                role = parts[7].decodeTrack(),
+                slipMs = parts.getOrNull(8)?.toLongOrNull()?.let(AudioSync::clampSlip) ?: 0L
             )
         }
     }

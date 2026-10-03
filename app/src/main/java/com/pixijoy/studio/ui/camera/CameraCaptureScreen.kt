@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
+import com.pixijoy.core.common.StudioDiagnostics
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -163,6 +164,7 @@ fun CameraCaptureScreen(
             error = null
         } catch (t: Throwable) {
             Log.w(TAG, "bind failed", t)
+            StudioDiagnostics.note("camera", "bind failed")
             error = t.localizedMessage
         }
     }

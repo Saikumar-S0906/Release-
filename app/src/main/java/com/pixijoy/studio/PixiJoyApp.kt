@@ -2,6 +2,7 @@ package com.pixijoy.studio
 
 import android.app.Application
 import android.content.Context
+import com.pixijoy.core.common.StudioDiagnostics
 import com.pixijoy.studio.export.ExportNotifications
 import com.pixijoy.ml.PackSplits
 import com.pixijoy.ml.pack.PackRuntime
@@ -16,6 +17,7 @@ class PixiJoyApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        StudioDiagnostics.bind(filesDir)
         PackRuntime.bind(this)
         ExportNotifications.ensureChannel(this)
     }

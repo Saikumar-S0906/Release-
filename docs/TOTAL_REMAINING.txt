@@ -1,7 +1,7 @@
 ﻿PixiJoy — TOTAL remaining (all stages)
-Updated: 2026-10-03 ~19:20 IST
-Source: room status + docs/NORTH_STAR_ROADMAP.md + UX backlog
-Branch: origin/next tip c5ec074 (#31 H10 honesty, #32 editor-back, #33 depth+inpaint landed)
+Updated: 2026-10-03 ~20:20 IST
+Source: docs/CODING_PHASES.md at origin/next fe89f5d (hands-off note on c5ec074)
+Branch: origin/next tip fe89f5d (#31 H10 honesty, #32 editor-back, #33 depth+inpaint sideload). Device Maestro, TalkBack, and battery are NOT green.
 
 ================================================================
 A. DONE / EXITED (do not re-open)
@@ -84,7 +84,7 @@ H1. CG compositor lane PARTIAL — :feature_cg PropGltf Filament offscreen (dire
 H2. glTF prop library (Release- packs; track-attach)
 H3. Lights + IBL / HDRI PARTIAL — procedural IBL on PropGltf; Release- HDRI + point lights + grade continuity open
 H4. GPU particles / trails (not sticker sparkle)
-H5. Depth-aware CG insert (monocular depth pack)
+H5. Depth-aware CG insert PARTIAL — #33 sideloads depth.tflite (not an APK asset, not a quality pin). Soft Z only when engineReady on SDR; manual Z stays the fallback. Not device-green.
 H6. Video matting plates for CG underlays
 H7. CG camera keyframes + motion blur
 H8. Set extension / sky dome + shadow catcher
@@ -92,46 +92,46 @@ H9. Audio-reactive CG (optional)
 H10. :feature_cg on-demand size + mid-range perf gate — MET (reportH10SizeGate + docs/H10_PERF_SIZE_GATE.md)
 
 ================================================================
-I. R8 ASSEMBLY (director editorial) — docs/DIRECTOR_KIT.md
+I. R8 ASSEMBLY — P2 LANDED (I1–I4). docs/CODING_PHASES.md
 ================================================================
-I1. Markers + notes
-I2. Bins + selects
-I3. Versions / assemblies
-I4. Snap edit polish (magnetic / J-L / ripple)
-I5. Proxy scrub for long 4K
-I6. Multicam polish + sync heuristic
+I1. Markers + notes — LANDED
+I2. Bins + selects — LANDED
+I3. Versions / assemblies — LANDED
+I4. Snap edit polish (magnetic / J-L / ripple) — LANDED
+I5. Proxy scrub for long 4K — still open
+I6. Multicam polish + sync heuristic — still open
 
 ================================================================
-J. R8 COLORIST KIT — docs/DIRECTOR_KIT.md
+J. R8 COLORIST KIT — P3 LANDED (J1–J4). docs/CODING_PHASES.md
 ================================================================
-J1. Secondary / power windows
-J2. Shot match
-J3. LUT pipeline order (continuity with CG IBL)
-J4. Scopes truth (display-referred; HDR labeled)
-J5. Still lookbook bridge (frame ↔ photo grade)
+J1. Secondary / power windows — LANDED
+J2. Shot match — LANDED
+J3. LUT pipeline order (continuity with CG IBL) — LANDED
+J4. Scopes truth (display-referred; HDR labeled) — LANDED
+J5. Still lookbook bridge (frame ↔ photo grade) — still open
 
 ================================================================
-K. R8 SOUND FINISH — docs/DIRECTOR_KIT.md
+K. R8 SOUND FINISH — P4 LANDED (K1–K4). docs/CODING_PHASES.md
 ================================================================
-K1. Stem buses (dialogue / music / SFX)
-K2. ADR / VO lane
-K3. Sync tools (slip / waveform / clap)
-K4. Loudness (LUFS target)
-K5. Spot FX to picture
+K1. Stem buses (dialogue / music / SFX) — LANDED
+K2. ADR / VO lane — LANDED
+K3. Sync tools (slip / waveform / clap) — LANDED
+K4. Loudness (LUFS target) — LANDED
+K5. Spot FX to picture — still open
 
 ================================================================
-L. R9 DELIVERY & REVIEW — docs/DIRECTOR_KIT.md
+L. R9 DELIVERY & REVIEW — P6 LANDED (L1–L4). docs/CODING_PHASES.md
 ================================================================
-L1. Review package (TC optional; local comments; no default watermark)
-L2. Handoff EDL-lite / FCPXML-lite
-L3. Deliverable presets (social / review proxy / master HDR)
-L4. Export metadata (title, version, LUT)
+L1. Review package (TC optional; local comments; no default watermark) — LANDED
+L2. Handoff EDL-lite / FCPXML-lite — LANDED
+L3. Deliverable presets (social / review proxy / master HDR) — LANDED
+L4. Export metadata (title, version, LUT) — LANDED
 
 ================================================================
 M. COLAB ML PACKS (parallel — do NOT wait on inpaint) — docs/PERFECT_BUILD.md · tools/COLAB_ML_RUNBOOK.md
 ================================================================
-M1. Inpaint — quality finish → Release- pin + E1 Download (tools/inpaint/)
-M2. Depth — QUALITY ONLY to Release- (tools/depth/ --quality + data/READY) → H5
+M1. Inpaint — #33 sideload bind landed (not an APK asset; Telea until engineReady). Quality SHA pin still open (tools/inpaint/)
+M2. Depth — #33 sideload bind landed (not a quality pin). QUALITY pack still open (tools/depth/) → H5
 M3. Video matting — QUALITY ONLY (tools/matting/ --quality) → H6
 M4. Optical flow — QUALITY ONLY (tools/flow/ --quality) → D8/track
 M7. Sky matte — planned with M2–M4 (close C4 heuristic gap) — not deferred as cheap
@@ -167,6 +167,7 @@ UX soft polish (2026-10-02) - not on #31 land path
 ================================================================
 Compare: already gated (PhotoSessionPreview.canCompare). Not open.
 Gallery/create picker: yellow-manual (first-session impression). System picker. Do not fake a green.
-Soft Maestro tip d53bae5 device dump: slider + curves FAIL (IME dismiss delivered as Back, session popped); rename FAIL (hideKeyboard dismissed the dialog); create-sheet FAIL (label is Movie, flow said Video). Code fix landed #32 (ec1272a). Device flows NOT re-run off tip c5ec074. PASS: layers, fill-pack, talkback. YELLOW: glTF + dust. P7 HOLD
-Device TalkBack: yellow until a pass off tip c5ec074
+Soft Maestro tip d53bae5 device dump: slider + curves FAIL (IME dismiss delivered as Back, session popped); rename FAIL (hideKeyboard dismissed the dialog); create-sheet FAIL (label is Movie, flow said Video). Code fix landed #32 (ec1272a). Device flows NOT re-run on fe89f5d / c5ec074. That older dump is not a pass on this tip. YELLOW: glTF + dust. P7 HOLD
+Device TalkBack: yellow. Not re-run on fe89f5d. Do not mark it green.
+Battery: not measured. Do not mark it green.
 Slow-mo/Track chrome: Coming with pack until real pack bind

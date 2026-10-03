@@ -25,6 +25,7 @@ import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.ProgressHolder
 import androidx.media3.transformer.Transformer
 import com.pixijoy.core.common.AppResult
+import com.pixijoy.core.common.StudioDiagnostics
 import com.pixijoy.core.media.MediaProbe
 import com.pixijoy.ml.PackEngineHooks
 import com.pixijoy.ml.pack.PackId
@@ -229,6 +230,7 @@ class Media3MovieEngine : MovieEngine {
         }
         if (encoded is AppResult.Err) {
             cache.delete()
+            StudioDiagnostics.note("export", encoded.message)
             return encoded
         }
         val published = if (gif) {
@@ -251,7 +253,10 @@ class Media3MovieEngine : MovieEngine {
         cache.delete()
         return when (published) {
             is AppResult.Ok -> AppResult.Ok(MovieExportFile(published.value, hdrFellBack))
-            is AppResult.Err -> published
+            is AppResult.Err -> {
+                StudioDiagnostics.note("export", published.message)
+                published
+            }
         }
     }
 
