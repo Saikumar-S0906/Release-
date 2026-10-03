@@ -8,4 +8,6 @@ package com.pixijoy.movie
 class PreviewMix {
     @Volatile var bed: Float = 1f
     @Volatile var voice: Float = 1f
+    /** True only while the timeline finger is down. Export never sets this. */
+    @Volatile var fingerDown: Boolean = false
 }

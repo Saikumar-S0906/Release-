@@ -659,7 +659,11 @@ class Media3MovieEngine : MovieEngine {
                 sequences += voiceSequence(file, asBed, total, dur)
             }
         }
-        val height = MovieExportSize.normalize(mixed.outputHeight)
+        val height = ProxyScrub.previewHeight(
+            durationMs = mixed.totalMs(),
+            outputHeight = mixed.outputHeight,
+            fingerDown = live?.fingerDown == true
+        )
         val videoEffects = ArrayList<Effect>()
         videoEffects += Presentation.createForHeight(height)
         TitleOverlays.effect(mixed.titles, total)?.let { videoEffects += it }

@@ -69,6 +69,9 @@ class CompositionPreview(
     private var graphMode: CompositionPreviewGraphMode? = null
     private var released = false
     val mix = PreviewMix()
+    private var lastPaths: List<String>? = null
+    private var lastTimeline: MultiTrackTimeline? = null
+    private var lastPlayWhenReady = false
 
     fun bind(
         paths: List<String>,
@@ -85,6 +88,9 @@ class CompositionPreview(
         if (released) {
             return publishExportOnly("Preview has already been released.")
         }
+        lastPaths = paths
+        lastTimeline = timeline
+        lastPlayWhenReady = playWhenReady
 
         val targetMode = CompositionPreviewPolicy.graphMode(timeline.layout)
         val oldPlayer = compositionPlayer
@@ -103,6 +109,9 @@ class CompositionPreview(
             // Export passes this same unmodified composition shape to Transformer.
             val composition = engine.composition(paths, timeline, mix)
             targetPlayer.setComposition(composition)
+            if (ProxyScrub.applies(timeline.totalMs(), timeline.outputHeight)) {
+                targetPlayer.setScrubbingModeEnabled(mix.fingerDown)
+            }
             targetPlayer.repeatMode = Player.REPEAT_MODE_ALL
             targetPlayer.prepare()
             val endMs = timeline.totalMs().coerceAtLeast(1)
@@ -149,6 +158,16 @@ class CompositionPreview(
             failPlayer(activePlayer, error)
             CompositionPreviewSeekResult.Failed
         }
+    }
+
+    /** Lighter frames only while the finger is down on a long 4K timeline. */
+    fun setFingerDown(down: Boolean) {
+        if (released || mix.fingerDown == down) return
+        mix.fingerDown = down
+        val timeline = lastTimeline ?: return
+        val paths = lastPaths ?: return
+        if (!ProxyScrub.applies(timeline.totalMs(), timeline.outputHeight)) return
+        bind(paths, timeline, compositionPlayer?.playWhenReady ?: lastPlayWhenReady)
     }
 
     fun release() {

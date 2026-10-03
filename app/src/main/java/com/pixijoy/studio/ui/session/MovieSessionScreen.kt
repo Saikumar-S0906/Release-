@@ -574,6 +574,7 @@ fun MovieSessionScreen(
             playEnabled = previewState.result.capability !=
                 CompositionPreviewCapability.ExportOnly,
             onPlayhead = sessionViewModel::setPlayhead,
+            onScrubbing = { down -> compositionPreview?.setFingerDown(down) },
             onSeek = { ms ->
                 val snapped = EditSnap.snapPlayhead(
                     ms,
@@ -1876,6 +1877,7 @@ private fun MovieTimelineDock(
     playEnabled: Boolean,
     onPlayhead: (Float) -> Unit,
     onSeek: (Long) -> Boolean,
+    onScrubbing: (Boolean) -> Unit,
     onTogglePlay: () -> Unit,
     onStep: (Int) -> Unit,
     onSelectClip: (String) -> Unit,
@@ -1963,9 +1965,11 @@ private fun MovieTimelineDock(
                 PixiSlider(
                     value = playhead.coerceIn(0f, 1f),
                     onValueChange = {
+                        onScrubbing(true)
                         val total = timeline.totalMs().coerceAtLeast(1)
                         if (onSeek((it * total).toLong())) onPlayhead(it)
                     },
+                    onValueChangeFinished = { onScrubbing(false) },
                     enabled = seekEnabled,
                     modifier = Modifier
                         .weight(1f)
@@ -1978,9 +1982,11 @@ private fun MovieTimelineDock(
             PixiSlider(
                 value = playhead.coerceIn(0f, 1f),
                 onValueChange = {
+                    onScrubbing(true)
                     val total = timeline.totalMs().coerceAtLeast(1)
                     if (onSeek((it * total).toLong())) onPlayhead(it)
                 },
+                onValueChangeFinished = { onScrubbing(false) },
                 enabled = seekEnabled,
                 modifier = Modifier
                     .fillMaxWidth()
