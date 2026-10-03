@@ -21,6 +21,6 @@
 - assertVisible:
     id: "source_sample"
 - assertVisible: "Photo"
-- assertVisible: "Video"
+- assertVisible: "Movie"
 - assertVisible: "Camera"
 - assertVisible: "Try a sample"

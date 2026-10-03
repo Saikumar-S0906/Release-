@@ -66,6 +66,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -207,8 +208,14 @@ fun MovieSessionScreen(
     val timeline = sessionState.timeline
     val previewEpoch = sessionState.previewEpoch
     FlushSessionOnStop(sessionViewModel::flushInBackground)
+    val keyboard = LocalSoftwareKeyboardController.current
+    val imeBottom = rememberSessionImeBottomPx()
     PredictiveBackHandler {
         it.collect { }
+        if (swallowSessionBackForIme(imeBottom[0], SliderImeDismiss.guardUntilElapsedMs, android.os.SystemClock.elapsedRealtime())) {
+            keyboard?.hide()
+            return@PredictiveBackHandler
+        }
         runCatching { sessionViewModel.flush() }
         onBack()
     }

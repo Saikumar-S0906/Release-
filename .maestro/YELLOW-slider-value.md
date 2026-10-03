@@ -4,4 +4,6 @@ Photo Light, Color, and Curves use `StudioValueSlider`. Short-tap the live value
 
 `StudioChromeBar` uses `imePadding()` so the glass lifts above the IME and the field stays visible under edge-to-edge + `adjustResize`.
 
-**Maestro:** `.maestro/chrome/slider-value-entry.yaml` — **green** (Exposure type-in `0.4` + sign chip).
+**Maestro:** `.maestro/chrome/slider-value-entry.yaml` — Exposure type-in `0.4` + sign chip.
+
+2026-10-02 Pixel_7a tip `d53bae5`: **FAIL**. After Enter the session was gone and Studio was showing, so `session_slider_value` was not on screen. Enter commits the field and hides the IME; that hide is delivered as Back, and the session Back handler popped the editor. The field now consumes Enter, and the session ignores Back while the IME is up and for 500 ms after a slider commit. Device flow not re-run with this change — do not mark green from the unit test alone.

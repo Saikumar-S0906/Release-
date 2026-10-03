@@ -11,4 +11,6 @@
 - `source_camera`
 - `source_sample`
 
-plus visible labels Photo / Video / Camera / Try a sample.
+plus visible labels Photo / Movie / Camera / Try a sample.
+
+The movie button id stays `source_video`. Its label is `studio_movie` ("Movie"), the same word as the Studio segment. A flow that asserts "Video" fails even though the button is on screen.
