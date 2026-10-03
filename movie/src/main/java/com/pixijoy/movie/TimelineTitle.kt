@@ -114,15 +114,24 @@ object TitleOverlays {
 
     fun spannablePreview(title: TimelineTitle): String = title.text.trim()
 
-    internal fun paintFor(role: TitleRole): Paint =
+    /** Output-frame baseline position as fractions of width and height. Shared with preview. */
+    fun baselineFraction(title: TimelineTitle): Pair<Float, Float> {
+        val y = 1f - (title.resolvedAnchorY() + 1f) * 0.5f
+        val x = 0.5f + title.anchorX.coerceIn(-1f, 1f) * 0.45f
+        return x to y
+    }
+
+    fun textSizePx(role: TitleRole): Float = when (role) {
+        TitleRole.Title -> 72f
+        TitleRole.Caption -> 54f
+    }
+
+    fun paintFor(role: TitleRole): Paint =
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             textAlign = Paint.Align.CENTER
-            textSize = when (role) {
-                TitleRole.Title -> 72f
-                TitleRole.Caption -> 54f
-            }
+            textSize = textSizePx(role)
             setShadowLayer(8f, 0f, 3f, Color.BLACK)
         }
 }
@@ -166,8 +175,9 @@ private class TimedBitmapTitleOverlay(
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         if (!showText) return bmp
         val canvas = Canvas(bmp)
-        val y = ((1f - (title.resolvedAnchorY() + 1f) * 0.5f) * h).coerceIn(48f, h - 48f)
-        val x = w * 0.5f + title.anchorX.coerceIn(-1f, 1f) * w * 0.45f
+        val (xf, yf) = TitleOverlays.baselineFraction(title)
+        val y = (yf * h).coerceIn(48f, h - 48f)
+        val x = xf * w
         canvas.drawText(title.text.trim().ifBlank { " " }, x, y, paint)
         return bmp
     }

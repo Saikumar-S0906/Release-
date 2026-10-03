@@ -1,4 +1,4 @@
-﻿appId: com.pixijoy.ai
+﻿appId: com.pixijoy.studio
 ---
 # Layers hub exposes session_mask on the short rail
 - runFlow: ../launch-to-home.yaml

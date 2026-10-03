@@ -42,7 +42,7 @@ class LayerStackTest {
     fun toOps_skipsHiddenLayers() {
         val layers = listOf(
             LayeredOp("a", "Grade", visible = true, op = PhotoOp.Grade(0f, 1f)),
-            LayeredOp("b", "Blur", visible = false, op = PhotoOp.Blur(2))
+            LayeredOp("b", "Blur", visible = false, op = PhotoOp.Blur(2f))
         )
         val ops = layers.toOps()
         assertEquals(1, ops.size)

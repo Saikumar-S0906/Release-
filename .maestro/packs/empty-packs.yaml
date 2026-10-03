@@ -1,10 +1,10 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # G7 pack plate. empty_packs is the Missing/installing/failed surface in PackChrome.
-# clearState leaves the inpaint pack Missing. Inpaint has no hosted weight, so the
-# plate shows Install from file, not Download. Do not pick a file. Ready hides
-# empty_packs. This does not claim a neural engine.
-# Glass chrome is 280dp — tap studio_scroll_more until the Install CTA is in view.
+# clearState leaves the inpaint pack Missing. The plate line is studio_packs_empty.
+# It also shows Download and Install from file. Do not tap Download (~75 MB).
+# Ready hides empty_packs. This does not claim a neural engine.
+# Glass chrome is 280dp — assert the status line before scrolling to the CTAs.
 - runFlow: ../launch-to-home.yaml
 - tapOn:
     id: "home_create"
@@ -28,6 +28,27 @@ appId: com.pixijoy.ai
             visible:
               id: "studio_scroll_more"
             notVisible:
+              id: "session_fill_pack_status"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
+      id: "session_fill_pack_status"
+    timeout: 15000
+- assertVisible:
+    id: "empty_packs"
+- assertVisible:
+    id: "session_fill_pack_status"
+- assertVisible: "Download an on-device model pack. Edits never leave this phone."
+- repeat:
+    times: 16
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
               id: "session_fill_pack_download_from_file"
           commands:
             - tapOn:
@@ -37,11 +58,6 @@ appId: com.pixijoy.ai
       id: "session_fill_pack_download_from_file"
     timeout: 15000
 - assertVisible:
-    id: "empty_packs"
-- assertVisible:
-    id: "session_fill_pack_status"
-- assertVisible: "This pack is not hosted for download in this build. Use Install from file, or copy the .tflite into the incoming folder. Play Store modules are not shipped yet."
+    id: "session_fill_pack_download"
 - assertVisible:
     id: "session_fill_pack_download_from_file"
-- assertNotVisible:
-    id: "session_fill_pack_download"

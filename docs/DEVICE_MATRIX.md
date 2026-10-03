@@ -1,6 +1,6 @@
 # PixiJoy device & OEM matrix
 
-Last updated: **2026-09-26**. Studio product gate (`com.pixijoy.ai`).
+Last updated: **2026-09-26**. Studio product gate (`com.pixijoy.studio`).
 
 ## Build targets
 

@@ -27,10 +27,10 @@ Write-Host "=== PixiJoy board QA depth ==="
 
 Write-Host "`n>>> Unit: catalog batches + journeys + typography"
 .\gradlew :app:testDebugUnitTest --console=plain `
-    --tests "com.pixijoy.ai.ui.board.BoardCatalogBatchesUnitTest" `
-    --tests "com.pixijoy.ai.ui.board.BoardFlowJourneysUnitTest" `
-    --tests "com.pixijoy.ai.ui.board.BoardUiCatalogUnitTest" `
-    --tests "com.pixijoy.ai.ui.board.BoardTypographyUnitTest"
+    --tests "com.pixijoy.studio.ui.board.BoardCatalogBatchesUnitTest" `
+    --tests "com.pixijoy.studio.ui.board.BoardFlowJourneysUnitTest" `
+    --tests "com.pixijoy.studio.ui.board.BoardUiCatalogUnitTest" `
+    --tests "com.pixijoy.studio.ui.board.BoardTypographyUnitTest"
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 if ($UnitOnly -or $SkipInstrumented) {
@@ -39,13 +39,13 @@ if ($UnitOnly -or $SkipInstrumented) {
 }
 
 $batchClasses = @{
-    core    = "com.pixijoy.ai.board.BoardCatalogBatchCoreComposeTest"
-    create  = "com.pixijoy.ai.board.BoardCatalogBatchCreateComposeTest"
-    ctools  = "com.pixijoy.ai.board.BoardCatalogBatchCToolsComposeTest"
-    media   = "com.pixijoy.ai.board.BoardCatalogBatchMediaComposeTest"
-    library = "com.pixijoy.ai.board.BoardCatalogBatchLibraryComposeTest"
-    me      = "com.pixijoy.ai.board.BoardCatalogBatchMeComposeTest"
-    social  = "com.pixijoy.ai.board.BoardCatalogBatchSocialComposeTest"
+    core    = "com.pixijoy.studio.board.BoardCatalogBatchCoreComposeTest"
+    create  = "com.pixijoy.studio.board.BoardCatalogBatchCreateComposeTest"
+    ctools  = "com.pixijoy.studio.board.BoardCatalogBatchCToolsComposeTest"
+    media   = "com.pixijoy.studio.board.BoardCatalogBatchMediaComposeTest"
+    library = "com.pixijoy.studio.board.BoardCatalogBatchLibraryComposeTest"
+    me      = "com.pixijoy.studio.board.BoardCatalogBatchMeComposeTest"
+    social  = "com.pixijoy.studio.board.BoardCatalogBatchSocialComposeTest"
 }
 
 $toRun = if ($Batch -eq "all") { @($batchClasses.Keys | Sort-Object) } else { @($Batch) }
@@ -71,13 +71,13 @@ foreach ($b in $toRun) {
 
 if ($Batch -eq "all") {
     Write-Host "`n>>> Day-in-life"
-    $day = "com.pixijoy.ai.board.BoardDayInLifeComposeTest"
+    $day = "com.pixijoy.studio.board.BoardDayInLifeComposeTest"
     .\gradlew :app:connectedDebugAndroidTest --console=plain `
         "-Pandroid.testInstrumentationRunnerArguments.class=$day"
     if ($LASTEXITCODE -ne 0) { $failed += $day }
 
     Write-Host "`n>>> Golden keys"
-    $golden = "com.pixijoy.ai.board.BoardGoldenKeyComposeTest"
+    $golden = "com.pixijoy.studio.board.BoardGoldenKeyComposeTest"
     .\gradlew :app:connectedDebugAndroidTest --console=plain `
         "-Pandroid.testInstrumentationRunnerArguments.class=$golden"
     if ($LASTEXITCODE -ne 0) { $failed += $golden }

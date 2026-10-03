@@ -1,11 +1,11 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 tags:
   - positive
   - chrome
 ---
 # Portrait chrome: Home scroll cue, Editor crop, Expand crop, My Stuff grid.
 - launchApp:
-    appId: com.pixijoy.ai
+    appId: com.pixijoy.studio
     clearState: false
     permissions:
       all: allow

@@ -1,10 +1,10 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 tags:
   - positive
   - chrome
 ---
 - launchApp:
-    appId: com.pixijoy.ai
+    appId: com.pixijoy.studio
     clearState: false
     permissions:
       all: allow

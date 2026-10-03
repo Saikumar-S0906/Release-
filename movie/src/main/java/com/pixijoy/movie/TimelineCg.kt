@@ -14,6 +14,9 @@ import androidx.media3.common.Effect
 import androidx.media3.effect.BitmapOverlay
 import androidx.media3.effect.OverlayEffect
 import androidx.media3.effect.TextureOverlay
+import com.pixijoy.ml.PackEngineHooks
+import com.pixijoy.ml.pack.PackId
+import com.pixijoy.ml.pack.PackModelContract
 
 /**
  * R7 / coding P1+P5 — CG compositor lane on the timeline.
@@ -25,6 +28,8 @@ import androidx.media3.effect.TextureOverlay
  *
  * P5 classical: Z-order + F1 track-attach, matte modes, camera keyframes,
  * dust drift + motion-blur crumbs. Cube/ground/sky/dust stay off Filament.
+ * Soft Z punches a plate only when the depth engine is bound and a map is
+ * already published. Otherwise the insert stays flat Z-order.
  *
  * Encode (v1): `CG,<id>,<preset>,<startMs>,<endMs>,<x>,<y>,<scale>,<yaw>,<zOrder>,<followTrack>`
  * Encode (v2+): `...,<matte>,<pitch>,<endYaw>,<endScale>,<propFile>`
@@ -482,6 +487,7 @@ private class TimedCgOverlay(
     private var visible: Bitmap? = null
     private var clear: Bitmap? = null
     private var cacheBucket = Long.MIN_VALUE
+    private var cachedDepthGen = Int.MIN_VALUE
 
     override fun configure(videoSize: androidx.media3.common.util.Size) {
         super.configure(videoSize)
@@ -492,6 +498,7 @@ private class TimedCgOverlay(
         visible = null
         clear = Bitmap.createBitmap(frameW, frameH, Bitmap.Config.ARGB_8888)
         cacheBucket = Long.MIN_VALUE
+        cachedDepthGen = Int.MIN_VALUE
     }
 
     override fun getBitmap(presentationTimeUs: Long): Bitmap {
@@ -501,15 +508,23 @@ private class TimedCgOverlay(
             return clear ?: Bitmap.createBitmap(frameW, frameH, Bitmap.Config.ARGB_8888).also { clear = it }
         }
         val bucket = ms / 40L
-        if (bucket != cacheBucket || visible == null) {
+        // A plate drawn before the map arrives must redraw when publish bumps
+        // the generation. Otherwise that 40 ms bucket stays flat for the clip.
+        val depthGen = if (PackEngineHooks.hasEngine(PackId.Depth)) {
+            DepthFrames.generation()
+        } else {
+            0
+        }
+        if (bucket != cacheBucket || visible == null || depthGen != cachedDepthGen) {
             visible?.recycle()
-            visible = renderAt(ms)
+            visible = renderAt(ms, presentationTimeUs)
             cacheBucket = bucket
+            cachedDepthGen = depthGen
         }
         return visible!!
     }
 
-    private fun renderAt(ms: Long): Bitmap {
+    private fun renderAt(ms: Long, timeUs: Long): Bitmap {
         val (ox, oy) = if (layer.followTrack) {
             val anchor = trackAnchors.at(ms)
             if (anchor != null) {
@@ -547,6 +562,31 @@ private class TimedCgOverlay(
             filament = { host.renderPlate(request) },
             classical = { ClassicalCgRenderer.renderPlate(request) }
         )
-        return ClassicalCgRenderer.applyMatte(raw, layer.matte)
+        return occludeIfDepthReady(ClassicalCgRenderer.applyMatte(raw, layer.matte), timeUs)
+    }
+
+    /**
+     * Hides plate pixels the scene is in front of. No bound engine, or no map
+     * yet, leaves the flat plate (manual Z-order still sorts the overlays).
+     */
+    private fun occludeIfDepthReady(plate: Bitmap, timeUs: Long): Bitmap {
+        if (!PackEngineHooks.hasEngine(PackId.Depth)) return plate
+        val depth = DepthFrames.at(timeUs) ?: return plate
+        val edge = PackModelContract.DEPTH_EDGE
+        if (depth.size != edge * edge) return plate
+        val w = plate.width
+        val h = plate.height
+        if (w <= 0 || h <= 0) return plate
+        val target = if (plate.isMutable) {
+            plate
+        } else {
+            plate.copy(Bitmap.Config.ARGB_8888, true)
+        }
+        val px = IntArray(w * h)
+        target.getPixels(px, 0, w, 0, 0, w, h)
+        occludePlateByDepth(px, w, h, depth, edge, edge, cgPlaneDepth(layer.zOrder))
+        target.setPixels(px, 0, w, 0, 0, w, h)
+        if (target !== plate && !plate.isRecycled) plate.recycle()
+        return target
     }
 }

@@ -1,0 +1,125 @@
+appId: com.pixijoy.studio
+---
+# Depth pack on an SDR movie with a prop cube, then play.
+# Does not clear app data. clearState would delete the pack.
+# studio_use_sample must be a resource-id (MediaSourceSheet is its own window).
+# Ready to apply means the engine is bound. The preview already plays,
+# so Play is tapped only when the transport is paused. Pause means it is running.
+# Not a physical Pixel 7a pass, and not a depth-pixel pass.
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible:
+      id: "home_create"
+    timeout: 90000
+- tapOn:
+    id: "home_open_studio"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_segment_movie"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_segment_movie"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_move"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_move"
+- extendedWaitUntil:
+    visible:
+      id: "studio_use_sample"
+    timeout: 20000
+- tapOn:
+    id: "studio_use_sample"
+- extendedWaitUntil:
+    visible:
+      id: "movie_session"
+    timeout: 90000
+- tapOn:
+    id: "studio_group_cg"
+- runFlow:
+    when:
+      visible:
+        id: "movie_cg_depth_download"
+    commands:
+      - tapOn:
+          id: "movie_cg_depth_download"
+      - extendedWaitUntil:
+          visible:
+            id: "movie_cg_depth_download_remove"
+          timeout: 360000
+- repeat:
+    times: 16
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_cg_depth_status"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- assertVisible: "Ready to apply"
+# Scroll to the end of the glass so Prop cube is not a sliver under the fade.
+- repeat:
+    times: 16
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- tapOn:
+    id: "movie_cg_propcube"
+- repeat:
+    times: 16
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_cg_layer_label"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
+      id: "movie_cg_layer_label"
+    timeout: 20000
+- tapOn:
+    id: "studio_group_color"
+- repeat:
+    times: 16
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_hdr_sdr"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- tapOn:
+    id: "movie_hdr_sdr"
+- extendedWaitUntil:
+    visible:
+      id: "movie_play"
+    timeout: 20000
+# Preview starts playing. Tapping Play while it says Pause would stop the depth pass.
+- runFlow:
+    when:
+      visible: "^Play$"
+    commands:
+      - tapOn:
+          id: "movie_play"
+- extendedWaitUntil:
+    visible: "^Pause$"
+    timeout: 20000
+- assertVisible:
+    id: "movie_session"

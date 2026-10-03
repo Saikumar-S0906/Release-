@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # Photo Light slider numeric entry (StudioValueSlider + sign path for ranges below zero).
 - runFlow: ../launch-to-home.yaml

@@ -7,8 +7,6 @@
     <string name="studio_privacy_body">PixiJoy edits photos and movies on this device. Your pictures are not uploaded. Optional on-device packs download a model file only after you tap Download.</string>
     <string name="studio_privacy_policy">Privacy policy</string>
     <string name="studio_terms">Terms of use</string>
-    <string name="studio_url_privacy" translatable="false">https://pixijoy.ai/privacy</string>
-    <string name="studio_url_terms" translatable="false">https://pixijoy.ai/terms</string>
     <string name="studio_accept">Continue</string>
     <string name="studio_open">Open studio</string>
     <string name="home_create">Create</string>
@@ -150,8 +148,17 @@
     <string name="studio_cg_sky">Sky dome</string>
     <string name="studio_cg_dust">Dust</string>
     <string name="studio_cg_scale">Scale</string>
+    <string name="studio_cg_horizon">Horizon</string>
+    <string name="studio_cg_amount">Amount</string>
     <string name="studio_cg_yaw">Yaw</string>
+    <string name="studio_cg_drift">Drift</string>
     <string name="studio_cg_pitch">Pitch</string>
+    <string name="studio_cg_cube_note">Turn and pitch the cube. Scale changes its size.</string>
+    <string name="studio_cg_ground_note">Horizon height and shadow. Yaw and pitch do not apply.</string>
+    <string name="studio_cg_sky_note">Full-frame sky gradient. Place it behind the shot with Z-order.</string>
+    <string name="studio_cg_dust_note">Mote size and drift direction. Pitch does not apply.</string>
+    <string name="studio_cg_gltf_note">Place and turn the loaded mesh.</string>
+    <string name="studio_cg_load_another">Load another prop</string>
     <string name="studio_cg_z">Z-order (behind ← → over)</string>
     <string name="studio_cg_pos_x">X</string>
     <string name="studio_cg_pos_y">Y</string>
@@ -225,7 +232,7 @@
     <string name="studio_transition">Transition</string>
     <string name="studio_transition_none">Cut</string>
     <string name="studio_transition_soft">Soft</string>
-    <string name="studio_transition_ms">Dissolve %1$d ms</string>
+    <string name="studio_transition_ms">Dip to black %1$d ms</string>
     <string name="studio_speed_ramp">Speed ramp</string>
     <string name="studio_speed_ramp_values">Start ×%1$.1f → end ×%2$.1f</string>
     <string name="studio_movie_d3_hint">Zoom and pan on this clip.</string>
@@ -314,7 +321,8 @@
     <string name="studio_export_hdr_label">HDR</string>
     <string name="studio_export_hdr_sdr">SDR</string>
     <string name="studio_export_hdr_keep">Keep HDR</string>
-    <string name="studio_export_hdr_keep_hint">Preserves HDR when supported · tone-maps if not</string>
+    <string name="studio_export_hdr_keep_hint">Keeps HDR when this device can write it. Otherwise the export is SDR.</string>
+    <string name="studio_export_hdr_sdr_fallback">This device cannot write HDR, so this export is SDR.</string>
     <string name="studio_slow_mo">Slow-mo</string>
     <string name="studio_slowmo_off">Off</string>
     <string name="studio_slowmo_half">½×</string>
@@ -338,7 +346,7 @@
     <string name="studio_heal">Heal</string>
     <string name="studio_erase">Erase</string>
     <string name="studio_fill">Fill</string>
-    <string name="studio_fill_hint">Paint to remove. Nearby-pixel fill is not neural. Neural Apply stays off until a sideloaded model is bound.</string>
+    <string name="studio_fill_hint">Paint to remove. Nearby-pixel fill is not neural. Neural Apply stays off until the inpaint model is bound.</string>
     <string name="studio_fill_apply_nearby">Apply nearby-pixel fill</string>
     <string name="studio_fill_apply_neural">Apply neural</string>
     <string name="studio_fill_clear_strokes">Clear strokes</string>
@@ -356,7 +364,10 @@
     <string name="studio_pack_ready_no_engine">Installed and verified (Ready). Coming with pack. Not neural.</string>
     <string name="studio_pack_inpaint_ready">Installed and verified (Ready). The neural engine is not bound, so neural inpaint stays off. Nearby-pixel fill is not neural.</string>
     <string name="studio_pack_inpaint_ready_no_litert">Installed and verified (Ready). Play services LiteRT is unavailable, so the neural engine cannot start. Nearby-pixel fill is not neural.</string>
-    <string name="studio_pack_inpaint_engine_ready">Neural ready. The sideloaded inpaint model is bound, so neural Apply can run it. Nearby-pixel fill stays available and is not neural.</string>
+    <string name="studio_pack_inpaint_engine_ready">Neural ready. The inpaint model is bound, so neural Apply can run it. Nearby-pixel fill stays available and is not neural.</string>
+    <string name="studio_pack_depth_ready">Installed and verified (Ready). The depth engine is not bound, so CG stays on manual Z-order. This is not neural depth.</string>
+    <string name="studio_pack_depth_ready_no_litert">Installed and verified (Ready). Play services LiteRT is unavailable, so the depth engine cannot start. CG stays on manual Z-order.</string>
+    <string name="studio_pack_depth_engine_ready">Neural ready. The depth model is bound, so CG plates hide where the scene is nearer. Manual Z still sets how close the plate sits.</string>
     <string name="studio_pack_sr_denoise_ready">Downloaded and verified (Ready). The neural engine is not bound, so Apply stays off and the photo is left unchanged.</string>
     <string name="studio_pack_sr_denoise_ready_no_litert">Downloaded and verified (Ready). Play services LiteRT is unavailable, so the neural engine cannot start and Apply stays off.</string>
     <string name="studio_pack_engine_ready">Neural ready. The on-device model is bound, so Apply can run it. Processing stays on this phone.</string>

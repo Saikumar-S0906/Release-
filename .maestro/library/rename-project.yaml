@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # G8 library rename. One sample so the library has a card.
 # Overflow is a separate window: tap text Rename. Dialog sets testTagsAsResourceId.
@@ -45,7 +45,7 @@ appId: com.pixijoy.ai
     id: "library_rename_field"
 - eraseText: 64
 - inputText: "RenamedSample"
-- hideKeyboard
+# hideKeyboard sends Back and dismisses this dialog. Confirm stays reachable.
 - tapOn:
     id: "library_rename_confirm"
 - extendedWaitUntil:

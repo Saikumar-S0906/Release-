@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Studio data stays on this device. allowBackup is false; these rules cover API 31+ transfer. -->
 <data-extraction-rules>
     <cloud-backup>
-        <exclude domain="database" path="pixijoy_studio.db" />
-        <exclude domain="database" path="pixijoy_studio.db-shm" />
-        <exclude domain="database" path="pixijoy_studio.db-wal" />
-        <exclude domain="file" path="projects/" />
-        <exclude domain="file" path="presets/" />
-        <exclude domain="sharedpref" path="pixijoy_studio" />
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
     </cloud-backup>
     <device-transfer>
-        <exclude domain="database" path="pixijoy_studio.db" />
-        <exclude domain="file" path="projects/" />
-        <exclude domain="file" path="presets/" />
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
     </device-transfer>
 </data-extraction-rules>

@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # C5 Warp — rail + Apply perspective
 - runFlow: ../launch-to-home.yaml

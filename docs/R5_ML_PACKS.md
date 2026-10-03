@@ -6,17 +6,18 @@
 
 ## Runtime (`:ml`)
 
-`:ml` owns install state, `PackSplits` (SplitCompat), and the Hilt singleton `PackEngineHooks`. Play feature modules (`ml_inpaint`, `ml_superres`, `ml_denoise`, `ml_interp`, `ml_track`) own optional Play assets. `:photo` and `:movie` call the facade and do not depend on a pack module or LiteRT. Session UI observes install state and pack CTAs; it does not call `register`. Super-res, Denoise, and Track seed from APK assets on first `PackInstallManager.get` — no Download CTA. FrameInterp Missing shows Download when an HTTPS pin exists. Inpaint Missing shows Download once a Release/APK artifact is pinned; otherwise **Install from file**. Telea Fill Apply stays on always.
+`:ml` owns install state, `PackSplits` (SplitCompat), and the Hilt singleton `PackEngineHooks`. Play feature modules (`ml_inpaint`, `ml_superres`, `ml_denoise`, `ml_interp`, `ml_track`) own optional Play assets. `:photo` and `:movie` call the facade and do not depend on a pack module or LiteRT. Session UI observes install state and pack CTAs; it does not call `register`. Super-res, Denoise, and Track seed from APK assets on first `PackInstallManager.get` — no Download CTA. FrameInterp, Inpaint, and Depth Missing show Download when an HTTPS pin exists, plus Install from file. Telea Fill Apply stays on always.
 
 - Install state: missing / installing / ready / failed / storage error. **Ready** means the file is on the device and its SHA-256 verified. **Neural** is `PackRuntime.engineReady` (Ready and a bound interpreter). Ready alone does not enable Super-res Apply, Denoise Apply, neural inpaint Apply, or Track follow
-- SHA-256 sidecar on sideload. Track / Super-res / Denoise use `expectedSha256` = bundled asset pin. FrameInterp HTTPS Download refuses a body that misses `downloadSha256` before Ready. Inpaint has no `downloadUrl` until a trained artifact is published (APK or Release)
+- SHA-256 sidecar on sideload. Track / Super-res / Denoise use `expectedSha256` = bundled asset pin. FrameInterp, Inpaint, and Depth HTTPS Download refuse a body that misses `downloadSha256` before Ready. None of those three is an APK asset.
 - Sideload: **Install from file** (`GetContent`) copies into cache then checksum-installs; fallback folder `filesDir/ml_incoming/{fileName}` (also app external files)
 - HTTPS fallback (user-tapped Download only) for packs without `assetPath`. Photos are not uploaded. Pins below are the only hosted artifacts.
   - Super-res `superres.tflite` / `ml_superres`: **ships in** `ml/src/main/assets/superres.tflite` (SHA-256 `27ed316318cac65fe350ccdb3c1e19ac08c512f4aa2fc23b1a351ce334809c3f`). Provenance ESRGAN pin retained as constant only. Graph is FLOAT32 NHWC `1×180×320×3` → `1×720×1280×3` (4×).
   - Denoise `denoise.tflite` / `ml_denoise`: **ships in** `ml/src/main/assets/denoise.tflite` (SHA-256 `53f0112f248b18ae518af64942ea4741f5b22ccdc4af5aea0ff452875f17fb84`). Graph is FLOAT32 NHWC `1×256×256×3` → same size.
   - FrameInterp `interp.tflite` / `ml_interp`: FILM (~67.29 MB) from public [Release-](https://github.com/Saikumar-S0906/Release-) `ml-packs-v1/interp.tflite` SHA-256 `3a201916658277ed6e7626d93a6ee117a47b04bc1986579600a90feabfe05eb4`. Graph FLOAT32 FILM 512 path.
   - Track `track.tflite` / `ml_track`: PixiJoy-trained Siamese (~1.99 MB) **ships in** `ml/src/main/assets/track.tflite`.
-  - Inpaint `inpaint.tflite` / `ml_inpaint`: PixiJoy-trained UNet from `tools/inpaint/` (full capacity, no size-driven shrink). Telea Fill always on. Neural Apply after Ready + LiteRT RGB+mask bind. Placement: APK assets if ≤~3 MB else GitHub Release Download.
+  - Inpaint `inpaint.tflite` / `ml_inpaint`: PixiJoy UNet (~75 MB) from [Release-](https://github.com/Saikumar-S0906/Release-) `ml-packs-v1/inpaint.tflite`, SHA-256 `6ca50eaad897f046245d956c1e4c77d12b885e61fa93a953c48967ecc1afb73c`. Download URL is `/releases/download/ml-packs-v1/inpaint.tflite`. Telea Fill always on. Neural Apply after Ready + LiteRT RGB+mask bind. Not an APK asset.
+  - Depth `depth.tflite` / `ml_depth`: PixiJoy UNet (~75 MB) from the same tag, `depth.tflite`, SHA-256 `a6b296193d7497ded445a1c257a08d4a9d49faad2a8a728767e9d1402287db1f`. Soft Z only when `engineReady` on SDR. Manual Z stays the fallback. Not an APK asset.
 - Failed Download for packs without a URL tells the user to **Install from file** (Play modules are not in this APK).
 - `PixiJoyApp.attachBaseContext` calls `PackSplits.install`. `onCreate` binds install state only and registers nothing
 - After SplitCompat, the studio shell calls `PackFeatureEntry.watchVerifiedModels`. `PackLiteRt` opens a file only when LiteRT is up, the pack is Ready, and the bytes match the recorded SHA-256 (and `expectedSha256` when set). It registers only if `PackModelContract` accepts the graph. A miss releases the capability (sink null). Chips read `PackRuntime.engineReady`: Ready alone is not neural
@@ -65,15 +66,15 @@ Steps for when a desktop or KVM device is available. Do not record a pass in thi
 5. When LiteRT is up and the FLOAT32 2×/4× NHWC contract accepts the graph, the status changes to “Neural ready” and Apply turns on. That is `PackRuntime.engineReady(SuperRes)`.
 6. Apply 2× once. Export uses the same op. If the interpreter is released, the status returns to Ready-without-neural and Apply turns off. The photo is left unchanged.
 7. Repeat steps 2–6 for Denoise (`session_apply_denoise`). The sidecar is `filesDir/ml_packs/denoise/1/denoise.tflite.sha256` and must equal `PackCatalog.DENOISE_DOWNLOAD_SHA256` (`53f0112f248b18ae518af64942ea4741f5b22ccdc4af5aea0ff452875f17fb84`). The bind is same-size FLOAT32 RGB. A 2×/4× graph must not turn Denoise Apply on.
-8. FrameInterp: Missing shows **Download** (HTTPS FILM pin). After Ready + LiteRT bind, neural Slow-mo unlocks. Track: bundled in APK assets — no Download. After LiteRT bind (`isPointTrack`), Enable Track unlocks and `TrackPathBake` follows. Inpaint stays sideload-only.
+8. FrameInterp: Missing shows **Download** (HTTPS FILM pin). After Ready + LiteRT bind, neural Slow-mo unlocks. Track: bundled in APK assets — no Download. After LiteRT bind (`isPointTrack`), Enable Track unlocks and `TrackPathBake` follows. Inpaint and Depth: Missing shows **Download** (same Release- tag) and Install from file. Neural stays off until `engineReady`.
 
-## Device smoke — Inpaint (sideload only)
+## Device smoke — Inpaint and Depth
 
-Steps for when a desktop or KVM device is available. Do not record a pass in this file. No Maestro or device result is claimed. There is no Inpaint HTTPS URL and no SHA pin.
+Steps for when a desktop or KVM device is available. Do not record a pass in this file. No Maestro or device result is claimed. Download fetches the Release- asset and refuses a body whose SHA-256 is not the pin.
 
-1. Photo → Retouch → Fill. The status is the sideload missing copy (“not hosted for download”). The primary control is Install from file (`session_fill_pack_download_from_file`). Download (`session_fill_pack_download`) is absent.
+1. Photo → Retouch → Fill. The status is the hosted missing copy. Download (`session_fill_pack_download`) and Install from file (`session_fill_pack_download_from_file`) are both shown. Do not treat this as a device pass until it is run.
 2. Nearby-pixel Apply (`session_apply_fill`) is on. Neural Apply (`session_apply_fill_neural`) is off. The nearby-pixel result is Telea and is not neural.
-3. Copy `inpaint.tflite` into `filesDir/ml_incoming/` or use Install from file. When the status says installed and verified (Ready), the file is checksum-recorded only. Neural Apply stays off until the status says the sideloaded model is bound.
+3. Tap Download, copy `inpaint.tflite` into `filesDir/ml_incoming/`, or use Install from file. A Download must match `PackCatalog.INPAINT_DOWNLOAD_SHA256`. When the status says Ready, the file is checksum-recorded only. Neural Apply stays off until the engine is bound. Depth is the same pattern on the CG panel (`movie_cg_depth_download`), and soft Z stays off until that engine is bound.
 4. If Play services LiteRT is unavailable, or the graph is not FLOAT32 RGB+mask, the status stays Ready without neural and Neural Apply stays off. Nearby-pixel Apply stays on.
 5. Neural Apply turns on only when `PackRuntime.engineReady(Inpaint)` after `PackLiteRt` binds that contract. Do not treat a Ready file as neural.
 

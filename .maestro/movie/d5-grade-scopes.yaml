@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # D5 — grade look + scopes in movie session
 - runFlow: ../launch-to-home.yaml
@@ -48,13 +48,20 @@ appId: com.pixijoy.ai
     speed: 40
 - assertVisible:
     id: "movie_grade_exposure"
-- scrollUntilVisible:
-    element:
-      id: "movie_scopes"
-    direction: DOWN
-    timeout: 20000
-    visibilityPercentage: 40
-    speed: 40
+- repeat:
+    times: 12
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_scopes"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- assertVisible:
+    id: "movie_scopes"
 - assertVisible:
     id: "movie_scope_r"
 - assertVisible:

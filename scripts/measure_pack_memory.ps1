@@ -14,7 +14,7 @@ param(
         } else { "maestro" }
     }),
     [string]$Apk = "app\build\outputs\apk\debug\app-debug.apk",
-    [string]$Package = "com.pixijoy.ai",
+    [string]$Package = "com.pixijoy.studio",
     [switch]$SkipInstall,
     [switch]$SkipMaestro
 )

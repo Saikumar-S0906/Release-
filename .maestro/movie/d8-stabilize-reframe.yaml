@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # D8 — stabilize + reframe presets in movie session
 - runFlow: ../launch-to-home.yaml

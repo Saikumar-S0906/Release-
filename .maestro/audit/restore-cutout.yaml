@@ -1,0 +1,57 @@
+appId: com.pixijoy.studio
+---
+# Restore and cutout are hub tools, not chips on a normal editor session.
+# Subject vision may fall back to a corner cutout. This does not claim a segmentation pass.
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible:
+      id: "home_create"
+    timeout: 90000
+- tapOn:
+    id: "home_open_studio"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_restore"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_restore"
+- extendedWaitUntil:
+    visible:
+      id: "studio_use_sample"
+    timeout: 20000
+- tapOn:
+    id: "studio_use_sample"
+- extendedWaitUntil:
+    visible:
+      id: "session_restore"
+    timeout: 90000
+- tapOn:
+    id: "session_restore"
+- assertVisible:
+    id: "photo_session"
+# Back from a hub tool returns to the Studio tab, not Home.
+- tapOn:
+    id: "session_back"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_remove_bg"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_remove_bg"
+- extendedWaitUntil:
+    visible:
+      id: "studio_use_sample"
+    timeout: 20000
+- tapOn:
+    id: "studio_use_sample"
+- extendedWaitUntil:
+    visible:
+      id: "session_cutout"
+    timeout: 90000
+- assertVisible:
+    id: "session_cutout_capability"
+- tapOn:
+    id: "session_cutout"
+- assertVisible:
+    id: "photo_session"

@@ -1,0 +1,30 @@
+appId: com.pixijoy.studio
+---
+# Liquify apply. Perspective apply is warp-perspective-apply.yaml.
+- runFlow: ../open-photo-sample.yaml
+- tapOn:
+    id: "studio_group_compose"
+- tapOn:
+    id: "session_warp"
+- extendedWaitUntil:
+    visible:
+      id: "session_warp_hint"
+    timeout: 15000
+- repeat:
+    times: 12
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "session_apply_liquify"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- tapOn:
+    id: "session_apply_liquify"
+- assertVisible:
+    id: "photo_session"
+- assertVisible:
+    id: "session_undo"

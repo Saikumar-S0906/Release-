@@ -1,0 +1,39 @@
+appId: com.pixijoy.studio
+---
+# Heal: set a clone source, paint, apply. Not a pixel-quality pass.
+- runFlow: ../open-photo-sample.yaml
+- tapOn:
+    id: "studio_group_retouch"
+- tapOn:
+    id: "session_heal"
+- extendedWaitUntil:
+    visible:
+      id: "session_heal_set_source"
+    timeout: 15000
+- tapOn:
+    id: "session_heal_set_source"
+- tapOn:
+    id: "session_place"
+- extendedWaitUntil:
+    visible: "Clone from the source point."
+    timeout: 15000
+- tapOn:
+    id: "session_brush"
+- repeat:
+    times: 12
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "session_apply_heal"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- tapOn:
+    id: "session_apply_heal"
+- assertVisible:
+    id: "photo_session"
+- assertVisible:
+    id: "session_undo"

@@ -1,8 +1,8 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # Fresh install → privacy Accept → skip onboarding → Home.
 - launchApp:
-    appId: com.pixijoy.ai
+    appId: com.pixijoy.studio
     clearState: true
     permissions:
       all: allow

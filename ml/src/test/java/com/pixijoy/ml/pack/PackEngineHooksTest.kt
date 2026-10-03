@@ -111,12 +111,14 @@ class PackEngineHooksTest {
     }
 
     @Test
-    fun inpaint_readyFileIsNotNeuralAndHasNoHttpsPin() {
+    fun inpaint_readyFileIsNotNeural() {
         val spec = PackCatalog.spec(PackId.Inpaint)
-        assertNull(spec.downloadUrl)
-        assertNull(spec.downloadSha256)
+        assertEquals(PackCatalog.INPAINT_DOWNLOAD_URL, spec.downloadUrl)
+        assertEquals(PackCatalog.INPAINT_DOWNLOAD_SHA256, spec.downloadSha256)
         assertNull(spec.expectedSha256)
-        assertFalse(PackCatalog.hasHttpsFallback(spec))
+        assertNull(spec.assetPath)
+        assertTrue(PackCatalog.hasHttpsFallback(spec))
+        assertFalse(PackCatalog.isBundled(PackId.Inpaint))
         assertEquals("inpaint.tflite", spec.fileName)
         assertFalse(PackRuntime.engineReady(PackId.Inpaint))
         assertEquals(
@@ -139,6 +141,32 @@ class PackEngineHooksTest {
         assertFalse(PackRuntime.inpaintNeuralApplyEnabled(packReady = false, engineBound = true))
         assertFalse(PackRuntime.inpaintNeuralApplyEnabled(packReady = false, engineBound = false))
         assertTrue(PackRuntime.inpaintNeuralApplyEnabled(packReady = true, engineBound = true))
+    }
+
+    @Test
+    fun depth_readyFileIsNotNeural() {
+        val spec = PackCatalog.spec(PackId.Depth)
+        assertEquals(PackCatalog.DEPTH_DOWNLOAD_URL, spec.downloadUrl)
+        assertEquals(PackCatalog.DEPTH_DOWNLOAD_SHA256, spec.downloadSha256)
+        assertNull(spec.expectedSha256)
+        assertNull(spec.assetPath)
+        assertFalse(PackCatalog.isBundled(PackId.Depth))
+        assertTrue(PackCatalog.hasHttpsFallback(spec))
+        assertEquals("depth.tflite", spec.fileName)
+        assertEquals("ml_depth", spec.playModule)
+        assertEquals(
+            DepthStatus.ReadyFileOnly,
+            PackRuntime.depthStatus(packReady = true, engineBound = false)
+        )
+        assertEquals(
+            DepthStatus.EngineReady,
+            PackRuntime.depthStatus(packReady = true, engineBound = true)
+        )
+        assertEquals(
+            DepthStatus.NotReady,
+            PackRuntime.depthStatus(packReady = false, engineBound = true)
+        )
+        assertFalse(PackRuntime.engineReady(PackId.Depth))
     }
 
     @Test

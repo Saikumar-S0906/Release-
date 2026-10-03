@@ -36,13 +36,13 @@ Use **only** `flows/additional/REMATCH_*` for Beautiful / Funny / Tell / Sticker
 
 | Item | Value |
 |------|--------|
-| `applicationId` | `com.pixijoy.ai` |
+| `applicationId` | `com.pixijoy.studio` |
 | `versionName` / `versionCode` | `1.0.1-internal` / `2` (bump again before production Play upload) |
 | Board UI | Live path (tabs + onboarding → board hosts) |
 | Board generate | Soft / simulated; optional live Gemini probe when `BOARD_LIVE_GENERATE=true` + real key |
 | Debug NavHost | Flow Index / Board UI Index / Responsive QA registered only when `BuildConfig.DEBUG` |
 | Redirect prune | Legacy `AppDestination` redirects kept for deep links; delete after one internal-track cycle if unused |
-| Privacy / terms URLs | `https://pixijoy.ai/privacy` · `https://pixijoy.ai/terms` (confirm live pages before store) |
+| Privacy / terms | In the app. No website. Confirm both screens before store. |
 | Secrets | `local.properties` only — never commit keys ([local.properties.example](../local.properties.example)) |
 
 ## Doc map

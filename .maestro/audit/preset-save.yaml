@@ -1,0 +1,32 @@
+appId: com.pixijoy.studio
+---
+# Save the current look as a preset. The status line appears only after the write.
+- runFlow: ../open-photo-sample.yaml
+- tapOn:
+    id: "studio_group_color"
+- tapOn:
+    id: "session_presets"
+- extendedWaitUntil:
+    visible:
+      id: "session_presets_hint"
+    timeout: 15000
+- repeat:
+    times: 12
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "session_preset_save"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- tapOn:
+    id: "session_preset_save"
+- extendedWaitUntil:
+    visible:
+      id: "session_status"
+    timeout: 20000
+- assertVisible:
+    id: "photo_session"

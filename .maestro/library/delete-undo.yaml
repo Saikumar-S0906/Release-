@@ -1,4 +1,4 @@
-﻿appId: com.pixijoy.ai
+﻿appId: com.pixijoy.studio
 ---
 # R3.1 Library overflow + delete Snackbar Undo
 # Nav tag is nav_my_stuff (StudioTab.Library). Sample open lands on Studio tab.

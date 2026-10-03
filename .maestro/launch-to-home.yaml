@@ -1,4 +1,4 @@
-﻿appId: com.pixijoy.ai
+﻿appId: com.pixijoy.studio
 ---
 # clearState -> Privacy ("Continue"). Emulator may show System UI ANR — dismiss Wait first.
 # Phase 0: longer ANR dismiss loop + longer privacy/home waits (no fake greens).

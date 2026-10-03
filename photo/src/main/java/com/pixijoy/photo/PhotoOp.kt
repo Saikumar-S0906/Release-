@@ -68,7 +68,7 @@ sealed interface PhotoOp {
             other is Curves && y.contentEquals(other.y)
         override fun hashCode(): Int = y.contentHashCode()
     }
-    data class Blur(val radius: Int) : PhotoOp
+    data class Blur(val radius: Float) : PhotoOp
     data class Sharpen(val amount: Float) : PhotoOp
     data class Vignette(val amount: Float) : PhotoOp
     data object Subject : PhotoOp
@@ -233,7 +233,7 @@ fun String.decodeGraph(): List<PhotoOp> {
                         parts[4].toFloat(), parts[5].toFloat()
                     ))
                 } else null
-                "W" -> if (parts.size == 2) PhotoOp.Blur(parts[1].toInt().coerceIn(1, 16)) else null
+                "W" -> if (parts.size == 2) PhotoOp.Blur(parts[1].toFloat().coerceIn(0f, 16f)) else null
                 "X" -> if (parts.size == 2) PhotoOp.Sharpen(parts[1].toFloat()) else null
                 "V" -> if (parts.size == 2) PhotoOp.Vignette(parts[1].toFloat()) else null
                 "J" -> PhotoOp.Subject

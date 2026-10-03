@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.pixijoy.ai.benchmark"
+    namespace = "com.pixijoy.studio.benchmark"
     compileSdk = 35
 
     defaultConfig {

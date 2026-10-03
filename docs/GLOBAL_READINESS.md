@@ -82,7 +82,7 @@ That is **22 locales including English** (≥20). Expand later only with install
 
 | Item | Status | Work |
 |------|--------|------|
-| Privacy / consent | **Done** | First-run `StudioPrivacy` + Privacy/Terms links (`privacy_policy_link` / `privacy_terms_link`). Library footer repeats links. URLs: `https://pixijoy.ai/privacy` · `https://pixijoy.ai/terms`. |
+| Privacy / consent | **Done** | First-run `StudioPrivacy` opens the in-app privacy policy and terms (`privacy_policy_link` / `privacy_terms_link`). Library footer repeats them. No website. |
 | Delete-all / reset | **Done** | Library **Delete all projects** + **Reset app data** (clears prefs → Privacy gate). `ProjectRepository.deleteAll()`. |
 | Offline | **Done** | Pack empty copy: “Download an on-device model pack. Edits never leave this phone.” Existing Missing/Installing/Ready copy stays on-device. |
 | Network | **Done** | Pack HTTPS+SHA + Retry already; no pack spinner on session open. |

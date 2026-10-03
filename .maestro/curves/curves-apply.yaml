@@ -1,4 +1,4 @@
-﻿appId: com.pixijoy.ai
+﻿appId: com.pixijoy.studio
 ---
 # Curves grade path — editor rail + numeric value entry (StudioValueSlider).
 - runFlow: ../launch-to-home.yaml

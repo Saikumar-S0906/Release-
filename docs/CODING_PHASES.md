@@ -155,8 +155,8 @@ Do **not** block Phases 0–6. Each plug is a thin bind:
 
 | When file lands | Code work |
 |-----------------|-----------|
-| `inpaint.tflite` | E1 HTTPS/SHA pin + Download CTA (Telea stays fallback) |
-| `depth.tflite` | PackId.Depth + LiteRT + soft Z replace P5.4 |
+| `inpaint.tflite` | Release- Download + SHA pin (`ml-packs-v1`). Bind accepts image+mask in either input order. Telea stays the fallback until `engineReady`. Not an APK asset. |
+| `depth.tflite` | Release- Download + SHA pin (`ml-packs-v1`). Soft Z runs only when `engineReady` on SDR; manual Z stays the fallback. Not an APK asset. |
 | `matting.tflite` | PackId.Matting + LiteRT + plates replace P5.5 |
 | `flow.tflite` | PackId.Flow + LiteRT + stabilize/attach assist |
 

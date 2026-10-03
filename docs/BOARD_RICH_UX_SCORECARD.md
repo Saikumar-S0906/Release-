@@ -203,7 +203,7 @@ Full list: see repo `drawable/board_*` (enumerated 2026-09-08; vectors added Pha
 $env:GRADLE_USER_HOME = "...\MyApplication\.gradle-local"
 # Phone API 35 — settle ≥12–14s after --es board_screen (DataStore seed + nav)
 # First Phase 0 attempt at 5s captured splash/loading only (purple dot).
-adb -s <serial> shell am start -W -n com.pixijoy.ai/.MainActivity --es board_screen <id>
+adb -s <serial> shell am start -W -n com.pixijoy.studio/.MainActivity --es board_screen <id>
 # Output: docs/board_review/phase0_baseline/
 ```
 

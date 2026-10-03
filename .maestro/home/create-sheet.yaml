@@ -1,4 +1,4 @@
-﻿appId: com.pixijoy.ai
+﻿appId: com.pixijoy.studio
 ---
 # Create → source sheet. Sheet sets testTagsAsResourceId; assert ids + labels.
 - runFlow: ../launch-to-home.yaml

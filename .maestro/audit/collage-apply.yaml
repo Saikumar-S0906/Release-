@@ -1,0 +1,23 @@
+appId: com.pixijoy.studio
+---
+# Collage grid. Adding another photo opens the system gallery and is not tapped.
+- runFlow: ../open-photo-sample.yaml
+- tapOn:
+    id: "studio_group_compose"
+- tapOn:
+    id: "session_collage"
+- extendedWaitUntil:
+    visible:
+      id: "collage_2"
+    timeout: 15000
+- tapOn:
+    id: "collage_2"
+- extendedWaitUntil:
+    visible: "2-photo grid"
+    timeout: 15000
+- assertVisible:
+    id: "collage_4"
+- assertVisible:
+    id: "session_add_photo"
+- assertVisible:
+    id: "photo_session"

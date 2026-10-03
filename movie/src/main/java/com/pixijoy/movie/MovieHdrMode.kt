@@ -7,8 +7,8 @@ import androidx.media3.transformer.Composition
  * Movie HDR export intent (D11) — beyond HD/FHD/4K SDR.
  *
  * [Sdr] tone-maps HDR inputs to SDR (OpenGL) for wide sharing.
- * [KeepHdr] preserves HDR when the device/encoder supports it; Media3 falls back
- * to OpenGL tone-map when Keep HDR is unsupported.
+ * [KeepHdr] preserves HDR when the device can write it (HEVC, not H.264).
+ * Otherwise the export is SDR and the UI says so.
  */
 enum class MovieHdrMode {
     Sdr,

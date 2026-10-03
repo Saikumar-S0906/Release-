@@ -18,7 +18,7 @@ python fix_string_escapes.py
 
 ```powershell
 .\gradlew :app:testDebugUnitTest
-.\gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.pixijoy.ai.LocaleResourcesTest"
+.\gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.pixijoy.studio.LocaleResourcesTest"
 .\gradlew :app:lintDebug
 ```
 

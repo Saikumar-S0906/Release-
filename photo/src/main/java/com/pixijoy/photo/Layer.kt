@@ -84,7 +84,7 @@ fun PhotoOp.isIdentity(): Boolean = when (this) {
     is PhotoOp.Collage -> columns <= 1
     is PhotoOp.Lut -> BundledLooks.isIdentity(assetKey) && !ImportedLuts.isImported(assetKey)
     is PhotoOp.Curves -> LiveGrade.curvesIdentity(y)
-    is PhotoOp.Blur -> radius <= 0
+    is PhotoOp.Blur -> radius <= 0.5f
     is PhotoOp.Sharpen -> amount <= 0f
     is PhotoOp.Vignette -> amount <= 0f
     is PhotoOp.Perspective -> kotlin.math.abs(horizontal) < 0.001f && kotlin.math.abs(vertical) < 0.001f

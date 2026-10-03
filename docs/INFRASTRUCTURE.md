@@ -26,7 +26,7 @@ So: you can keep testing the APK **without** Firebase JSON.
 
 **How:**
 1. [Firebase Console](https://console.firebase.google.com/) → create project  
-2. Add Android app with package `com.pixijoy.ai`  
+2. Add Android app with package `com.pixijoy.studio`  
 3. Download `google-services.json` → put in **`app/google-services.json`**  
 4. Rebuild — Gradle auto-applies the Google Services plugin  
 

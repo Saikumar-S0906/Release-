@@ -1,0 +1,34 @@
+appId: com.pixijoy.studio
+---
+# Opens a sample movie. Does not clear app data (that deletes installed model packs).
+# studio_use_sample is a resource-id. MediaSourceSheet is its own window.
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible:
+      id: "home_create"
+    timeout: 90000
+- tapOn:
+    id: "home_open_studio"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_segment_movie"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_segment_movie"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_move"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_move"
+- extendedWaitUntil:
+    visible:
+      id: "studio_use_sample"
+    timeout: 20000
+- tapOn:
+    id: "studio_use_sample"
+- extendedWaitUntil:
+    visible:
+      id: "movie_session"
+    timeout: 90000

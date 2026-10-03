@@ -1,9 +1,11 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
-# E1 Fill pack CTA. Inpaint is sideload-only: Missing shows Install from file, not Download.
-# Nearby-pixel Apply stays on. Neural Apply is present and stays off until engineReady.
-# This flow does not install a model and does not claim a neural or device pass.
-# Glass chrome is 280dp — tap studio_scroll_more until pack CTA / Apply are in view.
+# E1 Fill pack CTA. Missing shows Download (Release- pin) and Install from file.
+# The empty plate line is studio_packs_empty, not studio_pack_missing (that string
+# is not composed until a different state). Nearby-pixel Apply stays on.
+# Neural Apply is present and stays off until engineReady.
+# This flow does not download the ~75 MB file and does not claim engineReady.
+# Glass chrome is 280dp — assert the status line before scrolling it off screen.
 - runFlow: ../launch-to-home.yaml
 - tapOn:
     id: "home_create"
@@ -27,7 +29,7 @@ appId: com.pixijoy.ai
             visible:
               id: "studio_scroll_more"
             notVisible:
-              id: "session_apply_fill_neural"
+              id: "session_fill_pack_status"
           commands:
             - tapOn:
                 id: "studio_scroll_more"
@@ -35,11 +37,27 @@ appId: com.pixijoy.ai
     visible:
       id: "session_fill_pack_status"
     timeout: 15000
-- assertVisible: "This pack is not hosted for download in this build. Use Install from file, or copy the .tflite into the incoming folder. Play Store modules are not shipped yet."
+- assertVisible: "Download an on-device model pack. Edits never leave this phone."
+- repeat:
+    times: 16
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "session_apply_fill_neural"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
+      id: "session_fill_pack_download"
+    timeout: 15000
+- assertVisible:
+    id: "session_fill_pack_download"
 - assertVisible:
     id: "session_fill_pack_download_from_file"
-- assertNotVisible:
-    id: "session_fill_pack_download"
 - assertVisible:
     id: "session_apply_fill"
 - assertVisible:

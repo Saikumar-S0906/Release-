@@ -1,0 +1,98 @@
+appId: com.pixijoy.studio
+---
+# Neural fill, then nearby-pixel fill, on an already-installed inpaint pack.
+# Does not clear app data. clearState would delete the pack.
+# "Ready to apply" is the bound engine. The Apply neural tap is the inference.
+# Passed only when this flow's assertions pass. Not a physical Pixel 7a pass.
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible:
+      id: "home_create"
+    timeout: 90000
+- tapOn:
+    id: "home_create"
+- extendedWaitUntil:
+    visible:
+      id: "source_sample"
+    timeout: 20000
+- tapOn:
+    id: "source_sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 90000
+- tapOn:
+    id: "studio_group_retouch"
+- tapOn:
+    id: "session_fill"
+- extendedWaitUntil:
+    visible:
+      id: "session_brush"
+    timeout: 20000
+- runFlow:
+    when:
+      visible:
+        id: "session_fill_pack_download"
+    commands:
+      - tapOn:
+          id: "session_fill_pack_download"
+      - extendedWaitUntil:
+          visible:
+            id: "session_fill_pack_download_remove"
+          timeout: 360000
+- repeat:
+    times: 16
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "session_fill_pack_status"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- assertVisible: "Ready to apply"
+- tapOn:
+    id: "session_brush"
+- repeat:
+    times: 16
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "session_apply_fill_neural"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- tapOn:
+    id: "session_apply_fill_neural"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 90000
+- tapOn:
+    id: "session_brush"
+- repeat:
+    times: 16
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "session_apply_fill"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- tapOn:
+    id: "session_apply_fill"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 30000
+- assertVisible:
+    id: "session_apply_fill_neural"

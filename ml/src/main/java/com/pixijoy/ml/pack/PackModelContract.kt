@@ -14,6 +14,8 @@ package com.pixijoy.ml.pack
 object PackModelContract {
     const val TRACK_TEMPLATE = 64
     const val TRACK_SEARCH = 128
+    /** Frozen monocular-depth spatial size. 0 is near, 1 is far. */
+    const val DEPTH_EDGE = 256
 
     /**
      * PixiJoy point-track: template + search NHWC RGB → normalized `(x,y)`.
@@ -96,6 +98,36 @@ object PackModelContract {
     fun isInpaintRgbAndMask(image: IntArray, mask: IntArray, output: IntArray): Boolean {
         if (!isNhwcRgb(image) || !isNhwcRgb(output)) return false
         if (image[1] != output[1] || image[2] != output[2]) return false
+        val (mh, mw) = maskSpatial(mask) ?: return false
+        return mh == image[1] && mw == image[2]
+    }
+
+    /**
+     * Image index to mask index. LiteRT may put the mask first (the on-disk
+     * graph does). Null when the two tensors are not RGB plus a same-size mask.
+     */
+    fun inpaintInputIndices(first: IntArray, second: IntArray): Pair<Int, Int>? {
+        if (isRgbPlusMask(first, second)) return 0 to 1
+        if (isRgbPlusMask(second, first)) return 1 to 0
+        return null
+    }
+
+    /**
+     * Monocular relative depth: NHWC RGB `1×256×256×3` → `1×256×256×1`
+     * FLOAT32, 0 near → 1 far. Bind checks dtype. This is not a quality score.
+     */
+    fun isMonocularDepth(input: IntArray, output: IntArray): Boolean {
+        if (!isNhwcRgb(input)) return false
+        if (input[1] != DEPTH_EDGE || input[2] != DEPTH_EDGE) return false
+        return output.size == 4 &&
+            output[0] == 1 &&
+            output[1] == DEPTH_EDGE &&
+            output[2] == DEPTH_EDGE &&
+            output[3] == 1
+    }
+
+    private fun isRgbPlusMask(image: IntArray, mask: IntArray): Boolean {
+        if (!isNhwcRgb(image)) return false
         val (mh, mw) = maskSpatial(mask) ?: return false
         return mh == image[1] && mw == image[2]
     }

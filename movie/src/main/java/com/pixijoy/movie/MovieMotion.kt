@@ -16,6 +16,82 @@ object MovieMotion {
         if (talking) return 0f
         return (t.coerceIn(0f, 1f) - 0.5f) * width * 0.12f
     }
+
+    /**
+     * Same pan as [pan], in Media3 clip space (frame width is 2).
+     * Pixel shift / width * 2 = (t-0.5)*0.24.
+     */
+    fun panNdc(t: Float, talking: Boolean): Float {
+        if (talking) return 0f
+        return (t.coerceIn(0f, 1f) - 0.5f) * 0.24f
+    }
+
+    /**
+     * Default still move. Preview samples [scale] and [pan]; export samples this
+     * curve. Non-talking zoom and pan are linear (two keys). Talking is a cosine
+     * pulse, so it is stored on eight steps.
+     */
+    fun kenBurns(talking: Boolean): ClipMotion {
+        val steps = if (talking) 8 else 1
+        val keys = ArrayList<TransformKeyframe>(steps + 1)
+        for (i in 0..steps) {
+            val u = i / steps.toFloat()
+            keys += TransformKeyframe(
+                t = u,
+                scale = scale(u, talking),
+                tx = panNdc(u, talking)
+            )
+        }
+        return ClipMotion(keys)
+    }
+}
+
+/**
+ * A still with a grade, a title, a layout, or a user move must export through the
+ * composition (so the file contains that picture). Identity motion on a still is
+ * filled with [MovieMotion.kenBurns] there. A plain still stays on [KenBurnsEncoder].
+ */
+object StillPicture {
+    fun needsComposition(timeline: MultiTrackTimeline): Boolean =
+        timeline.titles.any { it.text.isNotBlank() } ||
+            !timeline.grade.isNeutral() ||
+            timeline.layout.isMulti() ||
+            timeline.composedVideoClips().any { it.hasMotion }
+
+    /**
+     * Timeline to hand to the composition exporter, or null when the still encoder
+     * already matches the preview (no grade, no title, no user move, single layout).
+     */
+    fun forExport(
+        timeline: MultiTrackTimeline,
+        talking: Boolean,
+        stillAt: (mediaIndex: Int) -> Boolean
+    ): MultiTrackTimeline? {
+        if (!needsComposition(timeline)) return null
+        if (timeline.layout.isMulti()) return timeline
+        return timeline.withDefaultStillMotion(talking, stillAt)
+    }
+}
+
+fun MultiTrackTimeline.withDefaultStillMotion(
+    talking: Boolean,
+    stillAt: (mediaIndex: Int) -> Boolean
+): MultiTrackTimeline {
+    val move = MovieMotion.kenBurns(talking)
+    return copy(
+        tracks = tracks.map { track ->
+            if (track.kind != TrackKind.Video) {
+                track
+            } else {
+                track.copy(
+                    clips = track.clips.map { clip ->
+                        if (clip.hasMotion || !stillAt(clip.mediaIndex)) clip
+                        else clip.copy(motion = move)
+                    }
+                )
+            }
+        }
+    )
 }
 
 object MovieSpeed {

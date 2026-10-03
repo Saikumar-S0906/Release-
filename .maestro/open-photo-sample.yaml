@@ -1,0 +1,21 @@
+appId: com.pixijoy.studio
+---
+# Opens a sample photo. Does not clear app data (that deletes installed model packs).
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible:
+      id: "home_create"
+    timeout: 90000
+- tapOn:
+    id: "home_create"
+- extendedWaitUntil:
+    visible:
+      id: "source_sample"
+    timeout: 20000
+- tapOn:
+    id: "source_sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 90000

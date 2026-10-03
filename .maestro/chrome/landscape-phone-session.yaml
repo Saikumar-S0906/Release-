@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # Phone landscape (wide + short): side tools beside canvas (not bottom glass).
 # Drive orientation from the host before this flow (Maestro 2.10 has no setOrientation):

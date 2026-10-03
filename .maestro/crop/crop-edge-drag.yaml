@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # Crop overlay + edge nodes + drag toward right edge (snap math is unit-tested).
 # Asserts chrome/a11y tags; does not claim haptic or pixel snap green from Maestro.

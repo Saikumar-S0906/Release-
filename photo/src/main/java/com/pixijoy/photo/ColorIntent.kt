@@ -31,7 +31,12 @@ fun Bitmap.withColorIntent(intent: ColorIntent): Bitmap {
         ColorIntent.DisplayP3 -> ColorSpace.get(ColorSpace.Named.DISPLAY_P3)
     } ?: return this
     if (colorSpace == space) return this
-    return copy(config ?: Bitmap.Config.ARGB_8888, true).also {
-        it.setColorSpace(space)
+    val copy = copy(config ?: Bitmap.Config.ARGB_8888, true)
+    return try {
+        copy.setColorSpace(space)
+        copy
+    } catch (t: Throwable) {
+        if (!copy.isRecycled) copy.recycle()
+        throw t
     }
 }

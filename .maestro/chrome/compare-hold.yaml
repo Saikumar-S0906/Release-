@@ -1,4 +1,4 @@
-﻿appId: com.pixijoy.ai
+﻿appId: com.pixijoy.studio
 ---
 # Pointer press-hold is momentary; TalkBack exposes a toggle action. Compare is disabled on a
 # fresh sample, enables for a live Look, and remains meaningful after that Look is baked.

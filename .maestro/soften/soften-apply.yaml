@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # C8 Soften — rail + Apply
 - runFlow: ../launch-to-home.yaml

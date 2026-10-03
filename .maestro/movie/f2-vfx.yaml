@@ -1,23 +1,52 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
-- launchApp
-- tapOn:
-    id: "shell_create"
-- tapOn:
-    id: "create_movie"
-- extendedWaitUntil:
-    visible:
-      id: "movie_timeline"
-    timeout: 20000
+# VFX sparkle on a sample movie. Does not clear app data.
+- runFlow: ../open-movie-sample.yaml
 - tapOn:
     id: "studio_group_effects"
+# VFX is the last effects chip. The More fade still covers it when the id first appears.
+- repeat:
+    times: 6
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_hscroll_more"
+            notVisible:
+              id: "movie_effect_vfx"
+          commands:
+            - tapOn:
+                id: "studio_hscroll_more"
+- swipe:
+    direction: LEFT
+    duration: 400
+    from:
+      id: "movie_effect_track"
 - tapOn:
     id: "movie_effect_vfx"
-- assertVisible:
-    id: "movie_f2_hint"
+- extendedWaitUntil:
+    visible:
+      id: "movie_f2_hint"
+    timeout: 15000
 - assertVisible:
     id: "movie_vfx_presets"
+- repeat:
+    times: 12
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_vfx_sparkle"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
 - tapOn:
     id: "movie_vfx_sparkle"
+- extendedWaitUntil:
+    visible:
+      id: "movie_vfx_layer_label"
+    timeout: 20000
 - assertVisible:
-    id: "movie_vfx_layer_label"
+    id: "movie_session"

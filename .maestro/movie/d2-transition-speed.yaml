@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # D2 — focused Roll, Transition, and Speed controls
 - runFlow: ../launch-to-home.yaml

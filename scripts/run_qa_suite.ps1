@@ -17,32 +17,32 @@ if (-not (Get-Command adb -ErrorAction SilentlyContinue)) {
 # Map suite -> fully-qualified instrumented test class(es)
 $suiteClasses = @{
     ui         = @(
-        "com.pixijoy.ai.PixiJoyNavigationSmokeTest",
-        "com.pixijoy.ai.PixiJoyScreenReachabilityTest",
-        "com.pixijoy.ai.qa.MemeStickerFlowTest"
+        "com.pixijoy.studio.PixiJoyNavigationSmokeTest",
+        "com.pixijoy.studio.PixiJoyScreenReachabilityTest",
+        "com.pixijoy.studio.qa.MemeStickerFlowTest"
     )
     e2e        = @(
-        "com.pixijoy.ai.qa.ColdStartE2ETest",
-        "com.pixijoy.ai.qa.MemeStickerFlowTest",
-        "com.pixijoy.ai.PixiJoyNavigationSmokeTest"
+        "com.pixijoy.studio.qa.ColdStartE2ETest",
+        "com.pixijoy.studio.qa.MemeStickerFlowTest",
+        "com.pixijoy.studio.PixiJoyNavigationSmokeTest"
     )
     regression = @(
-        "com.pixijoy.ai.qa.RegressionSuiteTest",
-        "com.pixijoy.ai.LocaleResourcesTest",
-        "com.pixijoy.ai.QaReportManagerTest",
-        "com.pixijoy.ai.qa.CreditEdgeCaseTest"
+        "com.pixijoy.studio.qa.RegressionSuiteTest",
+        "com.pixijoy.studio.LocaleResourcesTest",
+        "com.pixijoy.studio.QaReportManagerTest",
+        "com.pixijoy.studio.qa.CreditEdgeCaseTest"
     )
-    negative   = @("com.pixijoy.ai.qa.NegativeCaseTest")
+    negative   = @("com.pixijoy.studio.qa.NegativeCaseTest")
     edge       = @(
-        "com.pixijoy.ai.qa.EdgeCaseTest",
-        "com.pixijoy.ai.qa.CreditEdgeCaseTest",
-        "com.pixijoy.ai.LocaleResourcesTest"
+        "com.pixijoy.studio.qa.EdgeCaseTest",
+        "com.pixijoy.studio.qa.CreditEdgeCaseTest",
+        "com.pixijoy.studio.LocaleResourcesTest"
     )
     stability  = @(
-        "com.pixijoy.ai.qa.MonkeyStabilityTest",
-        "com.pixijoy.ai.qa.UiAutomatorLifecycleTest"
+        "com.pixijoy.studio.qa.MonkeyStabilityTest",
+        "com.pixijoy.studio.qa.UiAutomatorLifecycleTest"
     )
-    monkey     = @("com.pixijoy.ai.qa.MonkeyStabilityTest")
+    monkey     = @("com.pixijoy.studio.qa.MonkeyStabilityTest")
 }
 
 Write-Host "=== PixiJoy QA Suite: $Suite ==="

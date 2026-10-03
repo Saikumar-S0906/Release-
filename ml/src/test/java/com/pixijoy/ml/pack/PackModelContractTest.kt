@@ -45,6 +45,49 @@ class PackModelContractTest {
                 intArrayOf(1, 256, 256, 3)
             )
         )
+        assertEquals(
+            0 to 1,
+            PackModelContract.inpaintInputIndices(
+                intArrayOf(1, 256, 256, 3),
+                intArrayOf(1, 256, 256, 1)
+            )
+        )
+        // On-disk graph: mask is input 0, image is input 1.
+        assertEquals(
+            1 to 0,
+            PackModelContract.inpaintInputIndices(
+                intArrayOf(1, 256, 256, 1),
+                intArrayOf(1, 256, 256, 3)
+            )
+        )
+        assertNull(
+            PackModelContract.inpaintInputIndices(
+                intArrayOf(1, 256, 256, 3),
+                intArrayOf(1, 128, 128, 1)
+            )
+        )
+    }
+
+    @Test
+    fun depth_accepts256RelativeMap_rejectsRgbOut() {
+        assertTrue(
+            PackModelContract.isMonocularDepth(
+                intArrayOf(1, 256, 256, 3),
+                intArrayOf(1, 256, 256, 1)
+            )
+        )
+        assertFalse(
+            PackModelContract.isMonocularDepth(
+                intArrayOf(1, 128, 128, 3),
+                intArrayOf(1, 128, 128, 1)
+            )
+        )
+        assertFalse(
+            PackModelContract.isMonocularDepth(
+                intArrayOf(1, 256, 256, 3),
+                intArrayOf(1, 256, 256, 3)
+            )
+        )
     }
 
     @Test

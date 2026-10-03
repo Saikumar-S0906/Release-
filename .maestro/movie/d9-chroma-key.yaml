@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # D9 — chroma key presets in movie session
 - runFlow: ../launch-to-home.yaml
@@ -65,6 +65,18 @@ appId: com.pixijoy.ai
     id: "movie_chroma_wide"
 - tapOn:
     id: "movie_chroma_wide"
+- repeat:
+    times: 8
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_chroma_softness"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
 - assertVisible:
     id: "movie_chroma_softness"
 - assertVisible:

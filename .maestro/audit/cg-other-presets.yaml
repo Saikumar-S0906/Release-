@@ -1,0 +1,154 @@
+appId: com.pixijoy.studio
+---
+# Ground, sky, and dust plates. Prop cube is depth-neural-play.yaml.
+# Load glTF opens a system file picker and is not tapped.
+# A selected plate must replace the controls under the chips.
+# This does not check pixels.
+- runFlow: ../open-movie-sample.yaml
+- tapOn:
+    id: "studio_group_cg"
+- extendedWaitUntil:
+    visible:
+      id: "movie_cg_presets"
+    timeout: 15000
+# The bottom "More" label sits on the last row and swallows a tap on Ground.
+# One page lifts that row. A second tap on the same plate selects it; it does not stack.
+- runFlow:
+    when:
+      visible:
+        id: "studio_scroll_more"
+    commands:
+      - tapOn:
+          id: "studio_scroll_more"
+- tapOn:
+    id: "movie_cg_groundplane"
+- repeat:
+    times: 8
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_cg_options_groundplane"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
+      id: "movie_cg_options_groundplane"
+    timeout: 15000
+- assertNotVisible:
+    id: "movie_cg_options_dusttrail"
+- assertNotVisible:
+    id: "movie_cg_options_skydome"
+- assertNotVisible:
+    id: "movie_cg_yaw"
+- assertNotVisible:
+    id: "movie_cg_pitch"
+- repeat:
+    times: 6
+    commands:
+      - runFlow:
+          when:
+            notVisible:
+              id: "movie_cg_skydome"
+          commands:
+            - swipe:
+                direction: LEFT
+                duration: 400
+                from:
+                  id: "movie_cg_presets"
+- tapOn:
+    id: "movie_cg_skydome"
+- repeat:
+    times: 8
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_cg_options_skydome"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
+      id: "movie_cg_options_skydome"
+    timeout: 15000
+- assertNotVisible:
+    id: "movie_cg_options_groundplane"
+- assertNotVisible:
+    id: "movie_cg_scale"
+- assertNotVisible:
+    id: "movie_cg_yaw"
+- repeat:
+    times: 6
+    commands:
+      - runFlow:
+          when:
+            notVisible:
+              id: "movie_cg_dusttrail"
+          commands:
+            - swipe:
+                direction: LEFT
+                duration: 400
+                from:
+                  id: "movie_cg_presets"
+- tapOn:
+    id: "movie_cg_dusttrail"
+- repeat:
+    times: 8
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_cg_options_dusttrail"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
+      id: "movie_cg_options_dusttrail"
+    timeout: 15000
+- assertNotVisible:
+    id: "movie_cg_options_groundplane"
+- assertNotVisible:
+    id: "movie_cg_options_skydome"
+- assertNotVisible:
+    id: "movie_cg_pitch"
+- repeat:
+    times: 8
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_cg_yaw"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
+      id: "movie_cg_yaw"
+    timeout: 15000
+- repeat:
+    times: 40
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_cg_clear"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- tapOn:
+    id: "movie_cg_clear"
+- assertVisible:
+    id: "movie_session"

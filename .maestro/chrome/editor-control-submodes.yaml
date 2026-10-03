@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # Focused photo controls keep one slider visible at a time.
 - runFlow: ../launch-to-home.yaml

@@ -1,4 +1,4 @@
-﻿appId: com.pixijoy.ai
+﻿appId: com.pixijoy.studio
 ---
 # R3.1 Best-for + Recommended on Studio hub
 - runFlow: ../launch-to-home.yaml
@@ -15,7 +15,7 @@
 - assertVisible:
     id: "recommended_create_hub_remove_bg"
 - assertVisible: "Best for: everyday edits"
-- assertVisible: "Best for: remove the background"
+- assertVisible: "Basic cutout for simple backgrounds"
 - assertVisible:
     id: "create_hub_restore"
-- assertVisible: "Best for: remove unwanted objects"
+- assertVisible: "Contrast, color, and sharpening"

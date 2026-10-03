@@ -38,7 +38,7 @@ Details: [GEMINI_TESTING.md](GEMINI_TESTING.md).
 ## C4 — Auth / privacy URLs
 
 1. Open Settings → Privacy / Terms in-app.
-2. Confirm live pages: `https://pixijoy.ai/privacy` and `https://pixijoy.ai/terms`.
+2. Open Privacy policy and Terms from the first-run screen and from Library. Both are in the app. Neither opens a website.
 3. OAuth only if Play listing claims require it.
 
 **Exit:** Beautiful + Funny live probe green (or documented soft fallback); Pro/credits/ads smoke noted; privacy/terms URLs live.

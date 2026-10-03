@@ -31,7 +31,7 @@ function Write-Log([string]$msg) {
 
 function Capture-Meminfo([string]$label) {
     $file = Join-Path $outDir "meminfo_${label}_$stamp.txt"
-    adb -s $Device shell dumpsys meminfo com.pixijoy.ai > $file
+    adb -s $Device shell dumpsys meminfo com.pixijoy.studio > $file
     $summary = Select-String -Path $file -Pattern "TOTAL PSS:|TOTAL RSS:|Java Heap:|Native Heap:|Graphics:" |
         ForEach-Object { $_.Line.Trim() }
     Write-Log "meminfo[$label]: $($summary -join ' | ')"
@@ -54,7 +54,7 @@ $stressCode = 0
 if (-not $SkipStress) {
     Write-Log "Running StudioSessionStressTest on $Device..."
     & .\gradlew.bat :app:connectedDebugAndroidTest `
-        "-Pandroid.testInstrumentationRunnerArguments.class=com.pixijoy.ai.StudioSessionStressTest" `
+        "-Pandroid.testInstrumentationRunnerArguments.class=com.pixijoy.studio.StudioSessionStressTest" `
         "-Pandroid.injected.androidTest.connectedDeviceSerial=$Device"
     $stressCode = $LASTEXITCODE
     Write-Log "Stress exit=$stressCode"

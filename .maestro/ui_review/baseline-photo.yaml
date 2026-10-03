@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # R4 UI baseline — editor rail modes on the sample photo.
 - runFlow: ../launch-to-home.yaml
