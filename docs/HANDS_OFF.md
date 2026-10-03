@@ -1,8 +1,8 @@
-﻿# PixiJoy - Hands-off operating guide
+# PixiJoy - Hands-off operating guide
 
 Saikumar acts as **client**. Day-to-day ownership sits with **ProjectManager** and the team. Do not wait on him for routine decisions. Ask only when a true client approval or product call is required.
 
-Last updated: 2026-10-02 ~19:40 IST
+Last updated: 2026-10-03 ~19:20 IST
 
 ## North star
 
@@ -60,14 +60,13 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - Soft nits do not block exits.
 - ViewModel / Hilt / BuildConfig hygiene are **exited** (G2/G3/G9); do not re-open as feature gates.
 
-## Status snapshot (2026-10-02 ~19:40 IST)
+## Status snapshot (2026-10-03 ~19:20 IST)
 
 ### Tip / live train
 
-- **Tip `origin/next`:** `d53bae5` — squash-landed [PR #30](https://github.com/Saikumar-S0906/PixiJoy/pull/30) Track-ML F1 fixlet (`inMs`/`outMs` source window + cache key; `mapThroughDisplay` pan/zoom; seed-only unbound unchanged).
-- **Live gate:** draft [PR #31](https://github.com/Saikumar-S0906/PixiJoy/pull/31) **H10 gate honesty** head `2cd0d5d` (base `d53bae5`) — DEX class scan (not ZIP-path-only) + release shrinking / mapping residuals; fold P2 on-demand delivery assert. Reviwer **pre-CLEAR**; still **HOLD** until undraft + both CI green. Local OptFeatureModulesH10Test + reportH10SizeGate PASS. Soft Maestro / P7 / HDRI HOLD non-blocking for this bar.
-- **DESKTOP:** developer exclusive on `cursor/classical-h10-dex-zip-honesty-d53bae5` @ `2cd0d5d` for the land path. Soft dumps may run off tip while CI runs; do not divert #31.
-- **Soft Maestro (tip `d53bae5`, Pixel_7a):** still **not device-green**. Slider and curves left the editor because IME dismiss arrives as Back. Rename's `hideKeyboard` dismissed the dialog the same way. Create sheet failed on the label "Video" while the button reads "Movie" (`source_video` id unchanged). Code for those four is on `cursor/soft-maestro-editor-back-2cd0d5d` (does not move #31). Unit policy tests only — device flows not re-run. PASS on that dump: layers, fill-pack, talkback. YELLOW: glTF + dust. **P7 HOLD**. Artifacts: `artifacts/dumps/d53bae5/`.
+- **Tip `origin/next`:** `c5ec074` (Merge #33). Landed since the 10-02 snapshot: [#31](https://github.com/Saikumar-S0906/PixiJoy/pull/31) H10 DEX/ZIP honesty `150c959`; [#32](https://github.com/Saikumar-S0906/PixiJoy/pull/32) editor stays open when a slider or rename field closes the keyboard `ec1272a`; [#33](https://github.com/Saikumar-S0906/PixiJoy/pull/33) depth + inpaint sideload bind `c5ec074`. #30 Track-ML stays in history (`d53bae5`).
+- **Live gate:** none named. DESKTOP is on `next` @ `c5ec074`. Soft Maestro / P7 / HDRI still not device-green.
+- **Soft Maestro:** last Pixel_7a dump was tip `d53bae5` (YELLOW). #32 is the code fix for slider, curves, and rename leaving the editor on IME Back. Device flows were not re-run after #32, so those four stay not-green until a dump off `c5ec074`. Create-sheet label is Movie (`source_video` id unchanged). PASS on the old dump: layers, fill-pack, talkback. YELLOW: glTF + dust. **P7 HOLD**.
 
 ### UX locks (still true)
 
@@ -77,11 +76,11 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - TalkBack: short verbs; "Looks, selected"; Downloaded vs Ready to apply; crop edges by side. Device TalkBack remains yellow (`.maestro/YELLOW-talkback-studio.md`).
 - Pack Ready ≠ neural until `engineReady`.
 
-### Soft polish queue (not on #31 train)
+### Soft polish queue
 
 1. **Compare** — already gated in `PhotoSessionPreview.canCompare` (live delta, or a baked layer plus a snapshot). Not a new slice.
 2. **Gallery / create picker** — still yellow-manual; first-session impression. System picker. Do not fake a green.
-3. Device TalkBack pass when DESKTOP free after #31.
+3. Device TalkBack pass on tip `c5ec074` when DESKTOP is free.
 4. Slow-mo / Track pack-sheet final strings only after real pack bind (E4 FILM needs User **go FILM**; F1 Track stays honesty-chrome until engine).
 
 ### MET / exited (high level)
@@ -89,12 +88,12 @@ Then ProjectManager **calls the exit** in the group and the team rolls forward.
 - Waves B–D (R3.1 UX, Wave C photo, R4 D1–D11 cinema) exited 2026-09-23+.
 - R5 pack runtime + E1–E3 / E5 size bar; E4/F1 engines still HOLD until licensed `.tflite` + URL/SHA (F1 **contract** + #30 Track-ML fixlet MET; seed-only unbound unchanged).
 - G1–G9 platform/UX chrome MET (device TalkBack / some Maestro soft yellow).
-- H10 size gate MET earlier; **honesty (DEX class scan)** is the live #31 fixlet.
+- H10 size gate MET; honesty (DEX class scan) landed in #31.
 
 ### Follow-up (not a feature gate)
 
 - Gallery picker stays yellow-manual (system sheet).
-- Post-#31: any residual H10 docs only if Architect asks. Re-run slider, curves, rename, and create-sheet on Pixel_7a before calling those four green.
+- Re-run slider, curves, rename, and create-sheet on Pixel_7a off tip `c5ec074` before calling those four green.
 - B4 downscaled live preview on Color drag only with jank evidence.
 
 ## Docs on `next`

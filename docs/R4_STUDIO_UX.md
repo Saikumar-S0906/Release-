@@ -1,22 +1,22 @@
-# R4 studio UX
+﻿# R4 studio UX
 
 Pixel_7a (`emulator-5556`) on 2026-09-23. Baseline shots are the build that was already installed. After shots are the grouped chrome in this change.
 
-The live product is the three-tab studio (Home, Studio, Library). Explore, Community, and Create → AI are not on this shell, so they were not captured.
+The live product is the three-tab studio (Home, Studio, Library). Explore, Community, and Create â†’ AI are not on this shell, so they were not captured.
 
 ## What the screenshots showed
 
 Shell shots: `docs/ui_review/r4_baseline/.maestro/tests/2026-09-23_211719/baseline-shell/takeScreenshot/`.
 
 - Home is a dark canvas, one Create button, and an empty Recents line. Most of the screen is unused. That is fine for an empty library. It is not the editor problem.
-- Studio Photo listed Editor and Cutout twice: once under Recommended and again in the grid. Subtitles such as “Best for: remove the background” were cut off at the card edge. The grid now skips tools already in Recommended, and tile subtitles ellipsize at two lines.
+- Studio Photo listed Editor and Cutout twice: once under Recommended and again in the grid. Subtitles such as â€œBest for: remove the backgroundâ€ were cut off at the card edge. The grid now skips tools already in Recommended, and tile subtitles ellipsize at two lines.
 - Library is the third tab. There is no Explore or Community tab on this build.
 
 Photo editor shots: `docs/ui_review/r4_baseline/.maestro/tests/2026-09-23_212942/baseline-photo/takeScreenshot/` (`photo_crop`, `photo_adjust`, `photo_curves`, `photo_selective_hsl`, `photo_looks`, `photo_sky`). Later rail items (`session_warp` and after) did not scroll into view before the flow stopped. The pattern is the same on every shot that did land.
 
-- On Adjust, the portrait is a short band. Exposure, contrast, hue, saturation, and blur fill the rest, and the tool names still scroll sideways (Crop, Adjust, Curves, Color, Looks…).
+- On Adjust, the portrait is a short band. Exposure, contrast, hue, saturation, and blur fill the rest, and the tool names still scroll sideways (Crop, Adjust, Curves, Color, Looksâ€¦).
 - A full-width Export button sits under that rail.
-- The top row crushes “Saved” into a one-letter column and clips the compare sentence against Undo and Redo. The title is squeezed out. That row is now two lines: Back / title / Export, then Undo / Redo / compare / save status, each on one line.
+- The top row crushes â€œSavedâ€ into a one-letter column and clips the compare sentence against Undo and Redo. The title is squeezed out. That row is now two lines: Back / title / Export, then Undo / Redo / compare / save status, each on one line.
 
 Movie shots: `docs/ui_review/r4_baseline/.maestro/tests/2026-09-23_213321/baseline-movie/takeScreenshot/` (`movie_sheet_top`, `movie_sheet_grade`). The timeline tag never scrolled into view within 40 seconds. That is the stacked sheet: tracks, edit, motion, frame, chroma, slow-mo, HDR, titles, and grade all sit in one dark list, and the playhead is buried under them.
 
@@ -29,7 +29,7 @@ Same pattern as Lightroom (one category, a few sliders) and CapCut (one tool gro
 - The sheet is `PixiBg` at 72% opacity. Compose blur would smear the controls themselves, so the sheet is translucent and sits under the canvas. Crop handles stay on the photo, not under the sheet.
 - Export is a top-bar button. The full-width Export button is gone.
 - Movie transport (scrub, play, frame step, clip strip) is pinned under the video. It does not scroll away with the tools.
-- PiP / Split / Grid use the same `Composition` as export with Media3’s multi-input video graph. If the device/runtime rejects that graph, the editor removes the misleading preview and labels the layout export-only.
+- PiP / Split / Grid use the same `Composition` as export with Media3â€™s multi-input video graph. If the device/runtime rejects that graph, the editor removes the misleading preview and labels the layout export-only.
 
 Photo groups: Crop, Light, Color, Retouch, Compose, Add.
 Movie groups: Edit, Audio, Text, Color, Effects, Layout.
@@ -40,7 +40,7 @@ Clip volume, fades, and mute stay on Edit, next to trim. Audio holds ducking, mu
 
 Photo Light, hue/saturation, curves (API 33+), and bundled looks still update the image while the slider moves. Apply writes the graph op. Selective HSL, sky, warp, soften, and imported LUTs still bake on Apply. The selective hint already says Apply bakes. No downscale was added.
 
-Movie preview used to call `setComposition` + `prepare()` on every timeline encode, including while a slider was down. Drags now update the graph without rebinding. The player rebinds when the gesture ends, or immediately for a structural edit (split, transition chip, layout, title, motion preset). Playhead is restored for single-video sequences; seeking stays guarded for Media3’s known multi-video limitation.
+Movie preview used to call `setComposition` + `prepare()` on every timeline encode, including while a slider was down. Drags now update the graph without rebinding. The player rebinds when the gesture ends, or immediately for a structural edit (split, transition chip, layout, title, motion preset). Playhead is restored for single-video sequences; seeking stays guarded for Media3â€™s known multi-video limitation.
 
 ## Functional fixes in this change
 
@@ -54,7 +54,7 @@ Movie preview used to call `setComposition` + `prepare()` on every timeline enco
 
 - Typing a slider number is on the shared live-value slider for photo Light, Color, and Curves. Short-tap types, long-press resets.
 - Library cover skeletons landed (G6). Empty library and pack download use the same glass plate (G7).
-- Rename after export (G8) — landed: tappable project title, and Name this project on export success.
+- Rename after export (G8) â€” landed: tappable project title, and Name this project on export success.
 - Live PiP preview when `CompositionPlayer` can take more than one input.
 - Selective HSL on the GPU after a Pixel_7a frame-time measurement (B4).
 - LiteRT pack engines, and ViewModel extraction.
@@ -70,8 +70,8 @@ What changed on top of the first grouped chrome:
 
 - The picture fills the stage. Controls sit in a bottom glass stack (`StudioChromeBar`) with a fade into the media, not a solid slab under a letterboxed preview.
 - The icon rail is under the panel (CapCut-style thumb reach). Six groups share the width evenly.
-- Light and Curves show **one** control at a time (chips pick Exposure / Contrast / … or Blacks / Midtones / …). The panel no longer scrolls through five stacked sliders.
-- Hints are one short line. Movie Edit reads “Roll, dissolve, or ramp speed.”
+- Light and Curves show **one** control at a time (chips pick Exposure / Contrast / â€¦ or Blacks / Midtones / â€¦). The panel no longer scrolls through five stacked sliders.
+- Hints are one short line. Movie Edit reads â€œRoll, dissolve, or ramp speed.â€
 - Histogram is a small glass strip at the top of the photo, not between the image and the tools.
 - Crop pads the fit box so handles stay above the glass.
 
@@ -81,9 +81,9 @@ Honest remaining gaps vs Lightroom / CapCut: true backdrop blur (Compose cannot 
 
 Top and bottom chrome both fade over the picture (`StudioTopChrome` + `StudioChromeBar`, drawn above the canvas). The group rail uses an accent icon and underline instead of a solid purple tile. Light shows a large live value (tap to type, long-press to reset) and a short Apply. Layout keeps one export hint.
 
-Glass panel max height is 280 dp so dense groups (Compose / Edit) usually fit. When content still overflows, a bottom fade with a tappable “More ⌄” scrolls the panel (`studio_scroll_more`). Horizontal chip rows fade at the trailing edge when more chips sit off-screen. Still-movie GIF export lives in the Export sheet format chips (not a second top-bar button).
+Glass panel max height is 280 dp so dense groups (Compose / Edit) usually fit. When content still overflows, a bottom fade with a tappable â€œMore âŒ„â€ scrolls the panel (`studio_scroll_more`). Horizontal chip rows fade at the trailing edge when more chips sit off-screen. Still-movie GIF export lives in the Export sheet format chips (not a second top-bar button).
 
-Recapture: movie `docs/ui_review/r4_after/.maestro/tests/2026-09-24_195106/` (shows “More ⌄” on Edit). Photo recapture follows the same build.
+Recapture: movie `docs/ui_review/r4_after/.maestro/tests/2026-09-24_195106/` (shows â€œMore âŒ„â€ on Edit). Photo recapture follows the same build.
 
 ## How to recapture
 
@@ -94,3 +94,6 @@ maestro --device emulator-5556 test --debug-output docs\ui_review\r4_after .maes
 maestro --device emulator-5556 test --debug-output docs\ui_review\r4_after .maestro\ui_review\after-photo.yaml
 maestro --device emulator-5556 test --debug-output docs\ui_review\r4_after .maestro\ui_review\after-movie.yaml
 ```
+
+2026-10-03 IST — tip origin/next is c5ec074 (#31 honesty, #32 editor-back, #33 depth+inpaint). Soft Maestro still not device-green until slider/curves/rename/create-sheet are re-run. Chrome locks unchanged.
+
