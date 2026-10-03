@@ -25,6 +25,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -115,6 +119,14 @@ internal fun SliderValueField(
                 .weight(1f)
                 .heightIn(min = 48.dp)
                 .focusRequester(focusRequester)
+                .onPreviewKeyEvent { event ->
+                    if (event.type == KeyEventType.KeyDown && sliderCommitKey(event.key)) {
+                        onCommit(field.text)
+                        true
+                    } else {
+                        false
+                    }
+                }
                 .onFocusChanged { state ->
                     if (armed && !state.isFocused) onCommit(field.text)
                 }

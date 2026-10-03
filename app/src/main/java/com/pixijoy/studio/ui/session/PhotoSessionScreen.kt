@@ -38,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -167,8 +168,14 @@ fun PhotoSessionScreen(
     val layers = sessionState.layers
     val redo = sessionState.redo
     FlushSessionOnStop(sessionViewModel::flushInBackground)
+    val keyboard = LocalSoftwareKeyboardController.current
+    val imeBottom = rememberSessionImeBottomPx()
     PredictiveBackHandler {
         it.collect { }
+        if (swallowSessionBackForIme(imeBottom[0], SliderImeDismiss.guardUntilElapsedMs, android.os.SystemClock.elapsedRealtime())) {
+            keyboard?.hide()
+            return@PredictiveBackHandler
+        }
         runCatching { sessionViewModel.flush() }
         onBack()
     }
