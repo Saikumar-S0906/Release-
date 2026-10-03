@@ -172,9 +172,13 @@ fun PhotoSessionScreen(
     val imeBottom = rememberSessionImeBottomPx()
     PredictiveBackHandler {
         it.collect { }
-        if (swallowSessionBackForIme(imeBottom[0], SliderImeDismiss.guardUntilElapsedMs, android.os.SystemClock.elapsedRealtime())) {
-            keyboard?.hide()
-            return@PredictiveBackHandler
+        when (resolveSessionBack(imeBottom[0], android.os.SystemClock.elapsedRealtime())) {
+            SessionBackDecision.Stay -> return@PredictiveBackHandler
+            SessionBackDecision.StayHideIme -> {
+                keyboard?.hide()
+                return@PredictiveBackHandler
+            }
+            SessionBackDecision.Leave -> Unit
         }
         runCatching { sessionViewModel.flush() }
         onBack()

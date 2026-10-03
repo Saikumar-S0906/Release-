@@ -1,6 +1,19 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 package com.pixijoy.studio.ui.session
 
+
 import android.os.SystemClock
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
+import androidx.compose.foundation.gestures.BringIntoViewSpec
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.animation.core.snap
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -294,6 +307,7 @@ fun StudioTopChrome(
  * controls under the rail. When content still overflows, a bottom fade and
  * tappable “More ⌄” scrolls the panel. Glass stays translucent so the picture reads through.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun StudioFrostedPanel(
     modifier: Modifier = Modifier,
@@ -316,16 +330,18 @@ fun StudioFrostedPanel(
             .background(Color.Black.copy(alpha = 0.40f))
             .testTag("session_tool_scrim")
     ) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .verticalScroll(scroll)
-                .padding(horizontal = 14.dp, vertical = 10.dp)
-                // 48dp clears the 40dp fade, so the last row is not a clipped sliver.
-                .padding(bottom = if (moreBelow) 48.dp else 0.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-            content = content
-        )
+        CompositionLocalProvider(LocalBringIntoViewSpec provides SnapBringIntoViewSpec) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(scroll)
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                    // 48dp clears the 40dp fade, so the last row is not a clipped sliver.
+                    .padding(bottom = if (moreBelow) 48.dp else 0.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                content = content
+            )
+        }
         if (moreBelow) {
             val more = stringResource(R.string.studio_scroll_more)
             Box(
@@ -599,11 +615,15 @@ fun StudioApplyButton(
 
 /**
  * Lightroom-style: large live value, thin slider.
+ * The readout stays centered and still after a typed commit and after the finger lifts,
+ * including at 0.4 and at both ends. It does not follow the thumb, and it is not dropped to satisfy a test.
+ * The panel then scrolls so the bottom fade clears the 48dp box.
  * Short-tap the value to type a number (clamped to [range] on IME Done or focus clear).
  * Long-press resets to [defaultValue]. A value that does not parse is left unchanged.
  * When [showLabel] is false the chip row already names the control.
- * Dense layout kicks in on short landscape glass so tablet/fold/phone stay consistent.
+ * The touch box stays 48dp on short glass; only the type size tightens.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun StudioValueSlider(
     label: String,
@@ -622,50 +642,85 @@ fun StudioValueSlider(
     var editing by remember(tag) { mutableStateOf(false) }
     val keyboard = LocalSoftwareKeyboardController.current
     val dense = LocalConfiguration.current.screenHeightDp < 560
+    val bring = remember { BringIntoViewRequester() }
+    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    var boxWidth by remember { mutableFloatStateOf(0f) }
+    var boxHeight by remember { mutableFloatStateOf(0f) }
+    val clearancePx = with(density) { SLIDER_VALUE_REVEAL_CLEARANCE_DP.dp.toPx() }
+    LaunchedEffect(editing) {
+        if (!editing) {
+            revealSliderValue(bring, boxWidth, boxHeight, clearancePx)
+        }
+    }
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (editing) {
-            SliderValueField(
-                initialText = valueText,
-                allowNegative = range.start < 0f,
-                onCommit = { raw ->
-                    if (editing) {
-                        // Arm before hide: IME dismiss is delivered as Back and must not pop the session.
-                        SliderImeDismiss.arm(SystemClock.elapsedRealtime())
-                        editing = false
-                        keyboard?.hide()
-                        val parsed = parseSliderTypedValue(raw, range)
-                        if (parsed != null) {
-                            onChange(parsed)
-                            onSettled()
-                        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = SLIDER_VALUE_MIN_TOUCH_DP.dp)
+                .onSizeChanged {
+                    boxWidth = it.width.toFloat()
+                    boxHeight = it.height.toFloat()
+                }
+                .bringIntoViewRequester(bring)
+                .testTag("session_slider_value")
+                .semantics {
+                    contentDescription = spokenValue
+                    onLongClick(label = resetLabel) {
+                        onChange(defaultValue)
+                        onSettled()
+                        true
                     }
                 }
-            )
-        } else {
-            Text(
-                valueText,
-                color = PixiText,
-                style = if (dense) PixiValue.copy(fontSize = 18.sp) else PixiValue,
-                modifier = Modifier
-                    .heightIn(min = if (dense) 40.dp else 48.dp)
-                    .testTag("session_slider_value")
-                    .semantics {
-                        contentDescription = spokenValue
-                        onLongClick(label = resetLabel) {
-                            onChange(defaultValue)
-                            onSettled()
-                            true
+                .then(
+                    if (editing) {
+                        Modifier
+                    } else {
+                        Modifier.clickable(
+                            onClickLabel = editLabel,
+                            onClick = { editing = true }
+                        )
+                    }
+                )
+        ) {
+            if (editing) {
+                SliderValueField(
+                    initialText = valueText,
+                    allowNegative = range.start < 0f,
+                    onCommit = { raw ->
+                        if (editing) {
+                            // Arm before hide: IME dismiss is delivered as Back and must not pop the session.
+                            SliderImeDismiss.arm(SystemClock.elapsedRealtime())
+                            editing = false
+                            keyboard?.hide()
+                            val parsed = parseSliderTypedValue(raw, range)
+                            if (parsed != null) {
+                                onChange(parsed)
+                                onSettled()
+                            }
+                            scope.launch {
+                                revealSliderValue(bring, boxWidth, boxHeight, clearancePx)
+                            }
                         }
                     }
-                    .clickable(
-                        onClickLabel = editLabel,
-                        onClick = { editing = true }
-                    )
-                    .padding(horizontal = 12.dp, vertical = if (dense) 4.dp else 8.dp)
-            )
+                )
+            } else {
+                Text(
+                    valueText,
+                    color = PixiText,
+                    style = if (dense) PixiValue.copy(fontSize = 18.sp) else PixiValue,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .fillMaxWidth()
+                )
+            }
         }
         if (showLabel) {
             Text(label, color = PixiTextMuted, style = PixiLabel)
@@ -673,7 +728,12 @@ fun StudioValueSlider(
         PixiSlider(
             value = value,
             onValueChange = onChange,
-            onValueChangeFinished = onSettled,
+            onValueChangeFinished = {
+                onSettled()
+                scope.launch {
+                    revealSliderValue(bring, boxWidth, boxHeight, clearancePx)
+                }
+            },
             valueRange = range,
             contentDescription = label,
             modifier = Modifier
@@ -681,6 +741,27 @@ fun StudioValueSlider(
                 .testTag(tag)
         )
     }
+}
+
+private suspend fun revealSliderValue(
+    bring: BringIntoViewRequester,
+    widthPx: Float,
+    heightPx: Float,
+    clearancePx: Float
+) {
+    if (widthPx <= 0f || heightPx <= 0f) return
+    bring.bringIntoView(
+        Rect(
+            left = 0f,
+            top = 0f,
+            right = widthPx,
+            bottom = sliderValueRevealHeightPx(heightPx, clearancePx)
+        )
+    )
+}
+
+private object SnapBringIntoViewSpec : BringIntoViewSpec {
+    override val scrollAnimationSpec = snap<Float>()
 }
 
 /**

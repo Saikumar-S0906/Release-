@@ -12,10 +12,12 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -68,6 +70,12 @@ internal fun SliderValueField(
     var armed by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
+    val commitNow = rememberUpdatedState(onCommit)
+    val textNow = rememberUpdatedState(field.text)
+    DisposableEffect(Unit) {
+        SliderImeDismiss.bindCommit { commitNow.value(textNow.value) }
+        onDispose { SliderImeDismiss.bindCommit(null) }
+    }
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
         keyboard?.show()
