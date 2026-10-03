@@ -53,4 +53,36 @@ class TrackPathBakeTest {
         assertEquals(0L, TrackPathBake.sourceSampleMs(0, 10, 0L, 5_000L))
         assertEquals(5_000L, TrackPathBake.sourceSampleMs(9, 10, 0L, 5_000L))
     }
+
+    @Test
+    fun shortRamp_stepsKeepParentTrackWindow() {
+        // One second, six steps: each source slice is ~167 ms, under the 200 ms floor.
+        val clip = TimelineClip(
+            id = "ramp",
+            mediaIndex = 0,
+            inMs = 0,
+            outMs = 1_000,
+            speed = 0.5f,
+            speedEnd = 1.5f,
+            track = ClipTrack(0.4f, 0.6f, 0.08f, TrackEngine.Ml)
+        )
+        val steps = MovieSpeed.expandRamp(clip, steps = 6)
+        assertTrue(steps.size >= 2)
+        steps.forEach { step ->
+            assertTrue(
+                "step span ${step.sourceDurationMs} should be the short-ramp case",
+                step.sourceDurationMs < TrackPathBake.MIN_ML_SOURCE_MS
+            )
+            assertFalse(TrackPathBake.acceptsMlSourceSpan(step.sourceDurationMs))
+            assertEquals(0L, step.trackBakeIn())
+            assertEquals(1_000L, step.trackBakeOut())
+            assertTrue(TrackPathBake.acceptsMlSourceSpan(step.trackBakeOut() - step.trackBakeIn()))
+            val (t0, t1) = step.trackBakeWindow()
+            assertEquals(step.inMs / 1_000f, t0, 0.002f)
+            assertEquals(step.outMs / 1_000f, t1, 0.002f)
+        }
+        // Missing media still does not invent a path; the window is what stays tracked.
+        val follow = TrackPathBake.followMotion("/missing.mp4", steps[0])
+        assertTrue(follow.isIdentity)
+    }
 }

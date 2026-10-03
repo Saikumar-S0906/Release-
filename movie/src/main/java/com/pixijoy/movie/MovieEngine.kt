@@ -946,7 +946,7 @@ class Media3MovieEngine : MovieEngine {
             video += clip.motion.toMatrixTransformation(durationUs)
         }
         if (clip.hasTrack && mediaPath != null) {
-            val follow = TrackPathBake.motion(mediaPath, clip.track, clip.inMs, clip.outMs)
+            val follow = TrackPathBake.followMotion(mediaPath, clip)
             if (!follow.isIdentity) {
                 val durationUs = clip.durationMs.coerceAtLeast(1) * 1000L
                 video += follow.toMatrixTransformation(durationUs)

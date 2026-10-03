@@ -19,6 +19,29 @@ object TrackPathBake {
     private const val SAMPLES = 10
     private const val THUMB = 320
 
+    /**
+     * Source windows shorter than this are not a Track-ML sample.
+     * [MovieSpeed.expandRamp] must not pass those slices — it keeps the parent
+     * window (often ~167 ms steps on a one-second clip).
+     */
+    const val MIN_ML_SOURCE_MS = 200L
+
+    fun acceptsMlSourceSpan(sourceSpanMs: Long): Boolean = sourceSpanMs >= MIN_ML_SOURCE_MS
+
+    /**
+     * Follow curve for [clip], baked on the parent source window and sliced to
+     * this clip when a speed ramp expanded it.
+     */
+    fun followMotion(path: String, clip: TimelineClip): ClipMotion {
+        val baked = motion(path, clip.track, clip.trackBakeIn(), clip.trackBakeOut())
+        if (baked.isIdentity) return baked
+        val (t0, t1) = clip.trackBakeWindow()
+        return baked.withWindow(t0, t1)
+    }
+
+    fun followAnchors(path: String, clip: TimelineClip): TrackAnchorPath =
+        anchors(path, clip.track, clip.trackBakeIn(), clip.trackBakeOut())
+
     private data class Key(
         val path: String,
         val modifiedMs: Long,
@@ -77,7 +100,7 @@ object TrackPathBake {
         val end = outMs.coerceAtLeast(start + 1L)
         val sourceSpan = (end - start).coerceAtLeast(1L)
         val file = File(path)
-        if (!file.isFile || sourceSpan < 200L) {
+        if (!file.isFile || !acceptsMlSourceSpan(sourceSpan)) {
             return BakeResult(ClipMotion.None, seed)
         }
         val key = Key(

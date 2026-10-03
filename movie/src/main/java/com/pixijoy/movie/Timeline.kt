@@ -27,7 +27,14 @@ data class TimelineClip(
     /** Frame-interp slow-mo contract (D10); E4 ML plugs in via [FrameInterp]. */
     val slowMo: ClipSlowMo = ClipSlowMo.None,
     /** Tracking / roto-lite contract (F1); pack engine via [TrackFacade]. */
-    val track: ClipTrack = ClipTrack.None
+    val track: ClipTrack = ClipTrack.None,
+    /**
+     * Parent source window for Track-ML after a speed ramp is expanded.
+     * Runtime only — not persisted. -1 means this clip's own in/out.
+     * Expanded steps are often ~167 ms; baking that slice drops follow.
+     */
+    val trackBakeInMs: Long = -1L,
+    val trackBakeOutMs: Long = -1L
 ) {
     val sourceDurationMs: Long get() = (outMs - inMs).coerceAtLeast(1)
     val durationMs: Long
@@ -46,6 +53,35 @@ data class TimelineClip(
     val hasChroma: Boolean get() = !chroma.isIdentity
     val hasSlowMo: Boolean get() = slowMo.isActive
     val hasTrack: Boolean get() = track.isActive
+
+    /** Source start used to bake Track-ML. Expanded ramp steps keep the parent. */
+    fun trackBakeIn(): Long = if (trackBakeInMs >= 0L) trackBakeInMs else inMs.coerceAtLeast(0L)
+
+    /** Source end used to bake Track-ML. Always at least one millisecond past the start. */
+    fun trackBakeOut(): Long {
+        val start = trackBakeIn()
+        val end = if (trackBakeOutMs >= 0L) trackBakeOutMs else outMs
+        return end.coerceAtLeast(start + 1L)
+    }
+
+    /**
+     * This clip's in/out as fractions of [trackBakeIn]..[trackBakeOut].
+     * Identity (0, 1) when the clip is the bake window.
+     */
+    fun trackBakeWindow(): Pair<Float, Float> {
+        val start = trackBakeIn()
+        val end = trackBakeOut()
+        val span = (end - start).toFloat().coerceAtLeast(1f)
+        val t0 = ((inMs.coerceAtLeast(0L) - start).coerceAtLeast(0L).toFloat() / span).coerceIn(0f, 1f)
+        val t1 = ((outMs.coerceAtLeast(0L) - start).coerceAtLeast(0L).toFloat() / span).coerceIn(t0, 1f)
+        return t0 to t1
+    }
+
+    /** Local 0..1 on this clip, mapped into the parent bake window. */
+    fun trackBakeT(localT: Float): Float {
+        val (t0, t1) = trackBakeWindow()
+        return (t0 + (t1 - t0) * localT.coerceIn(0f, 1f)).coerceIn(0f, 1f)
+    }
 }
 
 data class AudioBed(

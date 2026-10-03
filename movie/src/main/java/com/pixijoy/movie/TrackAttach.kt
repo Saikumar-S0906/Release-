@@ -87,8 +87,8 @@ fun interface TrackAnchorResolver {
                     val localT = local.toFloat() / clip.durationMs.coerceAtLeast(1L).toFloat()
                     val mediaPath = paths.getOrNull(clip.mediaIndex)
                     val src = if (mediaPath != null) {
-                        TrackPathBake.anchors(mediaPath, clip.track, clip.inMs, clip.outMs)
-                            .sample(localT)
+                        TrackPathBake.followAnchors(mediaPath, clip)
+                            .sample(clip.trackBakeT(localT))
                             ?: (clip.track.x to clip.track.y)
                     } else {
                         clip.track.x to clip.track.y
@@ -98,12 +98,7 @@ fun interface TrackAnchorResolver {
                         transforms += clip.motion.sample(localT)
                     }
                     if (mediaPath != null && clip.hasTrack) {
-                        val follow = TrackPathBake.motion(
-                            mediaPath,
-                            clip.track,
-                            clip.inMs,
-                            clip.outMs
-                        )
+                        val follow = TrackPathBake.followMotion(mediaPath, clip)
                         if (!follow.isIdentity) {
                             transforms += follow.sample(localT)
                         }

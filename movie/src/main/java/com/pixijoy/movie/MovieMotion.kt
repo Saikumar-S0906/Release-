@@ -131,6 +131,10 @@ object MovieSpeed {
         if (span < n * 40L) return listOf(clip.copy(speedEnd = clip.speed))
         val start = normalize(clip.speed)
         val end = normalize(clip.speedEnd)
+        // Bake Track-ML on the parent source window. Step spans are often ~167 ms,
+        // under TrackPathBake's 200 ms floor, so slicing first drops follow.
+        val bakeIn = clip.trackBakeIn()
+        val bakeOut = clip.trackBakeOut()
         val out = ArrayList<TimelineClip>(n)
         for (i in 0 until n) {
             val t0 = i / n.toFloat()
@@ -150,7 +154,9 @@ object MovieSpeed {
                 fadeOutMs = if (i == n - 1) clip.fadeOutMs else 0L,
                 transition = if (i == n - 1) clip.transition else ClipTransition.None,
                 transitionMs = if (i == n - 1) clip.transitionMs else 0L,
-                motion = clip.motion.withWindow(t0, t1)
+                motion = clip.motion.withWindow(t0, t1),
+                trackBakeInMs = bakeIn,
+                trackBakeOutMs = bakeOut
             )
         }
         return out.ifEmpty { listOf(clip.copy(speedEnd = clip.speed)) }
