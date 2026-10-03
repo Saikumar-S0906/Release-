@@ -281,9 +281,28 @@ Real Filament CG + depth/matte inserts vs CapCut sticker VFX. Not a Hollywood fa
 
 ---
 
+## Local hygiene — 2026-10-03 (not an exit)
+
+Code and unit tests only. No device, no Maestro green, no `result: PASS`, and the project stays **not green**. `targetSdk` stays 35. `TOTAL_REMAINING.txt` and `HANDS_OFF.md` were not edited. Telea and manual Z stay the fallbacks until a real `engineReady` result.
+
+| Item | What landed | What it is not |
+|------|-------------|----------------|
+| Application id | `com.pixijoy.studio` (`versionName` `2.0.0-studio`) | Not an update of `com.pixijoy.ai`. Play treats it as a new app. Install is side-by-side. Project data does not move. |
+| Legal | Privacy policy and terms are in the app. No website is opened or stored. | Not a law-firm opinion. Play Console still requires a public privacy-policy URL at submit time. Play has not approved a listing. |
+| Media permissions | `READ_MEDIA_IMAGES` and `READ_MEDIA_VIDEO` removed. Gallery uses the system picker. Export inserts into MediaStore. Camera, microphone, notifications, internet, and the export foreground service stay. | Not a claim that Play Data safety is filled in. |
+| Backup | `allowBackup=false`. API 31+ cloud backup and device transfer exclude every domain (root, file, database, sharedpref, external). Pre-31 `backup_rules.xml` matches. | Not a phone-to-phone project move. Projects were already excluded; models, the database sidecars, and DataStore prefs are now excluded too. |
+| File provider | Cache and external cache only. | Nothing in the app requests a share URI today. Project folders stay private. |
+| Import | A failed new import deletes the folder and any partial project row. An empty incoming file is an error. LUT and audio replace keep the previous file if the new copy fails. Prop names never reuse an existing file. | Not a multi-gigabyte size cap. LUT and prop stay at 8 MB. |
+| Photo export | A color-intent copy and the original bitmap are both recycled. | Not a color-management certification. |
+| Same tree, local test | Live bed/voice volume, GIF resolution chip, 4-up collage drawn as 2×2, fold/tablet/phone chrome. | Not a visual device pass. |
+
+Debug APK for a local install is `app/build/outputs/apk/debug/app-debug.apk` after `:app:assembleDebug`. It is debug-signed and multi-ABI. It is not a Play artifact and not a quality gate.
+
+---
+
 ## Next concrete slice (start here)
 
 1. Interp / track engines only after Architect publishes a real artifact plus catalog `downloadUrl` / SHA and a `PackModelContract` gate. Until then leave the `Unit` no-op. `PackFeatureEntry.registerEngines` after SplitCompat, Ready + SHA-256, and `PackModelContract`. Do not register from `Application.onCreate`. Do not register Telea / bicubic / frame-hold
 2. R5 device gate (Maestro + TalkBack + five-user) on a mid-range phone
 
-When this plan drifts, update this file and `TOTAL_REMAINING.txt` in the same commit as the exit.
+When this plan drifts, update this file and `TOTAL_REMAINING.txt` in the same commit as the exit. This hygiene note is not an exit, so `TOTAL_REMAINING.txt` stays untouched.

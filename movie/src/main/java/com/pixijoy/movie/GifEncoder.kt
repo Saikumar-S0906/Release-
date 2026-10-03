@@ -17,10 +17,10 @@ internal class GifEncoder {
         output: File,
         durationMs: Long,
         talking: Boolean,
+        outputHeight: Int,
         onProgress: (Float) -> Unit
     ): AppResult<Unit> {
-        val width = 480
-        val height = 270
+        val (width, height) = MovieExportSize.gifFrameSize(outputHeight)
         val fps = 10
         val frameCount = ((durationMs.coerceAtLeast(800) / 1000f) * fps).toInt().coerceIn(8, 40)
         val delayCs = (100 / fps).coerceAtLeast(6)

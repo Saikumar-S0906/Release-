@@ -1,0 +1,80 @@
+appId: com.pixijoy.studio
+---
+# Assembly marker, 3D title, undo. AR previz needs ARCore and is not tapped.
+- runFlow: ../open-movie-sample.yaml
+- tapOn:
+    id: "studio_group_edit"
+- repeat:
+    times: 12
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_marker_add_beat"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+# Beat is on the clipped last row under More. One more page, then add.
+- runFlow:
+    when:
+      visible:
+        id: "studio_scroll_more"
+    commands:
+      - tapOn:
+          id: "studio_scroll_more"
+- tapOn:
+    id: "movie_marker_add_beat"
+- repeat:
+    times: 8
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_marker_mk0"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
+      id: "movie_marker_mk0"
+    timeout: 15000
+- tapOn:
+    id: "studio_group_text"
+- repeat:
+    times: 12
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_title_3d_add"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- tapOn:
+    id: "movie_title_3d_add"
+- tapOn:
+    id: "movie_undo"
+- assertVisible:
+    id: "movie_redo"
+- assertVisible:
+    id: "movie_session"
+- repeat:
+    times: 6
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_ar_previz"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- assertVisible:
+    id: "movie_ar_previz"

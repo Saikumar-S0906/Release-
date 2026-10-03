@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # D6 — audio finish duck presets in movie session
 - runFlow: ../launch-to-home.yaml
@@ -26,20 +26,35 @@ appId: com.pixijoy.ai
     timeout: 90000
 - tapOn:
     id: "studio_group_audio"
-- scrollUntilVisible:
-    element:
+# Duck presets sit under the sound panel. The glass scroller is the More control, not a swipe.
+- repeat:
+    times: 24
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_d6_hint"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
       id: "movie_d6_hint"
-    direction: DOWN
-    timeout: 40000
-    visibilityPercentage: 40
-    speed: 40
-- scrollUntilVisible:
-    element:
-      id: "movie_duck_presets"
-    direction: DOWN
-    timeout: 20000
-    visibilityPercentage: 30
-    speed: 40
+    timeout: 15000
+- repeat:
+    times: 8
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_duck_presets"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
 - assertVisible:
     id: "movie_duck_soft"
 - assertVisible:
@@ -48,13 +63,18 @@ appId: com.pixijoy.ai
     id: "movie_duck_hard"
 - assertVisible:
     id: "movie_duck_presets"
-- scrollUntilVisible:
-    element:
-      id: "movie_add_voice"
-    direction: DOWN
-    timeout: 20000
-    visibilityPercentage: 40
-    speed: 40
+- repeat:
+    times: 16
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_add_voice"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
 - assertVisible:
     id: "movie_add_voice"
 - assertVisible:

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Project files stay private. This provider may only share cache files. -->
 <paths>
     <cache-path name="cache" path="." />
-    <files-path name="files" path="." />
     <external-cache-path name="external_cache" path="." />
 </paths>

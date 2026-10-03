@@ -1,11 +1,10 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # G7 pack plate. empty_packs is the Missing/installing/failed surface in PackChrome.
-# clearState leaves the inpaint pack Missing. The plate shows Download and
-# Install from file. Do not tap Download (the file is ~75 MB) and do not pick a file.
+# clearState leaves the inpaint pack Missing. The plate line is studio_packs_empty.
+# It also shows Download and Install from file. Do not tap Download (~75 MB).
 # Ready hides empty_packs. This does not claim a neural engine.
-# Not re-run on a device after the Download CTA was added.
-# Glass chrome is 280dp — tap studio_scroll_more until the Install CTA is in view.
+# Glass chrome is 280dp — assert the status line before scrolling to the CTAs.
 - runFlow: ../launch-to-home.yaml
 - tapOn:
     id: "home_create"
@@ -29,6 +28,27 @@ appId: com.pixijoy.ai
             visible:
               id: "studio_scroll_more"
             notVisible:
+              id: "session_fill_pack_status"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
+      id: "session_fill_pack_status"
+    timeout: 15000
+- assertVisible:
+    id: "empty_packs"
+- assertVisible:
+    id: "session_fill_pack_status"
+- assertVisible: "Download an on-device model pack. Edits never leave this phone."
+- repeat:
+    times: 16
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
               id: "session_fill_pack_download_from_file"
           commands:
             - tapOn:
@@ -37,11 +57,6 @@ appId: com.pixijoy.ai
     visible:
       id: "session_fill_pack_download_from_file"
     timeout: 15000
-- assertVisible:
-    id: "empty_packs"
-- assertVisible:
-    id: "session_fill_pack_status"
-- assertVisible: "Unavailable until this on-device pack is downloaded. Your photo stays on the phone; only the model file is fetched."
 - assertVisible:
     id: "session_fill_pack_download"
 - assertVisible:

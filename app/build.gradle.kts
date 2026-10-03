@@ -10,11 +10,11 @@ plugins {
 }
 
 android {
-    namespace = "com.pixijoy.ai"
+    namespace = "com.pixijoy.studio"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.pixijoy.ai"
+        applicationId = "com.pixijoy.studio"
         minSdk = 31
         targetSdk = 35
         versionCode = 3

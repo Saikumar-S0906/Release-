@@ -1,0 +1,71 @@
+appId: com.pixijoy.studio
+---
+# Depth pack plate on the movie CG lane. Missing shows Download and Install from file.
+# The empty plate line is studio_packs_empty. Do not tap Download (~75 MB).
+# Passed on emulator-5554 (qemu sdk_gphone16k_x86_64). Not a physical Pixel 7a
+# pass, and it does not claim a neural engine.
+- runFlow: ../launch-to-home.yaml
+- tapOn:
+    id: "home_open_studio"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_segment_movie"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_segment_movie"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_move"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_move"
+- extendedWaitUntil:
+    visible:
+      id: "studio_use_sample"
+    timeout: 20000
+- tapOn:
+    id: "studio_use_sample"
+- extendedWaitUntil:
+    visible:
+      id: "movie_session"
+    timeout: 90000
+- tapOn:
+    id: "studio_group_cg"
+- repeat:
+    times: 16
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_cg_depth_status"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
+      id: "movie_cg_depth_status"
+    timeout: 15000
+- assertVisible: "Download an on-device model pack. Edits never leave this phone."
+- repeat:
+    times: 16
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_cg_depth_download_from_file"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
+      id: "movie_cg_depth_download"
+    timeout: 15000
+- assertVisible:
+    id: "movie_cg_depth_download"
+- assertVisible:
+    id: "movie_cg_depth_download_from_file"
+- assertNotVisible: "Neural ready"

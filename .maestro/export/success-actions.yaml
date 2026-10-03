@@ -1,4 +1,4 @@
-﻿appId: com.pixijoy.ai
+﻿appId: com.pixijoy.studio
 ---
 # Export sheet → confirm → success actions (View / Share / Done) + rename affordance.
 # Sample photo export is fast on emu; long timeout for worker.

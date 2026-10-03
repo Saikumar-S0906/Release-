@@ -67,6 +67,7 @@ class CompositionPreview(
     private var compositionPlayer: CompositionPlayer? = null
     private var graphMode: CompositionPreviewGraphMode? = null
     private var released = false
+    val mix = PreviewMix()
 
     fun bind(
         paths: List<String>,
@@ -99,7 +100,7 @@ class CompositionPreview(
 
         return try {
             // Export passes this same unmodified composition shape to Transformer.
-            val composition = engine.composition(paths, timeline)
+            val composition = engine.composition(paths, timeline, mix)
             targetPlayer.setComposition(composition)
             targetPlayer.repeatMode = Player.REPEAT_MODE_ALL
             targetPlayer.prepare()

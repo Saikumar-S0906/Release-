@@ -1,0 +1,38 @@
+appId: com.pixijoy.studio
+---
+# Expand the canvas, then undo and redo.
+- runFlow: ../open-photo-sample.yaml
+- tapOn:
+    id: "studio_group_crop"
+- tapOn:
+    id: "session_rotate"
+- tapOn:
+    id: "session_flip"
+- tapOn:
+    id: "session_expand"
+- extendedWaitUntil:
+    visible:
+      id: "session_expand_amount"
+    timeout: 15000
+- repeat:
+    times: 12
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "session_apply_expand"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- tapOn:
+    id: "session_apply_expand"
+- assertVisible:
+    id: "photo_session"
+- tapOn:
+    id: "session_undo"
+- tapOn:
+    id: "session_redo"
+- assertVisible:
+    id: "photo_session"

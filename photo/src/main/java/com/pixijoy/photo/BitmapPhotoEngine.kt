@@ -77,7 +77,12 @@ class BitmapPhotoEngine(
         colorIntent: ColorIntent = ColorIntent.Srgb
     ): AppResult<String> {
         val rendered = renderLayers(sources, layers, maxEdge = PhotoPreviewPolicy.EXPORT_MAX_EDGE)
-        val bitmap = rendered.withColorIntent(colorIntent)
+        val bitmap = try {
+            rendered.withColorIntent(colorIntent)
+        } catch (t: Throwable) {
+            recycleExportBitmaps(rendered, rendered)
+            return AppResult.Err("Export failed.", t)
+        }
         val requested = format
         val effective = ExportFormatSupport.resolve(requested)
         val outName = if (effective == requested) {
@@ -139,7 +144,7 @@ class BitmapPhotoEngine(
                 } catch (_: Exception) {
                 }
             }
-            if (!bitmap.isRecycled) bitmap.recycle()
+            recycleExportBitmaps(rendered, bitmap)
         }
     }
 
@@ -288,4 +293,10 @@ class BitmapPhotoEngine(
         is PhotoOp.SuperRes -> applySuperRes(src, op.scale)
         is PhotoOp.Denoise -> applyDenoise(src, op.amount)
     }
+}
+
+/** Export owns both bitmaps. A color-intent copy must not leave the original behind. */
+internal fun recycleExportBitmaps(rendered: Bitmap, colored: Bitmap) {
+    if (colored !== rendered && !rendered.isRecycled) rendered.recycle()
+    if (!colored.isRecycled) colored.recycle()
 }

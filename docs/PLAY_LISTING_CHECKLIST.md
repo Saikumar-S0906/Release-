@@ -9,8 +9,8 @@ Align store text with the **on-device** product claim. Confirm live pages before
 | App name | PixiJoy |
 | Short description | On-device photo & movie studio — no upload, no watermark |
 | Full description | Emphasize local edits; optional model-pack download only after user taps Download |
-| Privacy policy URL | `https://pixijoy.ai/privacy` (in-app links exist) |
-| Terms URL | `https://pixijoy.ai/terms` (in-app links exist) |
+| Privacy policy | Shown in the app. No website. Play Console still asks for a public URL at submit time. |
+| Terms | Shown in the app. No website. |
 | Content rating questionnaire | Complete IARC / Play questionnaire — creative tools, user-generated media, no social feed in studio shell |
 | Featured graphic / screenshots | Phone + tablet; show editor glass, not “cloud AI” |
 | Country / availability | Launch countries TBD from install data |
@@ -23,11 +23,12 @@ Declare consistently with privacy copy:
 | Category | Expectation |
 |----------|-------------|
 | Collects personal info | **No** account; no upload of photos/movies for editing |
-| Photos / videos | Processed **on device**; not shared with PixiJoy servers for edit/export |
+| Photos / videos | Processed **on device**; not shared with PixiJoy servers for edit/export. The app does not request `READ_MEDIA_IMAGES` or `READ_MEDIA_VIDEO`. Import uses the system picker. Export writes through MediaStore. |
 | Files / docs | Optional on-device pack `.tflite` download (user-initiated) |
 | App activity / diagnostics | None unless a future privacy-compliant analytics design ships |
 | Data encrypted in transit | Pack HTTPS + SHA; no media upload path |
 | Users can request deletion | In-app **Delete all projects** / **Reset app data** (Library) |
+| Backup / device transfer | **Off.** `allowBackup=false`, and API 31+ extraction rules exclude every domain. Projects, packs, and prefs stay on the device. |
 
 Do **not** claim “AI in the cloud” or account sync for the studio shell.
 

@@ -3,7 +3,7 @@
 **Prep (Pixel_7a `emulator-5556`):**
 ```
 adb -s emulator-5556 shell settings put system font_scale 1.3
-adb -s emulator-5556 shell am force-stop com.pixijoy.ai
+adb -s emulator-5556 shell am force-stop com.pixijoy.studio
 ```
 
 **Maestro:** `.maestro/chrome/fontscale-studio.yaml`

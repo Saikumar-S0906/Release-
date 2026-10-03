@@ -1,0 +1,50 @@
+appId: com.pixijoy.studio
+---
+# Each Light chip reveals its slider. Exposure numeric entry is a separate flow.
+- runFlow: ../open-photo-sample.yaml
+- tapOn:
+    id: "studio_group_light"
+- extendedWaitUntil:
+    visible:
+      id: "session_light_exposure"
+    timeout: 15000
+- assertVisible:
+    id: "session_exposure"
+- tapOn:
+    id: "session_light_contrast"
+- assertVisible:
+    id: "session_contrast"
+- tapOn:
+    id: "session_light_sharpen"
+- assertVisible:
+    id: "session_sharpen"
+- repeat:
+    times: 6
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_hscroll_more"
+            notVisible:
+              id: "session_light_vignette"
+          commands:
+            - tapOn:
+                id: "studio_hscroll_more"
+- tapOn:
+    id: "session_light_vignette"
+- assertVisible:
+    id: "session_vignette"
+# Blur sits under the horizontal "More" fade even when its id is already visible.
+- runFlow:
+    when:
+      visible:
+        id: "studio_hscroll_more"
+    commands:
+      - tapOn:
+          id: "studio_hscroll_more"
+- tapOn:
+    id: "session_light_blur"
+- assertVisible:
+    id: "session_blur"
+- assertVisible:
+    id: "photo_session"

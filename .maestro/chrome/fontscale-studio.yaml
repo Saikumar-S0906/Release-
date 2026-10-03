@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # Large text (fontScale 1.3). Host must set scale before launch:
 #   adb shell settings put system font_scale 1.3

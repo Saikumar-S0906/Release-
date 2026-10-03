@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # D7 — PiP / multicam layout presets in movie session
 - runFlow: ../launch-to-home.yaml

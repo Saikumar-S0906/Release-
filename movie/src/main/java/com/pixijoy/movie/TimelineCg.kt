@@ -487,6 +487,7 @@ private class TimedCgOverlay(
     private var visible: Bitmap? = null
     private var clear: Bitmap? = null
     private var cacheBucket = Long.MIN_VALUE
+    private var cachedDepthGen = Int.MIN_VALUE
 
     override fun configure(videoSize: androidx.media3.common.util.Size) {
         super.configure(videoSize)
@@ -497,6 +498,7 @@ private class TimedCgOverlay(
         visible = null
         clear = Bitmap.createBitmap(frameW, frameH, Bitmap.Config.ARGB_8888)
         cacheBucket = Long.MIN_VALUE
+        cachedDepthGen = Int.MIN_VALUE
     }
 
     override fun getBitmap(presentationTimeUs: Long): Bitmap {
@@ -506,10 +508,18 @@ private class TimedCgOverlay(
             return clear ?: Bitmap.createBitmap(frameW, frameH, Bitmap.Config.ARGB_8888).also { clear = it }
         }
         val bucket = ms / 40L
-        if (bucket != cacheBucket || visible == null) {
+        // A plate drawn before the map arrives must redraw when publish bumps
+        // the generation. Otherwise that 40 ms bucket stays flat for the clip.
+        val depthGen = if (PackEngineHooks.hasEngine(PackId.Depth)) {
+            DepthFrames.generation()
+        } else {
+            0
+        }
+        if (bucket != cacheBucket || visible == null || depthGen != cachedDepthGen) {
             visible?.recycle()
             visible = renderAt(ms, presentationTimeUs)
             cacheBucket = bucket
+            cachedDepthGen = depthGen
         }
         return visible!!
     }

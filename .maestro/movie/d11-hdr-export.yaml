@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # D11 — HDR export intent in movie session + export sheet
 - runFlow: ../launch-to-home.yaml
@@ -26,27 +26,35 @@ appId: com.pixijoy.ai
     timeout: 90000
 - tapOn:
     id: "studio_group_color"
-- scrollUntilVisible:
-    element:
+# HDR sits under grade and the colorist panel. More scrolls the glass; a swipe does not.
+- repeat:
+    times: 24
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_d11_hint"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- extendedWaitUntil:
+    visible:
       id: "movie_d11_hint"
-    direction: DOWN
-    timeout: 60000
-    visibilityPercentage: 30
-    speed: 50
-- scrollUntilVisible:
-    element:
-      id: "movie_hdr_presets"
-    direction: DOWN
-    timeout: 20000
-    visibilityPercentage: 30
-    speed: 40
-- scrollUntilVisible:
-    element:
-      id: "movie_hdr_keep"
-    direction: DOWN
     timeout: 15000
-    visibilityPercentage: 40
-    speed: 40
+- repeat:
+    times: 8
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "movie_hdr_keep"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
 - assertVisible:
     id: "movie_hdr_sdr"
 - assertVisible:

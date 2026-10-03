@@ -1,11 +1,11 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 tags:
   - negative
   - privacy
 ---
 # NEG-01 Privacy gate blocks Home until Accept
 - launchApp:
-    appId: com.pixijoy.ai
+    appId: com.pixijoy.studio
     clearState: true
     permissions:
       all: allow

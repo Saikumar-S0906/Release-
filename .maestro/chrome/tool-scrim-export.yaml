@@ -1,4 +1,4 @@
-﻿appId: com.pixijoy.ai
+﻿appId: com.pixijoy.studio
 ---
 # Glass scrim + canvas + sticky Export; Apply bake then open export sheet
 - runFlow: ../launch-to-home.yaml

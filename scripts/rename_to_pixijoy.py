@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 REPLACEMENTS = [
-    ("com.pixijoy.ai", "com.pixijoy.ai"),
+    ("com.pixijoy.studio", "com.pixijoy.studio"),
     ("PixiJoy", "PixiJoy"),
     ("pixijoy", "pixijoy"),
     ("PIXIJOY", "PIXIJOY"),

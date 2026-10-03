@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # Looks → Import LUT affordance visible (file pick is yellow/manual on emulator)
 - runFlow: ../launch-to-home.yaml

@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # After chrome — movie groups and pinned timeline.
 - runFlow: ../launch-to-home.yaml

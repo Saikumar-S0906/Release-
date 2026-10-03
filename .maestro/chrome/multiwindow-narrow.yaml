@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # Multi-window / narrow height simulation. Host sets a short viewport first:
 #   adb shell wm size 1080x1600

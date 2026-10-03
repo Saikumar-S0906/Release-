@@ -1,0 +1,22 @@
+appId: com.pixijoy.studio
+---
+# Stickers: drop a heart. Add-photo from the gallery is a system picker and is not tapped.
+- runFlow: ../open-photo-sample.yaml
+- tapOn:
+    id: "studio_group_add"
+- tapOn:
+    id: "session_stickers"
+- extendedWaitUntil:
+    visible:
+      id: "sticker_heart"
+    timeout: 15000
+- tapOn:
+    id: "sticker_heart"
+- assertVisible:
+    id: "sticker_star"
+- assertVisible:
+    id: "sticker_spark"
+- assertVisible:
+    id: "photo_session"
+- assertVisible:
+    id: "session_undo"

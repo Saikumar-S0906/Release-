@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # D1 multi-track — open movie session + track chips
 - runFlow: ../launch-to-home.yaml

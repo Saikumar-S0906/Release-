@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # C4 Sky / background replace — rail + Apply
 - runFlow: ../launch-to-home.yaml
@@ -14,6 +14,24 @@ appId: com.pixijoy.ai
     timeout: 60000
 - tapOn:
     id: "studio_group_retouch"
+# Sky is the last retouch chip. The horizontal More fade covers its center until the row moves.
+- repeat:
+    times: 4
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_hscroll_more"
+            notVisible:
+              id: "session_sky"
+          commands:
+            - tapOn:
+                id: "studio_hscroll_more"
+- swipe:
+    direction: LEFT
+    duration: 400
+    from:
+      id: "session_denoise"
 - tapOn:
     id: "session_sky"
 - extendedWaitUntil:

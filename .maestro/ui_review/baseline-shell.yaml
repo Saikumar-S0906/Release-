@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # R4 UI baseline — shell tabs that exist on the studio build.
 - runFlow: ../launch-to-home.yaml

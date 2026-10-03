@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # After chrome — one screenshot per photo group.
 - runFlow: ../launch-to-home.yaml

@@ -3,6 +3,7 @@ package com.pixijoy.core.data
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import androidx.room.withTransaction
 import com.pixijoy.core.common.AppDispatchers
 import com.pixijoy.core.common.AppResult
 import com.pixijoy.core.data.db.MediaRefEntity
@@ -36,99 +37,93 @@ class ProjectRepository(
         uri: Uri,
         kind: MediaKind,
         title: String
-    ): AppResult<Project> = withContext(dispatchers.io) {
-        runCatching {
-            try {
-                context.contentResolver.takePersistableUriPermission(
-                    uri,
-                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
-                )
-            } catch (_: SecurityException) {
-                // Photo picker URIs often cannot persist; copy-on-import covers that.
-            }
-            val id = UUID.randomUUID().toString()
-            val dir = File(context.filesDir, "projects/$id").apply { mkdirs() }
-            val tmp = File(dir, "incoming")
-            context.contentResolver.openInputStream(uri)?.use { input ->
-                tmp.outputStream().use { input.copyTo(it) }
-            } ?: return@withContext AppResult.Err("Could not read that file.")
-            finishImport(id, dir, tmp, kind, title)
-        }.fold(
-            onSuccess = { it },
-            onFailure = { AppResult.Err("Could not import media.", it) }
-        )
+    ): AppResult<Project> = importNewProject(kind, title, "Could not import media.") { dir ->
+        try {
+            context.contentResolver.takePersistableUriPermission(
+                uri,
+                android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+        } catch (_: SecurityException) {
+            // Photo picker URIs often cannot persist; copy-on-import covers that.
+        }
+        val tmp = File(dir, "incoming")
+        val input = context.contentResolver.openInputStream(uri)
+        if (input == null) {
+            AppResult.Err("Could not read that file.")
+        } else {
+            input.use { stream -> tmp.outputStream().use { stream.copyTo(it) } }
+            AppResult.Ok(tmp)
+        }
     }
 
     suspend fun importFile(
         file: File,
         kind: MediaKind,
         title: String
-    ): AppResult<Project> = withContext(dispatchers.io) {
-        runCatching {
-            val id = UUID.randomUUID().toString()
-            val dir = File(context.filesDir, "projects/$id").apply { mkdirs() }
-            val tmp = File(dir, "incoming")
-            file.copyTo(tmp, overwrite = true)
-            finishImport(id, dir, tmp, kind, title)
-        }.fold(
-            onSuccess = { it },
-            onFailure = { AppResult.Err("Could not import capture.", it) }
-        )
+    ): AppResult<Project> = importNewProject(kind, title, "Could not import capture.") { dir ->
+        val tmp = File(dir, "incoming")
+        file.copyTo(tmp, overwrite = true)
+        AppResult.Ok(tmp)
     }
 
     suspend fun importBitmap(
         bitmap: Bitmap,
         title: String,
         kind: MediaKind = MediaKind.PHOTO
-    ): AppResult<Project> = withContext(dispatchers.io) {
-        runCatching {
-            val id = UUID.randomUUID().toString()
-            val dir = File(context.filesDir, "projects/$id").apply { mkdirs() }
-            val tmp = File(dir, "incoming")
-            tmp.outputStream().use { out ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 92, out)
-            }
-            finishImport(id, dir, tmp, kind, title)
-        }.fold(
-            onSuccess = { it },
-            onFailure = { AppResult.Err("Could not save sample.", it) }
-        )
+    ): AppResult<Project> = importNewProject(kind, title, "Could not save sample.") { dir ->
+        val tmp = File(dir, "incoming")
+        val wrote = tmp.outputStream().use { out ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 92, out)
+        }
+        if (!wrote) AppResult.Err("Could not save sample.") else AppResult.Ok(tmp)
     }
 
     suspend fun addUri(projectId: String, uri: Uri): AppResult<Project> = withContext(dispatchers.io) {
-        runCatching {
-            val row = dao.get(projectId) ?: return@withContext AppResult.Err("Project missing.")
-            val dir = File(context.filesDir, "projects/$projectId").apply { mkdirs() }
-            val tmp = File(dir, "incoming-${System.currentTimeMillis()}")
-            context.contentResolver.openInputStream(uri)?.use { input ->
-                tmp.outputStream().use { input.copyTo(it) }
-            } ?: return@withContext AppResult.Err("Could not read that file.")
+        val row = dao.get(projectId) ?: return@withContext AppResult.Err("Project missing.")
+        val dir = File(context.filesDir, "projects/$projectId").apply { mkdirs() }
+        val tmp = File(dir, "incoming-${System.currentTimeMillis()}")
+        var dest: File? = null
+        var mediaSaved = false
+        try {
+            val input = context.contentResolver.openInputStream(uri)
+                ?: return@withContext AppResult.Err("Could not read that file.")
+            input.use { stream -> tmp.outputStream().use { stream.copyTo(it) } }
+            if (tmp.length() <= 0L) {
+                return@withContext AppResult.Err("Could not read that file.")
+            }
             val info = MediaProbe.probe(tmp)
             val ext = extensionFor(info.mime, info.durationMs, pathHint = tmp.name)
-            val dest = File(dir, "extra-${System.currentTimeMillis()}.$ext")
-            if (!tmp.renameTo(dest)) {
-                tmp.copyTo(dest, overwrite = true)
+            val file = File(dir, "extra-${System.currentTimeMillis()}.$ext")
+            dest = file
+            if (!tmp.renameTo(file)) {
+                tmp.copyTo(file, overwrite = true)
                 tmp.delete()
             }
             val order = dao.maxSortOrder(projectId) + 1
-            dao.upsertMedia(
-                MediaRefEntity(
-                    id = UUID.randomUUID().toString(),
-                    projectId = projectId,
-                    path = dest.absolutePath,
-                    mime = info.mime,
-                    width = info.width,
-                    height = info.height,
-                    durationMs = info.durationMs,
-                    sortOrder = order
+            db.withTransaction {
+                dao.upsertMedia(
+                    MediaRefEntity(
+                        id = UUID.randomUUID().toString(),
+                        projectId = projectId,
+                        path = file.absolutePath,
+                        mime = info.mime,
+                        width = info.width,
+                        height = info.height,
+                        durationMs = info.durationMs,
+                        sortOrder = order
+                    )
                 )
-            )
-            dao.upsertProject(row.project.copy(updatedAt = System.currentTimeMillis()))
-            AppResult.Ok(dao.get(projectId)!!.toProject())
-        }.fold(
-            onSuccess = { it },
-            onFailure = { AppResult.Err("Could not add photo.", it) }
-        )
+                dao.upsertProject(row.project.copy(updatedAt = System.currentTimeMillis()))
+            }
+            mediaSaved = true
+            val saved = dao.get(projectId) ?: return@withContext AppResult.Err("Project missing.")
+            AppResult.Ok(saved.toProject())
+        } catch (t: Throwable) {
+            AppResult.Err("Could not add photo.", t)
+        } finally {
+            if (tmp.exists()) tmp.delete()
+            if (!mediaSaved) dest?.delete()
+        }
     }
 
     suspend fun importAudioBed(projectId: String, uri: Uri): AppResult<String> =
@@ -139,26 +134,31 @@ class ProjectRepository(
         uri: Uri,
         prefix: String
     ): AppResult<String> = withContext(dispatchers.io) {
-        runCatching {
-            dao.get(projectId) ?: return@withContext AppResult.Err("Project missing.")
-            val dir = File(context.filesDir, "projects/$projectId").apply { mkdirs() }
-            val tmp = File(dir, "$prefix-incoming")
-            context.contentResolver.openInputStream(uri)?.use { input ->
-                tmp.outputStream().use { input.copyTo(it) }
-            } ?: return@withContext AppResult.Err("Could not read that audio.")
+        dao.get(projectId) ?: return@withContext AppResult.Err("Project missing.")
+        val dir = File(context.filesDir, "projects/$projectId").apply { mkdirs() }
+        val tmp = File(dir, "$prefix-incoming")
+        try {
+            val input = context.contentResolver.openInputStream(uri)
+                ?: return@withContext AppResult.Err("Could not read that audio.")
+            input.use { stream -> tmp.outputStream().use { stream.copyTo(it) } }
+            if (tmp.length() <= 0L) {
+                return@withContext AppResult.Err("Could not read that audio.")
+            }
             val info = MediaProbe.probe(tmp)
             val ext = audioExtension(info.mime)
-            dir.listFiles()?.filter { it.name.startsWith("$prefix.") }?.forEach { it.delete() }
             val dest = File(dir, "$prefix.$ext")
-            if (!tmp.renameTo(dest)) {
-                tmp.copyTo(dest, overwrite = true)
-                tmp.delete()
+            if (!replaceFile(tmp, dest)) {
+                return@withContext AppResult.Err("Could not add audio.")
             }
+            dir.listFiles()
+                ?.filter { it.name.startsWith("$prefix.") && it.absolutePath != dest.absolutePath }
+                ?.forEach { it.delete() }
             AppResult.Ok(dest.absolutePath)
-        }.fold(
-            onSuccess = { it },
-            onFailure = { AppResult.Err("Could not add audio.", it) }
-        )
+        } catch (t: Throwable) {
+            AppResult.Err("Could not add audio.", t)
+        } finally {
+            if (tmp.exists()) tmp.delete()
+        }
     }
 
     suspend fun saveGraph(id: String, graph: String): Unit = withContext(dispatchers.io) {
@@ -218,26 +218,29 @@ class ProjectRepository(
      */
     suspend fun importLut(projectId: String, uri: Uri, suggestedName: String): AppResult<File> =
         withContext(dispatchers.io) {
-            runCatching {
-                val dir = File(projectDir(projectId), "luts").apply { mkdirs() }
-                val name = sanitizeLutFileName(suggestedName)
-                val dest = File(dir, name)
-                context.contentResolver.openInputStream(uri)?.use { input ->
-                    dest.outputStream().use { output -> input.copyTo(output) }
-                } ?: return@withContext AppResult.Err("Could not read LUT.")
-                if (dest.length() < 8L) {
-                    dest.delete()
+            val dir = File(projectDir(projectId), "luts").apply { mkdirs() }
+            val name = sanitizeLutFileName(suggestedName)
+            val dest = File(dir, name)
+            val tmp = File(dir, ".$name.part")
+            try {
+                val input = context.contentResolver.openInputStream(uri)
+                    ?: return@withContext AppResult.Err("Could not read LUT.")
+                input.use { stream -> tmp.outputStream().use { output -> stream.copyTo(output) } }
+                if (tmp.length() < 8L) {
                     return@withContext AppResult.Err("LUT file is empty.")
                 }
-                if (dest.length() > 8L * 1024L * 1024L) {
-                    dest.delete()
+                if (tmp.length() > 8L * 1024L * 1024L) {
                     return@withContext AppResult.Err("LUT file is too large.")
                 }
+                if (!replaceFile(tmp, dest)) {
+                    return@withContext AppResult.Err("Could not import LUT.")
+                }
                 AppResult.Ok(dest)
-            }.fold(
-                onSuccess = { it },
-                onFailure = { AppResult.Err("Could not import LUT.", it) }
-            )
+            } catch (t: Throwable) {
+                AppResult.Err("Could not import LUT.", t)
+            } finally {
+                if (tmp.exists()) tmp.delete()
+            }
         }
 
     /**
@@ -246,42 +249,33 @@ class ProjectRepository(
      */
     suspend fun importGltfProp(projectId: String, uri: Uri, suggestedName: String): AppResult<File> =
         withContext(dispatchers.io) {
-            runCatching {
+            val dir = File(projectDir(projectId), "props")
+            var dest: File? = null
+            var kept = false
+            try {
                 dao.get(projectId) ?: return@withContext AppResult.Err("Project missing.")
                 val name = sanitizePropFileName(suggestedName)
                 if (name.isEmpty()) return@withContext AppResult.Err("Use a .gltf or .glb file.")
-                val dir = File(projectDir(projectId), "props").apply { mkdirs() }
-                val dest = uniquePropFile(dir, name)
-                context.contentResolver.openInputStream(uri)?.use { input ->
-                    dest.outputStream().use { output -> input.copyTo(output) }
-                } ?: return@withContext AppResult.Err("Could not read prop.")
-                if (dest.length() < 20L) {
-                    dest.delete()
+                dir.mkdirs()
+                val file = uniquePropFile(dir, name)
+                dest = file
+                val input = context.contentResolver.openInputStream(uri)
+                    ?: return@withContext AppResult.Err("Could not read prop.")
+                input.use { stream -> file.outputStream().use { output -> stream.copyTo(output) } }
+                if (file.length() < 20L) {
                     return@withContext AppResult.Err("Prop file is empty.")
                 }
-                if (dest.length() > 8L * 1024L * 1024L) {
-                    dest.delete()
+                if (file.length() > 8L * 1024L * 1024L) {
                     return@withContext AppResult.Err("Prop file is too large.")
                 }
-                AppResult.Ok(dest)
-            }.fold(
-                onSuccess = { it },
-                onFailure = { AppResult.Err("Could not import prop.", it) }
-            )
+                kept = true
+                AppResult.Ok(file)
+            } catch (t: Throwable) {
+                AppResult.Err("Could not import prop.", t)
+            } finally {
+                if (!kept) dest?.delete()
+            }
         }
-
-    private fun uniquePropFile(dir: File, name: String): File {
-        var dest = File(dir, name)
-        if (!dest.exists()) return dest
-        val stem = name.substringBeforeLast('.')
-        val ext = name.substringAfterLast('.')
-        var i = 2
-        while (dest.exists() && i < 100) {
-            dest = File(dir, "${stem}_$i.$ext")
-            i++
-        }
-        return dest
-    }
 
     private fun sanitizePropFileName(raw: String): String {
         val base = raw.substringAfterLast('/').substringAfterLast('\\').substringAfterLast(':')
@@ -373,9 +367,51 @@ class ProjectRepository(
             durationMs = info.durationMs,
             sortOrder = 0
         )
-        dao.upsertProject(entity)
-        dao.upsertMedia(media)
+        db.withTransaction {
+            dao.upsertProject(entity)
+            dao.upsertMedia(media)
+        }
         return AppResult.Ok(ProjectWithMedia(entity, listOf(media)).toProject())
+    }
+
+    /**
+     * New project id is unpublished until both rows commit.
+     * Any earlier failure deletes the row and the folder.
+     */
+    private suspend fun importNewProject(
+        kind: MediaKind,
+        title: String,
+        fallback: String,
+        writeIncoming: suspend (dir: File) -> AppResult<File>
+    ): AppResult<Project> = withContext(dispatchers.io) {
+        val id = UUID.randomUUID().toString()
+        val dir = File(context.filesDir, "projects/$id")
+        var committed = false
+        try {
+            if (!dir.mkdirs() && !dir.isDirectory) {
+                return@withContext AppResult.Err(fallback)
+            }
+            when (val prepared = writeIncoming(dir)) {
+                is AppResult.Err -> prepared
+                is AppResult.Ok -> {
+                    val tmp = prepared.value
+                    if (!tmp.isFile || tmp.length() <= 0L) {
+                        AppResult.Err("Could not read that file.")
+                    } else {
+                        val result = finishImport(id, dir, tmp, kind, title)
+                        committed = result is AppResult.Ok
+                        result
+                    }
+                }
+            }
+        } catch (t: Throwable) {
+            AppResult.Err(fallback, t)
+        } finally {
+            if (!committed) {
+                runCatching { dao.deleteProject(id) }
+                dir.deleteRecursively()
+            }
+        }
     }
 }
 
@@ -398,6 +434,58 @@ private fun com.pixijoy.core.data.db.ProjectWithMedia.toProject() = Project(
         )
     }
 )
+
+/** Next free prop name. Never returns a path that already exists. */
+internal fun uniquePropFile(dir: File, name: String): File {
+    val first = File(dir, name)
+    if (!first.exists()) return first
+    val stem = name.substringBeforeLast('.')
+    val ext = name.substringAfterLast('.', "")
+    var i = 2
+    while (i < 100) {
+        val candidate = File(dir, "${stem}_$i.$ext")
+        if (!candidate.exists()) return candidate
+        i++
+    }
+    var stamp = System.currentTimeMillis()
+    var fallback = File(dir, "${stem}_$stamp.$ext")
+    while (fallback.exists()) {
+        stamp++
+        fallback = File(dir, "${stem}_$stamp.$ext")
+    }
+    return fallback
+}
+
+/**
+ * Replaces [dest] with [tmp].
+ * If the swap fails, [dest] keeps its previous bytes when it had any.
+ */
+internal fun replaceFile(tmp: File, dest: File): Boolean {
+    val parent = dest.parentFile ?: return false
+    val backup = File(parent, ".${dest.name}.bak")
+    if (backup.exists() && !backup.delete()) return false
+    val hadDest = dest.exists()
+    if (hadDest && !dest.renameTo(backup)) {
+        tmp.delete()
+        return false
+    }
+    val moved = if (tmp.renameTo(dest)) {
+        true
+    } else {
+        runCatching {
+            tmp.copyTo(dest, overwrite = true)
+            tmp.delete()
+        }.isSuccess
+    }
+    if (moved && dest.isFile && dest.length() > 0L) {
+        backup.delete()
+        return true
+    }
+    if (dest.exists()) dest.delete()
+    if (hadDest) backup.renameTo(dest)
+    if (tmp.exists()) tmp.delete()
+    return false
+}
 
 internal fun extensionFor(mime: String, durationMs: Long?, movie: Boolean = false, pathHint: String = ""): String {
     val m = mime.lowercase()

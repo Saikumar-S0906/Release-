@@ -43,14 +43,53 @@ class SoftZTest {
     }
 
     @Test
-    fun depthFrames_missesUntilPublished_andExpires() {
+    fun depthFrames_missesUntilPublished_holdsForward_rejectsStalePast() {
         DepthFrames.resetForTests()
         assertNull(DepthFrames.at(0L))
         val map = floatArrayOf(0.25f)
+        assertEquals(0, DepthFrames.generation())
         DepthFrames.publish(1_000_000L, map)
+        assertEquals(1, DepthFrames.generation())
         assertTrue(DepthFrames.at(1_200_000L) === map)
-        assertNull(DepthFrames.at(1_000_000L + DepthFrames.SLACK_US + 1))
+        assertTrue(DepthFrames.at(1_000_000L + DepthFrames.HOLD_US) === map)
+        assertNull(DepthFrames.at(1_000_000L + DepthFrames.HOLD_US + 1))
+        assertTrue(DepthFrames.at(1_000_000L - DepthFrames.SLACK_US) === map)
+        assertNull(DepthFrames.at(1_000_000L - DepthFrames.SLACK_US - 1))
         DepthFrames.resetForTests()
         assertNull(DepthFrames.at(1_000_000L))
+    }
+
+    @Test
+    fun depthGate_keepsNewestFrameWhileBusy_thenRunsIt() {
+        val idle = DepthGate()
+        val (running, first) = idle.offer(0L)
+        assertEquals(DepthOffer.Start, first)
+        assertTrue(running.busy)
+        assertEquals(0L, running.inFlightUs)
+
+        val (sameBucketWhileBusy, skipped) = running.offer(50_000L)
+        assertEquals(DepthOffer.Skip, skipped)
+        assertEquals(0L, sameBucketWhileBusy.inFlightUs)
+
+        val (queued, second) = running.offer(1_500_000L)
+        assertEquals(DepthOffer.Queue, second)
+        val (replaced, newer) = queued.offer(1_700_000L)
+        assertEquals(DepthOffer.Queue, newer)
+        assertEquals(1_700_000L, replaced.pendingUs)
+        val (stillQueued, sameBucket) = replaced.offer(1_750_000L)
+        assertEquals(DepthOffer.Skip, sameBucket)
+        assertEquals(1_700_000L, stillQueued.pendingUs)
+
+        val (after, next) = stillQueued.finished(published = true, timeUs = 0L)
+        assertEquals(1_700_000L, next)
+        assertTrue(after.busy)
+        assertEquals(1_700_000L, after.inFlightUs)
+        val (done, none) = after.finished(published = true, timeUs = 1_700_000L)
+        assertNull(none)
+        assertFalse(done.busy)
+        assertNull(done.inFlightUs)
+        val (publishedBucket, offer) = done.offer(1_750_000L)
+        assertEquals(DepthOffer.Skip, offer)
+        assertFalse(publishedBucket.busy)
     }
 }

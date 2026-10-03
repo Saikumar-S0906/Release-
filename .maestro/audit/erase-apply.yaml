@@ -1,0 +1,70 @@
+appId: com.pixijoy.studio
+---
+# Erase is only on the cutout hub, not the normal editor.
+# Paint a stroke and apply. Not a segmentation or pixel-quality pass.
+- launchApp:
+    clearState: false
+- extendedWaitUntil:
+    visible:
+      id: "home_create"
+    timeout: 90000
+- tapOn:
+    id: "home_open_studio"
+- extendedWaitUntil:
+    visible:
+      id: "create_hub_remove_bg"
+    timeout: 20000
+- tapOn:
+    id: "create_hub_remove_bg"
+# Hub tools open MediaSourceSheet. Sample id is studio_use_sample, not source_sample.
+- extendedWaitUntil:
+    visible:
+      id: "studio_use_sample"
+    timeout: 20000
+- tapOn:
+    id: "studio_use_sample"
+- extendedWaitUntil:
+    visible:
+      id: "photo_session"
+    timeout: 90000
+- tapOn:
+    id: "studio_group_retouch"
+# Erase is the last retouch chip, past the horizontal More fade.
+- repeat:
+    times: 6
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_hscroll_more"
+            notVisible:
+              id: "session_erase"
+          commands:
+            - tapOn:
+                id: "studio_hscroll_more"
+- tapOn:
+    id: "session_erase"
+- extendedWaitUntil:
+    visible:
+      id: "session_brush"
+    timeout: 15000
+- tapOn:
+    id: "session_brush"
+- repeat:
+    times: 12
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "session_apply_erase"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- tapOn:
+    id: "session_apply_erase"
+- assertVisible:
+    id: "photo_session"
+- assertVisible:
+    id: "session_undo"

@@ -16,7 +16,9 @@ internal class EnvelopeAudioProcessor(
     private val attackMs: Long = 120,
     private val releaseMs: Long = 250,
     /** Positive delay: silence then audio (VO/bed slip). */
-    private val delayMs: Long = 0
+    private val delayMs: Long = 0,
+    /** When set, replaces [volume] on each buffer. Preview only. */
+    private val liveVolume: (() -> Float)? = null
 ) : BaseAudioProcessor() {
     private var framesRead = 0L
 
@@ -43,7 +45,13 @@ internal class EnvelopeAudioProcessor(
             val g = if (tMs < delay) {
                 0f
             } else {
-                ClipMix.gain(tMs - delay, durationMs, volume, fadeInMs, fadeOutMs) *
+                ClipMix.gain(
+                    tMs - delay,
+                    durationMs,
+                    liveVolume?.invoke() ?: volume,
+                    fadeInMs,
+                    fadeOutMs
+                ) *
                     ClipMix.duck(tMs - delay, windows, duck, attackMs, releaseMs)
             }
             repeat(channels) {

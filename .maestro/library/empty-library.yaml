@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # G7 empty library. empty_library is only on the no-projects plate (LibraryPane showCreate).
 # launch-to-home uses clearState, so a cold start has no projects. A run that skips

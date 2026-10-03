@@ -46,7 +46,7 @@ class PhotoOpTest {
             PhotoOp.Sticker("â¤", 0.5f, 0.5f, 0.2f),
             PhotoOp.Collage(2),
             PhotoOp.Curves(floatArrayOf(0f, 0.2f, 0.5f, 0.8f, 1f)),
-            PhotoOp.Blur(3),
+            PhotoOp.Blur(3f),
             PhotoOp.Sharpen(0.6f),
             PhotoOp.Vignette(0.4f),
             PhotoOp.Subject,
@@ -216,6 +216,16 @@ class PhotoOpTest {
         // Non-identity layers must enable hasVisibleEffect (Compare can activate)
         assertTrue(LayeredOp("id4", "Grade", op = PhotoOp.Grade(0.2f, 1f)).hasVisibleEffect())
         assertTrue(LayeredOp("id5", "Curves", op = PhotoOp.Curves(floatArrayOf(0f, 0.25f, 0.6f, 0.75f, 1f))).hasVisibleEffect())
+    }
+
+    @Test
+    fun blurRadius_keepsFloatAndOldInt() {
+        val legacy = "W,3".decodeGraph().single() as PhotoOp.Blur
+        assertEquals(3f, legacy.radius, 0.001f)
+        val half = listOf(PhotoOp.Blur(2.5f)).encodeGraph().decodeGraph().single() as PhotoOp.Blur
+        assertEquals(2.5f, half.radius, 0.001f)
+        assertTrue(PhotoOp.Blur(0.5f).isIdentity())
+        assertFalse(PhotoOp.Blur(0.6f).isIdentity())
     }
 
     @Test

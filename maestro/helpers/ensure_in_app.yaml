@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # If a prior back pressed out of the app, bring it back without wiping prefs.
 - runFlow: dismiss_anr.yaml
@@ -8,7 +8,7 @@ appId: com.pixijoy.ai
         id: "nav_home"
     commands:
       - launchApp:
-          appId: com.pixijoy.ai
+          appId: com.pixijoy.studio
           clearState: false
           stopApp: false
       - extendedWaitUntil:

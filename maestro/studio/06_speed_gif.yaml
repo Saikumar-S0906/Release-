@@ -1,7 +1,7 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 - launchApp:
-    appId: com.pixijoy.ai
+    appId: com.pixijoy.studio
     clearState: true
 - runFlow: helpers/onboard.yaml
 - tapOn:

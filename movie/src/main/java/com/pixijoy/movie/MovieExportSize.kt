@@ -27,4 +27,10 @@ object MovieExportSize {
         1080 -> "FHD"
         else -> "HD"
     }
+
+    /** GIF uses the same HD / FHD / 4K chip as the movie export. */
+    fun gifFrameSize(height: Int): Pair<Int, Int> {
+        val outHeight = normalize(height)
+        return width(outHeight) to outHeight
+    }
 }

@@ -632,6 +632,14 @@ object PackLiteRt {
                 2 -> inferInpaintDual(interpreter, sized, sizedMask, modelH, modelW)
                 else -> return null
             }
+            if (inpaintHoleIsDeadFill(
+                    sampleRgb(generated, sizedMask, hole = true),
+                    sampleRgb(sized, sizedMask, hole = false)
+                )
+            ) {
+                if (!generated.isRecycled) generated.recycle()
+                return null
+            }
             val full = if (generated.width == src.width && generated.height == src.height) {
                 generated
             } else {
@@ -827,6 +835,24 @@ object PackLiteRt {
             }
         }
         return out
+    }
+
+    /** RGB samples in 0..1. [hole] selects mask pixels; otherwise known pixels. */
+    private fun sampleRgb(bmp: Bitmap, mask: BooleanArray, hole: Boolean): FloatArray {
+        val w = bmp.width
+        val h = bmp.height
+        if (w <= 0 || h <= 0 || mask.size != w * h) return FloatArray(0)
+        val px = IntArray(w * h)
+        bmp.getPixels(px, 0, w, 0, 0, w, h)
+        val out = ArrayList<Float>(px.size)
+        for (i in px.indices) {
+            if (mask[i] != hole) continue
+            val c = px[i]
+            out.add(((c ushr 16) and 0xff) / 255f)
+            out.add(((c ushr 8) and 0xff) / 255f)
+            out.add((c and 0xff) / 255f)
+        }
+        return out.toFloatArray()
     }
 
     private fun stampMasked(src: Bitmap, generated: Bitmap, mask: BooleanArray): Bitmap {

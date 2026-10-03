@@ -43,6 +43,11 @@ interface MovieEngine {
     fun fps(path: String): Float
     fun composition(paths: List<String>, timeline: Timeline): Composition
     fun composition(paths: List<String>, timeline: MultiTrackTimeline): Composition
+    fun composition(
+        paths: List<String>,
+        timeline: MultiTrackTimeline,
+        live: PreviewMix
+    ): Composition
     suspend fun export(
         context: Context,
         paths: List<String>,
@@ -50,7 +55,7 @@ interface MovieEngine {
         talking: Boolean,
         gif: Boolean,
         onProgress: (Float) -> Unit
-    ): AppResult<String>
+    ): AppResult<MovieExportFile>
     suspend fun export(
         context: Context,
         paths: List<String>,
@@ -58,7 +63,7 @@ interface MovieEngine {
         talking: Boolean,
         gif: Boolean,
         onProgress: (Float) -> Unit
-    ): AppResult<String>
+    ): AppResult<MovieExportFile>
 }
 
 class Media3MovieEngine : MovieEngine {
@@ -77,7 +82,21 @@ class Media3MovieEngine : MovieEngine {
     override fun composition(paths: List<String>, timeline: Timeline): Composition =
         composition(paths, MultiTrackTimeline.fromFlatTimeline(timeline))
 
-    override fun composition(paths: List<String>, timeline: MultiTrackTimeline): Composition {
+    override fun composition(paths: List<String>, timeline: MultiTrackTimeline): Composition =
+        buildComposition(paths, timeline, coverStills = false, live = null)
+
+    override fun composition(
+        paths: List<String>,
+        timeline: MultiTrackTimeline,
+        live: PreviewMix
+    ): Composition = buildComposition(paths, timeline, coverStills = false, live = live)
+
+    private fun buildComposition(
+        paths: List<String>,
+        timeline: MultiTrackTimeline,
+        coverStills: Boolean,
+        live: PreviewMix? = null
+    ): Composition {
         val mt = timeline.ensureDefaultTracks()
         val prepared = mt.toFlatTimeline()
             .copy(clips = mt.composedVideoClips().ifEmpty {
@@ -85,16 +104,22 @@ class Media3MovieEngine : MovieEngine {
             })
             .withTransitionFadesApplied()
         val clips = MovieSpeed.expandTimeline(prepared.clips)
+        val pictureFades = PictureFade.windows(clips)
         val flat = prepared.copy(clips = clips)
         val audioTrackSeqs = mt.unmutedAudioTracksWithClips().map { track ->
             audioClipSequence(paths, MovieSpeed.expandTimeline(track.clips))
         }
         val layout = flat.layout
+        val coverHeight = if (coverStills) mt.outputHeight else null
         if (layout.isMulti()) {
             val inputPaths = VideoLayoutPlan.inputPaths(paths, layout)
             val totalMs = flat.totalMs().coerceAtLeast(250)
             val videoSeqs = ArrayList<EditedMediaItemSequence>(inputPaths.size)
-            videoSeqs += EditedMediaItemSequence.Builder(clips.map { videoItem(paths, it) }).build()
+            videoSeqs += EditedMediaItemSequence.Builder(
+                clips.mapIndexed { index, clip ->
+                    videoItem(paths, clip, coverHeight, pictureFades[index])
+                }
+            ).build()
             for (i in 1 until inputPaths.size) {
                 videoSeqs += parallelVideoSequence(inputPaths[i], totalMs, removeAudio = true)
             }
@@ -105,17 +130,23 @@ class Media3MovieEngine : MovieEngine {
                 durationOverrideMs = totalMs,
                 extraAudioSequences = audioTrackSeqs,
                 compositor = layout.compositor(),
-                burnInTc = mt.delivery.burnInTc
+                burnInTc = mt.delivery.burnInTc,
+                live = live
             )
         }
-        val videoSeq = EditedMediaItemSequence.Builder(clips.map { videoItem(paths, it) }).build()
+        val videoSeq = EditedMediaItemSequence.Builder(
+            clips.mapIndexed { index, clip ->
+                videoItem(paths, clip, coverHeight, pictureFades[index])
+            }
+        ).build()
         return composeAudio(
             videoSequences = listOf(videoSeq),
             paths = paths,
             timeline = flat,
             durationOverrideMs = null,
             extraAudioSequences = audioTrackSeqs,
-            burnInTc = mt.delivery.burnInTc
+            burnInTc = mt.delivery.burnInTc,
+            live = live
         )
     }
 
@@ -126,7 +157,7 @@ class Media3MovieEngine : MovieEngine {
         talking: Boolean,
         gif: Boolean,
         onProgress: (Float) -> Unit
-    ): AppResult<String> = export(
+    ): AppResult<MovieExportFile> = export(
         context,
         paths,
         MultiTrackTimeline.fromFlatTimeline(timeline),
@@ -142,7 +173,7 @@ class Media3MovieEngine : MovieEngine {
         talking: Boolean,
         gif: Boolean,
         onProgress: (Float) -> Unit
-    ): AppResult<String> {
+    ): AppResult<MovieExportFile> {
         val primary = paths.firstOrNull() ?: return AppResult.Err("No clip to export.")
         val still = isStill(primary)
         val flat = timeline.toFlatTimeline()
@@ -150,25 +181,51 @@ class Media3MovieEngine : MovieEngine {
         val cacheName = if (gif) "pixijoy-export-${System.currentTimeMillis()}.gif"
         else "pixijoy-export-${System.currentTimeMillis()}.mp4"
         val cache = File(context.cacheDir, cacheName)
+        var hdrFellBack = false
         val encoded = when {
-            gif -> encodeGif(primary, cache, talking, rate, onProgress)
+            gif -> encodeGif(primary, cache, talking, rate, flat.outputHeight, onProgress)
             still -> {
-                if (timeline.titles.isNotEmpty() || !timeline.grade.isNeutral() || timeline.layout.isMulti()) {
-                    encodeClips(context, paths, timeline, cache, onProgress)
+                val prepared = StillPicture.forExport(timeline, talking) { index ->
+                    isStill(paths.getOrElse(index) { primary })
+                }
+                if (prepared != null) {
+                    val (result, fellBack) = exportWithHdr(
+                        context,
+                        paths,
+                        prepared,
+                        cache,
+                        onProgress,
+                        coverStills = !timeline.layout.isMulti()
+                    )
+                    hdrFellBack = fellBack
+                    result
                 } else {
+                    // Ken Burns stills are H.264. Keep HDR cannot ride that file.
+                    if (timeline.hdrMode == MovieHdrMode.KeepHdr) hdrFellBack = true
                     val stillResult = encodeStill(primary, cache, talking, rate, flat.outputHeight, onProgress)
                     if (stillResult is AppResult.Err) stillResult
                     else attachBed(
                         context,
                         cache,
                         paths,
-                        flat,
+                        flat.copy(hdrMode = MovieHdrMode.Sdr),
                         MovieSpeed.outputDurationMs(MovieTrim.stillDurationMs(talking), rate),
                         onProgress
                     )
                 }
             }
-            else -> encodeClips(context, paths, timeline, cache, onProgress)
+            else -> {
+                val (result, fellBack) = exportWithHdr(
+                    context,
+                    paths,
+                    timeline,
+                    cache,
+                    onProgress,
+                    coverStills = false
+                )
+                hdrFellBack = fellBack
+                result
+            }
         }
         if (encoded is AppResult.Err) {
             cache.delete()
@@ -192,7 +249,49 @@ class Media3MovieEngine : MovieEngine {
             )
         }
         cache.delete()
-        return published
+        return when (published) {
+            is AppResult.Ok -> AppResult.Ok(MovieExportFile(published.value, hdrFellBack))
+            is AppResult.Err -> published
+        }
+    }
+
+    /**
+     * Keep HDR uses HEVC. If this device cannot write it, or the HDR attempt
+     * fails, the same timeline is exported as SDR H.264 and [Pair.second] is true.
+     */
+    private suspend fun exportWithHdr(
+        context: Context,
+        paths: List<String>,
+        timeline: MultiTrackTimeline,
+        cache: File,
+        onProgress: (Float) -> Unit,
+        coverStills: Boolean
+    ): Pair<AppResult<Unit>, Boolean> {
+        val choice = chooseHdrExport(timeline.hdrMode, HdrEncoderSupport.canWriteHdr())
+        val exportTimeline = timeline.copy(hdrMode = choice.mode)
+        val first = encodeClips(
+            context,
+            paths,
+            exportTimeline,
+            cache,
+            onProgress,
+            coverStills,
+            choice.videoMimeType
+        )
+        if (first is AppResult.Ok || choice.mode != MovieHdrMode.KeepHdr) {
+            return first to choice.fellBackToSdr
+        }
+        cache.delete()
+        val second = encodeClips(
+            context,
+            paths,
+            timeline.copy(hdrMode = MovieHdrMode.Sdr),
+            cache,
+            onProgress,
+            coverStills,
+            MimeTypes.VIDEO_H264
+        )
+        return second to true
     }
 
     private suspend fun encodeGif(
@@ -200,13 +299,14 @@ class Media3MovieEngine : MovieEngine {
         cache: File,
         talking: Boolean,
         speed: Float,
+        outputHeight: Int,
         onProgress: (Float) -> Unit
     ): AppResult<Unit> = withContext(Dispatchers.Default) {
         val bitmap = BitmapFactory.decodeFile(path)
             ?: return@withContext AppResult.Err("Could not read the still.")
         try {
             val duration = MovieSpeed.outputDurationMs(MovieTrim.stillDurationMs(talking), speed)
-            GifEncoder().encode(bitmap, cache, duration, talking, onProgress)
+            GifEncoder().encode(bitmap, cache, duration, talking, outputHeight, onProgress)
         } finally {
             if (!bitmap.isRecycled) bitmap.recycle()
         }
@@ -235,7 +335,9 @@ class Media3MovieEngine : MovieEngine {
         paths: List<String>,
         timeline: MultiTrackTimeline,
         cache: File,
-        onProgress: (Float) -> Unit
+        onProgress: (Float) -> Unit,
+        coverStills: Boolean = false,
+        videoMimeType: String = MimeTypes.VIDEO_H264
     ): AppResult<Unit> {
         val prepared = prepareNeuralSlowMo(context, paths, timeline) { p ->
             onProgress((p * 0.35f).coerceIn(0f, 0.35f))
@@ -244,8 +346,9 @@ class Media3MovieEngine : MovieEngine {
             withContext(Dispatchers.Main) {
                 startTransformer(
                     context,
-                    composition(prepared.paths, prepared.timeline),
-                    cache
+                    buildComposition(prepared.paths, prepared.timeline, coverStills),
+                    cache,
+                    videoMimeType
                 ) { p -> onProgress(0.35f + p * 0.65f) }
             }
         } finally {
@@ -403,7 +506,12 @@ class Media3MovieEngine : MovieEngine {
         val temps: List<File>
     )
 
-    private fun videoItem(paths: List<String>, clip: TimelineClip): EditedMediaItem {
+    private fun videoItem(
+        paths: List<String>,
+        clip: TimelineClip,
+        coverHeight: Int? = null,
+        pictureFade: Pair<Long, Long> = 0L to 0L
+    ): EditedMediaItem {
         val path = paths.getOrElse(clip.mediaIndex) { paths.first() }
         val duration = durationMs(path)
         val (start, end) = MovieTrim.normalize(clip.inMs, clip.outMs, duration)
@@ -418,7 +526,8 @@ class Media3MovieEngine : MovieEngine {
         val edited = EditedMediaItem.Builder(builder.build())
             .setDurationUs(clip.durationMs.coerceAtLeast(1) * 1000)
         if (clip.muted) edited.setRemoveAudio(true)
-        val effects = clipEffects(clip, path)
+        val stillCover = if (coverHeight != null && isStill(path)) coverHeight else null
+        val effects = clipEffects(clip, path, stillCover, pictureFade)
         if (effects != null) edited.setEffects(effects)
         return edited.build()
     }
@@ -472,7 +581,7 @@ class Media3MovieEngine : MovieEngine {
                     durationOverrideMs = pictureDurationMs.coerceAtLeast(250)
                 ),
                 mixed,
-                onProgress
+                onProgress = onProgress
             )
             if (result is AppResult.Ok) {
                 videoFile.delete()
@@ -494,7 +603,8 @@ class Media3MovieEngine : MovieEngine {
         durationOverrideMs: Long? = null,
         extraAudioSequences: List<EditedMediaItemSequence> = emptyList(),
         compositor: VideoCompositorSettings = VideoCompositorSettings.DEFAULT,
-        burnInTc: Boolean = false
+        burnInTc: Boolean = false,
+        live: PreviewMix? = null
     ): Composition {
         val mixed = timeline.withStemBusesApplied()
         val total = (durationOverrideMs ?: mixed.totalMs()).coerceAtLeast(250)
@@ -511,10 +621,16 @@ class Media3MovieEngine : MovieEngine {
             rawWindows
         }
         resolveStem(paths, mixed.bed)?.let { (bed, file) ->
-            sequences += bedSequence(file, bed, total, durationMs(file.absolutePath), windows)
+            sequences += bedSequence(
+                file, bed, total, durationMs(file.absolutePath), windows,
+                liveVolume = live?.let { mix -> { mix.bed.coerceIn(0f, 1f) } }
+            )
         }
         voice?.let { (stem, file) ->
-            sequences += voiceSequence(file, stem, total, durationMs(file.absolutePath))
+            sequences += voiceSequence(
+                file, stem, total, durationMs(file.absolutePath),
+                liveVolume = live?.let { mix -> { mix.voice.coerceIn(0f, 1f) } }
+            )
         }
         for (stem in mixed.extraStems) {
             if (stem.muted || stem.fileName.isBlank()) continue
@@ -638,7 +754,8 @@ class Media3MovieEngine : MovieEngine {
         file: File,
         stem: AudioBed,
         totalMs: Long,
-        sourceMs: Long
+        sourceMs: Long,
+        liveVolume: (() -> Float)? = null
     ): EditedMediaItemSequence {
         val slip = AudioSync.clampSlip(stem.slipMs)
         val advance = (-slip).coerceAtLeast(0L)
@@ -656,8 +773,9 @@ class Media3MovieEngine : MovieEngine {
         val edited = EditedMediaItem.Builder(media)
             .setRemoveVideo(true)
             .setDurationUs(take * 1000)
-        val vol = ClipMix.volume(stem.volume)
-        val needsMix = vol != 1f || stem.fadeInMs > 0 || stem.fadeOutMs > 0 || delay > 0
+        val vol = liveVolume?.invoke() ?: ClipMix.volume(stem.volume)
+        val needsMix = liveVolume != null || vol != 1f || stem.fadeInMs > 0 ||
+            stem.fadeOutMs > 0 || delay > 0
         if (needsMix) {
             edited.setEffects(
                 Effects(
@@ -667,7 +785,8 @@ class Media3MovieEngine : MovieEngine {
                             volume = vol,
                             fadeInMs = stem.fadeInMs,
                             fadeOutMs = stem.fadeOutMs,
-                            delayMs = delay
+                            delayMs = delay,
+                            liveVolume = liveVolume
                         )
                     ),
                     emptyList()
@@ -682,7 +801,8 @@ class Media3MovieEngine : MovieEngine {
         bed: AudioBed,
         totalMs: Long,
         bedDur: Long,
-        windows: List<ClipMix.Window>
+        windows: List<ClipMix.Window>,
+        liveVolume: (() -> Float)? = null
     ): EditedMediaItemSequence {
         val slip = AudioSync.clampSlip(bed.slipMs)
         val advance = (-slip).coerceAtLeast(0L)
@@ -691,9 +811,9 @@ class Media3MovieEngine : MovieEngine {
         val items = ArrayList<EditedMediaItem>()
         var t = 0L
         var index = 0
-        val vol = ClipMix.volume(bed.volume)
         val duck = ClipMix.volume(bed.duck)
         while (t < totalMs && index < 64) {
+            val vol = liveVolume?.invoke() ?: ClipMix.volume(bed.volume)
             val take = minOf(slice, totalMs - t).coerceAtLeast(1)
             val media = MediaItem.Builder()
                 .setUri(Uri.fromFile(file))
@@ -707,8 +827,8 @@ class Media3MovieEngine : MovieEngine {
             val edited = EditedMediaItem.Builder(media)
                 .setRemoveVideo(true)
                 .setDurationUs(take * 1000)
-            val needsMix = vol != 1f || bed.fadeInMs > 0 || bed.fadeOutMs > 0 ||
-                (duck < 0.999f && windows.isNotEmpty()) || delay > 0
+            val needsMix = liveVolume != null || vol != 1f || bed.fadeInMs > 0 ||
+                bed.fadeOutMs > 0 || (duck < 0.999f && windows.isNotEmpty()) || delay > 0
             if (needsMix) {
                 edited.setEffects(
                     Effects(
@@ -723,7 +843,8 @@ class Media3MovieEngine : MovieEngine {
                                 duck = duck,
                                 attackMs = bed.attackMs,
                                 releaseMs = bed.releaseMs,
-                                delayMs = if (index == 0) delay else 0L
+                                delayMs = if (index == 0) delay else 0L,
+                                liveVolume = liveVolume
                             )
                         ),
                         emptyList()
@@ -745,11 +866,12 @@ class Media3MovieEngine : MovieEngine {
         context: Context,
         composition: Composition,
         cache: File,
+        videoMimeType: String = MimeTypes.VIDEO_H264,
         onProgress: (Float) -> Unit
     ): AppResult<Unit> = withContext(Dispatchers.Main) {
         suspendCancellableCoroutine { cont ->
             val transformer = Transformer.Builder(context)
-                .setVideoMimeType(MimeTypes.VIDEO_H264)
+                .setVideoMimeType(videoMimeType)
                 .build()
             val holder = ProgressHolder()
             val poll = launch {
@@ -790,7 +912,12 @@ class Media3MovieEngine : MovieEngine {
         }
     }
 
-    private fun clipEffects(clip: TimelineClip, mediaPath: String? = null): Effects? {
+    private fun clipEffects(
+        clip: TimelineClip,
+        mediaPath: String? = null,
+        coverHeight: Int? = null,
+        pictureFade: Pair<Long, Long> = 0L to 0L
+    ): Effects? {
         val speed = MovieSpeed.playbackRate(clip)
         val audio = ArrayList<AudioProcessor>()
         val video = ArrayList<Effect>()
@@ -800,6 +927,14 @@ class Media3MovieEngine : MovieEngine {
                 setPitch(1f)
             }
             video += SpeedChangeEffect(speed)
+        }
+        if (coverHeight != null) {
+            val height = MovieExportSize.normalize(coverHeight)
+            video += Presentation.createForWidthAndHeight(
+                MovieExportSize.width(height),
+                height,
+                Presentation.LAYOUT_SCALE_TO_FIT_WITH_CROP
+            )
         }
         if (clip.hasMotion) {
             val durationUs = clip.durationMs.coerceAtLeast(1) * 1000L
@@ -816,6 +951,7 @@ class Media3MovieEngine : MovieEngine {
             video += clip.frame.toEffects()
         }
         ChromaKeyEffect.from(clip.chroma)?.let { video += it }
+        PictureFade.effect(clip.durationMs, pictureFade.first, pictureFade.second)?.let { video += it }
         if (!clip.muted) {
             val vol = ClipMix.volume(clip.volume)
             if (clip.fadeInMs > 0 || clip.fadeOutMs > 0) {

@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # E4 — HTTPS Download of FILM TFLite (~67 MB). Ready file only; neural chip stays locked
 # until LiteRT binds. Does not claim engineReady by itself.

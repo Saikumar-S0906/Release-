@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 ---
 # D10 — slow-mo / frame-interp contract in movie session.
 # Glass chrome is 280dp — prefer studio_scroll_more when scrollUntilVisible stalls.

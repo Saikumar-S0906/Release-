@@ -1,0 +1,43 @@
+PixiJoy privacy policy
+Effective 3 October 2026
+
+This policy is stored in the app. Opening it does not open a website and does not send this page anywhere. English is the text that applies if a translation differs.
+
+Who is responsible
+PixiJoy is an on-device photo and movie editor published by the developer named on its Google Play listing. To ask about this policy, use the contact method on that listing. The app has no account and no separate support site.
+
+What stays on your device
+Photos, videos, and project files you open, capture, or edit stay on this device. Optional voice recordings you make inside a project stay in that project. Grades, titles, and other edits stay on this device. The app remembers that you accepted this notice, on this device.
+
+PixiJoy does not upload your pictures, movies, or voice recordings. Export writes a file to this device, such as your gallery or files. Deleting a project, or resetting app data from the library, removes copies the app stored. Files you already exported are not removed by that reset. Uninstalling the app removes its private storage. Exported files remain until you delete them yourself.
+
+Photo export does not write GPS location into the saved file. If you keep photo details, non-location details such as camera model and time can be copied into that file. Those details stay on the device.
+
+Permissions
+Photos and videos: to open media you choose and to save an export.
+Camera: only when you take a picture or a clip in the app.
+Microphone: only when you record voice in a project.
+Notifications: to show that an export is running. The notice is local. It is not a message from a server.
+Internet: not used to send your edits. It is used only after you tap Download on an optional on-device model pack.
+
+Optional model packs
+Editing works without a pack. If you tap Download, the app requests a model file over an encrypted connection (HTTPS). The request identifies the app as PixiJoy/2.0. It does not include your photos, movies, voice, or an account. The computer that hosts the file can see ordinary connection data, including the network address of your device, the same way any file download works. You can choose not to download.
+
+What this app does not do
+It has no sign-in and no advertising. It does not use an advertising identifier. It does not include an analytics or crash-reporting kit. It does not sell your media or your personal information, and it does not share them with a data broker.
+
+Google Play, if you installed PixiJoy from it, may process install and reliability data under Google’s own rules. That is the store, not a PixiJoy upload of your projects.
+
+Children
+PixiJoy is a general creative tool. It is not directed at children under 13, and it does not knowingly collect personal information from them.
+
+How long data stays
+Project data stays until you delete the project, reset app data, or uninstall. You can refuse the camera, microphone, notifications, or a pack download and still use the tools that do not need them.
+
+Security
+Edits are processed on the device. Pack downloads use HTTPS. No storage method is perfect. Keep your own copies of important photos.
+
+Changes
+If this policy changes, the new text replaces this one inside the app, with a new date at the top. Using the app after that update means you accept the new text.
+
+This policy describes the app. It is not a promise that a store listing form will accept an empty web address. The practices above are the ones the app follows.

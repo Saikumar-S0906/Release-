@@ -1,6 +1,6 @@
 # PixiJoy Maestro E2E (new IA)
 
-Black-box flows for `com.pixijoy.ai` against **Home · Explore · Create · Community · My Stuff**.  
+Black-box flows for `com.pixijoy.studio` against **Home · Explore · Create · Community · My Stuff**.  
 Create tab is **Tools** (default) | **AI**.
 
 ## Suites

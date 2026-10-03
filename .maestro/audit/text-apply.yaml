@@ -1,0 +1,35 @@
+appId: com.pixijoy.studio
+---
+# Text: place a label and apply.
+- runFlow: ../open-photo-sample.yaml
+- tapOn:
+    id: "studio_group_add"
+- tapOn:
+    id: "session_text"
+- extendedWaitUntil:
+    visible:
+      id: "session_text_input"
+    timeout: 15000
+- tapOn:
+    id: "session_text_input"
+- inputText: "Hi"
+- tapOn:
+    id: "session_place"
+- repeat:
+    times: 12
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "studio_scroll_more"
+            notVisible:
+              id: "session_apply_text"
+          commands:
+            - tapOn:
+                id: "studio_scroll_more"
+- tapOn:
+    id: "session_apply_text"
+- assertVisible:
+    id: "photo_session"
+- assertVisible:
+    id: "session_undo"

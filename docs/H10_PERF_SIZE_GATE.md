@@ -77,7 +77,7 @@ Run only when DESKTOP is free and a Pixel_7a (or equivalent) is attached. **Do n
 2. Open Movie → CG: add Cube / Dust classical plates; scrub — expect preview≈export feel; no crash.
 3. Optional: install `:feature_cg` / titles split (Play or local multi-APK) → PropGltf bind; miss falls back to classical raster (honest).
 4. Soft Maestro suite may stay YELLOW; record PASS/FAIL only for the CG size/perf intent above.
-5. Optional meminfo snapshot via `scripts/run_perf_gates.ps1 -SkipBenchmark -SkipStress` (or adb `dumpsys meminfo com.pixijoy.ai`) — attach under `app/build/reports/perf_gates/` when claimed.
+5. Optional meminfo snapshot via `scripts/run_perf_gates.ps1 -SkipBenchmark -SkipStress` (or adb `dumpsys meminfo com.pixijoy.studio`) — attach under `app/build/reports/perf_gates/` when claimed.
 
 No Pixel result is claimed in this file until a dated tip dump is pasted by test_automator / developer.
 

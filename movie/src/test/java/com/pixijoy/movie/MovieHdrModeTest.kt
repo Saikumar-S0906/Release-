@@ -1,7 +1,9 @@
 package com.pixijoy.movie
 
+import androidx.media3.common.MimeTypes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -16,6 +18,32 @@ class MovieHdrModeTest {
         assertEquals(MovieHdrMode.KeepHdr, MovieHdrMode.parse("HDR"))
         assertTrue(MovieHdrMode.Sdr.isDefault())
         assertFalse(MovieHdrMode.KeepHdr.isDefault())
+    }
+
+    @Test
+    fun keepHdr_doesNotForceH264() {
+        val kept = chooseHdrExport(MovieHdrMode.KeepHdr, deviceCanWriteHdr = true)
+        assertEquals(MovieHdrMode.KeepHdr, kept.mode)
+        assertEquals(MimeTypes.VIDEO_H265, kept.videoMimeType)
+        assertNotEquals(MimeTypes.VIDEO_H264, kept.videoMimeType)
+        assertFalse(kept.fellBackToSdr)
+
+        val fell = chooseHdrExport(MovieHdrMode.KeepHdr, deviceCanWriteHdr = false)
+        assertEquals(MovieHdrMode.Sdr, fell.mode)
+        assertEquals(MimeTypes.VIDEO_H264, fell.videoMimeType)
+        assertTrue(fell.fellBackToSdr)
+
+        val sdr = chooseHdrExport(MovieHdrMode.Sdr, deviceCanWriteHdr = true)
+        assertEquals(MimeTypes.VIDEO_H264, sdr.videoMimeType)
+        assertFalse(sdr.fellBackToSdr)
+    }
+
+    @Test
+    fun gifFrame_usesResolutionChip() {
+        assertEquals(1280 to 720, MovieExportSize.gifFrameSize(720))
+        assertEquals(1920 to 1080, MovieExportSize.gifFrameSize(1080))
+        assertEquals(3840 to 2160, MovieExportSize.gifFrameSize(2160))
+        assertEquals(1280 to 720, MovieExportSize.gifFrameSize(480))
     }
 
     @Test

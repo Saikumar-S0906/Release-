@@ -22,7 +22,7 @@ Run focused JVM gates first:
   --tests "com.pixijoy.movie.ClipFrameTest"
 
 .\gradlew.bat :app:testDebugUnitTest `
-  --tests "com.pixijoy.ai.ui.StudioLayoutTest"
+  --tests "com.pixijoy.studio.ui.StudioLayoutTest"
 ```
 
 Compile the visible capability gates:

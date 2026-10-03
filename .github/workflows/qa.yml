@@ -81,7 +81,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: >-
             ./gradlew :app:connectedDebugAndroidTest
-            -Pandroid.testInstrumentationRunnerArguments.class=com.pixijoy.ai.StudioAppSmokeTest
+            -Pandroid.testInstrumentationRunnerArguments.class=com.pixijoy.studio.StudioAppSmokeTest
             --console=plain
 
       - name: Upload instrumented results

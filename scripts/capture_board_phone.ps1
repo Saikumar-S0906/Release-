@@ -81,9 +81,9 @@ Write-Host ("Capturing {0} screens -> {1}" -f $ids.Count, $outDir)
 
 foreach ($id in $ids) {
     Write-Host ("  {0}" -f $id)
-    & $adb shell am force-stop com.pixijoy.ai 2>$null | Out-Null
+    & $adb shell am force-stop com.pixijoy.studio 2>$null | Out-Null
     Start-Sleep -Milliseconds 600
-    & $adb shell am start -W -n com.pixijoy.ai/.MainActivity --es board_screen $id 2>$null | Out-Null
+    & $adb shell am start -W -n com.pixijoy.studio/.MainActivity --es board_screen $id 2>$null | Out-Null
     # Settle compose + seed (DataStore prepareBoardReviewCapture needs ≥10–12s cold)
     Start-Sleep -Seconds 12
     # Dismiss consent/privacy if present

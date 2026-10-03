@@ -18,6 +18,9 @@ android {
             "-opt-in=androidx.media3.common.util.ExperimentalApi"
         )
     }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
@@ -31,4 +34,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.play.feature.delivery.ktx)
     testImplementation(libs.junit)
+    // Plate pixel tests need a real Bitmap. JVM stubs throw "not mocked".
+    testImplementation("org.robolectric:robolectric:4.14.1")
 }

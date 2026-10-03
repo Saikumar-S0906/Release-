@@ -4,12 +4,12 @@ import android.graphics.Bitmap
 import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Shader
 import android.graphics.Typeface
+import kotlin.math.floor
 import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
@@ -192,20 +192,26 @@ fun applyErase(src: Bitmap, stamps: List<Stamp>): Bitmap {
     return out
 }
 
-fun applyHsl(src: Bitmap, hue: Float, saturation: Float): Bitmap {
-    val out = src.copy(Bitmap.Config.ARGB_8888, true)
-    val w = out.width
-    val h = out.height
+/** Hue then saturation, the same matrix as the live slider. Not an HSV rotate. */
+fun applyHsl(src: Bitmap, hue: Float, saturation: Float): Bitmap =
+    applyColorMatrix(src, LiveGrade.colorMatrix(0f, 1f, hue, saturation))
+
+private fun applyColorMatrix(src: Bitmap, matrix: FloatArray): Bitmap {
+    val w = src.width
+    val h = src.height
     val px = IntArray(w * h)
-    out.getPixels(px, 0, w, 0, 0, w, h)
-    val hsv = FloatArray(3)
+    src.getPixels(px, 0, w, 0, 0, w, h)
     for (i in px.indices) {
         val c = px[i]
-        Color.colorToHSV(c, hsv)
-        hsv[0] = (hsv[0] + hue + 360f) % 360f
-        hsv[1] = (hsv[1] * saturation).coerceIn(0f, 1f)
-        px[i] = (c and 0xFF000000.toInt()) or (Color.HSVToColor(hsv) and 0x00FFFFFF)
+        val a = Color.alpha(c)
+        px[i] = Color.argb(
+            matrixChannel(matrix, 3, c, a),
+            matrixChannel(matrix, 0, c, a),
+            matrixChannel(matrix, 1, c, a),
+            matrixChannel(matrix, 2, c, a)
+        )
     }
+    val out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
     out.setPixels(px, 0, w, 0, 0, w, h)
     return out
 }
@@ -281,10 +287,20 @@ fun applySticker(src: Bitmap, op: PhotoOp.Sticker): Bitmap {
     return out
 }
 
+/**
+ * Stored collage count stays 1–4. The 4-up chip encodes as 4 and draws as a
+ * 2×2 grid, not one row of four.
+ */
+fun collageGrid(columns: Int, sourceCount: Int): Pair<Int, Int> {
+    val stored = columns.coerceIn(1, 4)
+    val count = max(sourceCount, 1)
+    if (stored == 4) return 2 to 2
+    val rows = (count + stored - 1) / stored
+    return stored to rows
+}
+
 fun applyCollage(sources: List<Bitmap>, columns: Int, maxEdge: Int): Bitmap {
-    val cols = columns.coerceIn(1, 4)
-    val count = max(sources.size, 1)
-    val rows = (count + cols - 1) / cols
+    val (cols, rows) = collageGrid(columns, sources.size)
     val cell = maxEdge / max(cols, rows)
     val out = Bitmap.createBitmap(cell * cols, cell * rows, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(out)
@@ -299,25 +315,8 @@ fun applyCollage(sources: List<Bitmap>, columns: Int, maxEdge: Int): Bitmap {
     return out
 }
 
-fun applyGradeBitmap(src: Bitmap, exposureEv: Float, contrast: Float): Bitmap {
-    val gain = Math.pow(2.0, exposureEv.toDouble()).toFloat()
-    val translate = (1f - contrast) * 0.18f * 255f
-    val matrix = android.graphics.ColorMatrix(
-        floatArrayOf(
-            contrast * gain, 0f, 0f, 0f, translate,
-            0f, contrast * gain, 0f, 0f, translate,
-            0f, 0f, contrast * gain, 0f, translate,
-            0f, 0f, 0f, 1f, 0f
-        )
-    )
-    val out = Bitmap.createBitmap(src.width, src.height, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(out)
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
-        colorFilter = android.graphics.ColorMatrixColorFilter(matrix)
-    }
-    canvas.drawBitmap(src, 0f, 0f, paint)
-    return out
-}
+fun applyGradeBitmap(src: Bitmap, exposureEv: Float, contrast: Float): Bitmap =
+    applyColorMatrix(src, LiveGrade.gradeMatrix(exposureEv, contrast))
 
 fun evalCurve(t: Float, ys: FloatArray): Float {
     val x = t.coerceIn(0f, 1f)
@@ -348,22 +347,20 @@ fun applyCurves(src: Bitmap, ys: FloatArray): Bitmap {
     return out
 }
 
+/** Normalized falloff from [LiveGrade.vignetteMul], including on non-square frames. */
 fun applyVignette(src: Bitmap, amount: Float): Bitmap {
     val out = src.copy(Bitmap.Config.ARGB_8888, true)
     val w = out.width
     val h = out.height
-    val cx = w / 2f
-    val cy = h / 2f
-    val maxD = hypot(cx, cy)
+    if (w <= 0 || h <= 0) return out
     val px = IntArray(w * h)
     out.getPixels(px, 0, w, 0, 0, w, h)
     val a = amount.coerceIn(0f, 1f)
     for (y in 0 until h) {
+        val ny = y.toFloat() / h
         for (x in 0 until w) {
             val i = y * w + x
-            val d = hypot(x - cx, y - cy) / maxD
-            val fall = ((d - (1f - a)).coerceIn(0f, 1f) / a.coerceAtLeast(0.001f)).coerceIn(0f, 1f)
-            val m = 1f - a * fall * fall
+            val m = LiveGrade.vignetteMul(x.toFloat() / w, ny, a)
             val c = px[i]
             px[i] = Color.argb(
                 Color.alpha(c),
@@ -377,26 +374,71 @@ fun applyVignette(src: Bitmap, amount: Float): Bitmap {
     return out
 }
 
-fun applyBlurPasses(src: Bitmap, radius: Int): Bitmap {
-    var current = src
-    repeat(radius.coerceIn(1, 8)) {
-        val next = boxBlurBitmap(current)
-        if (current !== src && !current.isRecycled) current.recycle()
-        current = next
-    }
-    return current
-}
-
-fun boxBlurBitmap(src: Bitmap): Bitmap {
+/**
+ * Matches [LiveGrade.DETAIL_AGSL]: 5×5 taps spaced by [radius] pixels,
+ * mixed by `radius / 8`. At or below 0.5 the shader does not blur.
+ */
+fun applyBlurPasses(src: Bitmap, radius: Float): Bitmap {
     val w = src.width
     val h = src.height
+    val blur = radius.coerceIn(0f, 16f)
+    if (w <= 0 || h <= 0 || blur <= 0.5f) return src.copy(Bitmap.Config.ARGB_8888, false)
+    val spread = max(blur, 1f)
+    val mix = (blur / 8f).coerceIn(0f, 1f)
     val px = IntArray(w * h)
     src.getPixels(px, 0, w, 0, 0, w, h)
-    val dest = IntArray(px.size)
-    boxBlur(px, dest, w, h)
+    val outPx = IntArray(px.size)
+    for (y in 0 until h) {
+        for (x in 0 until w) {
+            var accA = 0f
+            var accR = 0f
+            var accG = 0f
+            var accB = 0f
+            for (oy in -2..2) {
+                for (ox in -2..2) {
+                    val s = sampleClamp(px, w, h, x + ox * spread, y + oy * spread)
+                    accA += Color.alpha(s)
+                    accR += Color.red(s)
+                    accG += Color.green(s)
+                    accB += Color.blue(s)
+                }
+            }
+            val c = px[y * w + x]
+            outPx[y * w + x] = Color.argb(
+                mixChannel(Color.alpha(c), accA, mix),
+                mixChannel(Color.red(c), accR, mix),
+                mixChannel(Color.green(c), accG, mix),
+                mixChannel(Color.blue(c), accB, mix)
+            )
+        }
+    }
     val out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-    out.setPixels(dest, 0, w, 0, 0, w, h)
+    out.setPixels(outPx, 0, w, 0, 0, w, h)
     return out
+}
+
+private fun mixChannel(base: Int, acc: Float, mix: Float): Int =
+    (base + (acc / 25f - base) * mix).roundToInt().coerceIn(0, 255)
+
+private fun sampleClamp(px: IntArray, w: Int, h: Int, fx: Float, fy: Float): Int {
+    val x0 = floor(fx).toInt()
+    val y0 = floor(fy).toInt()
+    val tx = fx - x0
+    val ty = fy - y0
+    fun at(x: Int, y: Int): Int = px[y.coerceIn(0, h - 1) * w + x.coerceIn(0, w - 1)]
+    if (tx == 0f && ty == 0f) return at(x0, y0)
+    val c00 = at(x0, y0)
+    val c10 = at(x0 + 1, y0)
+    val c01 = at(x0, y0 + 1)
+    val c11 = at(x0 + 1, y0 + 1)
+    fun channel(sel: (Int) -> Int): Int {
+        val v = sel(c00) * (1f - tx) * (1f - ty) +
+            sel(c10) * tx * (1f - ty) +
+            sel(c01) * (1f - tx) * ty +
+            sel(c11) * tx * ty
+        return v.roundToInt().coerceIn(0, 255)
+    }
+    return Color.argb(channel(Color::alpha), channel(Color::red), channel(Color::green), channel(Color::blue))
 }
 
 fun applyMaskAlpha(src: Bitmap, mask: Bitmap): Bitmap {
@@ -418,25 +460,58 @@ fun applyMaskAlpha(src: Bitmap, mask: Bitmap): Bitmap {
     return out
 }
 
-fun lumaHistogram(src: Bitmap): IntArray {
+private val histogramIdentity = floatArrayOf(
+    1f, 0f, 0f, 0f, 0f,
+    0f, 1f, 0f, 0f, 0f,
+    0f, 0f, 1f, 0f, 0f,
+    0f, 0f, 0f, 1f, 0f
+)
+
+fun lumaHistogram(src: Bitmap): IntArray = lumaHistogramGraded(src, histogramIdentity, 0f)
+
+/** Bins after the live grade matrix and vignette. Blur and sharpen are not folded in. */
+fun lumaHistogramGraded(src: Bitmap, matrix: FloatArray, vignette: Float): IntArray {
     val bins = IntArray(256)
     val w = src.width
     val h = src.height
+    if (w <= 0 || h <= 0) return bins
     val step = max(1, min(w, h) / 128)
     val px = IntArray(w * h)
     src.getPixels(px, 0, w, 0, 0, w, h)
+    val vig = vignette.coerceIn(0f, 1f)
     var y = 0
     while (y < h) {
+        val ny = y.toFloat() / h
         var x = 0
         while (x < w) {
             val c = px[y * w + x]
-            val luma = (77 * Color.red(c) + 150 * Color.green(c) + 29 * Color.blue(c)) shr 8
+            val a = Color.alpha(c)
+            var r = matrixChannel(matrix, 0, c, a)
+            var g = matrixChannel(matrix, 1, c, a)
+            var b = matrixChannel(matrix, 2, c, a)
+            if (vig > 0f) {
+                val m = LiveGrade.vignetteMul(x.toFloat() / w, ny, vig)
+                r = (r * m).roundToInt().coerceIn(0, 255)
+                g = (g * m).roundToInt().coerceIn(0, 255)
+                b = (b * m).roundToInt().coerceIn(0, 255)
+            }
+            val luma = (77 * r + 150 * g + 29 * b) shr 8
             bins[luma.coerceIn(0, 255)]++
             x += step
         }
         y += step
     }
     return bins
+}
+
+private fun matrixChannel(matrix: FloatArray, row: Int, color: Int, alpha: Int): Int {
+    val i = row * 5
+    val r = Color.red(color)
+    val g = Color.green(color)
+    val b = Color.blue(color)
+    return (matrix[i] * r + matrix[i + 1] * g + matrix[i + 2] * b + matrix[i + 3] * alpha + matrix[i + 4])
+        .roundToInt()
+        .coerceIn(0, 255)
 }
 
 private fun boxBlur(src: IntArray, dest: IntArray, w: Int, h: Int) {

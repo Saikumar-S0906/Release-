@@ -1,4 +1,4 @@
-appId: com.pixijoy.ai
+appId: com.pixijoy.studio
 tags:
   - negative
   - tools
@@ -6,7 +6,7 @@ tags:
 ---
 # Same as 05 but reuse guest session. Every Tools tile + Back.
 - launchApp:
-    appId: com.pixijoy.ai
+    appId: com.pixijoy.studio
     clearState: false
     permissions:
       all: allow
