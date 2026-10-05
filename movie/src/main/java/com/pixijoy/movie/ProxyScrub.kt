@@ -20,4 +20,15 @@ object ProxyScrub {
             exportHeight
         }
     }
+
+    /** Scrubbing stays on only while the finger is down on a timeline that still qualifies. */
+    fun scrubbingEnabled(fingerDown: Boolean, durationMs: Long, outputHeight: Int): Boolean =
+        fingerDown && applies(durationMs, outputHeight)
+
+    /**
+     * Position to restore after a rebind. The end is included so a finger-up
+     * there does not jump the picture back before the total duration.
+     */
+    fun restorePositionMs(positionMs: Long, endMs: Long): Long? =
+        positionMs.takeIf { it in 1..endMs }
 }

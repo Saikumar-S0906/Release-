@@ -109,16 +109,19 @@ class CompositionPreview(
             // Export passes this same unmodified composition shape to Transformer.
             val composition = engine.composition(paths, timeline, mix)
             targetPlayer.setComposition(composition)
-            if (ProxyScrub.applies(timeline.totalMs(), timeline.outputHeight)) {
-                targetPlayer.setScrubbingModeEnabled(mix.fingerDown)
-            }
+            targetPlayer.setScrubbingModeEnabled(
+                ProxyScrub.scrubbingEnabled(
+                    mix.fingerDown,
+                    timeline.totalMs(),
+                    timeline.outputHeight
+                )
+            )
             targetPlayer.repeatMode = Player.REPEAT_MODE_ALL
             targetPlayer.prepare()
             val endMs = timeline.totalMs().coerceAtLeast(1)
-            if (CompositionPreviewPolicy.supportsSeeking(targetMode) &&
-                oldPositionMs in 1 until endMs
-            ) {
-                targetPlayer.seekTo(oldPositionMs)
+            val restoreMs = ProxyScrub.restorePositionMs(oldPositionMs, endMs)
+            if (CompositionPreviewPolicy.supportsSeeking(targetMode) && restoreMs != null) {
+                targetPlayer.seekTo(restoreMs)
             }
             targetPlayer.playWhenReady = resumeWhenReady
             val result = CompositionPreviewResult(
@@ -166,8 +169,22 @@ class CompositionPreview(
         mix.fingerDown = down
         val timeline = lastTimeline ?: return
         val paths = lastPaths ?: return
-        if (!ProxyScrub.applies(timeline.totalMs(), timeline.outputHeight)) return
+        if (!ProxyScrub.applies(timeline.totalMs(), timeline.outputHeight)) {
+            disableScrubbing()
+            return
+        }
         bind(paths, timeline, compositionPlayer?.playWhenReady ?: lastPlayWhenReady)
+    }
+
+    private fun disableScrubbing() {
+        val player = compositionPlayer ?: return
+        try {
+            player.setScrubbingModeEnabled(false)
+        } catch (error: RuntimeException) {
+            Log.w(TAG, "Could not leave scrubbing mode.", error)
+        } catch (error: LinkageError) {
+            Log.w(TAG, "Could not leave scrubbing mode.", error)
+        }
     }
 
     fun release() {
