@@ -18,6 +18,9 @@ User choices: Kaggle GPU (30 h/week) for training; avoid hard dependency on Hugg
 
 - Final model decisions for scale written to `docs/ML_DECISION.md`: DA-V2-S, MI-GAN 256 (+512 HQ later), MODNet + MediaPipe preview tier, NeuFlow v2 (DIS until converted).
 
+- Kotlin wired (uncompiled here): v2 pins for depth/inpaint, new Matting + Flow packs, TieredVision cutout (MODNet final, MediaPipe preview). See docs/ML_PACKS_V2_ROLLOUT.md.
+- NeuFlow v2 converted to TFLite (EPE 0.76 vs DIS 1.64 on 14 Sintel pairs). Kaggle kit zip at lab/pixijoy-ml-kit.zip (427 MB), plus tools/kaggle_v2/make_kit.py to rebuild it anywhere.
+
 ## Backlog
 - P0: Upload the 3 int8 TFLite files to Release- `ml-packs-v2`, then update `PackCatalog` URLs, SHA-256 and VERSION=2. Run the device smoke test per R5_ML_PACKS.
 - P0: The user runs the Kaggle notebooks (depth 4 h, matting 5 h, inpaint 8 h, flow 6 h).

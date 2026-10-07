@@ -1,6 +1,7 @@
 package com.pixijoy.studio.ui.session
 
 import android.content.Intent
+import com.pixijoy.ml.pack.PackId
 import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.PredictiveBackHandler
@@ -1340,6 +1341,11 @@ private fun ToolBody(
                 "session_cutout_capability"
             )
             PixiPrimaryButton(stringResource(R.string.studio_cutout_now), onCutout, Modifier.testTag("session_cutout"))
+            PackStatusRow(
+                packId = PackId.Matting,
+                statusTag = "session_cutout_matting_status",
+                downloadTag = "session_cutout_matting_download"
+            )
         }
         when (mode) {
             SessionMode.Crop -> {

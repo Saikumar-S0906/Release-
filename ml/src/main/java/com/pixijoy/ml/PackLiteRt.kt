@@ -111,6 +111,8 @@ object PackLiteRt {
                 PackId.FrameInterp -> bindFrameInterp(file)
                 PackId.Track -> bindTrack(file)
                 PackId.Depth -> bindDepth(file)
+                PackId.Matting -> bindMatting(file)
+                PackId.Flow -> bindFlow(file)
             }
         } finally {
             PackRuntime.notifyEngineChanged()
@@ -469,6 +471,126 @@ object PackLiteRt {
             sink
         }
         notify?.invoke(PackId.Depth, engine)
+    }
+
+    private fun bindMatting(file: File) {
+        val interpreter = openInterpreter(file) ?: run {
+            releaseEngine(PackId.Matting)
+            return
+        }
+        val accepted = runCatching {
+            prepareDepthShape(interpreter)
+            floatIo(interpreter) &&
+                PackModelContract.isSubjectMatte(
+                    interpreter.getInputTensor(0).shape(),
+                    interpreter.getOutputTensor(0).shape()
+                )
+        }.getOrDefault(false)
+        if (!accepted) {
+            releaseEngine(PackId.Matting, interpreter)
+            return
+        }
+        val engine = NeuralEngine.Matting { bitmap ->
+            runCatching { subjectMatte(bitmap) }.getOrNull()
+        }
+        val notify = synchronized(lock) {
+            engines.remove(PackId.Matting)?.close()
+            engines[PackId.Matting] = interpreter
+            sink
+        }
+        notify?.invoke(PackId.Matting, engine)
+    }
+
+    /** MODNet alpha at 256², bilinear-scaled back to the source size (white ARGB, alpha = subject). */
+    private fun subjectMatte(src: Bitmap): Bitmap? {
+        val interpreter = synchronized(lock) { engines[PackId.Matting] } ?: return null
+        val edge = PackModelContract.DEPTH_EDGE
+        val sized = if (src.width == edge && src.height == edge) {
+            src
+        } else {
+            Bitmap.createScaledBitmap(src, edge, edge, true)
+        }
+        try {
+            val input = Array(1) { Array(edge) { Array(edge) { FloatArray(3) } } }
+            fillRgb(sized, input[0])
+            val output = Array(1) { Array(edge) { Array(edge) { FloatArray(1) } } }
+            interpreter.run(input, output)
+            val px = IntArray(edge * edge)
+            var i = 0
+            for (row in 0 until edge) {
+                for (col in 0 until edge) {
+                    val a = (output[0][row][col][0].coerceIn(0f, 1f) * 255f).toInt()
+                    px[i++] = (a shl 24) or 0x00FFFFFF
+                }
+            }
+            val matte = Bitmap.createBitmap(px, edge, edge, Bitmap.Config.ARGB_8888)
+            if (src.width == edge && src.height == edge) return matte
+            return Bitmap.createScaledBitmap(matte, src.width, src.height, true).also {
+                if (it !== matte) matte.recycle()
+            }
+        } finally {
+            if (sized !== src && !sized.isRecycled) sized.recycle()
+        }
+    }
+
+    private fun bindFlow(file: File) {
+        val interpreter = openInterpreter(file) ?: run {
+            releaseEngine(PackId.Flow)
+            return
+        }
+        val accepted = runCatching {
+            interpreter.inputTensorCount == 2 &&
+                floatIo(interpreter) &&
+                PackModelContract.isDenseFlow(
+                    interpreter.getInputTensor(0).shape(),
+                    interpreter.getInputTensor(1).shape(),
+                    interpreter.getOutputTensor(0).shape()
+                )
+        }.getOrDefault(false)
+        if (!accepted) {
+            releaseEngine(PackId.Flow, interpreter)
+            return
+        }
+        val engine = NeuralEngine.Flow { a, b -> runCatching { denseFlow(a, b) }.getOrNull() }
+        val notify = synchronized(lock) {
+            engines.remove(PackId.Flow)?.close()
+            engines[PackId.Flow] = interpreter
+            sink
+        }
+        notify?.invoke(PackId.Flow, engine)
+    }
+
+    /** NeuFlow v2: frame_t is the input named `args_0` (export order); output is (dx, dy) / 256. */
+    private fun denseFlow(frame0: Bitmap, frame1: Bitmap): FloatArray? {
+        val interpreter = synchronized(lock) { engines[PackId.Flow] } ?: return null
+        val edge = PackModelContract.DEPTH_EDGE
+        val firstIsT0 = !interpreter.getInputTensor(0).name().contains("args_1")
+        val scaled = listOf(frame0, frame1).map {
+            if (it.width == edge && it.height == edge) it else Bitmap.createScaledBitmap(it, edge, edge, true)
+        }
+        try {
+            val t0 = Array(1) { Array(edge) { Array(edge) { FloatArray(3) } } }
+            val t1 = Array(1) { Array(edge) { Array(edge) { FloatArray(3) } } }
+            fillRgb(scaled[0], t0[0])
+            fillRgb(scaled[1], t1[0])
+            val output = Array(1) { Array(edge) { Array(edge) { FloatArray(2) } } }
+            val inputs: Array<Any> = if (firstIsT0) arrayOf(t0, t1) else arrayOf(t1, t0)
+            interpreter.runForMultipleInputsOutputs(inputs, mapOf(0 to output))
+            val values = FloatArray(edge * edge * 2)
+            var i = 0
+            for (row in 0 until edge) {
+                for (col in 0 until edge) {
+                    values[i++] = output[0][row][col][0] * edge
+                    values[i++] = output[0][row][col][1] * edge
+                }
+            }
+            return values
+        } finally {
+            scaled.forEachIndexed { k, bmp ->
+                val src = if (k == 0) frame0 else frame1
+                if (bmp !== src && !bmp.isRecycled) bmp.recycle()
+            }
+        }
     }
 
     private fun prepareDepthShape(interpreter: InterpreterApi) {

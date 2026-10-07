@@ -577,4 +577,8 @@
     <string name="studio_pack_depth_ready_no_litert">已安裝並驗證（就緒）。Play 服務的 LiteRT 無法使用，因此深度引擎無法啟動。CG 仍用手動 Z 序。</string>
     <string name="studio_pack_depth_engine_ready">神經已就緒。深度模型已綁定，因此場景更近處 CG 板會隱藏。手動 Z 仍決定板有多近。</string>
     <string name="studio_export_hdr_sdr_fallback">這台裝置不能寫入 HDR，因此這次匯出是 SDR。</string>
+    <string name="studio_pack_matting_ready">Installed and verified (Ready). The hair-level matte engine is not bound, so Cutout uses the on-device selfie mask.</string>
+    <string name="studio_pack_matting_engine_ready">Neural ready. Hair-level matte is bound: Cutout and background swap use clean edges. Live preview stays on the fast selfie mask.</string>
+    <string name="studio_pack_flow_ready">Installed and verified (Ready). The motion engine is not bound, so stabilize stays on classical crop-zoom.</string>
+    <string name="studio_pack_flow_engine_ready">Neural ready. On-device optical flow is bound for stabilize and motion trails.</string>
 </resources>

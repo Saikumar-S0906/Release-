@@ -577,4 +577,8 @@
     <string name="studio_pack_depth_ready_no_litert">Установлено и проверено (Готово). LiteRT сервисов Play недоступен, поэтому движок глубины не запускается. CG остаётся на ручном порядке Z.</string>
     <string name="studio_pack_depth_engine_ready">Нейросеть готова. Модель глубины подключена, поэтому пластины CG скрываются там, где сцена ближе. Ручной Z по-прежнему задаёт, насколько близко сидит пластина.</string>
     <string name="studio_export_hdr_sdr_fallback">Это устройство не может записать HDR, поэтому этот экспорт — SDR.</string>
+    <string name="studio_pack_matting_ready">Installed and verified (Ready). The hair-level matte engine is not bound, so Cutout uses the on-device selfie mask.</string>
+    <string name="studio_pack_matting_engine_ready">Neural ready. Hair-level matte is bound: Cutout and background swap use clean edges. Live preview stays on the fast selfie mask.</string>
+    <string name="studio_pack_flow_ready">Installed and verified (Ready). The motion engine is not bound, so stabilize stays on classical crop-zoom.</string>
+    <string name="studio_pack_flow_engine_ready">Neural ready. On-device optical flow is bound for stabilize and motion trails.</string>
 </resources>

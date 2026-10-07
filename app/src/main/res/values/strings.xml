@@ -576,4 +576,8 @@
     <string name="a11y_slider_sign">Change sign</string>
     <string name="a11y_reset_value">Reset</string>
     <string name="a11y_place">Place</string>
+    <string name="studio_pack_matting_ready">Installed and verified (Ready). The hair-level matte engine is not bound, so Cutout uses the on-device selfie mask.</string>
+    <string name="studio_pack_matting_engine_ready">Neural ready. Hair-level matte is bound: Cutout and background swap use clean edges. Live preview stays on the fast selfie mask.</string>
+    <string name="studio_pack_flow_ready">Installed and verified (Ready). The motion engine is not bound, so stabilize stays on classical crop-zoom.</string>
+    <string name="studio_pack_flow_engine_ready">Neural ready. On-device optical flow is bound for stabilize and motion trails.</string>
 </resources>

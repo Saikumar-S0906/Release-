@@ -577,4 +577,8 @@
     <string name="studio_pack_depth_ready_no_litert">Naka-install at na-verify (Handa). Hindi available ang Play services LiteRT, kaya hindi makapagsimula ang depth engine. Manual Z-order ang CG.</string>
     <string name="studio_pack_depth_engine_ready">Neural handa. Naka-bind ang depth model, kaya nagtatago ang CG plate kung saan mas malapit ang eksena. Itinatakda pa rin ng manual Z kung gaano kalapit ang plate.</string>
     <string name="studio_export_hdr_sdr_fallback">Hindi makasulat ng HDR ang device na ito, kaya SDR ang export na ito.</string>
+    <string name="studio_pack_matting_ready">Installed and verified (Ready). The hair-level matte engine is not bound, so Cutout uses the on-device selfie mask.</string>
+    <string name="studio_pack_matting_engine_ready">Neural ready. Hair-level matte is bound: Cutout and background swap use clean edges. Live preview stays on the fast selfie mask.</string>
+    <string name="studio_pack_flow_ready">Installed and verified (Ready). The motion engine is not bound, so stabilize stays on classical crop-zoom.</string>
+    <string name="studio_pack_flow_engine_ready">Neural ready. On-device optical flow is bound for stabilize and motion trails.</string>
 </resources>

@@ -11,7 +11,9 @@ import pyarrow.parquet as pq
 from PIL import Image
 
 N = 100
-OUT = "/app/lab/eval"
+import os
+OUT = os.environ.get("PIXI_EVAL_OUT", "/app/lab/eval")
+DATA = os.environ.get("PIXI_DATA", "/app/lab/data")
 rng = np.random.default_rng(42)
 
 
@@ -59,13 +61,13 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     # depth: keep 640x480 GT, eval crop (Eigen) applied in bench
     rgb, dep = [], []
-    for r in rows("/app/lab/data/nyuval.parquet", N):
+    for r in rows(f"{DATA}/nyuval.parquet", N):
         rgb.append(np.array(img(r["image"]["bytes"])))
         dep.append(np.array(Image.open(io.BytesIO(r["depth_map"]["bytes"])), dtype=np.float32))
     np.savez_compressed(f"{OUT}/depth.npz", rgb=np.stack(rgb), depth=np.stack(dep))
     # inpaint: 256 contract and 512 for models that like more pixels
     r256, r512, masks = [], [], []
-    for r in rows("/app/lab/data/places0.parquet", N):
+    for r in rows(f"{DATA}/places0.parquet", N):
         im = img(r["image"]["bytes"])
         w, h = im.size
         s = min(w, h)
@@ -76,7 +78,7 @@ def main():
     np.savez_compressed(f"{OUT}/inpaint.npz", rgb256=np.stack(r256), rgb512=np.stack(r512), mask=np.stack(masks))
     # matting: resize to 512 long side square (pad-free resize) keeps eval fast
     rgb, alpha = [], []
-    for r in rows("/app/lab/data/p3m500p.parquet", N):
+    for r in rows(f"{DATA}/p3m500p.parquet", N):
         rgb.append(np.array(img(r["image"]["bytes"], 512)))
         alpha.append(np.array(img(r["mask"]["bytes"], 512, "L")))
     np.savez_compressed(f"{OUT}/matting.npz", rgb=np.stack(rgb), alpha=np.stack(alpha))

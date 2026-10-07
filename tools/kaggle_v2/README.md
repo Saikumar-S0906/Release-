@@ -22,7 +22,8 @@ L1 UNet from scratch on a few thousand images cannot reach the pretrained models
 Hugging Face worked in the build workspace, but Kaggle/Colab sessions have had HF failures, so the kit
 lets every notebook run **without HF**:
 
-1. Download/zip `lab/kit/` from this repo workspace (≈ 520 MB):
+1. Use the ready zip `lab/pixijoy-ml-kit.zip` (427 MB, SHA-256 in `lab/pixijoy-ml-kit.zip.sha256`) from the
+   workspace, **or** rebuild it on any machine with `python tools/kaggle_v2/make_kit.py` (≈ 430 MB):
    `dav2s/` (Depth Anything V2 Small), `weights/` (MI-GAN 256, MODNet ckpt, RAFT-small),
    `eval/` (depth.npz, inpaint.npz, matting.npz = the exact 100-sample Model Lab test sets).
 2. Kaggle → Datasets → New → upload → name **pixijoy-ml-kit** → Private.
@@ -51,7 +52,7 @@ Training photos come from the official COCO zip (HTTP range, not HF).
 - Research-only data: **P3M-10k**, **MPI Sintel**, Places365. A model fine-tuned on these is for internal
   evaluation; ship the pretrained conversion unless you have rights.
 
-## Flow export status
+## Flow export status (RAFT; NeuFlow v2 is converted — see docs/MODEL_LAB_REPORT.md)
 `ai-edge-torch` fails on RAFT (`tfl.div` legalize, torchvision `raft.py:497`), and the app has no flow
 `PackId` yet. Phase 2: replace the integer coordinate math in RAFT's correlation lookup, or port
 NeuFlow v2 (EPE 1.14 px on Sintel, best measured).

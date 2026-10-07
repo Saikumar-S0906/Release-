@@ -577,4 +577,8 @@
     <string name="studio_pack_depth_ready_no_litert">انسٹال اور تصدیق شدہ (تیار)۔ Play سروسز LiteRT دستیاب نہیں، اس لیے گہرائی کا انجن شروع نہیں ہو سکتا۔ CG دستی Z ترتیب پر رہتا ہے۔</string>
     <string name="studio_pack_depth_engine_ready">نیورل تیار۔ گہرائی کا ماڈل منسلک ہے، اس لیے CG پلیٹیں وہاں چھپتی ہیں جہاں منظر قریب ہے۔ دستی Z اب بھی بتاتا ہے کہ پلیٹ کتنی قریب بیٹھے۔</string>
     <string name="studio_export_hdr_sdr_fallback">یہ ڈیوائس HDR نہیں لکھ سکتا، اس لیے یہ ایکسپورٹ SDR ہے۔</string>
+    <string name="studio_pack_matting_ready">Installed and verified (Ready). The hair-level matte engine is not bound, so Cutout uses the on-device selfie mask.</string>
+    <string name="studio_pack_matting_engine_ready">Neural ready. Hair-level matte is bound: Cutout and background swap use clean edges. Live preview stays on the fast selfie mask.</string>
+    <string name="studio_pack_flow_ready">Installed and verified (Ready). The motion engine is not bound, so stabilize stays on classical crop-zoom.</string>
+    <string name="studio_pack_flow_engine_ready">Neural ready. On-device optical flow is bound for stabilize and motion trails.</string>
 </resources>

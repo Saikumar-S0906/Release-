@@ -88,9 +88,14 @@ Artifact: `matting_modnet_dyn8.tflite` SHA-256 `9902196ea431f4e7611d370561030e96
 | RAFT-small fed 256² contract frames | 3.45 | **1.34** (gate ≤ 1.5 ✔) | 3.8 MB | 1270 |
 | **NeuFlow v2 "things"** (no Sintel in training) | **1.14** | **0.46** | 40 MB | 1300 |
 
-(NeuFlow "mixed" was trained on Sintel, so it was excluded as test leakage.) TFLite export: RAFT fails
-in `ai-edge-torch` (`tfl.div` legalize, torchvision `raft.py:497`). This is the Phase 2 item, together with
-a flow `PackId`.
+(NeuFlow "mixed" was trained on Sintel, so it was excluded as test leakage.) RAFT fails in `ai-edge-torch`
+(`tfl.div` legalize).
+
+**NeuFlow v2 converted (2026-10-07):** `grid_sample` was replaced by an exact gather sampler
+(max diff 9e-7) and the 7-D convex upsampler by a 4-D + `pixel_shuffle` version (max diff 0.0).
+TFLite `flow.tflite` is 36 MB fp32 (int8 quantizer rejects shared constants), and the contract check
+passes. On 14 held-out-style Sintel clean pairs at 256²: **EPE 0.76 px vs OpenCV DIS 1.64 px**
+(gate ≤ 1.5 ✔), ~217 ms desktop CPU. SHA-256 `7fdffa3e5077201f351ca86975ef119ead2d7c1a39755114e8fbc9ead501a57a`.
 
 ## What the Kotlin side needs (minimal)
 1. Upload the three `*_dyn8.tflite` files to Release- tag **`ml-packs-v2`**.

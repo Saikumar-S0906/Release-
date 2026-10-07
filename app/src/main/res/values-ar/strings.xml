@@ -577,4 +577,8 @@
     <string name="studio_pack_depth_ready_no_litert">مثبّت ومتحقق (جاهز). LiteRT من خدمات Play غير متاح، لذا لا يمكن لمحرك العمق أن يبدأ. يبقى CG على ترتيب Z اليدوي.</string>
     <string name="studio_pack_depth_engine_ready">العصبي جاهز. نموذج العمق مربوط، لذا تختفي ألواح CG حيث يكون المشهد أقرب. ما زال Z اليدوي يحدد مدى قرب اللوح.</string>
     <string name="studio_export_hdr_sdr_fallback">هذا الجهاز لا يستطيع كتابة HDR، لذا هذا التصدير SDR.</string>
+    <string name="studio_pack_matting_ready">Installed and verified (Ready). The hair-level matte engine is not bound, so Cutout uses the on-device selfie mask.</string>
+    <string name="studio_pack_matting_engine_ready">Neural ready. Hair-level matte is bound: Cutout and background swap use clean edges. Live preview stays on the fast selfie mask.</string>
+    <string name="studio_pack_flow_ready">Installed and verified (Ready). The motion engine is not bound, so stabilize stays on classical crop-zoom.</string>
+    <string name="studio_pack_flow_engine_ready">Neural ready. On-device optical flow is bound for stabilize and motion trails.</string>
 </resources>

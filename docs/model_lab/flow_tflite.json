@@ -1,0 +1,15 @@
+{
+  "pairs": 14,
+  "opencv_dis_medium": 1.637,
+  "flow_neuflow.tflite": {
+    "contract_ok": true,
+    "inputs": [
+      "serving_default_args_0:0",
+      "serving_default_args_1:0"
+    ],
+    "epe_at_256": 0.756,
+    "size_mb": 36.33,
+    "sha256": "7fdffa3e5077201f351ca86975ef119ead2d7c1a39755114e8fbc9ead501a57a",
+    "cpu_ms_4t": 217.2
+  }
+}

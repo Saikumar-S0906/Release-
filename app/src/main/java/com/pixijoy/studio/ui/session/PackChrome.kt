@@ -256,6 +256,14 @@ private fun packStatusCopy(
         PackId.SuperRes, PackId.Denoise -> superResDenoiseReadyCopy(engineReady)
         PackId.Inpaint -> inpaintReadyCopy(engineReady)
         PackId.Depth -> depthReadyCopy(engineReady)
+        PackId.Matting -> stringResource(
+            if (engineReady) R.string.studio_pack_matting_engine_ready
+            else R.string.studio_pack_matting_ready
+        )
+        PackId.Flow -> stringResource(
+            if (engineReady) R.string.studio_pack_flow_engine_ready
+            else R.string.studio_pack_flow_ready
+        )
         PackId.FrameInterp, PackId.Track -> holdReadyCopy(engineReady)
     }
     is PackInstallState.Failed ->

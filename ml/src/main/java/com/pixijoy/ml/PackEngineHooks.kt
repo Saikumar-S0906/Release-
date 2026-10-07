@@ -65,6 +65,25 @@ sealed interface NeuralEngine {
         override val capability: PackId = PackId.Depth
         fun run(frame: Bitmap): FloatArray? = invoke(frame)
     }
+
+    /** Hair-level alpha matte at the source size (white ARGB, alpha = subject). Null on a miss. */
+    class Matting(
+        private val invoke: (Bitmap) -> Bitmap?
+    ) : NeuralEngine {
+        override val capability: PackId = PackId.Matting
+        fun run(frame: Bitmap): Bitmap? = invoke(frame)
+    }
+
+    /**
+     * Dense optical flow frame0 → frame1 on the 256×256 grid, row-major interleaved
+     * `[dx0, dy0, dx1, dy1, …]` in pixels of that grid. Null on a miss.
+     */
+    class Flow(
+        private val invoke: (Bitmap, Bitmap) -> FloatArray?
+    ) : NeuralEngine {
+        override val capability: PackId = PackId.Flow
+        fun run(frame0: Bitmap, frame1: Bitmap): FloatArray? = invoke(frame0, frame1)
+    }
 }
 
 /** Install + checksum gate. True only for a ready pack whose file hash matches. */
@@ -190,6 +209,12 @@ class PackEngineHooks @Inject constructor(
     fun depth(frame: Bitmap): FloatArray? =
         (boundEngine(PackId.Depth) as? NeuralEngine.Depth)?.run(frame)
 
+    fun matte(frame: Bitmap): Bitmap? =
+        (boundEngine(PackId.Matting) as? NeuralEngine.Matting)?.run(frame)
+
+    fun flow(frame0: Bitmap, frame1: Bitmap): FloatArray? =
+        (boundEngine(PackId.Flow) as? NeuralEngine.Flow)?.run(frame0, frame1)
+
     fun clear() {
         bound.clear()
     }
@@ -222,6 +247,12 @@ class PackEngineHooks @Inject constructor(
 
         /** Null unless a depth interpreter is bound. Classical Z stays in that case. */
         fun tryDepth(frame: Bitmap): FloatArray? = active?.depth(frame)
+
+        /** Null unless the MODNet matte interpreter is bound. MediaPipe stays in that case. */
+        fun tryMatte(frame: Bitmap): Bitmap? = active?.matte(frame)
+
+        /** Null unless the NeuFlow interpreter is bound. Classical stabilize stays in that case. */
+        fun tryFlow(frame0: Bitmap, frame1: Bitmap): FloatArray? = active?.flow(frame0, frame1)
 
         fun hasEngine(id: PackId): Boolean = active?.isBound(id) == true
 

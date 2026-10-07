@@ -6,6 +6,7 @@ import com.pixijoy.core.data.StudioPrefs
 import com.pixijoy.ml.MediaPipeVision
 import com.pixijoy.ml.PackReadiness
 import com.pixijoy.ml.StorePackReadiness
+import com.pixijoy.ml.TieredVision
 import com.pixijoy.ml.VisionFacade
 import com.pixijoy.movie.Media3MovieEngine
 import com.pixijoy.photo.BitmapPhotoEngine
@@ -44,7 +45,7 @@ object StudioGraphModule {
     @Provides
     @Singleton
     fun provideVision(@ApplicationContext context: Context): VisionFacade =
-        MediaPipeVision(context)
+        TieredVision(MediaPipeVision(context))
 
     @Provides
     @Singleton

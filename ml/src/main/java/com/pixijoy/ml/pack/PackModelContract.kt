@@ -126,6 +126,21 @@ object PackModelContract {
             output[3] == 1
     }
 
+    /**
+     * Subject matte (MODNet): NHWC RGB `1×256×256×3` → alpha `1×256×256×1` FLOAT32, 1 = subject.
+     * Same shapes as depth; the pack id decides which engine binds.
+     */
+    fun isSubjectMatte(input: IntArray, output: IntArray): Boolean = isMonocularDepth(input, output)
+
+    /** Dense flow: two NHWC RGB `1×256×256×3` frames → `1×256×256×2` FLOAT32 `(dx, dy) / 256`. */
+    fun isDenseFlow(frame0: IntArray, frame1: IntArray, output: IntArray): Boolean {
+        if (!isNhwcRgb(frame0) || !isNhwcRgb(frame1)) return false
+        if (frame0[1] != DEPTH_EDGE || frame0[2] != DEPTH_EDGE) return false
+        if (frame1[1] != DEPTH_EDGE || frame1[2] != DEPTH_EDGE) return false
+        return output.size == 4 && output[0] == 1 && output[1] == DEPTH_EDGE &&
+            output[2] == DEPTH_EDGE && output[3] == 2
+    }
+
     private fun isRgbPlusMask(image: IntArray, mask: IntArray): Boolean {
         if (!isNhwcRgb(image)) return false
         val (mh, mw) = maskSpatial(mask) ?: return false

@@ -71,7 +71,7 @@ class PackStoreTest {
 
     @Test
     fun catalog_coversAllPacks() {
-        assertEquals(6, PackCatalog.all().size)
+        assertEquals(8, PackCatalog.all().size)
         val depth = PackCatalog.spec(PackId.Depth)
         assertEquals("depth.tflite", depth.fileName)
         assertNull(depth.expectedSha256)
@@ -161,19 +161,19 @@ class PackStoreTest {
             PackCatalog.FRAME_INTERP_DOWNLOAD_SHA256
         )
         assertEquals(
-            "https://github.com/Saikumar-S0906/Release-/releases/download/ml-packs-v1/inpaint.tflite",
+            "https://github.com/Saikumar-S0906/Release-/releases/download/ml-packs-v2/inpaint.tflite",
             PackCatalog.INPAINT_DOWNLOAD_URL
         )
         assertEquals(
-            "6ca50eaad897f046245d956c1e4c77d12b885e61fa93a953c48967ecc1afb73c",
+            "3d9d6b30a1fe5bed0eb231c9877d5668380490229e8695a142df4872f65e1809",
             PackCatalog.INPAINT_DOWNLOAD_SHA256
         )
         assertEquals(
-            "https://github.com/Saikumar-S0906/Release-/releases/download/ml-packs-v1/depth.tflite",
+            "https://github.com/Saikumar-S0906/Release-/releases/download/ml-packs-v2/depth.tflite",
             PackCatalog.DEPTH_DOWNLOAD_URL
         )
         assertEquals(
-            "a6b296193d7497ded445a1c257a08d4a9d49faad2a8a728767e9d1402287db1f",
+            "251c44443c96b66790cc0f54aaf1e746de9d36af4b2e0ed01e504ee0d82e87ad",
             PackCatalog.DEPTH_DOWNLOAD_SHA256
         )
         assertEquals(
@@ -181,7 +181,7 @@ class PackStoreTest {
             PackCatalog.TRACK_ASSET_SHA256
         )
         assertEquals(
-            setOf(PackId.FrameInterp, PackId.Inpaint, PackId.Depth),
+            setOf(PackId.FrameInterp, PackId.Inpaint, PackId.Depth, PackId.Matting, PackId.Flow),
             PackId.entries.filter { PackCatalog.hasHttpsFallback(PackCatalog.spec(it)) }.toSet()
         )
         assertEquals(

@@ -15,7 +15,11 @@ enum class PackId {
     Denoise,
     FrameInterp,
     Track,
-    Depth
+    Depth,
+    /** Hair-level subject matte (MODNet). MediaPipe selfie stays the live-preview tier. */
+    Matting,
+    /** Dense optical flow (NeuFlow v2) for stabilize / motion trails. Classical DIS/crop stays fallback. */
+    Flow
 }
 
 data class PackSpec(
@@ -79,22 +83,39 @@ object PackCatalog {
     const val ML_RELEASE_TAG = "ml-packs-v1"
 
     /**
-     * PixiJoy inpaint UNet, ~75 MB, FLOAT32 image+mask 256 → RGB.
-     * Release- asset. Not an APK asset. Telea stays the fallback.
+     * v2 packs (Model Lab, docs/MODEL_LAB_REPORT.md): pretrained, int8-weight, FLOAT32 I/O, same
+     * tensor contracts as v1. Spec version "2" so devices holding a v1 file re-download.
      */
-    const val INPAINT_DOWNLOAD_URL =
-        "https://github.com/Saikumar-S0906/Release-/releases/download/ml-packs-v1/inpaint.tflite"
-    const val INPAINT_DOWNLOAD_SHA256 =
-        "6ca50eaad897f046245d956c1e4c77d12b885e61fa93a953c48967ecc1afb73c"
+    const val ML_V2_TAG = "ml-packs-v2"
+    const val V2 = "2"
 
     /**
-     * PixiJoy monocular depth UNet, ~75 MB, FLOAT32 RGB 256 → depth 256.
-     * Release- asset. Not an APK asset. Manual Z stays the fallback.
+     * MI-GAN 256 Places2 (MIT), ~7.1 MB, FLOAT32 image 256×256×3 + mask 256×256×1 (1 = hole) → RGB.
+     * The graph blanks the hole itself, matching [com.pixijoy.ml.PackLiteRt] feeding original pixels.
+     * Release- `ml-packs-v2` asset. Telea stays the fallback.
+     */
+    const val INPAINT_DOWNLOAD_URL =
+        "https://github.com/Saikumar-S0906/Release-/releases/download/ml-packs-v2/inpaint.tflite"
+    const val INPAINT_DOWNLOAD_SHA256 =
+        "3d9d6b30a1fe5bed0eb231c9877d5668380490229e8695a142df4872f65e1809"
+
+    /**
+     * Depth Anything V2 Small (Apache-2.0), ~26 MB, FLOAT32 RGB 256 → depth 256 (0 near, 1 far).
+     * Release- `ml-packs-v2` asset. Manual Z stays the fallback.
      */
     const val DEPTH_DOWNLOAD_URL =
-        "https://github.com/Saikumar-S0906/Release-/releases/download/ml-packs-v1/depth.tflite"
+        "https://github.com/Saikumar-S0906/Release-/releases/download/ml-packs-v2/depth.tflite"
     const val DEPTH_DOWNLOAD_SHA256 =
-        "a6b296193d7497ded445a1c257a08d4a9d49faad2a8a728767e9d1402287db1f"
+        "251c44443c96b66790cc0f54aaf1e746de9d36af4b2e0ed01e504ee0d82e87ad"
+
+    /**
+     * MODNet photographic portrait matting (Apache-2.0), ~6.8 MB, FLOAT32 RGB 256 → alpha 256.
+     * Release- `ml-packs-v2` asset. MediaPipe selfie segmenter stays the preview / fallback.
+     */
+    const val MATTING_DOWNLOAD_URL =
+        "https://github.com/Saikumar-S0906/Release-/releases/download/ml-packs-v2/matting.tflite"
+    const val MATTING_DOWNLOAD_SHA256 =
+        "9902196ea431f4e7611d370561030e969fee45e309915dfa890b3a887ad60ec4"
 
     /**
      * PixiJoy F1 point-track TFLite (Apache-2.0), synthetic-trained Siamese,
@@ -105,10 +126,19 @@ object PackCatalog {
     const val TRACK_ASSET_SHA256 =
         "e2eb42c38ac53b9f708811f2887b53f4eb9774d9cb1bfff058a197d9fe26301f"
 
+    /**
+     * NeuFlow v2 "things" (Apache-2.0), ~36 MB FLOAT32, two RGB 256×256 frames → flow 256×256×2
+     * as (dx, dy) / 256. Sintel EPE 0.76 px on the 256 grid (OpenCV DIS 1.64).
+     */
+    const val FLOW_DOWNLOAD_URL =
+        "https://github.com/Saikumar-S0906/Release-/releases/download/ml-packs-v2/flow.tflite"
+    const val FLOW_DOWNLOAD_SHA256 =
+        "7fdffa3e5077201f351ca86975ef119ead2d7c1a39755114e8fbc9ead501a57a"
+
     fun spec(id: PackId): PackSpec = when (id) {
         PackId.Inpaint -> PackSpec(
             id,
-            VERSION,
+            V2,
             "inpaint.tflite",
             "ml_inpaint",
             downloadUrl = INPAINT_DOWNLOAD_URL,
@@ -148,11 +178,27 @@ object PackCatalog {
         )
         PackId.Depth -> PackSpec(
             id,
-            VERSION,
+            V2,
             "depth.tflite",
             "ml_depth",
             downloadUrl = DEPTH_DOWNLOAD_URL,
             downloadSha256 = DEPTH_DOWNLOAD_SHA256
+        )
+        PackId.Matting -> PackSpec(
+            id,
+            V2,
+            "matting.tflite",
+            "ml_matting",
+            downloadUrl = MATTING_DOWNLOAD_URL,
+            downloadSha256 = MATTING_DOWNLOAD_SHA256
+        )
+        PackId.Flow -> PackSpec(
+            id,
+            V2,
+            "flow.tflite",
+            "ml_flow",
+            downloadUrl = FLOW_DOWNLOAD_URL,
+            downloadSha256 = FLOW_DOWNLOAD_SHA256
         )
     }
 

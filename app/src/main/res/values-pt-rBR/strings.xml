@@ -577,4 +577,8 @@
     <string name="studio_pack_depth_ready_no_litert">Instalado e verificado (Pronto). O LiteRT dos serviços do Play não está disponível, então o motor de profundidade não inicia. O CG fica na ordem Z manual.</string>
     <string name="studio_pack_depth_engine_ready">Neural pronto. O modelo de profundidade está vinculado, então as placas CG somem onde a cena está mais perto. O Z manual ainda define quão perto a placa fica.</string>
     <string name="studio_export_hdr_sdr_fallback">Este aparelho não consegue gravar HDR, então esta exportação é SDR.</string>
+    <string name="studio_pack_matting_ready">Installed and verified (Ready). The hair-level matte engine is not bound, so Cutout uses the on-device selfie mask.</string>
+    <string name="studio_pack_matting_engine_ready">Neural ready. Hair-level matte is bound: Cutout and background swap use clean edges. Live preview stays on the fast selfie mask.</string>
+    <string name="studio_pack_flow_ready">Installed and verified (Ready). The motion engine is not bound, so stabilize stays on classical crop-zoom.</string>
+    <string name="studio_pack_flow_engine_ready">Neural ready. On-device optical flow is bound for stabilize and motion trails.</string>
 </resources>
