@@ -24,19 +24,27 @@ class BitmapPhotoEngine(
 
     val visionAvailable: Boolean get() = vision.available
 
+    /** True when Subject masks come from the hair-level neural matte (worth a settle-time refine). */
+    val neuralMatteReady: Boolean get() = vision.neuralMatte
+
     override fun render(sources: List<String>, ops: List<PhotoOp>, maxEdge: Int): Bitmap =
         renderLayers(sources, ops.toLayers(), maxEdge)
 
-    fun renderLayers(sources: List<String>, layers: List<LayeredOp>, maxEdge: Int): Bitmap {
+    /**
+     * [draft] = live preview while the user drags: Subject / Background masks use the fast
+     * MediaPipe tier ([com.pixijoy.ml.VisionFacade.previewMask]). Settled renders and export
+     * use [com.pixijoy.ml.VisionFacade.subjectMask] (MODNet when its pack is bound).
+     */
+    fun renderLayers(sources: List<String>, layers: List<LayeredOp>, maxEdge: Int, draft: Boolean = false): Bitmap {
         require(sources.isNotEmpty()) { "No media" }
         var current = decode(sources.first(), maxEdge)
         for (layer in layers) {
             if (!layer.visible) continue
-            val next = applyOp(current, layer.op, sources, maxEdge)
+            val next = applyOp(current, layer.op, sources, maxEdge, draft)
             val composed = if (layer.op.isGeometry()) {
                 next
             } else {
-                val mask = rasterizeLayerMask(current, next, layer)
+                val mask = rasterizeLayerMask(current, next, layer, draft)
                 blendBitmaps(current, next, layer.opacity, layer.blend, mask)
             }
             if (next !== current && next !== composed && !next.isRecycled) next.recycle()
@@ -202,12 +210,21 @@ class BitmapPhotoEngine(
         }
     }
 
-    private fun rasterizeLayerMask(current: Bitmap, next: Bitmap, layer: LayeredOp): ByteArray? {
+    private fun matte(src: Bitmap, draft: Boolean): Bitmap? =
+        if (draft) vision.previewMask(src) else vision.subjectMask(src)
+
+    /** True when any visible layer needs a subject matte (Subject op, Sky background, mask fill). */
+    fun usesSubjectMatte(layers: List<LayeredOp>): Boolean = layers.any {
+        it.visible && (it.maskFill != MaskFill.None || it.op is PhotoOp.Subject ||
+            (it.op is PhotoOp.SkyReplace && (it.op as PhotoOp.SkyReplace).target == SkyReplaceTarget.Background))
+    }
+
+    private fun rasterizeLayerMask(current: Bitmap, next: Bitmap, layer: LayeredOp, draft: Boolean): ByteArray? {
         if (layer.mask.isEmpty() && layer.maskFill == MaskFill.None) return null
         val fill = when (layer.maskFill) {
             MaskFill.None -> null
             MaskFill.Subject, MaskFill.Background -> {
-                val bmp = vision.subjectMask(current) ?: return rasterizeMask(next.width, next.height, layer.mask)
+                val bmp = matte(current, draft) ?: return rasterizeMask(next.width, next.height, layer.mask)
                 val scaled = if (bmp.width == next.width && bmp.height == next.height) bmp
                 else Bitmap.createScaledBitmap(bmp, next.width, next.height, true)
                 val px = IntArray(scaled.width * scaled.height)
@@ -239,7 +256,8 @@ class BitmapPhotoEngine(
         src: Bitmap,
         op: PhotoOp,
         sources: List<String>,
-        maxEdge: Int
+        maxEdge: Int,
+        draft: Boolean = false
     ): Bitmap = when (op) {
         is PhotoOp.Crop -> {
             val px = op.toPixels(src.width, src.height)
@@ -276,7 +294,7 @@ class BitmapPhotoEngine(
         is PhotoOp.Sharpen -> applyUnsharp(src, op.amount)
         is PhotoOp.Vignette -> applyVignette(src, op.amount)
         is PhotoOp.Subject -> {
-            val mask = vision.subjectMask(src)
+            val mask = matte(src, draft)
             if (mask != null) {
                 val cut = applyMaskAlpha(src, mask)
                 if (!mask.isRecycled) mask.recycle()
@@ -287,7 +305,7 @@ class BitmapPhotoEngine(
         }
         is PhotoOp.SkyReplace -> {
             val mask = if (op.target == SkyReplaceTarget.Background) {
-                vision.subjectMask(src)
+                matte(src, draft)
             } else {
                 null
             }

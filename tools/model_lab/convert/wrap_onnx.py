@@ -44,7 +44,8 @@ if __name__ == "__main__":
     task, src, prefix = sys.argv[1:4]
     m = onnx.load(src)
     if task == "matting":
-        m = fix_shapes(m, {"input": [1, 3, 256, 256]})
+        edge = int(sys.argv[4]) if len(sys.argv) > 4 else 256  # 512 = HQ tier
+        m = fix_shapes(m, {"input": [1, 3, edge, edge]})
         m = prepend_norm(m, "input", 2.0, -1.0)  # (x-0.5)/0.5
     onnx.save(m, prefix + ".onnx")
     # TFLite step: o2t.py (onnx2tf without its online test-image download)

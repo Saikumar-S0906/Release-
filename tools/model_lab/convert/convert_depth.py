@@ -16,10 +16,11 @@ from transformers import AutoModelForDepthEstimation
 
 
 class PixiDepth(torch.nn.Module):
-    def __init__(self, path, edge=266):
+    def __init__(self, path, edge=266, io_edge=256):
         super().__init__()
         self.m = AutoModelForDepthEstimation.from_pretrained(path).eval()
         self.edge = edge
+        self.io = io_edge
         self.register_buffer("mean", torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1))
         self.register_buffer("std", torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1))
 
@@ -28,12 +29,12 @@ class PixiDepth(torch.nn.Module):
         x = F.interpolate(x, (self.edge, self.edge), mode="bilinear", align_corners=False)
         x = (x - self.mean) / self.std
         disp = self.m(pixel_values=x).predicted_depth.unsqueeze(1)  # 1x1xHxW, big = near
-        disp = F.interpolate(disp, (256, 256), mode="bilinear", align_corners=False)
-        flat = disp.reshape(1, 256 * 256)
+        disp = F.interpolate(disp, (self.io, self.io), mode="bilinear", align_corners=False)
+        flat = disp.reshape(1, self.io * self.io)
         lo = torch.min(flat, dim=1).values.reshape(1, 1)
         hi = torch.max(flat, dim=1).values.reshape(1, 1)
         far01 = 1.0 - (flat - lo) / (hi - lo + 1e-6)
-        return far01.reshape(1, 256, 256, 1)
+        return far01.reshape(1, self.io, self.io, 1)
 
 
 if __name__ == "__main__":
@@ -42,9 +43,11 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--weights", default="/app/lab/kit/dav2s")
     ap.add_argument("--out", default="/app/lab/out/depth_dav2s.tflite")
+    ap.add_argument("--io-edge", type=int, default=256, help="app tensor edge: 256 standard, 512 HQ")
+    ap.add_argument("--model-edge", type=int, default=266, help="multiple of 14: 266 standard, 518 HQ")
     a = ap.parse_args()
-    mod = PixiDepth(a.weights).eval()
-    sample = (torch.rand(1, 256, 256, 3),)
+    mod = PixiDepth(a.weights, a.model_edge, a.io_edge).eval()
+    sample = (torch.rand(1, a.io_edge, a.io_edge, 3),)
     edge = ai_edge_torch.convert(mod, sample)
     edge.export(a.out)
     print("exported", a.out)

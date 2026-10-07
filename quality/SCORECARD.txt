@@ -1,0 +1,63 @@
+PROJECT NOT_GREEN
+# Generated from docs/FUNCTIONALITY_MATRIX.md. GREEN requires quality/evidence/<id>.txt with result: PASS.
+# A Maestro tap is not evidence. Product LIVE/BAKED/PACK is not evidence.
+shell-home	NOT_GREEN	Shell / Home — no passing evidence file; product status LIVE is not a quality result
+shell-studio	NOT_GREEN	Shell / Studio — no passing evidence file; product status LIVE is not a quality result
+shell-library	NOT_GREEN	Shell / Library — no passing evidence file; product status LIVE is not a quality result
+shell-project-persistence	NOT_GREEN	Shell / Project persistence — no passing evidence file; product status LIVE is not a quality result
+photo-studio-crop-rotate-flip	NOT_GREEN	Photo Studio / Crop, rotate, flip — no passing evidence file; product status LIVE is not a quality result
+photo-studio-exposure-contrast-hue-saturation	NOT_GREEN	Photo Studio / Exposure, contrast, hue, saturation — no passing evidence file; product status LIVE is not a quality result
+photo-studio-curves-and-bundled-looks	NOT_GREEN	Photo Studio / Curves and bundled looks — no passing evidence file; product status LIVE is not a quality result
+photo-studio-selective-color-imported-lut-sky-warp-soften	NOT_GREEN	Photo Studio / Selective color, imported LUT, sky, warp, soften — no passing evidence file; product status BAKED is not a quality result
+photo-studio-quick-enhance	NOT_GREEN	Photo Studio / Quick enhance — no passing evidence file; product status BAKED is not a quality result
+photo-studio-mirror-expand	NOT_GREEN	Photo Studio / Mirror expand — no passing evidence file; product status BAKED is not a quality result
+photo-studio-basic-cutout	NOT_GREEN	Photo Studio / Basic cutout — no passing evidence file; product status FALLBACK is not a quality result
+photo-studio-heal	NOT_GREEN	Photo Studio / Heal — no passing evidence file; product status BAKED is not a quality result
+photo-studio-fill	NOT_GREEN	Photo Studio / Fill — no passing evidence file; product status BAKED is not a quality result
+photo-studio-super-res	NOT_GREEN	Photo Studio / Super-res — no passing evidence file; product status LIVE is not a quality result
+photo-studio-denoise	NOT_GREEN	Photo Studio / Denoise — no passing evidence file; product status LIVE is not a quality result
+photo-studio-text-stickers-collage	NOT_GREEN	Photo Studio / Text, stickers, collage — no passing evidence file; product status BAKED is not a quality result
+photo-studio-layers-blend-opacity-masks	NOT_GREEN	Photo Studio / Layers, blend, opacity, masks — no passing evidence file; product status BAKED is not a quality result
+photo-studio-presets	NOT_GREEN	Photo Studio / Presets — no passing evidence file; product status LIVE is not a quality result
+photo-studio-fit-spot-preview	NOT_GREEN	Photo Studio / Fit + spot preview — no passing evidence file; product status LIVE is not a quality result
+movie-studio-trim-split-concat-transitions-speed-ramp	NOT_GREEN	Movie Studio / Trim, split, concat, transitions, speed ramp — no passing evidence file; product status LIVE is not a quality result
+movie-studio-motion-presets-titles-captions-grade-looks	NOT_GREEN	Movie Studio / Motion presets, titles/captions, grade/looks — no passing evidence file; product status LIVE is not a quality result
+movie-studio-music-voice-sfx-fades-ducking-eq-dynamics	NOT_GREEN	Movie Studio / Music, voice, SFX, fades, ducking, EQ/dynamics — no passing evidence file; product status LIVE is not a quality result
+movie-studio-chroma-key	NOT_GREEN	Movie Studio / Chroma key — no passing evidence file; product status LIVE is not a quality result
+movie-studio-steady-crop	NOT_GREEN	Movie Studio / Steady crop — no passing evidence file; product status LIVE is not a quality result
+movie-studio-slow-motion	NOT_GREEN	Movie Studio / Slow motion — no passing evidence file; product status LIVE is not a quality result
+movie-studio-point-track-roto-lite	NOT_GREEN	Movie Studio / Point track / roto-lite — no passing evidence file; product status LIVE is not a quality result
+movie-studio-pip-split-grid	NOT_GREEN	Movie Studio / PiP, split, grid — no passing evidence file; product status LIVE is not a quality result
+movie-studio-keep-hdr	NOT_GREEN	Movie Studio / Keep HDR — no passing evidence file; product status FALLBACK is not a quality result
+movie-studio-talking-still	NOT_GREEN	Movie Studio / Talking still — no passing evidence file; product status BAKED is not a quality result
+export-jpeg-png-webp	NOT_GREEN	Export / JPEG, PNG, WebP — no passing evidence file; product status LIVE is not a quality result
+export-heic	NOT_GREEN	Export / HEIC — no passing evidence file; product status FALLBACK is not a quality result
+export-avif	NOT_GREEN	Export / AVIF — no passing evidence file; product status UNAVAILABLE is not a quality result
+export-mp4	NOT_GREEN	Export / MP4 — no passing evidence file; product status LIVE is not a quality result
+export-gif	NOT_GREEN	Export / GIF — no passing evidence file; product status LIVE is not a quality result
+hard-truth-gates-neural-inpaint	NOT_GREEN	Hard truth gates / Neural inpaint — no passing evidence file; product status PACK is not a quality result
+hard-truth-gates-neural-depth	NOT_GREEN	Hard truth gates / Neural depth — no passing evidence file; product status PACK is not a quality result
+hard-truth-gates-neural-super-res	NOT_GREEN	Hard truth gates / Neural super-res — no passing evidence file; product status LIVE is not a quality result
+hard-truth-gates-neural-denoise	NOT_GREEN	Hard truth gates / Neural denoise — no passing evidence file; product status LIVE is not a quality result
+hard-truth-gates-neural-frame-interpolation	NOT_GREEN	Hard truth gates / Neural frame interpolation — no passing evidence file; product status PACK is not a quality result
+hard-truth-gates-point-track-roto-lite	NOT_GREEN	Hard truth gates / Point track / roto-lite — no passing evidence file; product status LIVE is not a quality result
+hard-truth-gates-particle-vfx	NOT_GREEN	Hard truth gates / Particle VFX — no passing evidence file; product status LIVE is not a quality result
+hard-truth-gates-cg-compositor-lane	NOT_GREEN	Hard truth gates / CG compositor lane — no passing evidence file; product status LIVE is not a quality result
+hard-truth-gates-tool-search-movie	NOT_GREEN	Hard truth gates / Tool search (movie) — no passing evidence file; product status LIVE is not a quality result
+hard-truth-gates-assembly-markers-bins-versions	NOT_GREEN	Hard truth gates / Assembly markers / bins / versions — no passing evidence file; product status LIVE is not a quality result
+hard-truth-gates-colorist-secondary-shot-match	NOT_GREEN	Hard truth gates / Colorist secondary / shot match — no passing evidence file; product status LIVE is not a quality result
+hard-truth-gates-3d-titles	NOT_GREEN	Hard truth gates / 3D titles — no passing evidence file; product status LIVE is not a quality result
+hard-truth-gates-ar-previz	NOT_GREEN	Hard truth gates / AR previz — no passing evidence file; product status LIVE is not a quality result
+hard-truth-gates-ffmpeg-gap-export	NOT_GREEN	Hard truth gates / FFmpeg gap export — no passing evidence file; product status PACK is not a quality result
+hard-truth-gates-smart-objects-pdf	NOT_GREEN	Hard truth gates / Smart objects / PDF — no passing evidence file; product status LIVE is not a quality result
+hard-truth-gates-true-motion-stabilization	NOT_GREEN	Hard truth gates / True motion stabilization — no passing evidence file; product status UNAVAILABLE is not a quality result
+hard-truth-gates-generative-expand	NOT_GREEN	Hard truth gates / Generative expand — no passing evidence file; product status UNAVAILABLE is not a quality result
+photo-studio-sky-heuristic	NOT_GREEN	Photo Studio / Sky heuristic — no passing evidence file; product status BAKED is not a quality result
+movie-studio-classical-cube-plate	NOT_GREEN	Movie Studio / Classical cube plate — no passing evidence file; product status LIVE is not a quality result
+movie-studio-classical-ground-plate	NOT_GREEN	Movie Studio / Classical ground plate — no passing evidence file; product status LIVE is not a quality result
+movie-studio-classical-sky-plate	NOT_GREEN	Movie Studio / Classical sky plate — no passing evidence file; product status LIVE is not a quality result
+movie-studio-classical-dust-plate	NOT_GREEN	Movie Studio / Classical dust plate — no passing evidence file; product status LIVE is not a quality result
+hard-truth-gates-inpaint-contract-smoke	NOT_GREEN	Hard truth gates / Inpaint contract smoke — no passing evidence file; product status PACK is not a quality result
+hard-truth-gates-depth-contract-smoke	NOT_GREEN	Hard truth gates / Depth contract smoke — no passing evidence file; product status PACK is not a quality result
+hard-truth-gates-inpaint-contract-quality	NOT_GREEN	Hard truth gates / Inpaint contract quality — no passing evidence file; product status PACK is not a quality result
+hard-truth-gates-depth-contract-quality	NOT_GREEN	Hard truth gates / Depth contract quality — no passing evidence file; product status PACK is not a quality result

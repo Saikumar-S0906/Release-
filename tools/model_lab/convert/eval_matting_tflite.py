@@ -14,11 +14,12 @@ out = {}
 for path in sys.argv[1:]:
     it = litert(path)
     ins, outs = it.get_input_details(), it.get_output_details()
-    ok = (len(ins) == 1 and ins[0]["shape"].tolist() == [1, 256, 256, 3] and ins[0]["dtype"] == np.float32
-          and outs[0]["shape"].tolist() == [1, 256, 256, 1] and outs[0]["dtype"] == np.float32)
+    E = int(ins[0]["shape"][1])
+    ok = (len(ins) == 1 and ins[0]["shape"].tolist() == [1, E, E, 3] and ins[0]["dtype"] == np.float32
+          and outs[0]["shape"].tolist() == [1, E, E, 1] and outs[0]["dtype"] == np.float32)
 
     def run(rgb):
-        x = cv2.resize(rgb, (256, 256), interpolation=cv2.INTER_AREA).astype(np.float32) / 255
+        x = cv2.resize(rgb, (E, E), interpolation=cv2.INTER_AREA).astype(np.float32) / 255
         it.set_tensor(ins[0]["index"], x[None])
         it.invoke()
         return cv2.resize(it.get_tensor(outs[0]["index"])[0, :, :, 0], (512, 512))

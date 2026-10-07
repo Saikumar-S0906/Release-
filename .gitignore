@@ -77,3 +77,10 @@ tools/_todo_*.txt
 
 # Model Lab working data (weights, eval arrays, converter venv) — not source
 /lab/
+.env
+.env.*
+*.env
+credentials.json
+*.pem
+*.key
+.credentials

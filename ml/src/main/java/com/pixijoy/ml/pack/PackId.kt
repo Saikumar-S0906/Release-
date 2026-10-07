@@ -135,7 +135,31 @@ object PackCatalog {
     const val FLOW_DOWNLOAD_SHA256 =
         "7fdffa3e5077201f351ca86975ef119ead2d7c1a39755114e8fbc9ead501a57a"
 
-    fun spec(id: PackId): PackSpec = when (id) {
+    /**
+     * Flagship HQ tier (`ml-packs-v2-hq`, chosen by [PackTier]): same contracts at 512² tensors.
+     * Depth Anything V2 Small @518, MI-GAN 512 Places2, MODNet @512. Version "2hq" keeps a separate
+     * store folder, so a phone never mixes tiers.
+     */
+    const val ML_V2_HQ_TAG = "ml-packs-v2-hq"
+    const val V2_HQ = "2hq"
+    private const val HQ_BASE = "https://github.com/Saikumar-S0906/Release-/releases/download/ml-packs-v2-hq/"
+    const val DEPTH_HQ_SHA256 = "6addaa7826620c017a589ead0aff3bbdaea3a0a7aa8400d8619dfeb86f094960"
+    const val INPAINT_HQ_SHA256 = "5769125dc24b60a7160f6854fb2adfea4780b66052fa1fa71e523ec238fb1c50"
+    const val MATTING_HQ_SHA256 = "e715a2c951445b705d1dc071742a906720cf2fb55be5819479cf68b0edbf0a2d"
+
+    fun hqSpec(id: PackId): PackSpec? = when (id) {
+        PackId.Depth -> PackSpec(id, V2_HQ, "depth_hq.tflite", "ml_depth",
+            downloadUrl = HQ_BASE + "depth_hq.tflite", downloadSha256 = DEPTH_HQ_SHA256)
+        PackId.Inpaint -> PackSpec(id, V2_HQ, "inpaint_hq.tflite", "ml_inpaint",
+            downloadUrl = HQ_BASE + "inpaint_hq.tflite", downloadSha256 = INPAINT_HQ_SHA256)
+        PackId.Matting -> PackSpec(id, V2_HQ, "matting_hq.tflite", "ml_matting",
+            downloadUrl = HQ_BASE + "matting_hq.tflite", downloadSha256 = MATTING_HQ_SHA256)
+        else -> null
+    }
+
+    fun spec(id: PackId): PackSpec = if (PackTier.hq) hqSpec(id) ?: standardSpec(id) else standardSpec(id)
+
+    fun standardSpec(id: PackId): PackSpec = when (id) {
         PackId.Inpaint -> PackSpec(
             id,
             V2,

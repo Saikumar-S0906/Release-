@@ -957,7 +957,14 @@ class Media3MovieEngine : MovieEngine {
             }
         }
         if (clip.hasFrame) {
-            video += clip.frame.toEffects()
+            val neural = if (mediaPath != null) FlowStabilize.effect(mediaPath, clip) else null
+            if (neural != null) {
+                // AI stabilize replaces the constant zoom; reframe crop still applies.
+                video += clip.frame.copy(stabilize = 0f).toEffects()
+                video += neural
+            } else {
+                video += clip.frame.toEffects()
+            }
         }
         ChromaKeyEffect.from(clip.chroma)?.let { video += it }
         PictureFade.effect(clip.durationMs, pictureFade.first, pictureFade.second)?.let { video += it }

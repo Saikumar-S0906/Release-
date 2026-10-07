@@ -17,6 +17,11 @@ object PackModelContract {
     /** Frozen monocular-depth spatial size. 0 is near, 1 is far. */
     const val DEPTH_EDGE = 256
 
+    /** Flagship HQ tier tensor edge (depth / matting). Depth output is pooled back to [DEPTH_EDGE]. */
+    const val HQ_EDGE = 512
+
+    fun isTierEdge(edge: Int): Boolean = edge == DEPTH_EDGE || edge == HQ_EDGE
+
     /**
      * PixiJoy point-track: template + search NHWC RGB → normalized `(x,y)`.
      */
@@ -118,11 +123,12 @@ object PackModelContract {
      */
     fun isMonocularDepth(input: IntArray, output: IntArray): Boolean {
         if (!isNhwcRgb(input)) return false
-        if (input[1] != DEPTH_EDGE || input[2] != DEPTH_EDGE) return false
+        val edge = input[1]
+        if (!isTierEdge(edge) || input[2] != edge) return false
         return output.size == 4 &&
             output[0] == 1 &&
-            output[1] == DEPTH_EDGE &&
-            output[2] == DEPTH_EDGE &&
+            output[1] == edge &&
+            output[2] == edge &&
             output[3] == 1
     }
 

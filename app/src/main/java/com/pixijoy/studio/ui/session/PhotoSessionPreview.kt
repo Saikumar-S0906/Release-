@@ -30,7 +30,11 @@ import com.pixijoy.photo.withBackgroundSeed
 import java.io.File
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+
+/** Idle time after the last edit before the live selfie mask is swapped for the neural matte. */
+internal const val MATTE_SETTLE_MS = 350L
 
 /**
  * Slider commit and preview baking for a photo session.
@@ -343,7 +347,8 @@ internal fun PhotoPreviewEffects(
     sources: List<String>,
     layers: List<LayeredOp>,
     projectDir: File,
-    renderLayers: suspend (List<String>, List<LayeredOp>, Int) -> Bitmap
+    renderLayers: suspend (List<String>, List<LayeredOp>, Int, Boolean) -> Bitmap,
+    needsMatteRefine: (List<LayeredOp>) -> Boolean = { false }
 ) {
     val context = LocalContext.current
     val controls = viewModel.controls
@@ -372,12 +377,27 @@ internal fun PhotoPreviewEffects(
     val inspectDetail = mode == SessionMode.Heal || mode == SessionMode.Mask || mode == SessionMode.Fill
     val previewMaxEdge = PhotoPreviewPolicy.previewMaxEdge(controls.viewportState.zoom, inspectDetail)
     LaunchedEffect(sources, layers, previewMaxEdge) {
+        // Live tier: fast selfie mask while the user is still dragging / editing.
+        val refine = needsMatteRefine(layers)
         viewModel.preview.render(
             sources = sources,
             layers = layers,
             maxEdge = previewMaxEdge,
             renderLayers = { src, ops, edge ->
-                withContext(Dispatchers.Default) { renderLayers(src, ops, edge) }
+                withContext(Dispatchers.Default) { renderLayers(src, ops, edge, refine) }
+            },
+            renderFailed = renderFailed
+        )
+        if (!refine) return@LaunchedEffect
+        // Settled ("release"): no new edit for MATTE_SETTLE_MS → swap in the hair-level matte.
+        // A new edit restarts this effect and cancels the refine.
+        delay(MATTE_SETTLE_MS)
+        viewModel.preview.render(
+            sources = sources,
+            layers = layers,
+            maxEdge = previewMaxEdge,
+            renderLayers = { src, ops, edge ->
+                withContext(Dispatchers.Default) { renderLayers(src, ops, edge, false) }
             },
             renderFailed = renderFailed
         )

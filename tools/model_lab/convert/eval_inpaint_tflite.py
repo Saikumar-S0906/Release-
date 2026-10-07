@@ -12,22 +12,31 @@ T = lambda a: torch.from_numpy(a).permute(2, 0, 1)[None].float() * 2 - 1
 
 d = np.load("/app/lab/eval/inpaint.npz")
 R, M = d["rgb256"].astype(np.float32) / 255, d["mask"]
+R512 = d["rgb512"].astype(np.float32) / 255
+import cv2
 out = {}
+CUR = [0]
 for path in sys.argv[1:]:
     it = litert(path)
     ins, outs = it.get_input_details(), it.get_output_details()
+    E = int(max(i["shape"][1] for i in ins))
     shapes = sorted(i["shape"].tolist() for i in ins)
-    ok = (shapes == [[1, 256, 256, 1], [1, 256, 256, 3]] and all(i["dtype"] == np.float32 for i in ins)
-          and outs[0]["shape"].tolist() == [1, 256, 256, 3] and outs[0]["dtype"] == np.float32)
+    ok = (shapes == [[1, E, E, 1], [1, E, E, 3]] and all(i["dtype"] == np.float32 for i in ins)
+          and outs[0]["shape"].tolist() == [1, E, E, 3] and outs[0]["dtype"] == np.float32)
 
     def run(rgb, m):
+        if E != 256:  # HQ: feed the 512 photo + upscaled mask, score back at 256 (same protocol)
+            rgb = R512[CUR[0]]
+            m = (cv2.resize(m, (E, E), interpolation=cv2.INTER_NEAREST) > 0.5).astype(np.float32)
         for i in ins:
             it.set_tensor(i["index"], (rgb[None] if i["shape"][-1] == 3 else m[None, :, :, None]).astype(np.float32))
         it.invoke()
-        return it.get_tensor(outs[0]["index"])[0]
+        o = it.get_tensor(outs[0]["index"])[0]
+        return o if E == 256 else cv2.resize(o, (256, 256), interpolation=cv2.INTER_AREA)
 
     l1, lps = [], []
     for i in range(len(R)):
+        CUR[0] = i
         mm = M[i][..., None]
         comp = R[i] * (1 - mm) + run(R[i], M[i]) * mm
         l1.append(np.sum(np.abs(comp - R[i]).mean(-1) * M[i]) / M[i].sum())
@@ -38,5 +47,5 @@ for path in sys.argv[1:]:
     out[path.split("/")[-1]] = {"contract_ok": bool(ok), "inputs": [(i["name"], i["shape"].tolist()) for i in ins],
                                 "masked_l1": round(float(np.mean(l1)), 4), "lpips": round(float(np.mean(lps)), 4), "size_mb": mb(path),
                                 "sha256": hashlib.sha256(open(path, "rb").read()).hexdigest(),
-                                "cpu_ms_4t": round(timed(run, R[0], M[0]), 1)}
+                                "cpu_ms_4t": (CUR.__setitem__(0, 0), round(timed(run, R[0], M[0]), 1))[1]}
 save_json("inpaint_tflite", out)

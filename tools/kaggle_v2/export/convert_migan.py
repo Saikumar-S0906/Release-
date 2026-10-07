@@ -32,9 +32,9 @@ Generator = _mod.Generator
 
 
 class PixiInpaint(torch.nn.Module):
-    def __init__(self, weights):
+    def __init__(self, weights, res=256):
         super().__init__()
-        self.g = Generator(resolution=256)
+        self.g = Generator(resolution=res)
         self.g.load_state_dict(torch.load(weights, map_location="cpu"))
         self.g.eval()
         # MI-GAN keeps FIR filters as plain tensor attributes; torch.export needs them as buffers.
@@ -59,9 +59,11 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--weights", default="/app/lab/kit/weights/migan_256_places2.pt")
     ap.add_argument("--out", default="/app/lab/out/inpaint_migan256.tflite")
+    ap.add_argument("--res", type=int, default=256, help="256 standard, 512 HQ (migan_512_places2.pt)")
     a = ap.parse_args()
-    m = PixiInpaint(a.weights).eval()
-    sample = (torch.rand(1, 256, 256, 3), (torch.rand(1, 256, 256, 1) > 0.8).float())
+    m = PixiInpaint(a.weights, a.res).eval()
+    r = a.res
+    sample = (torch.rand(1, r, r, 3), (torch.rand(1, r, r, 1) > 0.8).float())
     with torch.no_grad():
         print("torch ok", m(*sample).shape)
     import ai_edge_torch

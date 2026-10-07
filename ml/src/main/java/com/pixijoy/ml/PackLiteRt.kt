@@ -504,7 +504,7 @@ object PackLiteRt {
     /** MODNet alpha at 256², bilinear-scaled back to the source size (white ARGB, alpha = subject). */
     private fun subjectMatte(src: Bitmap): Bitmap? {
         val interpreter = synchronized(lock) { engines[PackId.Matting] } ?: return null
-        val edge = PackModelContract.DEPTH_EDGE
+        val edge = interpreter.getInputTensor(0).shape()[1]  // 256 standard, 512 HQ
         val sized = if (src.width == edge && src.height == edge) {
             src
         } else {
@@ -604,7 +604,7 @@ object PackLiteRt {
     /** Relative depth, row 0 at the top, values coerced to 0..1 (near → far). */
     private fun depthMap(src: Bitmap): FloatArray? {
         val interpreter = synchronized(lock) { engines[PackId.Depth] } ?: return null
-        val edge = PackModelContract.DEPTH_EDGE
+        val edge = interpreter.getInputTensor(0).shape()[1]  // 256 standard, 512 HQ
         val sized = if (src.width == edge && src.height == edge) {
             src
         } else {
@@ -615,11 +615,16 @@ object PackLiteRt {
             fillRgb(sized, input[0])
             val output = Array(1) { Array(edge) { Array(edge) { FloatArray(1) } } }
             interpreter.run(input, output)
-            val values = FloatArray(edge * edge)
+            // Consumers (SoftZ, CG) read a DEPTH_EDGE² map; HQ output is box-pooled down to it.
+            val outEdge = PackModelContract.DEPTH_EDGE
+            val k = (edge / outEdge).coerceAtLeast(1)
+            val values = FloatArray(outEdge * outEdge)
             var i = 0
-            for (row in 0 until edge) {
-                for (col in 0 until edge) {
-                    values[i++] = output[0][row][col][0].coerceIn(0f, 1f)
+            for (row in 0 until outEdge) {
+                for (col in 0 until outEdge) {
+                    var sum = 0f
+                    for (dy in 0 until k) for (dx in 0 until k) sum += output[0][row * k + dy][col * k + dx][0]
+                    values[i++] = (sum / (k * k)).coerceIn(0f, 1f)
                 }
             }
             return values

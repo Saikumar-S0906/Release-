@@ -281,7 +281,8 @@ fun PhotoSessionScreen(
         sources = sources,
         layers = layers,
         projectDir = projectDir,
-        renderLayers = engine::renderLayers
+        renderLayers = engine::renderLayers,
+        needsMatteRefine = { engine.neuralMatteReady && engine.usesSubjectMatte(it) }
     )
     val hasLiveDelta = sessionViewModel.preview.hasLiveDelta(mode)
     val canCompare = sessionViewModel.preview.canCompare(mode, layers)
