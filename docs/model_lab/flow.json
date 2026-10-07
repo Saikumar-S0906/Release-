@@ -1,0 +1,40 @@
+{
+  "dataset": "MPI Sintel clean training GT, 104 pairs, native 1024x436",
+  "models": {
+    "opencv_dis_medium (classical)": {
+      "epe_native": 5.622,
+      "epe_at_256_grid": 1.969,
+      "size_mb": 0,
+      "cpu_ms_4t": 15.4
+    },
+    "opencv_farneback (classical)": {
+      "epe_native": 9.499,
+      "epe_at_256_grid": 3.493,
+      "size_mb": 0,
+      "cpu_ms_4t": 83.8
+    },
+    "raft_small (C+T, BSD-3) native": {
+      "epe_native": 2.721,
+      "epe_at_256_grid": 0.958,
+      "size_mb": 3.8,
+      "params_m": 0.99,
+      "cpu_ms_4t": 1497.0
+    },
+    "neuflow_v2 things 432x768 (Apache-2.0, no Sintel train)": {
+      "epe_native": 1.141,
+      "epe_at_256_grid": 0.458,
+      "size_mb": 40.25,
+      "cpu_ms_4t": 1305.0
+    },
+    "opencv_dis @256 contract": {
+      "epe_native": 5.636,
+      "epe_at_256_grid": 2.052,
+      "cpu_ms_4t": 5.9
+    },
+    "raft_small @256 contract": {
+      "epe_native": 3.452,
+      "epe_at_256_grid": 1.339,
+      "cpu_ms_4t": 1269.4
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "dataset": "P3M-500-P portrait matting test, 100 images, 512x512",
+  "models": {
+    "mediapipe_selfie_segmenter (current)": {
+      "mad": 0.0345,
+      "mse": 0.0229,
+      "sad": 9.04,
+      "edge_mad": 0.1331,
+      "size_mb": 0.24,
+      "input": 256,
+      "cpu_ms_4t": 1.8
+    },
+    "modnet @256": {
+      "mad": 0.0148,
+      "mse": 0.01,
+      "sad": 3.87,
+      "edge_mad": 0.0739,
+      "size_mb": 24.69,
+      "params_m": 6.5,
+      "input": 256,
+      "cpu_ms_4t": 66.9
+    },
+    "modnet @512": {
+      "mad": 0.0144,
+      "mse": 0.0094,
+      "sad": 3.77,
+      "edge_mad": 0.066,
+      "input": 512,
+      "cpu_ms_4t": 459.2
+    }
+  }
+}

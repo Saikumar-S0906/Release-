@@ -74,3 +74,6 @@ tools/__pycache__/
 tools/_*.txt
 tools/_todo_*.txt
 
+
+# Model Lab working data (weights, eval arrays, converter venv) — not source
+/lab/

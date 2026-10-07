@@ -1,0 +1,22 @@
+{
+  "matting_modnet_dyn8.tflite": {
+    "contract_ok": true,
+    "in": [
+      1,
+      256,
+      256,
+      3
+    ],
+    "out": [
+      1,
+      256,
+      256,
+      1
+    ],
+    "mad": 0.0149,
+    "edge_mad": 0.0738,
+    "size_mb": 6.82,
+    "sha256": "9902196ea431f4e7611d370561030e969fee45e309915dfa890b3a887ad60ec4",
+    "cpu_ms_4t": 20.9
+  }
+}

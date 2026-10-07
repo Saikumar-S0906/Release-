@@ -1,0 +1,58 @@
+{
+  "inpaint_migan256_dyn8.tflite": {
+    "contract_ok": true,
+    "inputs": [
+      [
+        "serving_default_args_0:0",
+        [
+          1,
+          256,
+          256,
+          3
+        ]
+      ],
+      [
+        "serving_default_args_1:0",
+        [
+          1,
+          256,
+          256,
+          1
+        ]
+      ]
+    ],
+    "masked_l1": 0.1128,
+    "lpips": 0.0756,
+    "size_mb": 7.09,
+    "sha256": "3d9d6b30a1fe5bed0eb231c9877d5668380490229e8695a142df4872f65e1809",
+    "cpu_ms_4t": 132.4
+  },
+  "inpaint_migan256.tflite": {
+    "contract_ok": true,
+    "inputs": [
+      [
+        "serving_default_args_0:0",
+        [
+          1,
+          256,
+          256,
+          3
+        ]
+      ],
+      [
+        "serving_default_args_1:0",
+        [
+          1,
+          256,
+          256,
+          1
+        ]
+      ]
+    ],
+    "masked_l1": 0.1113,
+    "lpips": 0.0749,
+    "size_mb": 23.61,
+    "sha256": "6ac0d0761f7d2f18291bad7ab87e7e92e43ec5faaa8c38bc6a2ad6c854c173b6",
+    "cpu_ms_4t": 160.7
+  }
+}

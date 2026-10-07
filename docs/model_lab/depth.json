@@ -1,0 +1,30 @@
+{
+  "dataset": "NYU Depth V2 official test split, 100 images, Eigen crop, scale+shift aligned",
+  "models": {
+    "pixijoy_unet_v1 (current)": {
+      "abs_rel": 0.2391,
+      "delta1": 0.6266,
+      "mae01": 0.2503,
+      "size_mb": 74.71,
+      "params_m": 19.6,
+      "input": 256,
+      "cpu_ms_4t": 518.5
+    },
+    "depth_anything_v2_small @266": {
+      "abs_rel": 0.0752,
+      "delta1": 0.9388,
+      "mae01": 0.0848,
+      "size_mb_fp32": 94.6,
+      "params_m": 24.8,
+      "input": 266,
+      "cpu_ms_4t": 294.1
+    },
+    "depth_anything_v2_small @518": {
+      "abs_rel": 0.0642,
+      "delta1": 0.9511,
+      "mae01": 0.0744,
+      "input": 518,
+      "cpu_ms_4t": 897.5
+    }
+  }
+}

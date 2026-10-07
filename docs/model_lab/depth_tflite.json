@@ -1,0 +1,12 @@
+{
+  "depth_dav2s_dyn8.tflite": {
+    "contract_ok": true,
+    "near_is_low": 1.0,
+    "abs_rel": 0.0771,
+    "delta1": 0.9378,
+    "mae01": 0.0861,
+    "size_mb": 26.2,
+    "sha256": "251c44443c96b66790cc0f54aaf1e746de9d36af4b2e0ed01e504ee0d82e87ad",
+    "cpu_ms_4t": 62.8
+  }
+}

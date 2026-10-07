@@ -1,0 +1,46 @@
+{
+  "dataset": "Places365 val, 100 photos, 256x256, PixiJoy make_mask() holes (mean hole 16.9% of image)",
+  "models": {
+    "telea (classical fallback)": {
+      "masked_l1": 0.1116,
+      "psnr": 25.48,
+      "ssim": 0.8929,
+      "lpips": 0.1329,
+      "size_mb": 0,
+      "cpu_ms_4t": 5.5
+    },
+    "pixijoy_unet_v1 (current)": {
+      "masked_l1": 0.2209,
+      "psnr": 21.34,
+      "ssim": 0.9042,
+      "lpips": 0.1319,
+      "size_mb": 74.95,
+      "params_m": 19.7,
+      "cpu_ms_4t": 1028.1
+    },
+    "mi_gan @256": {
+      "masked_l1": 0.1027,
+      "psnr": 26.18,
+      "ssim": 0.9003,
+      "lpips": 0.0748,
+      "size_mb": 26.78,
+      "cpu_ms_4t": 602.4
+    },
+    "mi_gan @512->256": {
+      "masked_l1": 0.1108,
+      "psnr": 25.5,
+      "ssim": 0.8941,
+      "lpips": 0.074,
+      "cpu_ms_4t": 310.9
+    },
+    "big_lama @512->256 (reference, too big)": {
+      "masked_l1": 0.0867,
+      "psnr": 27.45,
+      "ssim": 0.9085,
+      "lpips": 0.0631,
+      "size_mb": 198.41,
+      "params_m": 51,
+      "cpu_ms_4t": 3508.3
+    }
+  }
+}
