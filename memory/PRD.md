@@ -16,6 +16,8 @@ User choices: Kaggle GPU (30 h/week) for training; avoid hard dependency on Hugg
 - Kaggle kit `tools/kaggle_v2/`: `pixi_ft.py` (depth/matting/inpaint/flow fine-tune, budgeted and resumable), export scripts, 4 generated notebooks, README. Download order: kit → Hugging Face → hf-mirror → official sources. All 4 tasks pass the CPU smoke test, and the 3 export paths were verified (contract_ok).
 - Bench and convert scripts are copied to `tools/model_lab/`.
 
+- Final model decisions for scale written to `docs/ML_DECISION.md`: DA-V2-S, MI-GAN 256 (+512 HQ later), MODNet + MediaPipe preview tier, NeuFlow v2 (DIS until converted).
+
 ## Backlog
 - P0: Upload the 3 int8 TFLite files to Release- `ml-packs-v2`, then update `PackCatalog` URLs, SHA-256 and VERSION=2. Run the device smoke test per R5_ML_PACKS.
 - P0: The user runs the Kaggle notebooks (depth 4 h, matting 5 h, inpaint 8 h, flow 6 h).
